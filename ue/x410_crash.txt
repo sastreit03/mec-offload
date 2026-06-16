@@ -49,80 +49,80 @@ channelmod = {
 [INFO] Target b2xx_common_fw_default is up to date.
 ==================================
 == Starting NR UE soft modem
-Additional option(s): --usrp-args addr=192.168.20.2 --ue-fo-compensation --band 78 --ue-rxgain 20 --log_config.global_log_options level,nocolor,time -C 3604800000 -r 24 --numerology 1 --ssb 24 --thread-pool 4,5
-/opt/oai-nr-ue/bin/nr-uesoftmodem -O /opt/oai-nr-ue/etc/nr-ue.conf --usrp-args addr=192.168.20.2 --ue-fo-compensation --band 78 --ue-rxgain 20 --log_config.global_log_options level,nocolor,time -C 3604800000 -r 24 --numerology 1 --ssb 24 --thread-pool 4,5
-20338.209154 [UTIL] I running in SA mode (no --phy-test, --do-ra, --nsa option present)
-20338.209169 [UTIL] I threadCreate() for Tpool0_4: creating thread with affinity 4, priority 97
-20338.209254 [UTIL] I threadCreate() for Tpool1_5: creating thread with affinity 5, priority 97
-20339.210260 [OPT] I OPT disabled
+Additional option(s): --usrp-args addr=192.168.20.2 --ue-fo-compensation --band 78 --ue-rxgain 10 --log_config.global_log_options level,nocolor,time -C 3604800000 -r 24 --numerology 1 --ssb 24 --thread-pool 4,5
+/opt/oai-nr-ue/bin/nr-uesoftmodem -O /opt/oai-nr-ue/etc/nr-ue.conf --usrp-args addr=192.168.20.2 --ue-fo-compensation --band 78 --ue-rxgain 10 --log_config.global_log_options level,nocolor,time -C 3604800000 -r 24 --numerology 1 --ssb 24 --thread-pool 4,5
+20372.423962 [UTIL] I running in SA mode (no --phy-test, --do-ra, --nsa option present)
+20372.423978 [UTIL] I threadCreate() for Tpool0_4: creating thread with affinity 4, priority 97
+20372.424075 [UTIL] I threadCreate() for Tpool1_5: creating thread with affinity 5, priority 97
 [LOADER] library libdemapper.so is not loaded: libdemapper.so: cannot open shared object file: No such file or directory
 [LOADER] library libreceiver.so is not loaded: libreceiver.so: cannot open shared object file: No such file or directory
-CMDLINE: "/opt/oai-nr-ue/bin/nr-uesoftmodem" "-O" "/opt/oai-nr-ue/etc/nr-ue.conf" "--usrp-args" "addr=192.168.20.2" "--ue-fo-compensation" "--band" "78" "--ue-rxgain" "20" "--log_config.global_log_options" "level,nocolor,time" "-C" "3604800000" "-r" "24" "--numerology" "1" "--ssb" "24" "--thread-pool" "4,5" 
+20373.425167 [OPT] I OPT disabled
+CMDLINE: "/opt/oai-nr-ue/bin/nr-uesoftmodem" "-O" "/opt/oai-nr-ue/etc/nr-ue.conf" "--usrp-args" "addr=192.168.20.2" "--ue-fo-compensation" "--band" "78" "--ue-rxgain" "10" "--log_config.global_log_options" "level,nocolor,time" "-C" "3604800000" "-r" "24" "--numerology" "1" "--ssb" "24" "--thread-pool" "4,5" 
 [CONFIG] function config_libconfig_init returned 0
-Error loading receiver_(null), ignoring receiver plugin20339.210525 [HW] I Version: Branch: HEAD Abrev. Hash: 207aac94d1 Date: Fri Aug 22 08:07:59 2025 +0000
-20339.212438 [NR_RRC] I create TASK_RRC_NRUE 
-20339.212446 [UTIL] I threadCreate() for TASK_RRC_NRUE: creating thread with affinity ffffffff, priority 50
-20339.212544 [UTIL] I threadCreate() for TASK_NAS_NRUE: creating thread with affinity ffffffff, priority 50
-20339.212678 [SIM] I UICC simulation: IMSI=262990100000832, IMEISV=6754567890123413, Ki=fec86ba6eb707ed08905757b1bb44b8f, OPc=C42449363BBAD02B66D16BC975D77CC1, DNN=oai, SST=0x01, SD=0xffffff
-20339.212708 [NR_MAC] I [UE0] Initializing MAC
-20339.212723 [NR_MAC] I Initializing dl and ul config_request. num_slots = 20
-20339.212766 [RLC] I Activated srb0 for UE 0
-20339.212773 [UTIL] I threadCreate() for time source realtime: creating thread with affinity ffffffff, priority 2
-20339.212797 [UTIL] I time manager configuration: [time source: reatime] [mode: standalone] [server IP: 127.0.0.1} [server port: 7374] (server IP/port not used)
-20339.212799 [PHY] I Set UE_fo_compensation 1, UE_scan_carrier 0, UE_no_timing_correction 0 
+Error loading receiver_(null), ignoring receiver plugin20373.425414 [HW] I Version: Branch: HEAD Abrev. Hash: 207aac94d1 Date: Fri Aug 22 08:07:59 2025 +0000
+20373.427204 [NR_RRC] I create TASK_RRC_NRUE 
+20373.427212 [UTIL] I threadCreate() for TASK_RRC_NRUE: creating thread with affinity ffffffff, priority 50
+20373.427303 [UTIL] I threadCreate() for TASK_NAS_NRUE: creating thread with affinity ffffffff, priority 50
+20373.427423 [SIM] I UICC simulation: IMSI=262990100000832, IMEISV=6754567890123413, Ki=fec86ba6eb707ed08905757b1bb44b8f, OPc=C42449363BBAD02B66D16BC975D77CC1, DNN=oai, SST=0x01, SD=0xffffff
+20373.427448 [NR_MAC] I [UE0] Initializing MAC
+20373.427457 [NR_MAC] I Initializing dl and ul config_request. num_slots = 20
+20373.427498 [RLC] I Activated srb0 for UE 0
+20373.427505 [UTIL] I threadCreate() for time source realtime: creating thread with affinity ffffffff, priority 2
+20373.427528 [UTIL] I time manager configuration: [time source: reatime] [mode: standalone] [server IP: 127.0.0.1} [server port: 7374] (server IP/port not used)
+20373.427529 [PHY] I Set UE_fo_compensation 1, UE_scan_carrier 0, UE_no_timing_correction 0 
 , chest-freq 0, chest-time 0
-20339.212800 [PHY] I Set UE nb_rx_antenna 1, nb_tx_antenna 1, threequarter_fs 0, ssb_start_subcarrier 24
-20339.212803 [PHY] I SA init parameters. DL freq 3604800000 UL offset 0 SSB numerology 1 N_RB_DL 24
-20339.212807 [PHY] I Init: N_RB_DL 24, first_carrier_offset 368, nb_prefix_samples 36,nb_prefix_samples0 44, ofdm_symbol_size 512
-20339.212808 [PHY] W samples_per_subframe 15360/per second 15360000, wCP 14336
-20339.212810 [UTIL] I threadCreate() for SYNC__actor: creating thread with affinity ffffffff, priority 97
-20339.212840 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-20339.212876 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-20339.212901 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-20339.212928 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-20339.212960 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
-20339.212991 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
-20339.213024 [PHY] I Initializing UE vars for gNB TXant 1, UE RXant 1
-20339.279813 [PHY] I prs_config configuration NOT found..!! Skipped configuring UE for the PRS reception
-20339.310469 [PHY] I HW: Configuring card 0, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20339.310480 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20339.310483 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 20
-20339.310484 [PHY] I HW: Configuring card 1, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20339.310484 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20339.310486 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 20
-20339.310486 [PHY] I HW: Configuring card 2, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20339.310487 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20339.310488 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 20
-20339.310488 [PHY] I HW: Configuring card 3, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20339.310489 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20339.310490 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 20
-20339.310491 [PHY] I HW: Configuring card 4, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20339.310492 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20339.310492 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 20
-20339.310493 [PHY] I HW: Configuring card 5, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20339.310494 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20339.310495 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 20
-20339.310496 [PHY] I HW: Configuring card 6, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20339.310496 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20339.310497 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 20
-20339.310498 [PHY] I HW: Configuring card 7, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20339.310499 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20339.310500 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 20
-20339.359719 [PHY] I Intializing UE Threads for instance 0 ...
-20339.359729 [UTIL] I threadCreate() for UEthread_0: creating thread with affinity ffffffff, priority 97
-20339.361983 [UTIL] I threadCreate() for L1_UE_stats_0: creating thread with affinity ffffffff, priority 1
-20339.367708 [HW] I openair0_cfg[0].sdr_addrs == 'addr=192.168.20.2'
-20339.367715 [HW] I openair0_cfg[0].clock_source == '0' (internal = 0, external = 1)
-20339.367718 [HW] I UHD version 4.8.0.HEAD-0-g308126a4 (4.8.0)
-20339.367719 [HW] I Checking for USRP with args addr=192.168.20.2
+20373.427530 [PHY] I Set UE nb_rx_antenna 1, nb_tx_antenna 1, threequarter_fs 0, ssb_start_subcarrier 24
+20373.427533 [PHY] I SA init parameters. DL freq 3604800000 UL offset 0 SSB numerology 1 N_RB_DL 24
+20373.427536 [PHY] I Init: N_RB_DL 24, first_carrier_offset 368, nb_prefix_samples 36,nb_prefix_samples0 44, ofdm_symbol_size 512
+20373.427537 [PHY] W samples_per_subframe 15360/per second 15360000, wCP 14336
+20373.427539 [UTIL] I threadCreate() for SYNC__actor: creating thread with affinity ffffffff, priority 97
+20373.427563 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+20373.427585 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+20373.427608 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+20373.427629 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+20373.427650 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
+20373.427675 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
+20373.427699 [PHY] I Initializing UE vars for gNB TXant 1, UE RXant 1
+20373.493904 [PHY] I prs_config configuration NOT found..!! Skipped configuring UE for the PRS reception
+20373.524365 [PHY] I HW: Configuring card 0, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20373.524377 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20373.524380 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
+20373.524381 [PHY] I HW: Configuring card 1, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20373.524381 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20373.524382 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
+20373.524383 [PHY] I HW: Configuring card 2, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20373.524384 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20373.524385 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
+20373.524385 [PHY] I HW: Configuring card 3, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20373.524386 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20373.524387 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
+20373.524387 [PHY] I HW: Configuring card 4, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20373.524388 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20373.524389 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
+20373.524390 [PHY] I HW: Configuring card 5, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20373.524390 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20373.524391 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
+20373.524392 [PHY] I HW: Configuring card 6, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20373.524393 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20373.524394 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
+20373.524394 [PHY] I HW: Configuring card 7, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20373.524395 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20373.524396 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
+20373.566370 [PHY] I Intializing UE Threads for instance 0 ...
+20373.566384 [UTIL] I threadCreate() for UEthread_0: creating thread with affinity ffffffff, priority 97
+20373.568262 [UTIL] I threadCreate() for L1_UE_stats_0: creating thread with affinity ffffffff, priority 1
+20373.573459 [HW] I openair0_cfg[0].sdr_addrs == 'addr=192.168.20.2'
+20373.573465 [HW] I openair0_cfg[0].clock_source == '0' (internal = 0, external = 1)
+20373.573469 [HW] I UHD version 4.8.0.HEAD-0-g308126a4 (4.8.0)
+20373.573470 [HW] I Checking for USRP with args addr=192.168.20.2
 [INFO] [UHD] linux; GNU C++ version 13.3.0; Boost_108300; UHD_4.8.0.HEAD-0-g308126a4
-20339.886089 [HW] I Found USRP x4xx
+20374.092281 [HW] I Found USRP x4xx
 sysctl: setting key "net.core.rmem_max": Operation not permitted
 sysctl: setting key "net.core.wmem_max": Operation not permitted
 [INFO] [MPMD] Initializing 1 device(s) in parallel with args: mgmt_addr=192.168.20.2,type=x4xx,product=x410,serial=35074B8,name=ni-x4xx-35074B8,fpga=UC_200,claimed=False,addr=192.168.20.2,master_clock_rate=245760000.000000
 [INFO] [MPM.PeriphManager] init() called with device args `fpga=UC_200,master_clock_rate=(245760000.0,),mgmt_addr=192.168.20.2,name=ni-x4xx-35074B8,product=x410,clock_source=internal,time_source=internal,initializing=True'.
-20342.012178 [HW] I Setting clock source to internal
-20342.020879 [HW] I Setting time source to internal
+20376.199348 [HW] I Setting clock source to internal
+20376.206570 [HW] I Setting time source to internal
 Channel emulation enabled: CIR source=cir_file, folder=(null), num_taps=0
 Channel emulation disabled (--cir-folder and --cir-zmq-num-taps not set)
 
@@ -133,34 +133,36 @@ TYPE <CTRL-C> TO TERMINATE
 Found USRP x400
 Entering ITTI signals handler
 TYPE <CTRL-C> TO TERMINATE
-20342.027761 [HW] I device_init() sample_rate:15360000
+20376.211441 [HW] I device_init() sample_rate:15360000
 -- Using calibration table: calib_table_none
-20342.033880 [HW] I cal 0: freq 3500000000.000000, offset 0.000000, diff 104800000.000000
-20342.033889 [HW] I cal 1: freq 2660000000.000000, offset 0.000000, diff 944800000.000000
-20342.033891 [HW] I cal 2: freq 2300000000.000000, offset 0.000000, diff 1304800000.000000
-20342.033893 [HW] I cal 3: freq 1880000000.000000, offset 0.000000, diff 1724800000.000000
-20342.033895 [HW] I cal 4: freq 816000000.000000, offset 0.000000, diff 2788800000.000000
-20342.034486 [HW] I RX Gain 0 20.000000 (0.000000) => 20.000000 (max 60.000000)
-20342.041377 [HW] I USRP TX_GAIN:60.00 gain_range:60.00 tx_gain:0.00
-20342.041395 [HW] I Actual master clock: 245.760000MHz...
-20342.043574 [HW] I Actual clock source internal...
-20342.045131 [HW] I Actual time source internal...
-20342.045144 [HW] I setting rx channel 0
-20342.047174 [HW] I RF board max packet size 360, size for 100µs jitter 1536 
-20342.047181 [HW] I rx_max_num_samps 360
-20342.052116 [HW] I RX Channel 0
-20342.052123 [HW] I   Actual RX sample rate: 15.360000MSps...
-20342.052127 [HW] I   Actual RX frequency: 3.604800GHz...
-20342.052133 [HW] I   Actual RX gain: 20.000000...
-20342.052136 [HW] I   Actual RX bandwidth: 400.000000M...
-20342.052139 [HW] I   Actual RX antenna: RX1...
-20342.052140 [HW] I TX Channel 0
-20342.052142 [HW] I   Actual TX sample rate: 15.360000MSps...
-20342.052144 [HW] I   Actual TX frequency: 3.604800GHz...
-20342.052149 [HW] I   Actual TX gain: 60.000000...
-20342.052151 [HW] I   Actual TX bandwidth: 400.000000M...
-20342.052155 [HW] I   Actual TX antenna: TX/RX0...
-20342.052156 [HW] I   Actual TX packet size: 360
+20376.217457 [HW] I cal 0: freq 3500000000.000000, offset 0.000000, diff 104800000.000000
+20376.217469 [HW] I cal 1: freq 2660000000.000000, offset 0.000000, diff 944800000.000000
+20376.217473 [HW] I cal 2: freq 2300000000.000000, offset 0.000000, diff 1304800000.000000
+20376.217474 [HW] I cal 3: freq 1880000000.000000, offset 0.000000, diff 1724800000.000000
+20376.217476 [HW] I cal 4: freq 816000000.000000, offset 0.000000, diff 2788800000.000000
+20376.218101 [HW] I RX Gain 0 10.000000 (0.000000) => 10.000000 (max 60.000000)
+20376.223850 [HW] I USRP TX_GAIN:60.00 gain_range:60.00 tx_gain:0.00
+20376.223870 [HW] I Actual master clock: 245.760000MHz...
+20376.225343 [HW] I Actual clock source internal...
+20376.226934 [HW] I Actual time source internal...
+20376.226947 [HW] I setting rx channel 0
+20376.229210 [HW] I RF board max packet size 360, size for 100µs jitter 1536 
+20376.229215 [HW] I rx_max_num_samps 360
+[WARNING] [0/Radio#0] Invalid analog bandwidth: 10 MHz.
+[WARNING] [0/Radio#0] Invalid analog bandwidth: 10 MHz.
+20376.234035 [HW] I RX Channel 0
+20376.234041 [HW] I   Actual RX sample rate: 15.360000MSps...
+20376.234044 [HW] I   Actual RX frequency: 3.604800GHz...
+20376.234047 [HW] I   Actual RX gain: 10.000000...
+20376.234049 [HW] I   Actual RX bandwidth: 400.000000M...
+20376.234052 [HW] I   Actual RX antenna: RX1...
+20376.234052 [HW] I TX Channel 0
+20376.234053 [HW] I   Actual TX sample rate: 15.360000MSps...
+20376.234055 [HW] I   Actual TX frequency: 3.604800GHz...
+20376.234058 [HW] I   Actual TX gain: 60.000000...
+20376.234059 [HW] I   Actual TX bandwidth: 400.000000M...
+20376.234061 [HW] I   Actual TX antenna: TX/RX0...
+20376.234062 [HW] I   Actual TX packet size: 360
 Using Device: Single USRP:
   Device: X400-Series Device
   Mboard 0: x410
@@ -197,640 +199,161 @@ Using Device: Single USRP:
     TX Dboard: B
     TX Subdev: 1
 
-[WARNING] [0/Radio#0] Invalid analog bandwidth: 10 MHz.
-[WARNING] [0/Radio#0] Invalid analog bandwidth: 10 MHz.
-20342.052375 [HW] I Device timestamp: 0.055971...
-20342.052383 [HW] I [RRU] has loaded USRP X400 device.
-20342.714745 [HW] I current pps at 0.000000, starting streaming at 1.000000
-20344.733181 [PHY] W SSB position provided
-20344.733203 [NR_PHY] W Starting sync detection
-20344.733208 [PHY] I [UE thread Synch] Running Initial Synch 
-20344.733210 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20344.733638 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20344.871841 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-20344.871854 [PHY] I pbch rx ok. rsrp:49 dB/RE, adjust_rxgain:1 dB
-20344.871865 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS Corr Average: 56
-20344.874976 [PHY] I [UE0] In synch, rx_offset 73392 samples
-20344.874983 [PHY] I [UE 0] Measured Carrier Frequency offset -147 Hz
-20344.874985 [PHY] A Initial sync successful, PCI: 0
-20344.874987 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799853 Hz, rx_freq 3604799853 Hz, tune_offset 0
-20344.879819 [PHY] I Got synch: hw_slot_offset 19, carrier off -147 Hz, rxgain 20.000000 (DL 3604799853.000000 Hz, UL 3604799853.000000 Hz)
-20344.892551 [PHY] A UE synchronized! decoded_frame_rx=242 UE->init_sync_frame=0 trashed_frames=16
-20344.892557 [PHY] I Resynchronizing RX by 73392 samples
-20344.897661 [HW] I received write reorder clear context
-20344.908554 [NR_RRC] A SIB1 decoded
-20344.909522 [NR_MAC] I TDD period index = 6, based on the sum of dl_UL_TransmissionPeriodicity from Pattern1 (5.000000 ms) and Pattern2 (0.000000 ms): Total = 5.000000 ms
-20344.909529 [NR_MAC] I Set TDD configuration period to: 8 DL slots, 2 UL slots, 10 slots per period (NR_TDD_UL_DL_Pattern is 7 DL slots, 2 UL slots, 6 DL symbols, 0 UL symbols)
-20344.909530 [NR_MAC] I Configured 1 TDD patterns (total slots: pattern1 = 10, pattern2 = 0)
-20344.909570 [PHY] I N_TA_offset changed from 0 to 200
-sleep...
-sleep...
-sleep...
-sleep...
-sleep...
-sleep...
-sleep...
-sleep...
-sleep...
-Setting USRP TX Freq 3604799853.000000, RX Freq 3604799853.000000, tune_offset: 0.000000
-20344.911404 [MAC] I Initialization of 4-Step CBRA procedure
-20344.926558 [NR_MAC] I PRACH scheduler: Selected RO Frame 261, Slot 19, Symbol 8, Fdm 0
-20344.926751 [PHY] I PRACH [UE 0] in frame.slot 261.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 3, first_nonzero_root_idx 0, preambleIndex = 6
-20344.938920 [MAC] W [UE 0] RAR reception failed
-20344.946965 [NR_MAC] I PRACH scheduler: Selected RO Frame 263, Slot 19, Symbol 0, Fdm 0
-20344.947013 [PHY] I PRACH [UE 0] in frame.slot 263.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 15, first_nonzero_root_idx 0, preambleIndex = 30
-20344.959148 [MAC] W [UE 0] RAR reception failed
-20344.966227 [NR_MAC] I PRACH scheduler: Selected RO Frame 265, Slot 19, Symbol 0, Fdm 0
-20344.966262 [PHY] I PRACH [UE 0] in frame.slot 265.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 11, first_nonzero_root_idx 0, preambleIndex = 23
-20344.977855 [MAC] W [UE 0] RAR reception failed
-20344.986378 [NR_MAC] I PRACH scheduler: Selected RO Frame 267, Slot 19, Symbol 8, Fdm 0
-20344.986416 [PHY] I PRACH [UE 0] in frame.slot 267.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 20, first_nonzero_root_idx 0, preambleIndex = 40
-20344.999264 [MAC] W [UE 0] RAR reception failed
-20345.006106 [NR_MAC] I PRACH scheduler: Selected RO Frame 269, Slot 19, Symbol 8, Fdm 0
-20345.006141 [PHY] I PRACH [UE 0] in frame.slot 269.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 19, first_nonzero_root_idx 0, preambleIndex = 39
-20345.017778 [MAC] W [UE 0] RAR reception failed
-20345.026477 [NR_MAC] I PRACH scheduler: Selected RO Frame 271, Slot 19, Symbol 4, Fdm 0
-20345.026509 [PHY] I PRACH [UE 0] in frame.slot 271.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 5, first_nonzero_root_idx 0, preambleIndex = 10
-20345.039554 [MAC] W [UE 0] RAR reception failed
-20345.046382 [NR_MAC] I PRACH scheduler: Selected RO Frame 273, Slot 19, Symbol 0, Fdm 0
-20345.046412 [PHY] I PRACH [UE 0] in frame.slot 273.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 23, first_nonzero_root_idx 0, preambleIndex = 46
-20345.059607 [MAC] W [UE 0] RAR reception failed
-20345.066587 [NR_MAC] I PRACH scheduler: Selected RO Frame 275, Slot 19, Symbol 0, Fdm 0
-20345.066616 [PHY] I PRACH [UE 0] in frame.slot 275.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 13, first_nonzero_root_idx 0, preambleIndex = 26
-20345.078137 [MAC] W [UE 0] RAR reception failed
-20345.086860 [NR_MAC] I PRACH scheduler: Selected RO Frame 277, Slot 19, Symbol 8, Fdm 0
-20345.086893 [PHY] I PRACH [UE 0] in frame.slot 277.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 26, first_nonzero_root_idx 0, preambleIndex = 53
-20345.099880 [MAC] W [UE 0] RAR reception failed
-20345.107260 [NR_MAC] I PRACH scheduler: Selected RO Frame 279, Slot 19, Symbol 8, Fdm 0
-20345.107291 [PHY] I PRACH [UE 0] in frame.slot 279.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 24, first_nonzero_root_idx 0, preambleIndex = 49
-20345.120239 [MAC] W [UE 0] RAR reception failed
-20345.120258 [NR_RRC] I RRC moved into IDLE state
-20345.120312 [NR_MAC] I [UE0] Initializing MAC
-20345.120370 [NAS] I [UE 0] Received NR_NAS_CONN_RELEASE_IND: cause OTHER
-20345.139592 [PHY] W SSB position provided
-20345.139722 [NR_PHY] W Starting sync detection
-20345.139730 [PHY] I [UE thread Synch] Running Initial Synch 
-20345.139732 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20345.140083 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20345.210362 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-20345.210377 [PHY] I pbch rx ok. rsrp:49 dB/RE, adjust_rxgain:1 dB
-20345.210390 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS Corr Average: 56
-20345.212549 [PHY] I [UE0] In synch, rx_offset 114644 samples
-20345.212555 [PHY] I [UE 0] Measured Carrier Frequency offset -21 Hz
-20345.212557 [PHY] A Initial sync successful, PCI: 0
-20345.212559 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799979 Hz, rx_freq 3604799979 Hz, tune_offset 0
-20345.217556 [PHY] I Got synch: hw_slot_offset 30, carrier off -21 Hz, rxgain 20.000000 (DL 3604799979.000000 Hz, UL 3604799979.000000 Hz)
-20345.221092 [PHY] A UE synchronized! decoded_frame_rx=282 UE->init_sync_frame=1 trashed_frames=8
-20345.221098 [PHY] I Resynchronizing RX by 114644 samples
-20345.228081 [HW] I received write reorder clear context
-20345.228635 [NR_RRC] A SIB1 decoded
-20345.229706 [NR_MAC] I TDD period index = 6, based on the sum of dl_UL_TransmissionPeriodicity from Pattern1 (5.000000 ms) and Pattern2 (0.000000 ms): Total = 5.000000 ms
-20345.229712 [NR_MAC] I Set TDD configuration period to: 8 DL slots, 2 UL slots, 10 slots per period (NR_TDD_UL_DL_Pattern is 7 DL slots, 2 UL slots, 6 DL symbols, 0 UL symbols)
-20345.229713 [NR_MAC] I Configured 1 TDD patterns (total slots: pattern1 = 10, pattern2 = 0)
-Setting USRP TX Freq 3604799979.000000, RX Freq 3604799979.000000, tune_offset: 0.000000
-20345.230133 [MAC] I Initialization of 4-Step CBRA procedure
-20345.246186 [NR_MAC] I PRACH scheduler: Selected RO Frame 293, Slot 19, Symbol 0, Fdm 0
-20345.246364 [PHY] I PRACH [UE 0] in frame.slot 293.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 0, first_nonzero_root_idx 0, preambleIndex = 1
-20345.259123 [MAC] W [UE 0] RAR reception failed
-20345.266185 [NR_MAC] I PRACH scheduler: Selected RO Frame 295, Slot 19, Symbol 4, Fdm 0
-20345.266214 [PHY] I PRACH [UE 0] in frame.slot 295.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 6, first_nonzero_root_idx 0, preambleIndex = 12
-20345.278976 [MAC] W [UE 0] RAR reception failed
-20345.286991 [NR_MAC] I PRACH scheduler: Selected RO Frame 297, Slot 19, Symbol 4, Fdm 0
-20345.287022 [PHY] I PRACH [UE 0] in frame.slot 297.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 8, first_nonzero_root_idx 0, preambleIndex = 16
-20345.299996 [MAC] W [UE 0] RAR reception failed
-20345.306573 [NR_MAC] I PRACH scheduler: Selected RO Frame 299, Slot 19, Symbol 0, Fdm 0
-20345.306596 [PHY] I PRACH [UE 0] in frame.slot 299.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 25, first_nonzero_root_idx 0, preambleIndex = 51
-20345.317876 [MAC] W [UE 0] RAR reception failed
-20345.326444 [NR_MAC] I PRACH scheduler: Selected RO Frame 301, Slot 19, Symbol 8, Fdm 0
-20345.326470 [PHY] I PRACH [UE 0] in frame.slot 301.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 26, first_nonzero_root_idx 0, preambleIndex = 53
-20345.339137 [MAC] W [UE 0] RAR reception failed
-20345.346318 [NR_MAC] I PRACH scheduler: Selected RO Frame 303, Slot 19, Symbol 8, Fdm 0
-20345.346362 [PHY] I PRACH [UE 0] in frame.slot 303.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 29, first_nonzero_root_idx 0, preambleIndex = 59
-20345.358076 [MAC] W [UE 0] RAR reception failed
-20345.366403 [NR_MAC] I PRACH scheduler: Selected RO Frame 305, Slot 19, Symbol 0, Fdm 0
-20345.366436 [PHY] I PRACH [UE 0] in frame.slot 305.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 7, first_nonzero_root_idx 0, preambleIndex = 14
-20345.378254 [MAC] W [UE 0] RAR reception failed
-20345.386575 [NR_MAC] I PRACH scheduler: Selected RO Frame 307, Slot 19, Symbol 8, Fdm 0
-20345.386631 [PHY] I PRACH [UE 0] in frame.slot 307.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 18, first_nonzero_root_idx 0, preambleIndex = 37
-20345.398279 [MAC] W [UE 0] RAR reception failed
-20345.406864 [NR_MAC] I PRACH scheduler: Selected RO Frame 309, Slot 19, Symbol 0, Fdm 0
-20345.406899 [PHY] I PRACH [UE 0] in frame.slot 309.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 10, first_nonzero_root_idx 0, preambleIndex = 21
-20345.418995 [MAC] W [UE 0] RAR reception failed
-20345.425724 [NR_MAC] I PRACH scheduler: Selected RO Frame 311, Slot 19, Symbol 0, Fdm 0
-20345.425756 [PHY] I PRACH [UE 0] in frame.slot 311.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 15, first_nonzero_root_idx 0, preambleIndex = 30
-20345.438656 [MAC] W [UE 0] RAR reception failed
-20345.438668 [NR_RRC] I RRC moved into IDLE state
-20345.438685 [NR_MAC] I [UE0] Initializing MAC
-20345.438831 [NAS] I [UE 0] Received NR_NAS_CONN_RELEASE_IND: cause OTHER
-20345.458845 [PHY] W SSB position provided
-20345.458964 [NR_PHY] W Starting sync detection
-20345.458971 [PHY] I [UE thread Synch] Running Initial Synch 
-20345.458973 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20345.459029 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20345.529841 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-20345.529856 [PHY] I pbch rx ok. rsrp:49 dB/RE, adjust_rxgain:1 dB
-20345.529963 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS Corr Average: 56
-20345.532605 [PHY] I [UE0] In synch, rx_offset 137684 samples
-20345.532610 [PHY] I [UE 0] Measured Carrier Frequency offset -112 Hz
-20345.532612 [PHY] A Initial sync successful, PCI: 0
-20345.532614 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799888 Hz, rx_freq 3604799888 Hz, tune_offset 0
-20345.537735 [PHY] I Got synch: hw_slot_offset 36, carrier off -112 Hz, rxgain 20.000000 (DL 3604799888.000000 Hz, UL 3604799888.000000 Hz)
-20345.538143 [PHY] A UE synchronized! decoded_frame_rx=314 UE->init_sync_frame=1 trashed_frames=8
-20345.538152 [PHY] I Resynchronizing RX by 137684 samples
-20345.548246 [HW] I received write reorder clear context
-20345.549235 [NR_RRC] A SIB1 decoded
-20345.549998 [NR_MAC] I TDD period index = 6, based on the sum of dl_UL_TransmissionPeriodicity from Pattern1 (5.000000 ms) and Pattern2 (0.000000 ms): Total = 5.000000 ms
-20345.550015 [NR_MAC] I Set TDD configuration period to: 8 DL slots, 2 UL slots, 10 slots per period (NR_TDD_UL_DL_Pattern is 7 DL slots, 2 UL slots, 6 DL symbols, 0 UL symbols)
-20345.550017 [NR_MAC] I Configured 1 TDD patterns (total slots: pattern1 = 10, pattern2 = 0)
-Setting USRP TX Freq 3604799888.000000, RX Freq 3604799888.000000, tune_offset: 0.000000
-20345.551690 [MAC] I Initialization of 4-Step CBRA procedure
-20345.566195 [NR_MAC] I PRACH scheduler: Selected RO Frame 325, Slot 19, Symbol 4, Fdm 0
-20345.566373 [PHY] I PRACH [UE 0] in frame.slot 325.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 2, first_nonzero_root_idx 0, preambleIndex = 5
-20345.578399 [MAC] W [UE 0] RAR reception failed
-20345.586699 [NR_MAC] I PRACH scheduler: Selected RO Frame 327, Slot 19, Symbol 0, Fdm 0
-20345.586735 [PHY] I PRACH [UE 0] in frame.slot 327.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 19, first_nonzero_root_idx 0, preambleIndex = 39
-20345.599125 [MAC] W [UE 0] RAR reception failed
-20345.606260 [NR_MAC] I PRACH scheduler: Selected RO Frame 329, Slot 19, Symbol 8, Fdm 0
-20345.606306 [PHY] I PRACH [UE 0] in frame.slot 329.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 17, first_nonzero_root_idx 0, preambleIndex = 35
-20345.618517 [MAC] W [UE 0] RAR reception failed
-20345.626800 [NR_MAC] I PRACH scheduler: Selected RO Frame 331, Slot 19, Symbol 0, Fdm 0
-20345.626835 [PHY] I PRACH [UE 0] in frame.slot 331.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 22, first_nonzero_root_idx 0, preambleIndex = 45
-20345.638230 [MAC] W [UE 0] RAR reception failed
-20345.646822 [NR_MAC] I PRACH scheduler: Selected RO Frame 333, Slot 19, Symbol 0, Fdm 0
-20345.646855 [PHY] I PRACH [UE 0] in frame.slot 333.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 20, first_nonzero_root_idx 0, preambleIndex = 41
-20345.659894 [MAC] W [UE 0] RAR reception failed
-20345.666853 [NR_MAC] I PRACH scheduler: Selected RO Frame 335, Slot 19, Symbol 0, Fdm 0
-20345.666881 [PHY] I PRACH [UE 0] in frame.slot 335.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 3, first_nonzero_root_idx 0, preambleIndex = 7
-20345.679994 [MAC] W [UE 0] RAR reception failed
-20345.686436 [NR_MAC] I PRACH scheduler: Selected RO Frame 337, Slot 19, Symbol 0, Fdm 0
-20345.686462 [PHY] I PRACH [UE 0] in frame.slot 337.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 4, first_nonzero_root_idx 0, preambleIndex = 9
-20345.698053 [MAC] W [UE 0] RAR reception failed
-20345.706956 [NR_MAC] I PRACH scheduler: Selected RO Frame 339, Slot 19, Symbol 0, Fdm 0
-20345.706988 [PHY] I PRACH [UE 0] in frame.slot 339.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 17, first_nonzero_root_idx 0, preambleIndex = 35
-20345.719158 [MAC] W [UE 0] RAR reception failed
-20345.726235 [NR_MAC] I PRACH scheduler: Selected RO Frame 341, Slot 19, Symbol 4, Fdm 0
-20345.726266 [PHY] I PRACH [UE 0] in frame.slot 341.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 24, first_nonzero_root_idx 0, preambleIndex = 49
-20345.738730 [MAC] W [UE 0] RAR reception failed
-20345.745993 [NR_MAC] I PRACH scheduler: Selected RO Frame 343, Slot 19, Symbol 4, Fdm 0
-20345.746037 [PHY] I PRACH [UE 0] in frame.slot 343.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 13, first_nonzero_root_idx 0, preambleIndex = 27
-20345.758949 [MAC] W [UE 0] RAR reception failed
-20345.759140 [NR_RRC] I RRC moved into IDLE state
-20345.759255 [NAS] I [UE 0] Received NR_NAS_CONN_RELEASE_IND: cause OTHER
-20345.760571 [NR_MAC] I [UE0] Initializing MAC
-20345.780712 [PHY] W SSB position provided
-20345.780838 [NR_PHY] W Starting sync detection
-20345.780843 [PHY] I [UE thread Synch] Running Initial Synch 
-20345.780845 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20345.780884 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20345.851127 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-20345.851140 [PHY] I pbch rx ok. rsrp:49 dB/RE, adjust_rxgain:1 dB
-20345.851252 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS Corr Average: 56
-20345.853497 [PHY] I [UE0] In synch, rx_offset 122324 samples
-20345.853502 [PHY] I [UE 0] Measured Carrier Frequency offset -40 Hz
-20345.853503 [PHY] A Initial sync successful, PCI: 0
-20345.853505 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799960 Hz, rx_freq 3604799960 Hz, tune_offset 0
-20345.859058 [PHY] I Got synch: hw_slot_offset 32, carrier off -40 Hz, rxgain 20.000000 (DL 3604799960.000000 Hz, UL 3604799960.000000 Hz)
-20345.859117 [PHY] A UE synchronized! decoded_frame_rx=346 UE->init_sync_frame=1 trashed_frames=8
-20345.859121 [PHY] I Resynchronizing RX by 122324 samples
-20345.867706 [HW] I received write reorder clear context
-20345.868762 [NR_RRC] A SIB1 decoded
-20345.869400 [NR_MAC] I TDD period index = 6, based on the sum of dl_UL_TransmissionPeriodicity from Pattern1 (5.000000 ms) and Pattern2 (0.000000 ms): Total = 5.000000 ms
-20345.869405 [NR_MAC] I Set TDD configuration period to: 8 DL slots, 2 UL slots, 10 slots per period (NR_TDD_UL_DL_Pattern is 7 DL slots, 2 UL slots, 6 DL symbols, 0 UL symbols)
-20345.869406 [NR_MAC] I Configured 1 TDD patterns (total slots: pattern1 = 10, pattern2 = 0)
-20345.871291 [MAC] I Initialization of 4-Step CBRA procedure
-Setting USRP TX Freq 3604799960.000000, RX Freq 3604799960.000000, tune_offset: 0.000000
-20345.886663 [NR_MAC] I PRACH scheduler: Selected RO Frame 357, Slot 19, Symbol 0, Fdm 0
-20345.886791 [PHY] I PRACH [UE 0] in frame.slot 357.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 16, first_nonzero_root_idx 0, preambleIndex = 33
-20345.898560 [MAC] W [UE 0] RAR reception failed
-20345.907030 [NR_MAC] I PRACH scheduler: Selected RO Frame 359, Slot 19, Symbol 8, Fdm 0
-20345.907062 [PHY] I PRACH [UE 0] in frame.slot 359.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 11, first_nonzero_root_idx 0, preambleIndex = 22
-20345.920125 [MAC] W [UE 0] RAR reception failed
-20345.927043 [NR_MAC] I PRACH scheduler: Selected RO Frame 361, Slot 19, Symbol 4, Fdm 0
-20345.927091 [PHY] I PRACH [UE 0] in frame.slot 361.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 10, first_nonzero_root_idx 0, preambleIndex = 20
-20345.939590 [MAC] W [UE 0] RAR reception failed
-20345.946267 [NR_MAC] I PRACH scheduler: Selected RO Frame 363, Slot 19, Symbol 0, Fdm 0
-20345.946308 [PHY] I PRACH [UE 0] in frame.slot 363.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 8, first_nonzero_root_idx 0, preambleIndex = 16
-20345.958924 [MAC] W [UE 0] RAR reception failed
-20345.966966 [NR_MAC] I PRACH scheduler: Selected RO Frame 365, Slot 19, Symbol 8, Fdm 0
-20345.967014 [PHY] I PRACH [UE 0] in frame.slot 365.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 8, first_nonzero_root_idx 0, preambleIndex = 17
-20345.980032 [MAC] W [UE 0] RAR reception failed
-20345.986468 [NR_MAC] I PRACH scheduler: Selected RO Frame 367, Slot 19, Symbol 8, Fdm 0
-20345.986502 [PHY] I PRACH [UE 0] in frame.slot 367.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 18, first_nonzero_root_idx 0, preambleIndex = 36
-20345.998141 [MAC] W [UE 0] RAR reception failed
-20346.005946 [NR_MAC] I PRACH scheduler: Selected RO Frame 369, Slot 19, Symbol 0, Fdm 0
-20346.005969 [PHY] I PRACH [UE 0] in frame.slot 369.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 8, first_nonzero_root_idx 0, preambleIndex = 17
-20346.017701 [MAC] W [UE 0] RAR reception failed
-20346.027134 [NR_MAC] I PRACH scheduler: Selected RO Frame 371, Slot 19, Symbol 0, Fdm 0
-20346.027164 [PHY] I PRACH [UE 0] in frame.slot 371.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 23, first_nonzero_root_idx 0, preambleIndex = 47
-20346.039822 [MAC] W [UE 0] RAR reception failed
-20346.046423 [NR_MAC] I PRACH scheduler: Selected RO Frame 373, Slot 19, Symbol 4, Fdm 0
-20346.046468 [PHY] I PRACH [UE 0] in frame.slot 373.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 26, first_nonzero_root_idx 0, preambleIndex = 53
-20346.059514 [MAC] W [UE 0] RAR reception failed
-20346.066315 [NR_MAC] I PRACH scheduler: Selected RO Frame 375, Slot 19, Symbol 8, Fdm 0
-20346.066351 [PHY] I PRACH [UE 0] in frame.slot 375.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 5, first_nonzero_root_idx 0, preambleIndex = 11
-20346.078094 [MAC] W [UE 0] RAR reception failed
-20346.078212 [NR_RRC] I RRC moved into IDLE state
-20346.078356 [NAS] I [UE 0] Received NR_NAS_CONN_RELEASE_IND: cause OTHER
-20346.079653 [NR_MAC] I [UE0] Initializing MAC
-20346.099856 [PHY] W SSB position provided
-20346.099990 [NR_PHY] W Starting sync detection
-20346.099997 [PHY] I [UE thread Synch] Running Initial Synch 
-20346.099999 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20346.100048 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20346.170707 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-20346.170723 [PHY] I pbch rx ok. rsrp:49 dB/RE, adjust_rxgain:1 dB
-20346.170839 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS Corr Average: 56
-20346.173464 [PHY] I [UE0] In synch, rx_offset 130004 samples
-20346.173469 [PHY] I [UE 0] Measured Carrier Frequency offset -105 Hz
-20346.173470 [PHY] A Initial sync successful, PCI: 0
-20346.173472 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799895 Hz, rx_freq 3604799895 Hz, tune_offset 0
-20346.178740 [PHY] I Got synch: hw_slot_offset 34, carrier off -105 Hz, rxgain 20.000000 (DL 3604799895.000000 Hz, UL 3604799895.000000 Hz)
-20346.179670 [PHY] A UE synchronized! decoded_frame_rx=378 UE->init_sync_frame=1 trashed_frames=8
-20346.179675 [PHY] I Resynchronizing RX by 130004 samples
-20346.187849 [HW] I received write reorder clear context
-20346.188825 [NR_RRC] A SIB1 decoded
-20346.189573 [NR_MAC] I TDD period index = 6, based on the sum of dl_UL_TransmissionPeriodicity from Pattern1 (5.000000 ms) and Pattern2 (0.000000 ms): Total = 5.000000 ms
-20346.189579 [NR_MAC] I Set TDD configuration period to: 8 DL slots, 2 UL slots, 10 slots per period (NR_TDD_UL_DL_Pattern is 7 DL slots, 2 UL slots, 6 DL symbols, 0 UL symbols)
-20346.189580 [NR_MAC] I Configured 1 TDD patterns (total slots: pattern1 = 10, pattern2 = 0)
-Setting USRP TX Freq 3604799895.000000, RX Freq 3604799895.000000, tune_offset: 0.000000
-20346.192471 [MAC] I Initialization of 4-Step CBRA procedure
-20346.206459 [NR_MAC] I PRACH scheduler: Selected RO Frame 389, Slot 19, Symbol 0, Fdm 0
-20346.206645 [PHY] I PRACH [UE 0] in frame.slot 389.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 5, first_nonzero_root_idx 0, preambleIndex = 11
-20346.218103 [MAC] W [UE 0] RAR reception failed
-20346.226457 [NR_MAC] I PRACH scheduler: Selected RO Frame 391, Slot 19, Symbol 4, Fdm 0
-20346.226499 [PHY] I PRACH [UE 0] in frame.slot 391.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 29, first_nonzero_root_idx 0, preambleIndex = 59
-20346.239562 [MAC] W [UE 0] RAR reception failed
-20346.246413 [NR_MAC] I PRACH scheduler: Selected RO Frame 393, Slot 19, Symbol 4, Fdm 0
-20346.246450 [PHY] I PRACH [UE 0] in frame.slot 393.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 25, first_nonzero_root_idx 0, preambleIndex = 51
-20346.257696 [MAC] W [UE 0] RAR reception failed
-20346.266896 [NR_MAC] I PRACH scheduler: Selected RO Frame 395, Slot 19, Symbol 0, Fdm 0
-20346.266924 [PHY] I PRACH [UE 0] in frame.slot 395.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 11, first_nonzero_root_idx 0, preambleIndex = 22
-20346.279528 [MAC] W [UE 0] RAR reception failed
-20346.286460 [NR_MAC] I PRACH scheduler: Selected RO Frame 397, Slot 19, Symbol 4, Fdm 0
-20346.286495 [PHY] I PRACH [UE 0] in frame.slot 397.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 28, first_nonzero_root_idx 0, preambleIndex = 57
-20346.298179 [MAC] W [UE 0] RAR reception failed
-20346.306152 [NR_MAC] I PRACH scheduler: Selected RO Frame 399, Slot 19, Symbol 8, Fdm 0
-20346.306194 [PHY] I PRACH [UE 0] in frame.slot 399.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 14, first_nonzero_root_idx 0, preambleIndex = 29
-20346.319110 [MAC] W [UE 0] RAR reception failed
-20346.326233 [NR_MAC] I PRACH scheduler: Selected RO Frame 401, Slot 19, Symbol 8, Fdm 0
-20346.326270 [PHY] I PRACH [UE 0] in frame.slot 401.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 1, first_nonzero_root_idx 0, preambleIndex = 3
-20346.337831 [MAC] W [UE 0] RAR reception failed
-20346.346424 [NR_MAC] I PRACH scheduler: Selected RO Frame 403, Slot 19, Symbol 0, Fdm 0
-20346.346452 [PHY] I PRACH [UE 0] in frame.slot 403.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 13, first_nonzero_root_idx 0, preambleIndex = 26
-20346.358604 [MAC] W [UE 0] RAR reception failed
-20346.367147 [NR_MAC] I PRACH scheduler: Selected RO Frame 405, Slot 19, Symbol 0, Fdm 0
-20346.367186 [PHY] I PRACH [UE 0] in frame.slot 405.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 4, first_nonzero_root_idx 0, preambleIndex = 8
-20346.380416 [MAC] W [UE 0] RAR reception failed
-20346.385978 [NR_MAC] I PRACH scheduler: Selected RO Frame 407, Slot 19, Symbol 0, Fdm 0
-20346.386020 [PHY] I PRACH [UE 0] in frame.slot 407.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 19, first_nonzero_root_idx 0, preambleIndex = 39
-20346.399198 [MAC] W [UE 0] RAR reception failed
-20346.399294 [NR_RRC] I RRC moved into IDLE state
-20346.399314 [NR_MAC] I [UE0] Initializing MAC
-20346.399610 [NAS] I [UE 0] Received NR_NAS_CONN_RELEASE_IND: cause OTHER
-20346.420391 [PHY] W SSB position provided
-20346.420691 [NR_PHY] W Starting sync detection
-20346.420697 [PHY] I [UE thread Synch] Running Initial Synch 
-20346.420699 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20346.420738 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20346.491317 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-20346.491331 [PHY] I pbch rx ok. rsrp:49 dB/RE, adjust_rxgain:1 dB
-20346.491435 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS Corr Average: 56
-20346.493751 [PHY] I [UE0] In synch, rx_offset 122324 samples
-20346.493756 [PHY] I [UE 0] Measured Carrier Frequency offset -44 Hz
-20346.493758 [PHY] A Initial sync successful, PCI: 0
-20346.493759 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799956 Hz, rx_freq 3604799956 Hz, tune_offset 0
-20346.499333 [PHY] I Got synch: hw_slot_offset 32, carrier off -44 Hz, rxgain 20.000000 (DL 3604799956.000000 Hz, UL 3604799956.000000 Hz)
-20346.500576 [PHY] A UE synchronized! decoded_frame_rx=410 UE->init_sync_frame=1 trashed_frames=8
-20346.500580 [PHY] I Resynchronizing RX by 122324 samples
-20346.507347 [HW] I received write reorder clear context
-20346.509944 [NR_RRC] A SIB1 decoded
-20346.510715 [NR_MAC] I TDD period index = 6, based on the sum of dl_UL_TransmissionPeriodicity from Pattern1 (5.000000 ms) and Pattern2 (0.000000 ms): Total = 5.000000 ms
-20346.510721 [NR_MAC] I Set TDD configuration period to: 8 DL slots, 2 UL slots, 10 slots per period (NR_TDD_UL_DL_Pattern is 7 DL slots, 2 UL slots, 6 DL symbols, 0 UL symbols)
-20346.510722 [NR_MAC] I Configured 1 TDD patterns (total slots: pattern1 = 10, pattern2 = 0)
-20346.511649 [MAC] I Initialization of 4-Step CBRA procedure
-Setting USRP TX Freq 3604799956.000000, RX Freq 3604799956.000000, tune_offset: 0.000000
-20346.526248 [NR_MAC] I PRACH scheduler: Selected RO Frame 421, Slot 19, Symbol 4, Fdm 0
-20346.526374 [PHY] I PRACH [UE 0] in frame.slot 421.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 4, first_nonzero_root_idx 0, preambleIndex = 8
-20346.537799 [MAC] W [UE 0] RAR reception failed
-ULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL20346.546267 [NR_MAC] I PRACH scheduler: Selected RO Frame 423, Slot 19, Symbol 4, Fdm 0
-20346.546306 [PHY] I PRACH [UE 0] in frame.slot 423.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 2, first_nonzero_root_idx 0, preambleIndex = 5
-20346.558106 [MAC] W [UE 0] RAR reception failed
-20346.565796 [NR_MAC] I PRACH scheduler: Selected RO Frame 425, Slot 19, Symbol 4, Fdm 0
-20346.565823 [PHY] I PRACH [UE 0] in frame.slot 425.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 5, first_nonzero_root_idx 0, preambleIndex = 11
-20346.579207 [MAC] W [UE 0] RAR reception failed
-20346.586226 [NR_MAC] I PRACH scheduler: Selected RO Frame 427, Slot 19, Symbol 8, Fdm 0
-20346.586261 [PHY] I PRACH [UE 0] in frame.slot 427.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 1, first_nonzero_root_idx 0, preambleIndex = 3
-20346.599094 [MAC] W [UE 0] RAR reception failed
-20346.606127 [NR_MAC] I PRACH scheduler: Selected RO Frame 429, Slot 19, Symbol 8, Fdm 0
-20346.606159 [PHY] I PRACH [UE 0] in frame.slot 429.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 29, first_nonzero_root_idx 0, preambleIndex = 59
-20346.619189 [MAC] W [UE 0] RAR reception failed
-20346.626206 [NR_MAC] I PRACH scheduler: Selected RO Frame 431, Slot 19, Symbol 8, Fdm 0
-20346.626239 [PHY] I PRACH [UE 0] in frame.slot 431.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 14, first_nonzero_root_idx 0, preambleIndex = 29
-20346.638111 [MAC] W [UE 0] RAR reception failed
-20346.646185 [NR_MAC] I PRACH scheduler: Selected RO Frame 433, Slot 19, Symbol 8, Fdm 0
-20346.646223 [PHY] I PRACH [UE 0] in frame.slot 433.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 15, first_nonzero_root_idx 0, preambleIndex = 30
-20346.657925 [MAC] W [UE 0] RAR reception failed
-20346.667556 [NR_MAC] I PRACH scheduler: Selected RO Frame 435, Slot 19, Symbol 0, Fdm 0
-20346.667590 [PHY] I PRACH [UE 0] in frame.slot 435.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 20, first_nonzero_root_idx 0, preambleIndex = 41
-20346.680028 [MAC] W [UE 0] RAR reception failed
-20346.686170 [NR_MAC] I PRACH scheduler: Selected RO Frame 437, Slot 19, Symbol 8, Fdm 0
-20346.686201 [PHY] I PRACH [UE 0] in frame.slot 437.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 10, first_nonzero_root_idx 0, preambleIndex = 21
-20346.698120 [MAC] W [UE 0] RAR reception failed
-20346.706408 [NR_MAC] I PRACH scheduler: Selected RO Frame 439, Slot 19, Symbol 0, Fdm 0
-20346.706433 [PHY] I PRACH [UE 0] in frame.slot 439.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 18, first_nonzero_root_idx 0, preambleIndex = 37
-20346.718280 [MAC] W [UE 0] RAR reception failed
-20346.718356 [NR_RRC] I RRC moved into IDLE state
-20346.718379 [NAS] I [UE 0] Received NR_NAS_CONN_RELEASE_IND: cause OTHER
-20346.719931 [NR_MAC] I [UE0] Initializing MAC
-20346.738669 [PHY] W SSB position provided
-20346.738781 [NR_PHY] W Starting sync detection
-20346.738790 [PHY] I [UE thread Synch] Running Initial Synch 
-20346.738792 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20346.738839 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20346.809290 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-20346.809303 [PHY] I pbch rx ok. rsrp:49 dB/RE, adjust_rxgain:1 dB
-20346.809406 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS Corr Average: 56
-20346.812024 [PHY] I [UE0] In synch, rx_offset 130004 samples
-20346.812029 [PHY] I [UE 0] Measured Carrier Frequency offset -101 Hz
-20346.812030 [PHY] A Initial sync successful, PCI: 0
-20346.812032 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799899 Hz, rx_freq 3604799899 Hz, tune_offset 0
-20346.817813 [PHY] I Got synch: hw_slot_offset 34, carrier off -101 Hz, rxgain 20.000000 (DL 3604799899.000000 Hz, UL 3604799899.000000 Hz)
-20346.820011 [PHY] A UE synchronized! decoded_frame_rx=442 UE->init_sync_frame=1 trashed_frames=8
-20346.820021 [PHY] I Resynchronizing RX by 130004 samples
-20346.828855 [HW] I received write reorder clear context
-20346.829683 [NR_RRC] A SIB1 decoded
-20346.830578 [NR_MAC] I TDD period index = 6, based on the sum of dl_UL_TransmissionPeriodicity from Pattern1 (5.000000 ms) and Pattern2 (0.000000 ms): Total = 5.000000 ms
-20346.830587 [NR_MAC] I Set TDD configuration period to: 8 DL slots, 2 UL slots, 10 slots per period (NR_TDD_UL_DL_Pattern is 7 DL slots, 2 UL slots, 6 DL symbols, 0 UL symbols)
-20346.830590 [NR_MAC] I Configured 1 TDD patterns (total slots: pattern1 = 10, pattern2 = 0)
-20346.830841 [MAC] I Initialization of 4-Step CBRA procedure
-Setting USRP TX Freq 3604799899.000000, RX Freq 3604799899.000000, tune_offset: 0.000000
-20346.846572 [NR_MAC] I PRACH scheduler: Selected RO Frame 453, Slot 19, Symbol 4, Fdm 0
-20346.846752 [PHY] I PRACH [UE 0] in frame.slot 453.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 25, first_nonzero_root_idx 0, preambleIndex = 51
-20346.859084 [MAC] W [UE 0] RAR reception failed
-20346.866119 [NR_MAC] I PRACH scheduler: Selected RO Frame 455, Slot 19, Symbol 4, Fdm 0
-20346.866149 [PHY] I PRACH [UE 0] in frame.slot 455.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 9, first_nonzero_root_idx 0, preambleIndex = 18
-20346.878180 [MAC] W [UE 0] RAR reception failed
-20346.886670 [NR_MAC] I PRACH scheduler: Selected RO Frame 457, Slot 19, Symbol 4, Fdm 0
-20346.886704 [PHY] I PRACH [UE 0] in frame.slot 457.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 21, first_nonzero_root_idx 0, preambleIndex = 42
-20346.899571 [MAC] W [UE 0] RAR reception failed
-20346.906026 [NR_MAC] I PRACH scheduler: Selected RO Frame 459, Slot 19, Symbol 8, Fdm 0
-20346.906051 [PHY] I PRACH [UE 0] in frame.slot 459.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 12, first_nonzero_root_idx 0, preambleIndex = 24
-20346.919721 [MAC] W [UE 0] RAR reception failed
-20346.926679 [NR_MAC] I PRACH scheduler: Selected RO Frame 461, Slot 19, Symbol 8, Fdm 0
-20346.926719 [PHY] I PRACH [UE 0] in frame.slot 461.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 11, first_nonzero_root_idx 0, preambleIndex = 22
-20346.940020 [MAC] W [UE 0] RAR reception failed
-20346.946960 [NR_MAC] I PRACH scheduler: Selected RO Frame 463, Slot 19, Symbol 4, Fdm 0
-20346.946994 [PHY] I PRACH [UE 0] in frame.slot 463.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 9, first_nonzero_root_idx 0, preambleIndex = 18
-20346.959724 [MAC] W [UE 0] RAR reception failed
-20346.966512 [NR_MAC] I PRACH scheduler: Selected RO Frame 465, Slot 19, Symbol 8, Fdm 0
-20346.966542 [PHY] I PRACH [UE 0] in frame.slot 465.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 20, first_nonzero_root_idx 0, preambleIndex = 40
-20346.979608 [MAC] W [UE 0] RAR reception failed
-20346.986502 [NR_MAC] I PRACH scheduler: Selected RO Frame 467, Slot 19, Symbol 4, Fdm 0
-20346.986530 [PHY] I PRACH [UE 0] in frame.slot 467.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 8, first_nonzero_root_idx 0, preambleIndex = 17
-20346.998276 [MAC] W [UE 0] RAR reception failed
-20347.006690 [NR_MAC] I PRACH scheduler: Selected RO Frame 469, Slot 19, Symbol 0, Fdm 0
-20347.006731 [PHY] I PRACH [UE 0] in frame.slot 469.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 17, first_nonzero_root_idx 0, preambleIndex = 35
-20347.019209 [MAC] W [UE 0] RAR reception failed
-20347.026267 [NR_MAC] I PRACH scheduler: Selected RO Frame 471, Slot 19, Symbol 0, Fdm 0
-20347.026298 [PHY] I PRACH [UE 0] in frame.slot 471.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 25, first_nonzero_root_idx 0, preambleIndex = 50
-20347.037685 [MAC] W [UE 0] RAR reception failed
-20347.037791 [NR_RRC] I RRC moved into IDLE state
-20347.037813 [NAS] I [UE 0] Received NR_NAS_CONN_RELEASE_IND: cause OTHER
-20347.039298 [NR_MAC] I [UE0] Initializing MAC
-20347.059528 [PHY] W SSB position provided
-20347.059548 [NR_PHY] W Starting sync detection
-20347.059552 [PHY] I [UE thread Synch] Running Initial Synch 
-20347.059554 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20347.059611 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20347.130471 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-20347.130483 [PHY] I pbch rx ok. rsrp:49 dB/RE, adjust_rxgain:1 dB
-20347.130590 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS Corr Average: 56
-20347.133135 [PHY] I [UE0] In synch, rx_offset 137684 samples
-20347.133141 [PHY] I [UE 0] Measured Carrier Frequency offset -47 Hz
-20347.133143 [PHY] A Initial sync successful, PCI: 0
-20347.133145 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799953 Hz, rx_freq 3604799953 Hz, tune_offset 0
-20347.138884 [PHY] I Got synch: hw_slot_offset 36, carrier off -47 Hz, rxgain 20.000000 (DL 3604799953.000000 Hz, UL 3604799953.000000 Hz)
-20347.139334 [PHY] A UE synchronized! decoded_frame_rx=474 UE->init_sync_frame=1 trashed_frames=8
-20347.139339 [PHY] I Resynchronizing RX by 137684 samples
-20347.147601 [HW] I received write reorder clear context
-20347.148254 [NR_RRC] A SIB1 decoded
-20347.149272 [NR_MAC] I TDD period index = 6, based on the sum of dl_UL_TransmissionPeriodicity from Pattern1 (5.000000 ms) and Pattern2 (0.000000 ms): Total = 5.000000 ms
-20347.149281 [NR_MAC] I Set TDD configuration period to: 8 DL slots, 2 UL slots, 10 slots per period (NR_TDD_UL_DL_Pattern is 7 DL slots, 2 UL slots, 6 DL symbols, 0 UL symbols)
-20347.149284 [NR_MAC] I Configured 1 TDD patterns (total slots: pattern1 = 10, pattern2 = 0)
-20347.151561 [MAC] I Initialization of 4-Step CBRA procedure
-Setting USRP TX Freq 3604799953.000000, RX Freq 3604799953.000000, tune_offset: 0.000000
-20347.166531 [NR_MAC] I PRACH scheduler: Selected RO Frame 485, Slot 19, Symbol 8, Fdm 0
-20347.166712 [PHY] I PRACH [UE 0] in frame.slot 485.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 8, first_nonzero_root_idx 0, preambleIndex = 17
-20347.178342 [MAC] W [UE 0] RAR reception failed
-20347.185888 [NR_MAC] I PRACH scheduler: Selected RO Frame 487, Slot 19, Symbol 4, Fdm 0
-20347.185919 [PHY] I PRACH [UE 0] in frame.slot 487.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 9, first_nonzero_root_idx 0, preambleIndex = 18
-20347.198847 [MAC] W [UE 0] RAR reception failed
-20347.206114 [NR_MAC] I PRACH scheduler: Selected RO Frame 489, Slot 19, Symbol 8, Fdm 0
-20347.206147 [PHY] I PRACH [UE 0] in frame.slot 489.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 27, first_nonzero_root_idx 0, preambleIndex = 55
-20347.217732 [MAC] W [UE 0] RAR reception failed
-20347.226244 [NR_MAC] I PRACH scheduler: Selected RO Frame 491, Slot 19, Symbol 0, Fdm 0
-20347.226276 [PHY] I PRACH [UE 0] in frame.slot 491.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 24, first_nonzero_root_idx 0, preambleIndex = 49
-20347.239182 [MAC] W [UE 0] RAR reception failed
-20347.246275 [NR_MAC] I PRACH scheduler: Selected RO Frame 493, Slot 19, Symbol 4, Fdm 0
-20347.246312 [PHY] I PRACH [UE 0] in frame.slot 493.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 20, first_nonzero_root_idx 0, preambleIndex = 41
-20347.257811 [MAC] W [UE 0] RAR reception failed
-20347.266724 [NR_MAC] I PRACH scheduler: Selected RO Frame 495, Slot 19, Symbol 4, Fdm 0
-20347.266759 [PHY] I PRACH [UE 0] in frame.slot 495.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 19, first_nonzero_root_idx 0, preambleIndex = 39
-20347.278403 [MAC] W [UE 0] RAR reception failed
-20347.286788 [NR_MAC] I PRACH scheduler: Selected RO Frame 497, Slot 19, Symbol 4, Fdm 0
-20347.286821 [PHY] I PRACH [UE 0] in frame.slot 497.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 18, first_nonzero_root_idx 0, preambleIndex = 36
-20347.299494 [MAC] W [UE 0] RAR reception failed
-20347.306207 [NR_MAC] I PRACH scheduler: Selected RO Frame 499, Slot 19, Symbol 4, Fdm 0
-20347.306238 [PHY] I PRACH [UE 0] in frame.slot 499.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 26, first_nonzero_root_idx 0, preambleIndex = 52
-20347.319168 [MAC] W [UE 0] RAR reception failed
-20347.326106 [NR_MAC] I PRACH scheduler: Selected RO Frame 501, Slot 19, Symbol 0, Fdm 0
-20347.326138 [PHY] I PRACH [UE 0] in frame.slot 501.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 24, first_nonzero_root_idx 0, preambleIndex = 49
-20347.329081 [PHY] E [UE 0] frame 502, nr_slot_rx 0, Error decoding PBCH!
-20347.338765 [MAC] W [UE 0] RAR reception failed
-20347.346811 [NR_MAC] I PRACH scheduler: Selected RO Frame 503, Slot 19, Symbol 4, Fdm 0
-20347.346845 [PHY] I PRACH [UE 0] in frame.slot 503.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 3, first_nonzero_root_idx 0, preambleIndex = 7
-20347.359969 [MAC] W [UE 0] RAR reception failed
-20347.360086 [NR_RRC] I RRC moved into IDLE state
-20347.360088 [NR_MAC] I [UE0] Initializing MAC
-20347.360335 [NAS] I [UE 0] Received NR_NAS_CONN_RELEASE_IND: cause OTHER
-20347.380851 [PHY] W SSB position provided
-20347.381199 [NR_PHY] W Starting sync detection
-20347.381204 [PHY] I [UE thread Synch] Running Initial Synch 
-20347.381205 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20347.381243 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20347.451966 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-20347.451979 [PHY] I pbch rx ok. rsrp:49 dB/RE, adjust_rxgain:1 dB
-20347.452106 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS Corr Average: 56
-20347.454731 [PHY] I [UE0] In synch, rx_offset 114644 samples
-20347.454736 [PHY] I [UE 0] Measured Carrier Frequency offset -99 Hz
-20347.454737 [PHY] A Initial sync successful, PCI: 0
-20347.454739 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799901 Hz, rx_freq 3604799901 Hz, tune_offset 0
-20347.459912 [PHY] I Got synch: hw_slot_offset 30, carrier off -99 Hz, rxgain 20.000000 (DL 3604799901.000000 Hz, UL 3604799901.000000 Hz)
-20347.460663 [PHY] A UE synchronized! decoded_frame_rx=506 UE->init_sync_frame=1 trashed_frames=8
-20347.460668 [PHY] I Resynchronizing RX by 114644 samples
-20347.467463 [HW] I received write reorder clear context
-20347.470157 [NR_RRC] A SIB1 decoded
-20347.470988 [NR_MAC] I TDD period index = 6, based on the sum of dl_UL_TransmissionPeriodicity from Pattern1 (5.000000 ms) and Pattern2 (0.000000 ms): Total = 5.000000 ms
-20347.470994 [NR_MAC] I Set TDD configuration period to: 8 DL slots, 2 UL slots, 10 slots per period (NR_TDD_UL_DL_Pattern is 7 DL slots, 2 UL slots, 6 DL symbols, 0 UL symbols)
-20347.470996 [NR_MAC] I Configured 1 TDD patterns (total slots: pattern1 = 10, pattern2 = 0)
-20347.471451 [MAC] I Initialization of 4-Step CBRA procedure
-Setting USRP TX Freq 3604799901.000000, RX Freq 3604799901.000000, tune_offset: 0.000000
-20347.486287 [NR_MAC] I PRACH scheduler: Selected RO Frame 517, Slot 19, Symbol 8, Fdm 0
-20347.486462 [PHY] I PRACH [UE 0] in frame.slot 517.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 29, first_nonzero_root_idx 0, preambleIndex = 58
-20347.499357 [MAC] W [UE 0] RAR reception failed
-20347.505992 [NR_MAC] I PRACH scheduler: Selected RO Frame 519, Slot 19, Symbol 4, Fdm 0
-20347.506021 [PHY] I PRACH [UE 0] in frame.slot 519.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 2, first_nonzero_root_idx 0, preambleIndex = 4
-20347.518020 [MAC] W [UE 0] RAR reception failed
-20347.526722 [NR_MAC] I PRACH scheduler: Selected RO Frame 521, Slot 19, Symbol 4, Fdm 0
-20347.526752 [PHY] I PRACH [UE 0] in frame.slot 521.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 15, first_nonzero_root_idx 0, preambleIndex = 30
-20347.538930 [MAC] W [UE 0] RAR reception failed
-20347.547060 [NR_MAC] I PRACH scheduler: Selected RO Frame 523, Slot 19, Symbol 0, Fdm 0
-20347.547091 [PHY] I PRACH [UE 0] in frame.slot 523.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 9, first_nonzero_root_idx 0, preambleIndex = 18
-20347.559673 [MAC] W [UE 0] RAR reception failed
-20347.566438 [NR_MAC] I PRACH scheduler: Selected RO Frame 525, Slot 19, Symbol 0, Fdm 0
-20347.566466 [PHY] I PRACH [UE 0] in frame.slot 525.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 24, first_nonzero_root_idx 0, preambleIndex = 49
-20347.577616 [MAC] W [UE 0] RAR reception failed
-20347.586327 [NR_MAC] I PRACH scheduler: Selected RO Frame 527, Slot 19, Symbol 8, Fdm 0
-20347.586367 [PHY] I PRACH [UE 0] in frame.slot 527.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 19, first_nonzero_root_idx 0, preambleIndex = 39
-20347.598921 [MAC] W [UE 0] RAR reception failed
-20347.607185 [NR_MAC] I PRACH scheduler: Selected RO Frame 529, Slot 19, Symbol 0, Fdm 0
-20347.607214 [PHY] I PRACH [UE 0] in frame.slot 529.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 20, first_nonzero_root_idx 0, preambleIndex = 41
-20347.620308 [MAC] W [UE 0] RAR reception failed
-20347.627131 [NR_MAC] I PRACH scheduler: Selected RO Frame 531, Slot 19, Symbol 8, Fdm 0
-20347.627164 [PHY] I PRACH [UE 0] in frame.slot 531.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 16, first_nonzero_root_idx 0, preambleIndex = 33
-20347.639874 [MAC] W [UE 0] RAR reception failed
-20347.646883 [NR_MAC] I PRACH scheduler: Selected RO Frame 533, Slot 19, Symbol 4, Fdm 0
-20347.646910 [PHY] I PRACH [UE 0] in frame.slot 533.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 6, first_nonzero_root_idx 0, preambleIndex = 12
-20347.658833 [MAC] W [UE 0] RAR reception failed
-20347.666097 [NR_MAC] I PRACH scheduler: Selected RO Frame 535, Slot 19, Symbol 8, Fdm 0
-20347.666127 [PHY] I PRACH [UE 0] in frame.slot 535.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 25, first_nonzero_root_idx 0, preambleIndex = 51
-20347.677767 [MAC] W [UE 0] RAR reception failed
-20347.677777 [NR_RRC] I RRC moved into IDLE state
-20347.678000 [NAS] I [UE 0] Received NR_NAS_CONN_RELEASE_IND: cause OTHER
-20347.679345 [NR_MAC] I [UE0] Initializing MAC
-20347.698232 [PHY] W SSB position provided
-20347.698360 [NR_PHY] W Starting sync detection
-20347.698367 [PHY] I [UE thread Synch] Running Initial Synch 
-20347.698368 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20347.698634 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20347.768889 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-20347.768906 [PHY] I pbch rx ok. rsrp:49 dB/RE, adjust_rxgain:1 dB
-20347.769018 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS Corr Average: 56
-20347.771426 [PHY] I [UE0] In synch, rx_offset 137684 samples
-20347.771433 [PHY] I [UE 0] Measured Carrier Frequency offset -53 Hz
-20347.771434 [PHY] A Initial sync successful, PCI: 0
-20347.771437 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799947 Hz, rx_freq 3604799947 Hz, tune_offset 0
-20347.775983 [PHY] I Got synch: hw_slot_offset 36, carrier off -53 Hz, rxgain 20.000000 (DL 3604799947.000000 Hz, UL 3604799947.000000 Hz)
-20347.779257 [PHY] A UE synchronized! decoded_frame_rx=538 UE->init_sync_frame=1 trashed_frames=8
-20347.779262 [PHY] I Resynchronizing RX by 137684 samples
-20347.787752 [HW] I received write reorder clear context
-20347.788349 [NR_RRC] A SIB1 decoded
-20347.789395 [NR_MAC] I TDD period index = 6, based on the sum of dl_UL_TransmissionPeriodicity from Pattern1 (5.000000 ms) and Pattern2 (0.000000 ms): Total = 5.000000 ms
-20347.789407 [NR_MAC] I Set TDD configuration period to: 8 DL slots, 2 UL slots, 10 slots per period (NR_TDD_UL_DL_Pattern is 7 DL slots, 2 UL slots, 6 DL symbols, 0 UL symbols)
-20347.789409 [NR_MAC] I Configured 1 TDD patterns (total slots: pattern1 = 10, pattern2 = 0)
-20347.791127 [MAC] I Initialization of 4-Step CBRA procedure
-Setting USRP TX Freq 3604799947.000000, RX Freq 3604799947.000000, tune_offset: 0.000000
-20347.807117 [NR_MAC] I PRACH scheduler: Selected RO Frame 549, Slot 19, Symbol 0, Fdm 0
-20347.807257 [PHY] I PRACH [UE 0] in frame.slot 549.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 6, first_nonzero_root_idx 0, preambleIndex = 12
-20347.818471 [MAC] W [UE 0] RAR reception failed
-20347.826796 [NR_MAC] I PRACH scheduler: Selected RO Frame 551, Slot 19, Symbol 0, Fdm 0
-20347.826834 [PHY] I PRACH [UE 0] in frame.slot 551.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 13, first_nonzero_root_idx 0, preambleIndex = 27
-20347.839042 [MAC] W [UE 0] RAR reception failed
-20347.846678 [NR_MAC] I PRACH scheduler: Selected RO Frame 553, Slot 19, Symbol 0, Fdm 0
-20347.846715 [PHY] I PRACH [UE 0] in frame.slot 553.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 13, first_nonzero_root_idx 0, preambleIndex = 27
-20347.859067 [MAC] W [UE 0] RAR reception failed
-20347.865977 [NR_MAC] I PRACH scheduler: Selected RO Frame 555, Slot 19, Symbol 0, Fdm 0
-20347.866032 [PHY] I PRACH [UE 0] in frame.slot 555.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 29, first_nonzero_root_idx 0, preambleIndex = 59
-20347.877907 [MAC] W [UE 0] RAR reception failed
-20347.886438 [NR_MAC] I PRACH scheduler: Selected RO Frame 557, Slot 19, Symbol 8, Fdm 0
-20347.886478 [PHY] I PRACH [UE 0] in frame.slot 557.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 18, first_nonzero_root_idx 0, preambleIndex = 36
-20347.898826 [MAC] W [UE 0] RAR reception failed
-20347.899019 [PHY] W Deadline missed for tx slot 559.2 (current time 1781641292995216 us, deadline 1781641292994629 us, missed by 587)
-20347.906284 [NR_MAC] I PRACH scheduler: Selected RO Frame 559, Slot 19, Symbol 0, Fdm 0
-20347.906320 [PHY] I PRACH [UE 0] in frame.slot 559.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 24, first_nonzero_root_idx 0, preambleIndex = 49
-20347.918239 [MAC] W [UE 0] RAR reception failed
-20347.926831 [NR_MAC] I PRACH scheduler: Selected RO Frame 561, Slot 19, Symbol 8, Fdm 0
-20347.926865 [PHY] I PRACH [UE 0] in frame.slot 561.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 2, first_nonzero_root_idx 0, preambleIndex = 5
-20347.939843 [MAC] W [UE 0] RAR reception failed
-20347.946703 [NR_MAC] I PRACH scheduler: Selected RO Frame 563, Slot 19, Symbol 0, Fdm 0
-20347.946736 [PHY] I PRACH [UE 0] in frame.slot 563.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 6, first_nonzero_root_idx 0, preambleIndex = 12
-20347.959449 [MAC] W [UE 0] RAR reception failed
-20347.965815 [NR_MAC] I PRACH scheduler: Selected RO Frame 565, Slot 19, Symbol 4, Fdm 0
-20347.965861 [PHY] I PRACH [UE 0] in frame.slot 565.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 1, first_nonzero_root_idx 0, preambleIndex = 2
-20347.978489 [MAC] W [UE 0] RAR reception failed
-20347.986797 [NR_MAC] I PRACH scheduler: Selected RO Frame 567, Slot 19, Symbol 4, Fdm 0
-20347.986829 [PHY] I PRACH [UE 0] in frame.slot 567.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 1, first_nonzero_root_idx 0, preambleIndex = 3
-20347.998780 [MAC] W [UE 0] RAR reception failed
-20347.998795 [NR_RRC] I RRC moved into IDLE state
-20347.998817 [NAS] I [UE 0] Received NR_NAS_CONN_RELEASE_IND: cause OTHER
-20348.000497 [NR_MAC] I [UE0] Initializing MAC
-20348.020532 [PHY] W SSB position provided
-20348.020659 [NR_PHY] W Starting sync detection
-20348.020665 [PHY] I [UE thread Synch] Running Initial Synch 
-20348.020667 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20348.020716 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20348.091250 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-20348.091264 [PHY] I pbch rx ok. rsrp:49 dB/RE, adjust_rxgain:1 dB
-20348.091357 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS Corr Average: 56
-20348.094017 [PHY] I [UE0] In synch, rx_offset 122324 samples
-20348.094020 [PHY] I [UE 0] Measured Carrier Frequency offset -115 Hz
-20348.094021 [PHY] A Initial sync successful, PCI: 0
-20348.094023 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799885 Hz, rx_freq 3604799885 Hz, tune_offset 0
-20348.099864 [PHY] I Got synch: hw_slot_offset 32, carrier off -115 Hz, rxgain 20.000000 (DL 3604799885.000000 Hz, UL 3604799885.000000 Hz)
-20348.100451 [PHY] A UE synchronized! decoded_frame_rx=570 UE->init_sync_frame=1 trashed_frames=8
-20348.100455 [PHY] I Resynchronizing RX by 122324 samples
-20348.107315 [HW] I received write reorder clear context
-20348.109917 [NR_RRC] A SIB1 decoded
-20348.110751 [NR_MAC] I TDD period index = 6, based on the sum of dl_UL_TransmissionPeriodicity from Pattern1 (5.000000 ms) and Pattern2 (0.000000 ms): Total = 5.000000 ms
-20348.110757 [NR_MAC] I Set TDD configuration period to: 8 DL slots, 2 UL slots, 10 slots per period (NR_TDD_UL_DL_Pattern is 7 DL slots, 2 UL slots, 6 DL symbols, 0 UL symbols)
-20348.110758 [NR_MAC] I Configured 1 TDD patterns (total slots: pattern1 = 10, pattern2 = 0)
-20348.111323 [MAC] I Initialization of 4-Step CBRA procedure
-Setting USRP TX Freq 3604799885.000000, RX Freq 3604799885.000000, tune_offset: 0.000000
-20348.126114 [NR_MAC] I PRACH scheduler: Selected RO Frame 581, Slot 19, Symbol 8, Fdm 0
-20348.126305 [PHY] I PRACH [UE 0] in frame.slot 581.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 21, first_nonzero_root_idx 0, preambleIndex = 43
-20348.137598 [MAC] W [UE 0] RAR reception failed
-20348.145798 [NR_MAC] I PRACH scheduler: Selected RO Frame 583, Slot 19, Symbol 4, Fdm 0
-20348.145828 [PHY] I PRACH [UE 0] in frame.slot 583.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 21, first_nonzero_root_idx 0, preambleIndex = 42
-20348.158484 [MAC] W [UE 0] RAR reception failed
-20348.166625 [NR_MAC] I PRACH scheduler: Selected RO Frame 585, Slot 19, Symbol 0, Fdm 0
-20348.166664 [PHY] I PRACH [UE 0] in frame.slot 585.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 22, first_nonzero_root_idx 0, preambleIndex = 45
-LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL20348.179027 [MAC] W [UE 0] RAR reception failed
-20348.187032 [NR_MAC] I PRACH scheduler: Selected RO Frame 587, Slot 19, Symbol 0, Fdm 0
-20348.187084 [PHY] I PRACH [UE 0] in frame.slot 587.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 6, first_nonzero_root_idx 0, preambleIndex = 12
-20348.199882 [MAC] W [UE 0] RAR reception failed
-20348.206375 [NR_MAC] I PRACH scheduler: Selected RO Frame 589, Slot 19, Symbol 0, Fdm 0
-20348.206410 [PHY] I PRACH [UE 0] in frame.slot 589.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 4, first_nonzero_root_idx 0, preambleIndex = 8
-20348.218315 [MAC] W [UE 0] RAR reception failed
-20348.226796 [NR_MAC] I PRACH scheduler: Selected RO Frame 591, Slot 19, Symbol 0, Fdm 0
-20348.226840 [PHY] I PRACH [UE 0] in frame.slot 591.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 14, first_nonzero_root_idx 0, preambleIndex = 29
-20348.238981 [MAC] W [UE 0] RAR reception failed
-20348.246171 [NR_MAC] I PRACH scheduler: Selected RO Frame 593, Slot 19, Symbol 4, Fdm 0
-20348.246203 [PHY] I PRACH [UE 0] in frame.slot 593.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 25, first_nonzero_root_idx 0, preambleIndex = 51
-20348.258761 [MAC] W [UE 0] RAR reception failed
-20348.265934 [NR_MAC] I PRACH scheduler: Selected RO Frame 595, Slot 19, Symbol 0, Fdm 0
-20348.265972 [PHY] I PRACH [UE 0] in frame.slot 595.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 15, first_nonzero_root_idx 0, preambleIndex = 30
-20348.278122 [MAC] W [UE 0] RAR reception failed
-20348.286713 [NR_MAC] I PRACH scheduler: Selected RO Frame 597, Slot 19, Symbol 4, Fdm 0
-20348.286738 [PHY] I PRACH [UE 0] in frame.slot 597.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 2, first_nonzero_root_idx 0, preambleIndex = 4
-20348.298369 [MAC] W [UE 0] RAR reception failed
-20348.306798 [NR_MAC] I PRACH scheduler: Selected RO Frame 599, Slot 19, Symbol 8, Fdm 0
-20348.306834 [PHY] I PRACH [UE 0] in frame.slot 599.19, placing PRACH in position 740, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 25, first_nonzero_root_idx 0, preambleIndex = 51
-20348.318996 [MAC] W [UE 0] RAR reception failed
-20348.319031 [NR_RRC] I RRC moved into IDLE state
-20348.319142 [NAS] I [UE 0] Received NR_NAS_CONN_RELEASE_IND: cause OTHER
-20348.320664 [NR_MAC] I [UE0] Initializing MAC
-20348.339724 [PHY] W SSB position provided
-20348.339827 [NR_PHY] W Starting sync detection
-20348.339833 [PHY] I [UE thread Synch] Running Initial Synch 
-20348.339835 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20348.339883 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20348.410306 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-20348.410319 [PHY] I pbch rx ok. rsrp:49 dB/RE, adjust_rxgain:1 dB
-20348.410421 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 90 dB, PSS Corr Average: 56
-20348.412654 [PHY] I [UE0] In synch, rx_offset 122324 samples
-20348.412659 [PHY] I [UE 0] Measured Carrier Frequency offset -39 Hz
-20348.412661 [PHY] A Initial sync successful, PCI: 0
-20348.412663 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799961 Hz, rx_freq 3604799961 Hz, tune_offset 0
-20348.418470 [PHY] I Got synch: hw_slot_offset 32, carrier off -39 Hz, rxgain 20.000000 (DL 3604799961.000000 Hz, UL 3604799961.000000 Hz)
-20348.419376 [PHY] A UE synchronized! decoded_frame_rx=602 UE->init_sync_frame=1 trashed_frames=8
-20348.419381 [PHY] I Resynchronizing RX by 122324 samples
+20376.234645 [HW] I Device timestamp: 0.045927...
+20376.234656 [HW] I [RRU] has loaded USRP X400 device.
+20376.714019 [HW] I current pps at 0.000000, starting streaming at 1.000000
+20378.732647 [PHY] W SSB position provided
+20378.732684 [NR_PHY] W Starting sync detection
+20378.732688 [PHY] I [UE thread Synch] Running Initial Synch 
+20378.732690 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20378.733022 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20378.871615 [PHY] E synch Failed: 
+20378.892828 [PHY] W SSB position provided
+20378.892953 [NR_PHY] W Starting sync detection
+20378.892960 [PHY] I [UE thread Synch] Running Initial Synch 
+20378.892962 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20378.893203 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20378.937029 [PHY] E synch Failed: 
+20378.972364 [PHY] W SSB position provided
+20378.972486 [NR_PHY] W Starting sync detection
+20378.972494 [PHY] I [UE thread Synch] Running Initial Synch 
+20378.972496 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20378.972532 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20379.110586 [PHY] E synch Failed: 
+20379.133567 [PHY] W SSB position provided
+20379.133689 [NR_PHY] W Starting sync detection
+20379.133697 [PHY] I [UE thread Synch] Running Initial Synch 
+20379.133698 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20379.133738 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20379.177672 [PHY] E synch Failed: 
+20379.212936 [PHY] W SSB position provided
+20379.213053 [NR_PHY] W Starting sync detection
+20379.213060 [PHY] I [UE thread Synch] Running Initial Synch 
+20379.213061 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20379.213096 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20379.351072 [PHY] E synch Failed: 
+20379.372274 [PHY] W SSB position provided
+20379.372289 [NR_PHY] W Starting sync detection
+20379.372294 [PHY] I [UE thread Synch] Running Initial Synch 
+20379.372295 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20379.372335 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20379.416065 [PHY] E synch Failed: 
+20379.452277 [PHY] W SSB position provided
+20379.452390 [NR_PHY] W Starting sync detection
+20379.452395 [PHY] I [UE thread Synch] Running Initial Synch 
+20379.452397 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20379.452440 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20379.590592 [PHY] E synch Failed: 
+20379.612329 [PHY] W SSB position provided
+20379.612694 [NR_PHY] W Starting sync detection
+20379.612702 [PHY] I [UE thread Synch] Running Initial Synch 
+20379.612703 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20379.612758 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20379.656534 [PHY] E synch Failed: 
+20379.693020 [PHY] W SSB position provided
+20379.693382 [NR_PHY] W Starting sync detection
+20379.693390 [PHY] I [UE thread Synch] Running Initial Synch 
+20379.693392 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20379.693430 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20379.831662 [PHY] E synch Failed: 
+20379.853763 [PHY] W SSB position provided
+20379.853778 [NR_PHY] W Starting sync detection
+20379.853782 [PHY] I [UE thread Synch] Running Initial Synch 
+20379.853783 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20379.853824 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20379.897887 [PHY] E synch Failed: 
+20379.933501 [PHY] W SSB position provided
+20379.933609 [NR_PHY] W Starting sync detection
+20379.933613 [PHY] I [UE thread Synch] Running Initial Synch 
+20379.933615 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20379.933650 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20380.071608 [PHY] E synch Failed: 
+20380.092412 [PHY] W SSB position provided
+20380.092776 [NR_PHY] W Starting sync detection
+20380.092784 [PHY] I [UE thread Synch] Running Initial Synch 
+20380.092786 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20380.092840 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20380.136516 [PHY] E synch Failed: 
+20380.173597 [PHY] W SSB position provided
+20380.173713 [NR_PHY] W Starting sync detection
+20380.173721 [PHY] I [UE thread Synch] Running Initial Synch 
+20380.173722 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20380.173760 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20380.311809 [PHY] E synch Failed: 
+20380.333285 [PHY] W SSB position provided
+20380.333400 [NR_PHY] W Starting sync detection
+20380.333409 [PHY] I [UE thread Synch] Running Initial Synch 
+20380.333411 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20380.333449 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20380.377269 [PHY] E synch Failed: 
+20380.412877 [PHY] W SSB position provided
+20380.412990 [NR_PHY] W Starting sync detection
+20380.412996 [PHY] I [UE thread Synch] Running Initial Synch 
+20380.412997 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20380.413047 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20380.551134 [PHY] E synch Failed: 
+20380.572824 [PHY] W SSB position provided
+20380.572855 [NR_PHY] W Starting sync detection
+20380.572860 [PHY] I [UE thread Synch] Running Initial Synch 
+20380.572862 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20380.572903 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20380.616833 [PHY] E synch Failed: 
+20380.652878 [PHY] W SSB position provided
+20380.653017 [NR_PHY] W Starting sync detection
+20380.653024 [PHY] I [UE thread Synch] Running Initial Synch 
+20380.653026 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20380.653067 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20380.791397 [PHY] E synch Failed: 
+20380.812620 [PHY] W SSB position provided
+20380.812939 [NR_PHY] W Starting sync detection
+20380.812945 [PHY] I [UE thread Synch] Running Initial Synch 
+20380.812947 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20380.812985 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20380.856767 [PHY] E synch Failed: 
+20380.893334 [PHY] W SSB position provided
+20380.893449 [NR_PHY] W Starting sync detection
+20380.893456 [PHY] I [UE thread Synch] Running Initial Synch 
+20380.893458 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20380.893502 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20381.031605 [PHY] E synch Failed: 
+20381.052550 [PHY] W SSB position provided
+20381.052565 [NR_PHY] W Starting sync detection
+20381.052569 [PHY] I [UE thread Synch] Running Initial Synch 
+20381.052571 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20381.052617 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20381.096268 [PHY] E synch Failed: 
+20381.133318 [PHY] W SSB position provided
+20381.133416 [NR_PHY] W Starting sync detection
+20381.133420 [PHY] I [UE thread Synch] Running Initial Synch 
+20381.133422 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20381.133458 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20381.271612 [PHY] E synch Failed: 
+20381.292360 [PHY] W SSB position provided
+20381.292464 [NR_PHY] W Starting sync detection
+20381.292473 [PHY] I [UE thread Synch] Running Initial Synch 
+20381.292474 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20381.292514 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20381.336035 [PHY] E synch Failed: 
+20381.373163 [PHY] W SSB position provided
+20381.373275 [NR_PHY] W Starting sync detection
+20381.373284 [PHY] I [UE thread Synch] Running Initial Synch 
+20381.373286 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20381.373324 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20381.511288 [PHY] E synch Failed: 
+20381.534021 [PHY] W SSB position provided
+20381.534134 [NR_PHY] W Starting sync detection
+20381.534139 [PHY] I [UE thread Synch] Running Initial Synch 
+20381.534141 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20381.534184 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20381.577949 [PHY] E synch Failed: 
+20381.612558 [PHY] W SSB position provided
+20381.612575 [NR_PHY] W Starting sync detection
+20381.612579 [PHY] I [UE thread Synch] Running Initial Synch 
+20381.612583 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20381.612624 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20381.750863 [PHY] E synch Failed: 
+20381.772767 [PHY] W SSB position provided
+20381.772886 [NR_PHY] W Starting sync detection
+20381.772892 [PHY] I [UE thread Synch] Running Initial Synch 
+20381.772894 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20381.772931 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
