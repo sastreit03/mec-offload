@@ -79,7 +79,7 @@ wait_for_container() {
 #echo "Starting gNB"
 #USER_ID="$(id -u)" GROUP_ID="$(id -g)" docker compose --env-file "$env_file" up -d oai-gnb
 
-wait_for_container "oai-gnb"
+#wait_for_container "oai-gnb"
 
 # Check if CONFIG_NAME contains "rfsim" and start "nr-ue" service if needed
 #if [[ "$CONFIG_NAME" == *"rfsim"* ]]; then
