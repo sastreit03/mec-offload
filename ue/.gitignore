@@ -5,7 +5,6 @@ doc/public
 doc/_build
 profiler/reports
 dev/
-configs/**/.env
 configs/**/docker-compose.override.yaml
 **/demapper_in.txt
 **/demapper_out.txt
