@@ -49,80 +49,80 @@ channelmod = {
 [INFO] Target b2xx_common_fw_default is up to date.
 ==================================
 == Starting NR UE soft modem
-Additional option(s): --usrp-args addr=192.168.20.2 --ue-fo-compensation --band 78 --ue-rxgain 10 --log_config.global_log_options level,nocolor,time -C 3604800000 -r 24 --numerology 1 --ssb 24 --thread-pool 4,5
-/opt/oai-nr-ue/bin/nr-uesoftmodem -O /opt/oai-nr-ue/etc/nr-ue.conf --usrp-args addr=192.168.20.2 --ue-fo-compensation --band 78 --ue-rxgain 10 --log_config.global_log_options level,nocolor,time -C 3604800000 -r 24 --numerology 1 --ssb 24 --thread-pool 4,5
-20372.423962 [UTIL] I running in SA mode (no --phy-test, --do-ra, --nsa option present)
-20372.423978 [UTIL] I threadCreate() for Tpool0_4: creating thread with affinity 4, priority 97
-20372.424075 [UTIL] I threadCreate() for Tpool1_5: creating thread with affinity 5, priority 97
+Additional option(s): --usrp-args addr=192.168.20.2 --ue-fo-compensation --band 78 --ue-rxgain 0 --log_config.global_log_options level,nocolor,time -C 3604800000 -r 24 --numerology 1 --ssb 24 --thread-pool 4,5
+/opt/oai-nr-ue/bin/nr-uesoftmodem -O /opt/oai-nr-ue/etc/nr-ue.conf --usrp-args addr=192.168.20.2 --ue-fo-compensation --band 78 --ue-rxgain 0 --log_config.global_log_options level,nocolor,time -C 3604800000 -r 24 --numerology 1 --ssb 24 --thread-pool 4,5
+20424.839190 [UTIL] I running in SA mode (no --phy-test, --do-ra, --nsa option present)
+20424.839216 [UTIL] I threadCreate() for Tpool0_4: creating thread with affinity 4, priority 97
+20424.839373 [UTIL] I threadCreate() for Tpool1_5: creating thread with affinity 5, priority 97
+20425.840415 [OPT] I OPT disabled
 [LOADER] library libdemapper.so is not loaded: libdemapper.so: cannot open shared object file: No such file or directory
 [LOADER] library libreceiver.so is not loaded: libreceiver.so: cannot open shared object file: No such file or directory
-20373.425167 [OPT] I OPT disabled
-CMDLINE: "/opt/oai-nr-ue/bin/nr-uesoftmodem" "-O" "/opt/oai-nr-ue/etc/nr-ue.conf" "--usrp-args" "addr=192.168.20.2" "--ue-fo-compensation" "--band" "78" "--ue-rxgain" "10" "--log_config.global_log_options" "level,nocolor,time" "-C" "3604800000" "-r" "24" "--numerology" "1" "--ssb" "24" "--thread-pool" "4,5" 
+CMDLINE: "/opt/oai-nr-ue/bin/nr-uesoftmodem" "-O" "/opt/oai-nr-ue/etc/nr-ue.conf" "--usrp-args" "addr=192.168.20.2" "--ue-fo-compensation" "--band" "78" "--ue-rxgain" "0" "--log_config.global_log_options" "level,nocolor,time" "-C" "3604800000" "-r" "24" "--numerology" "1" "--ssb" "24" "--thread-pool" "4,5" 
 [CONFIG] function config_libconfig_init returned 0
-Error loading receiver_(null), ignoring receiver plugin20373.425414 [HW] I Version: Branch: HEAD Abrev. Hash: 207aac94d1 Date: Fri Aug 22 08:07:59 2025 +0000
-20373.427204 [NR_RRC] I create TASK_RRC_NRUE 
-20373.427212 [UTIL] I threadCreate() for TASK_RRC_NRUE: creating thread with affinity ffffffff, priority 50
-20373.427303 [UTIL] I threadCreate() for TASK_NAS_NRUE: creating thread with affinity ffffffff, priority 50
-20373.427423 [SIM] I UICC simulation: IMSI=262990100000832, IMEISV=6754567890123413, Ki=fec86ba6eb707ed08905757b1bb44b8f, OPc=C42449363BBAD02B66D16BC975D77CC1, DNN=oai, SST=0x01, SD=0xffffff
-20373.427448 [NR_MAC] I [UE0] Initializing MAC
-20373.427457 [NR_MAC] I Initializing dl and ul config_request. num_slots = 20
-20373.427498 [RLC] I Activated srb0 for UE 0
-20373.427505 [UTIL] I threadCreate() for time source realtime: creating thread with affinity ffffffff, priority 2
-20373.427528 [UTIL] I time manager configuration: [time source: reatime] [mode: standalone] [server IP: 127.0.0.1} [server port: 7374] (server IP/port not used)
-20373.427529 [PHY] I Set UE_fo_compensation 1, UE_scan_carrier 0, UE_no_timing_correction 0 
+Error loading receiver_(null), ignoring receiver plugin20425.840783 [HW] I Version: Branch: HEAD Abrev. Hash: 207aac94d1 Date: Fri Aug 22 08:07:59 2025 +0000
+20425.842290 [NR_RRC] I create TASK_RRC_NRUE 
+20425.842301 [UTIL] I threadCreate() for TASK_RRC_NRUE: creating thread with affinity ffffffff, priority 50
+20425.842418 [UTIL] I threadCreate() for TASK_NAS_NRUE: creating thread with affinity ffffffff, priority 50
+20425.842611 [SIM] I UICC simulation: IMSI=262990100000832, IMEISV=6754567890123413, Ki=fec86ba6eb707ed08905757b1bb44b8f, OPc=C42449363BBAD02B66D16BC975D77CC1, DNN=oai, SST=0x01, SD=0xffffff
+20425.842660 [NR_MAC] I [UE0] Initializing MAC
+20425.842670 [NR_MAC] I Initializing dl and ul config_request. num_slots = 20
+20425.842702 [RLC] I Activated srb0 for UE 0
+20425.842714 [UTIL] I threadCreate() for time source realtime: creating thread with affinity ffffffff, priority 2
+20425.842757 [UTIL] I time manager configuration: [time source: reatime] [mode: standalone] [server IP: 127.0.0.1} [server port: 7374] (server IP/port not used)
+20425.842760 [PHY] I Set UE_fo_compensation 1, UE_scan_carrier 0, UE_no_timing_correction 0 
 , chest-freq 0, chest-time 0
-20373.427530 [PHY] I Set UE nb_rx_antenna 1, nb_tx_antenna 1, threequarter_fs 0, ssb_start_subcarrier 24
-20373.427533 [PHY] I SA init parameters. DL freq 3604800000 UL offset 0 SSB numerology 1 N_RB_DL 24
-20373.427536 [PHY] I Init: N_RB_DL 24, first_carrier_offset 368, nb_prefix_samples 36,nb_prefix_samples0 44, ofdm_symbol_size 512
-20373.427537 [PHY] W samples_per_subframe 15360/per second 15360000, wCP 14336
-20373.427539 [UTIL] I threadCreate() for SYNC__actor: creating thread with affinity ffffffff, priority 97
-20373.427563 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-20373.427585 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-20373.427608 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-20373.427629 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-20373.427650 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
-20373.427675 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
-20373.427699 [PHY] I Initializing UE vars for gNB TXant 1, UE RXant 1
-20373.493904 [PHY] I prs_config configuration NOT found..!! Skipped configuring UE for the PRS reception
-20373.524365 [PHY] I HW: Configuring card 0, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20373.524377 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20373.524380 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
-20373.524381 [PHY] I HW: Configuring card 1, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20373.524381 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20373.524382 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
-20373.524383 [PHY] I HW: Configuring card 2, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20373.524384 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20373.524385 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
-20373.524385 [PHY] I HW: Configuring card 3, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20373.524386 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20373.524387 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
-20373.524387 [PHY] I HW: Configuring card 4, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20373.524388 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20373.524389 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
-20373.524390 [PHY] I HW: Configuring card 5, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20373.524390 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20373.524391 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
-20373.524392 [PHY] I HW: Configuring card 6, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20373.524393 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20373.524394 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
-20373.524394 [PHY] I HW: Configuring card 7, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-20373.524395 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-20373.524396 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 10
-20373.566370 [PHY] I Intializing UE Threads for instance 0 ...
-20373.566384 [UTIL] I threadCreate() for UEthread_0: creating thread with affinity ffffffff, priority 97
-20373.568262 [UTIL] I threadCreate() for L1_UE_stats_0: creating thread with affinity ffffffff, priority 1
-20373.573459 [HW] I openair0_cfg[0].sdr_addrs == 'addr=192.168.20.2'
-20373.573465 [HW] I openair0_cfg[0].clock_source == '0' (internal = 0, external = 1)
-20373.573469 [HW] I UHD version 4.8.0.HEAD-0-g308126a4 (4.8.0)
-20373.573470 [HW] I Checking for USRP with args addr=192.168.20.2
+20425.842761 [PHY] I Set UE nb_rx_antenna 1, nb_tx_antenna 1, threequarter_fs 0, ssb_start_subcarrier 24
+20425.842767 [PHY] I SA init parameters. DL freq 3604800000 UL offset 0 SSB numerology 1 N_RB_DL 24
+20425.842771 [PHY] I Init: N_RB_DL 24, first_carrier_offset 368, nb_prefix_samples 36,nb_prefix_samples0 44, ofdm_symbol_size 512
+20425.842773 [PHY] W samples_per_subframe 15360/per second 15360000, wCP 14336
+20425.842776 [UTIL] I threadCreate() for SYNC__actor: creating thread with affinity ffffffff, priority 97
+20425.842832 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+20425.842880 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+20425.842926 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+20425.842968 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+20425.843019 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
+20425.843069 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
+20425.843123 [PHY] I Initializing UE vars for gNB TXant 1, UE RXant 1
+20425.931139 [PHY] I prs_config configuration NOT found..!! Skipped configuring UE for the PRS reception
+20425.959874 [PHY] I HW: Configuring card 0, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20425.959885 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20425.959888 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 0
+20425.959889 [PHY] I HW: Configuring card 1, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20425.959890 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20425.959891 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 0
+20425.959891 [PHY] I HW: Configuring card 2, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20425.959892 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20425.959893 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 0
+20425.959894 [PHY] I HW: Configuring card 3, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20425.959895 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20425.959896 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 0
+20425.959896 [PHY] I HW: Configuring card 4, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20425.959897 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20425.959898 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 0
+20425.959899 [PHY] I HW: Configuring card 5, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20425.959900 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20425.959901 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 0
+20425.959901 [PHY] I HW: Configuring card 6, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20425.959902 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20425.959903 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 0
+20425.959903 [PHY] I HW: Configuring card 7, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+20425.959904 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+20425.959905 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 0
+20425.999513 [PHY] I Intializing UE Threads for instance 0 ...
+20425.999525 [UTIL] I threadCreate() for UEthread_0: creating thread with affinity ffffffff, priority 97
+20426.001699 [UTIL] I threadCreate() for L1_UE_stats_0: creating thread with affinity ffffffff, priority 1
+20426.007668 [HW] I openair0_cfg[0].sdr_addrs == 'addr=192.168.20.2'
+20426.007675 [HW] I openair0_cfg[0].clock_source == '0' (internal = 0, external = 1)
+20426.007679 [HW] I UHD version 4.8.0.HEAD-0-g308126a4 (4.8.0)
+20426.007680 [HW] I Checking for USRP with args addr=192.168.20.2
 [INFO] [UHD] linux; GNU C++ version 13.3.0; Boost_108300; UHD_4.8.0.HEAD-0-g308126a4
-20374.092281 [HW] I Found USRP x4xx
+20426.526386 [HW] I Found USRP x4xx
 sysctl: setting key "net.core.rmem_max": Operation not permitted
 sysctl: setting key "net.core.wmem_max": Operation not permitted
 [INFO] [MPMD] Initializing 1 device(s) in parallel with args: mgmt_addr=192.168.20.2,type=x4xx,product=x410,serial=35074B8,name=ni-x4xx-35074B8,fpga=UC_200,claimed=False,addr=192.168.20.2,master_clock_rate=245760000.000000
 [INFO] [MPM.PeriphManager] init() called with device args `fpga=UC_200,master_clock_rate=(245760000.0,),mgmt_addr=192.168.20.2,name=ni-x4xx-35074B8,product=x410,clock_source=internal,time_source=internal,initializing=True'.
-20376.199348 [HW] I Setting clock source to internal
-20376.206570 [HW] I Setting time source to internal
+20428.632818 [HW] I Setting clock source to internal
+20428.640701 [HW] I Setting time source to internal
 Channel emulation enabled: CIR source=cir_file, folder=(null), num_taps=0
 Channel emulation disabled (--cir-folder and --cir-zmq-num-taps not set)
 
@@ -133,36 +133,34 @@ TYPE <CTRL-C> TO TERMINATE
 Found USRP x400
 Entering ITTI signals handler
 TYPE <CTRL-C> TO TERMINATE
-20376.211441 [HW] I device_init() sample_rate:15360000
+20428.646680 [HW] I device_init() sample_rate:15360000
 -- Using calibration table: calib_table_none
-20376.217457 [HW] I cal 0: freq 3500000000.000000, offset 0.000000, diff 104800000.000000
-20376.217469 [HW] I cal 1: freq 2660000000.000000, offset 0.000000, diff 944800000.000000
-20376.217473 [HW] I cal 2: freq 2300000000.000000, offset 0.000000, diff 1304800000.000000
-20376.217474 [HW] I cal 3: freq 1880000000.000000, offset 0.000000, diff 1724800000.000000
-20376.217476 [HW] I cal 4: freq 816000000.000000, offset 0.000000, diff 2788800000.000000
-20376.218101 [HW] I RX Gain 0 10.000000 (0.000000) => 10.000000 (max 60.000000)
-20376.223850 [HW] I USRP TX_GAIN:60.00 gain_range:60.00 tx_gain:0.00
-20376.223870 [HW] I Actual master clock: 245.760000MHz...
-20376.225343 [HW] I Actual clock source internal...
-20376.226934 [HW] I Actual time source internal...
-20376.226947 [HW] I setting rx channel 0
-20376.229210 [HW] I RF board max packet size 360, size for 100µs jitter 1536 
-20376.229215 [HW] I rx_max_num_samps 360
-[WARNING] [0/Radio#0] Invalid analog bandwidth: 10 MHz.
-[WARNING] [0/Radio#0] Invalid analog bandwidth: 10 MHz.
-20376.234035 [HW] I RX Channel 0
-20376.234041 [HW] I   Actual RX sample rate: 15.360000MSps...
-20376.234044 [HW] I   Actual RX frequency: 3.604800GHz...
-20376.234047 [HW] I   Actual RX gain: 10.000000...
-20376.234049 [HW] I   Actual RX bandwidth: 400.000000M...
-20376.234052 [HW] I   Actual RX antenna: RX1...
-20376.234052 [HW] I TX Channel 0
-20376.234053 [HW] I   Actual TX sample rate: 15.360000MSps...
-20376.234055 [HW] I   Actual TX frequency: 3.604800GHz...
-20376.234058 [HW] I   Actual TX gain: 60.000000...
-20376.234059 [HW] I   Actual TX bandwidth: 400.000000M...
-20376.234061 [HW] I   Actual TX antenna: TX/RX0...
-20376.234062 [HW] I   Actual TX packet size: 360
+20428.653485 [HW] I cal 0: freq 3500000000.000000, offset 0.000000, diff 104800000.000000
+20428.653494 [HW] I cal 1: freq 2660000000.000000, offset 0.000000, diff 944800000.000000
+20428.653497 [HW] I cal 2: freq 2300000000.000000, offset 0.000000, diff 1304800000.000000
+20428.653498 [HW] I cal 3: freq 1880000000.000000, offset 0.000000, diff 1724800000.000000
+20428.653500 [HW] I cal 4: freq 816000000.000000, offset 0.000000, diff 2788800000.000000
+20428.653510 [HW] I RX Gain 0 0.000000 (0.000000) => 0.000000 (max 60.000000)
+20428.659294 [HW] I USRP TX_GAIN:60.00 gain_range:60.00 tx_gain:0.00
+20428.659311 [HW] I Actual master clock: 245.760000MHz...
+20428.660898 [HW] I Actual clock source internal...
+20428.662370 [HW] I Actual time source internal...
+20428.662377 [HW] I setting rx channel 0
+20428.665094 [HW] I RF board max packet size 360, size for 100µs jitter 1536 
+20428.665100 [HW] I rx_max_num_samps 360
+20428.670680 [HW] I RX Channel 0
+20428.670686 [HW] I   Actual RX sample rate: 15.360000MSps...
+20428.670690 [HW] I   Actual RX frequency: 3.604800GHz...
+20428.670696 [HW] I   Actual RX gain: 0.000000...
+20428.670699 [HW] I   Actual RX bandwidth: 400.000000M...
+20428.670702 [HW] I   Actual RX antenna: RX1...
+20428.670703 [HW] I TX Channel 0
+20428.670705 [HW] I   Actual TX sample rate: 15.360000MSps...
+20428.670707 [HW] I   Actual TX frequency: 3.604800GHz...
+20428.670712 [HW] I   Actual TX gain: 60.000000...
+20428.670715 [HW] I   Actual TX bandwidth: 400.000000M...
+20428.670719 [HW] I   Actual TX antenna: TX/RX0...
+20428.670720 [HW] I   Actual TX packet size: 360
 Using Device: Single USRP:
   Device: X400-Series Device
   Mboard 0: x410
@@ -172,6 +170,8 @@ Using Device: Single USRP:
     RX Subdev: 0
   RX Channel: 1
     RX DSP: 1
+[WARNING] [0/Radio#0] Invalid analog bandwidth: 10 MHz.
+[WARNING] [0/Radio#0] Invalid analog bandwidth: 10 MHz.
     RX Dboard: A
     RX Subdev: 1
   RX Channel: 2
@@ -199,161 +199,335 @@ Using Device: Single USRP:
     TX Dboard: B
     TX Subdev: 1
 
-20376.234645 [HW] I Device timestamp: 0.045927...
-20376.234656 [HW] I [RRU] has loaded USRP X400 device.
-20376.714019 [HW] I current pps at 0.000000, starting streaming at 1.000000
-20378.732647 [PHY] W SSB position provided
-20378.732684 [NR_PHY] W Starting sync detection
-20378.732688 [PHY] I [UE thread Synch] Running Initial Synch 
-20378.732690 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20378.733022 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20378.871615 [PHY] E synch Failed: 
-20378.892828 [PHY] W SSB position provided
-20378.892953 [NR_PHY] W Starting sync detection
-20378.892960 [PHY] I [UE thread Synch] Running Initial Synch 
-20378.892962 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20378.893203 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20378.937029 [PHY] E synch Failed: 
-20378.972364 [PHY] W SSB position provided
-20378.972486 [NR_PHY] W Starting sync detection
-20378.972494 [PHY] I [UE thread Synch] Running Initial Synch 
-20378.972496 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20378.972532 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20379.110586 [PHY] E synch Failed: 
-20379.133567 [PHY] W SSB position provided
-20379.133689 [NR_PHY] W Starting sync detection
-20379.133697 [PHY] I [UE thread Synch] Running Initial Synch 
-20379.133698 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20379.133738 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20379.177672 [PHY] E synch Failed: 
-20379.212936 [PHY] W SSB position provided
-20379.213053 [NR_PHY] W Starting sync detection
-20379.213060 [PHY] I [UE thread Synch] Running Initial Synch 
-20379.213061 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20379.213096 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20379.351072 [PHY] E synch Failed: 
-20379.372274 [PHY] W SSB position provided
-20379.372289 [NR_PHY] W Starting sync detection
-20379.372294 [PHY] I [UE thread Synch] Running Initial Synch 
-20379.372295 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20379.372335 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20379.416065 [PHY] E synch Failed: 
-20379.452277 [PHY] W SSB position provided
-20379.452390 [NR_PHY] W Starting sync detection
-20379.452395 [PHY] I [UE thread Synch] Running Initial Synch 
-20379.452397 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20379.452440 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20379.590592 [PHY] E synch Failed: 
-20379.612329 [PHY] W SSB position provided
-20379.612694 [NR_PHY] W Starting sync detection
-20379.612702 [PHY] I [UE thread Synch] Running Initial Synch 
-20379.612703 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20379.612758 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20379.656534 [PHY] E synch Failed: 
-20379.693020 [PHY] W SSB position provided
-20379.693382 [NR_PHY] W Starting sync detection
-20379.693390 [PHY] I [UE thread Synch] Running Initial Synch 
-20379.693392 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20379.693430 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20379.831662 [PHY] E synch Failed: 
-20379.853763 [PHY] W SSB position provided
-20379.853778 [NR_PHY] W Starting sync detection
-20379.853782 [PHY] I [UE thread Synch] Running Initial Synch 
-20379.853783 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20379.853824 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20379.897887 [PHY] E synch Failed: 
-20379.933501 [PHY] W SSB position provided
-20379.933609 [NR_PHY] W Starting sync detection
-20379.933613 [PHY] I [UE thread Synch] Running Initial Synch 
-20379.933615 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20379.933650 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20380.071608 [PHY] E synch Failed: 
-20380.092412 [PHY] W SSB position provided
-20380.092776 [NR_PHY] W Starting sync detection
-20380.092784 [PHY] I [UE thread Synch] Running Initial Synch 
-20380.092786 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20380.092840 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20380.136516 [PHY] E synch Failed: 
-20380.173597 [PHY] W SSB position provided
-20380.173713 [NR_PHY] W Starting sync detection
-20380.173721 [PHY] I [UE thread Synch] Running Initial Synch 
-20380.173722 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20380.173760 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20380.311809 [PHY] E synch Failed: 
-20380.333285 [PHY] W SSB position provided
-20380.333400 [NR_PHY] W Starting sync detection
-20380.333409 [PHY] I [UE thread Synch] Running Initial Synch 
-20380.333411 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20380.333449 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20380.377269 [PHY] E synch Failed: 
-20380.412877 [PHY] W SSB position provided
-20380.412990 [NR_PHY] W Starting sync detection
-20380.412996 [PHY] I [UE thread Synch] Running Initial Synch 
-20380.412997 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20380.413047 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20380.551134 [PHY] E synch Failed: 
-20380.572824 [PHY] W SSB position provided
-20380.572855 [NR_PHY] W Starting sync detection
-20380.572860 [PHY] I [UE thread Synch] Running Initial Synch 
-20380.572862 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20380.572903 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20380.616833 [PHY] E synch Failed: 
-20380.652878 [PHY] W SSB position provided
-20380.653017 [NR_PHY] W Starting sync detection
-20380.653024 [PHY] I [UE thread Synch] Running Initial Synch 
-20380.653026 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20380.653067 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20380.791397 [PHY] E synch Failed: 
-20380.812620 [PHY] W SSB position provided
-20380.812939 [NR_PHY] W Starting sync detection
-20380.812945 [PHY] I [UE thread Synch] Running Initial Synch 
-20380.812947 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20380.812985 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20380.856767 [PHY] E synch Failed: 
-20380.893334 [PHY] W SSB position provided
-20380.893449 [NR_PHY] W Starting sync detection
-20380.893456 [PHY] I [UE thread Synch] Running Initial Synch 
-20380.893458 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20380.893502 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20381.031605 [PHY] E synch Failed: 
-20381.052550 [PHY] W SSB position provided
-20381.052565 [NR_PHY] W Starting sync detection
-20381.052569 [PHY] I [UE thread Synch] Running Initial Synch 
-20381.052571 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20381.052617 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20381.096268 [PHY] E synch Failed: 
-20381.133318 [PHY] W SSB position provided
-20381.133416 [NR_PHY] W Starting sync detection
-20381.133420 [PHY] I [UE thread Synch] Running Initial Synch 
-20381.133422 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20381.133458 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20381.271612 [PHY] E synch Failed: 
-20381.292360 [PHY] W SSB position provided
-20381.292464 [NR_PHY] W Starting sync detection
-20381.292473 [PHY] I [UE thread Synch] Running Initial Synch 
-20381.292474 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20381.292514 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20381.336035 [PHY] E synch Failed: 
-20381.373163 [PHY] W SSB position provided
-20381.373275 [NR_PHY] W Starting sync detection
-20381.373284 [PHY] I [UE thread Synch] Running Initial Synch 
-20381.373286 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20381.373324 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20381.511288 [PHY] E synch Failed: 
-20381.534021 [PHY] W SSB position provided
-20381.534134 [NR_PHY] W Starting sync detection
-20381.534139 [PHY] I [UE thread Synch] Running Initial Synch 
-20381.534141 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20381.534184 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20381.577949 [PHY] E synch Failed: 
-20381.612558 [PHY] W SSB position provided
-20381.612575 [NR_PHY] W Starting sync detection
-20381.612579 [PHY] I [UE thread Synch] Running Initial Synch 
-20381.612583 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20381.612624 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-20381.750863 [PHY] E synch Failed: 
-20381.772767 [PHY] W SSB position provided
-20381.772886 [NR_PHY] W Starting sync detection
-20381.772892 [PHY] I [UE thread Synch] Running Initial Synch 
-20381.772894 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-20381.772931 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20428.670897 [HW] I Device timestamp: 0.052064...
+20428.670905 [HW] I [RRU] has loaded USRP X400 device.
+20428.713157 [HW] I current pps at 0.000000, starting streaming at 1.000000
+20430.733731 [PHY] W SSB position provided
+20430.733758 [NR_PHY] W Starting sync detection
+20430.733762 [PHY] I [UE thread Synch] Running Initial Synch 
+20430.733764 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20430.734150 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20430.871892 [PHY] E synch Failed: 
+20430.893119 [PHY] W SSB position provided
+20430.893232 [NR_PHY] W Starting sync detection
+20430.893237 [PHY] I [UE thread Synch] Running Initial Synch 
+20430.893239 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20430.893490 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20430.937289 [PHY] E synch Failed: 
+20430.972972 [PHY] W SSB position provided
+20430.973086 [NR_PHY] W Starting sync detection
+20430.973091 [PHY] I [UE thread Synch] Running Initial Synch 
+20430.973093 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20430.973129 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20431.111297 [PHY] E synch Failed: 
+20431.133212 [PHY] W SSB position provided
+20431.133236 [NR_PHY] W Starting sync detection
+20431.133240 [PHY] I [UE thread Synch] Running Initial Synch 
+20431.133242 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20431.133280 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20431.176906 [PHY] E synch Failed: 
+20431.212484 [PHY] W SSB position provided
+20431.212603 [NR_PHY] W Starting sync detection
+20431.212608 [PHY] I [UE thread Synch] Running Initial Synch 
+20431.212609 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20431.212654 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20431.350831 [PHY] E synch Failed: 
+20431.373666 [PHY] W SSB position provided
+20431.373802 [NR_PHY] W Starting sync detection
+20431.373810 [PHY] I [UE thread Synch] Running Initial Synch 
+20431.373811 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20431.373857 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20431.418450 [PHY] E synch Failed: 
+20431.452475 [PHY] W SSB position provided
+20431.452584 [NR_PHY] W Starting sync detection
+20431.452589 [PHY] I [UE thread Synch] Running Initial Synch 
+20431.452590 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20431.452625 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20431.590855 [PHY] E synch Failed: 
+20431.613892 [PHY] W SSB position provided
+20431.614012 [NR_PHY] W Starting sync detection
+20431.614016 [PHY] I [UE thread Synch] Running Initial Synch 
+20431.614018 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20431.614056 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20431.657647 [PHY] E synch Failed: 
+20431.692208 [PHY] W SSB position provided
+20431.692476 [NR_PHY] W Starting sync detection
+20431.692481 [PHY] I [UE thread Synch] Running Initial Synch 
+20431.692482 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20431.692523 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20431.830643 [PHY] E synch Failed: 
+20431.852919 [PHY] W SSB position provided
+20431.853039 [NR_PHY] W Starting sync detection
+20431.853046 [PHY] I [UE thread Synch] Running Initial Synch 
+20431.853048 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20431.853084 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20431.896756 [PHY] E synch Failed: 
+20431.932442 [PHY] W SSB position provided
+20431.932468 [NR_PHY] W Starting sync detection
+20431.932471 [PHY] I [UE thread Synch] Running Initial Synch 
+20431.932471 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20431.932498 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20432.070816 [PHY] E synch Failed: 
+20432.093903 [PHY] W SSB position provided
+20432.094022 [NR_PHY] W Starting sync detection
+20432.094031 [PHY] I [UE thread Synch] Running Initial Synch 
+20432.094033 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20432.094074 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20432.137930 [PHY] E synch Failed: 
+20432.172450 [PHY] W SSB position provided
+20432.172555 [NR_PHY] W Starting sync detection
+20432.172564 [PHY] I [UE thread Synch] Running Initial Synch 
+20432.172565 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20432.172606 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20432.310771 [PHY] E synch Failed: 
+20432.332488 [PHY] W SSB position provided
+20432.332601 [NR_PHY] W Starting sync detection
+20432.332609 [PHY] I [UE thread Synch] Running Initial Synch 
+20432.332610 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20432.332648 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20432.376842 [PHY] E synch Failed: 
+20432.413218 [PHY] W SSB position provided
+20432.413332 [NR_PHY] W Starting sync detection
+20432.413340 [PHY] I [UE thread Synch] Running Initial Synch 
+20432.413342 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20432.413385 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20432.551608 [PHY] E synch Failed: 
+20432.572565 [PHY] W SSB position provided
+20432.572681 [NR_PHY] W Starting sync detection
+20432.572687 [PHY] I [UE thread Synch] Running Initial Synch 
+20432.572689 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20432.572747 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20432.616493 [PHY] E synch Failed: 
+20432.653047 [PHY] W SSB position provided
+20432.653072 [NR_PHY] W Starting sync detection
+20432.653078 [PHY] I [UE thread Synch] Running Initial Synch 
+20432.653079 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20432.653122 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20432.791055 [PHY] E synch Failed: 
+20432.813311 [PHY] W SSB position provided
+20432.813422 [NR_PHY] W Starting sync detection
+20432.813427 [PHY] I [UE thread Synch] Running Initial Synch 
+20432.813429 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20432.813472 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20432.857395 [PHY] E synch Failed: 
+20432.893396 [PHY] W SSB position provided
+20432.893421 [NR_PHY] W Starting sync detection
+20432.893425 [PHY] I [UE thread Synch] Running Initial Synch 
+20432.893427 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20432.893467 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20433.030979 [PHY] E synch Failed: 
+20433.052502 [PHY] W SSB position provided
+20433.052527 [NR_PHY] W Starting sync detection
+20433.052531 [PHY] I [UE thread Synch] Running Initial Synch 
+20433.052532 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20433.052560 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20433.096298 [PHY] E synch Failed: 
+20433.132686 [PHY] W SSB position provided
+20433.132706 [NR_PHY] W Starting sync detection
+20433.132711 [PHY] I [UE thread Synch] Running Initial Synch 
+20433.132712 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20433.132747 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20433.271020 [PHY] E synch Failed: 
+20433.292927 [PHY] W SSB position provided
+20433.293062 [NR_PHY] W Starting sync detection
+20433.293069 [PHY] I [UE thread Synch] Running Initial Synch 
+20433.293070 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20433.293106 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20433.336720 [PHY] E synch Failed: 
+20433.373100 [PHY] W SSB position provided
+20433.373210 [NR_PHY] W Starting sync detection
+20433.373218 [PHY] I [UE thread Synch] Running Initial Synch 
+20433.373220 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20433.373257 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20433.511289 [PHY] E synch Failed: 
+20433.533559 [PHY] W SSB position provided
+20433.533672 [NR_PHY] W Starting sync detection
+20433.533679 [PHY] I [UE thread Synch] Running Initial Synch 
+20433.533680 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20433.533715 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20433.577966 [PHY] E synch Failed: 
+20433.612274 [PHY] W SSB position provided
+20433.612391 [NR_PHY] W Starting sync detection
+20433.612399 [PHY] I [UE thread Synch] Running Initial Synch 
+20433.612400 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20433.612441 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20433.750707 [PHY] E synch Failed: 
+20433.772790 [PHY] W SSB position provided
+20433.772905 [NR_PHY] W Starting sync detection
+20433.772909 [PHY] I [UE thread Synch] Running Initial Synch 
+20433.772910 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20433.772935 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20433.816702 [PHY] E synch Failed: 
+20433.852327 [PHY] W SSB position provided
+20433.852343 [NR_PHY] W Starting sync detection
+20433.852347 [PHY] I [UE thread Synch] Running Initial Synch 
+20433.852348 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20433.852385 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20433.990717 [PHY] E synch Failed: 
+20434.013342 [PHY] W SSB position provided
+20434.013358 [NR_PHY] W Starting sync detection
+20434.013361 [PHY] I [UE thread Synch] Running Initial Synch 
+20434.013362 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20434.013395 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20434.057035 [PHY] E synch Failed: 
+20434.093495 [PHY] W SSB position provided
+20434.093511 [NR_PHY] W Starting sync detection
+20434.093515 [PHY] I [UE thread Synch] Running Initial Synch 
+20434.093516 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20434.093540 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20434.231625 [PHY] E synch Failed: 
+20434.252818 [PHY] W SSB position provided
+20434.252932 [NR_PHY] W Starting sync detection
+20434.252939 [PHY] I [UE thread Synch] Running Initial Synch 
+20434.252940 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20434.252965 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20434.296759 [PHY] E synch Failed: 
+20434.333059 [PHY] W SSB position provided
+20434.333419 [NR_PHY] W Starting sync detection
+20434.333429 [PHY] I [UE thread Synch] Running Initial Synch 
+20434.333431 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20434.333474 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20434.471691 [PHY] E synch Failed: 
+20434.492669 [PHY] W SSB position provided
+20434.492784 [NR_PHY] W Starting sync detection
+20434.492791 [PHY] I [UE thread Synch] Running Initial Synch 
+20434.492792 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20434.492827 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20434.536590 [PHY] E synch Failed: 
+20434.572936 [PHY] W SSB position provided
+20434.573045 [NR_PHY] W Starting sync detection
+20434.573052 [PHY] I [UE thread Synch] Running Initial Synch 
+20434.573054 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20434.573090 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20434.711264 [PHY] E synch Failed: 
+20434.733469 [PHY] W SSB position provided
+20434.733580 [NR_PHY] W Starting sync detection
+20434.733588 [PHY] I [UE thread Synch] Running Initial Synch 
+20434.733590 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20434.733626 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20434.777657 [PHY] E synch Failed: 
+20434.812797 [PHY] W SSB position provided
+20434.812910 [NR_PHY] W Starting sync detection
+20434.812915 [PHY] I [UE thread Synch] Running Initial Synch 
+20434.812916 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20434.812954 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20434.950883 [PHY] E synch Failed: 
+20434.973437 [PHY] W SSB position provided
+20434.973553 [NR_PHY] W Starting sync detection
+20434.973559 [PHY] I [UE thread Synch] Running Initial Synch 
+20434.973562 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20434.973602 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20435.017283 [PHY] E synch Failed: 
+20435.052412 [PHY] W SSB position provided
+20435.052527 [NR_PHY] W Starting sync detection
+20435.052533 [PHY] I [UE thread Synch] Running Initial Synch 
+20435.052535 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20435.052576 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20435.190929 [PHY] E synch Failed: 
+20435.212691 [PHY] W SSB position provided
+20435.212820 [NR_PHY] W Starting sync detection
+20435.212827 [PHY] I [UE thread Synch] Running Initial Synch 
+20435.212828 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20435.212872 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20435.256796 [PHY] E synch Failed: 
+20435.293584 [PHY] W SSB position provided
+20435.293715 [NR_PHY] W Starting sync detection
+20435.293723 [PHY] I [UE thread Synch] Running Initial Synch 
+20435.293725 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20435.293760 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20435.431820 [PHY] E synch Failed: 
+20435.452769 [PHY] W SSB position provided
+20435.452884 [NR_PHY] W Starting sync detection
+20435.452893 [PHY] I [UE thread Synch] Running Initial Synch 
+20435.452895 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20435.452929 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20435.496816 [PHY] E synch Failed: 
+20435.532525 [PHY] W SSB position provided
+20435.532551 [NR_PHY] W Starting sync detection
+20435.532556 [PHY] I [UE thread Synch] Running Initial Synch 
+20435.532557 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20435.532600 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20435.670825 [PHY] E synch Failed: 
+20435.692329 [PHY] W SSB position provided
+20435.692441 [NR_PHY] W Starting sync detection
+20435.692447 [PHY] I [UE thread Synch] Running Initial Synch 
+20435.692448 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20435.692483 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20435.736071 [PHY] E synch Failed: 
+20435.772991 [PHY] W SSB position provided
+20435.773170 [NR_PHY] W Starting sync detection
+20435.773178 [PHY] I [UE thread Synch] Running Initial Synch 
+20435.773180 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20435.773226 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20435.911085 [PHY] E synch Failed: 
+20435.932811 [PHY] W SSB position provided
+20435.932835 [NR_PHY] W Starting sync detection
+20435.932838 [PHY] I [UE thread Synch] Running Initial Synch 
+20435.932839 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20435.932870 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20435.976591 [PHY] E synch Failed: 
+20436.012758 [PHY] W SSB position provided
+20436.012867 [NR_PHY] W Starting sync detection
+20436.012876 [PHY] I [UE thread Synch] Running Initial Synch 
+20436.012877 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20436.012916 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20436.150830 [PHY] E synch Failed: 
+20436.172802 [PHY] W SSB position provided
+20436.172821 [NR_PHY] W Starting sync detection
+20436.172826 [PHY] I [UE thread Synch] Running Initial Synch 
+20436.172827 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20436.172877 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20436.216669 [PHY] E synch Failed: 
+20436.253042 [PHY] W SSB position provided
+20436.253287 [NR_PHY] W Starting sync detection
+20436.253292 [PHY] I [UE thread Synch] Running Initial Synch 
+20436.253294 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20436.253330 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20436.391512 [PHY] E synch Failed: 
+20436.412991 [PHY] W SSB position provided
+20436.413136 [NR_PHY] W Starting sync detection
+20436.413143 [PHY] I [UE thread Synch] Running Initial Synch 
+20436.413145 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20436.413184 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20436.457025 [PHY] E synch Failed: 
+20436.492716 [PHY] W SSB position provided
+20436.492845 [NR_PHY] W Starting sync detection
+20436.492853 [PHY] I [UE thread Synch] Running Initial Synch 
+20436.492854 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20436.492894 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20436.630883 [PHY] E synch Failed: 
+20436.653124 [PHY] W SSB position provided
+20436.653242 [NR_PHY] W Starting sync detection
+20436.653251 [PHY] I [UE thread Synch] Running Initial Synch 
+20436.653252 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20436.653289 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20436.697116 [PHY] E synch Failed: 
+20436.733406 [PHY] W SSB position provided
+20436.733422 [NR_PHY] W Starting sync detection
+20436.733425 [PHY] I [UE thread Synch] Running Initial Synch 
+20436.733427 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20436.733465 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20436.871599 [PHY] E synch Failed: 
+20436.893248 [PHY] W SSB position provided
+20436.893637 [NR_PHY] W Starting sync detection
+20436.893646 [PHY] I [UE thread Synch] Running Initial Synch 
+20436.893648 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20436.893690 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20436.937505 [PHY] E synch Failed: 
+20436.972760 [PHY] W SSB position provided
+20436.972783 [NR_PHY] W Starting sync detection
+20436.972786 [PHY] I [UE thread Synch] Running Initial Synch 
+20436.972786 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20436.972815 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20437.111194 [PHY] E synch Failed: 
+20437.133634 [PHY] W SSB position provided
+20437.133729 [NR_PHY] W Starting sync detection
+20437.133734 [PHY] I [UE thread Synch] Running Initial Synch 
+20437.133736 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20437.133777 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+20437.177628 [PHY] E synch Failed: 
+20437.212948 [PHY] W SSB position provided
+20437.213056 [NR_PHY] W Starting sync detection
+20437.213063 [PHY] I [UE thread Synch] Running Initial Synch 
+20437.213065 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+20437.213105 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
