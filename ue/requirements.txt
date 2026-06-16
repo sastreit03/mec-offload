@@ -1,0 +1,11 @@
+sionna < 2.0
+numpy
+matplotlib
+nanobind
+onnx
+tf2onnx
+pytest
+tensorrt
+pyzmq
+pyyaml
+sionna-rt-gui @ git+https://github.com/NVlabs/sionna-rt-gui.git@srk-channel-emulator
