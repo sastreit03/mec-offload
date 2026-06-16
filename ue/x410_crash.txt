@@ -51,118 +51,118 @@ channelmod = {
 == Starting NR UE soft modem
 Additional option(s): --usrp-args addr=192.168.20.2 --ue-fo-compensation --band 78 --ue-rxgain 60 --log_config.global_log_options level,nocolor,time -C 3604800000 -r 24 --numerology 1 --ssb 24 --thread-pool 4,5
 /opt/oai-nr-ue/bin/nr-uesoftmodem -O /opt/oai-nr-ue/etc/nr-ue.conf --usrp-args addr=192.168.20.2 --ue-fo-compensation --band 78 --ue-rxgain 60 --log_config.global_log_options level,nocolor,time -C 3604800000 -r 24 --numerology 1 --ssb 24 --thread-pool 4,5
-15337.668053 [UTIL] I running in SA mode (no --phy-test, --do-ra, --nsa option present)
-15337.668075 [UTIL] I threadCreate() for Tpool0_4: creating thread with affinity 4, priority 97
-15337.668192 [UTIL] I threadCreate() for Tpool1_5: creating thread with affinity 5, priority 97
+15582.439134 [UTIL] I running in SA mode (no --phy-test, --do-ra, --nsa option present)
+15582.439157 [UTIL] I threadCreate() for Tpool0_4: creating thread with affinity 4, priority 97
+15582.439303 [UTIL] I threadCreate() for Tpool1_5: creating thread with affinity 5, priority 97
 [LOADER] library libdemapper.so is not loaded: libdemapper.so: cannot open shared object file: No such file or directory
 [LOADER] library libreceiver.so is not loaded: libreceiver.so: cannot open shared object file: No such file or directory
-15338.669452 [OPT] I OPT disabled
+15583.440628 [OPT] I OPT disabled
 CMDLINE: "/opt/oai-nr-ue/bin/nr-uesoftmodem" "-O" "/opt/oai-nr-ue/etc/nr-ue.conf" "--usrp-args" "addr=192.168.20.2" "--ue-fo-compensation" "--band" "78" "--ue-rxgain" "60" "--log_config.global_log_options" "level,nocolor,time" "-C" "3604800000" "-r" "24" "--numerology" "1" "--ssb" "24" "--thread-pool" "4,5" 
 [CONFIG] function config_libconfig_init returned 0
-Error loading receiver_(null), ignoring receiver plugin15338.669839 [HW] I Version: Branch: HEAD Abrev. Hash: 207aac94d1 Date: Fri Aug 22 08:07:59 2025 +0000
-15338.671249 [NR_RRC] I create TASK_RRC_NRUE 
-15338.671262 [UTIL] I threadCreate() for TASK_RRC_NRUE: creating thread with affinity ffffffff, priority 50
-15338.671372 [UTIL] I threadCreate() for TASK_NAS_NRUE: creating thread with affinity ffffffff, priority 50
-15338.671562 [SIM] I UICC simulation: IMSI=262990100000832, IMEISV=6754567890123413, Ki=fec86ba6eb707ed08905757b1bb44b8f, OPc=C42449363BBAD02B66D16BC975D77CC1, DNN=oai, SST=0x01, SD=0xffffff
-15338.671610 [NR_MAC] I [UE0] Initializing MAC
-15338.671621 [NR_MAC] I Initializing dl and ul config_request. num_slots = 20
-15338.671654 [RLC] I Activated srb0 for UE 0
-15338.671665 [UTIL] I threadCreate() for time source realtime: creating thread with affinity ffffffff, priority 2
-15338.671707 [UTIL] I time manager configuration: [time source: reatime] [mode: standalone] [server IP: 127.0.0.1} [server port: 7374] (server IP/port not used)
-15338.671709 [PHY] I Set UE_fo_compensation 1, UE_scan_carrier 0, UE_no_timing_correction 0 
+Error loading receiver_(null), ignoring receiver plugin15583.440985 [HW] I Version: Branch: HEAD Abrev. Hash: 207aac94d1 Date: Fri Aug 22 08:07:59 2025 +0000
+15583.442822 [NR_RRC] I create TASK_RRC_NRUE 
+15583.442833 [UTIL] I threadCreate() for TASK_RRC_NRUE: creating thread with affinity ffffffff, priority 50
+15583.442953 [UTIL] I threadCreate() for TASK_NAS_NRUE: creating thread with affinity ffffffff, priority 50
+15583.443147 [SIM] I UICC simulation: IMSI=262990100000832, IMEISV=6754567890123413, Ki=fec86ba6eb707ed08905757b1bb44b8f, OPc=C42449363BBAD02B66D16BC975D77CC1, DNN=oai, SST=0x01, SD=0xffffff
+15583.443187 [NR_MAC] I [UE0] Initializing MAC
+15583.443205 [NR_MAC] I Initializing dl and ul config_request. num_slots = 20
+15583.443245 [RLC] I Activated srb0 for UE 0
+15583.443259 [UTIL] I threadCreate() for time source realtime: creating thread with affinity ffffffff, priority 2
+15583.443388 [UTIL] I time manager configuration: [time source: reatime] [mode: standalone] [server IP: 127.0.0.1} [server port: 7374] (server IP/port not used)
+15583.443392 [PHY] I Set UE_fo_compensation 1, UE_scan_carrier 0, UE_no_timing_correction 0 
 , chest-freq 0, chest-time 0
-15338.671710 [PHY] I Set UE nb_rx_antenna 1, nb_tx_antenna 1, threequarter_fs 0, ssb_start_subcarrier 24
-15338.671716 [PHY] I SA init parameters. DL freq 3604800000 UL offset 0 SSB numerology 1 N_RB_DL 24
-15338.671721 [PHY] I Init: N_RB_DL 24, first_carrier_offset 368, nb_prefix_samples 36,nb_prefix_samples0 44, ofdm_symbol_size 512
-15338.671722 [PHY] W samples_per_subframe 15360/per second 15360000, wCP 14336
-15338.671725 [UTIL] I threadCreate() for SYNC__actor: creating thread with affinity ffffffff, priority 97
-15338.671783 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-15338.671840 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-15338.671881 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-15338.671926 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-15338.671971 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
-15338.672028 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
-15338.672072 [PHY] I Initializing UE vars for gNB TXant 1, UE RXant 1
-15338.764585 [PHY] I prs_config configuration NOT found..!! Skipped configuring UE for the PRS reception
-15338.792592 [PHY] I HW: Configuring card 0, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-15338.792606 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-15338.792608 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
-15338.792609 [PHY] I HW: Configuring card 1, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-15338.792610 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-15338.792611 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
-15338.792612 [PHY] I HW: Configuring card 2, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-15338.792612 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-15338.792613 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
-15338.792614 [PHY] I HW: Configuring card 3, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-15338.792615 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-15338.792615 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
-15338.792616 [PHY] I HW: Configuring card 4, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-15338.792617 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-15338.792618 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
-15338.792619 [PHY] I HW: Configuring card 5, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-15338.792619 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-15338.792620 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
-15338.792621 [PHY] I HW: Configuring card 6, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-15338.792622 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-15338.792622 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
-15338.792623 [PHY] I HW: Configuring card 7, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-15338.792624 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
-15338.792625 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
-15338.824722 [PHY] I Intializing UE Threads for instance 0 ...
-15338.824739 [UTIL] I threadCreate() for UEthread_0: creating thread with affinity ffffffff, priority 97
-15338.826437 [UTIL] I threadCreate() for L1_UE_stats_0: creating thread with affinity ffffffff, priority 1
-15338.831731 [HW] I openair0_cfg[0].sdr_addrs == 'addr=192.168.20.2'
-15338.831739 [HW] I openair0_cfg[0].clock_source == '0' (internal = 0, external = 1)
-15338.831742 [HW] I UHD version 4.8.0.HEAD-0-g308126a4 (4.8.0)
-15338.831743 [HW] I Checking for USRP with args addr=192.168.20.2
+15583.443393 [PHY] I Set UE nb_rx_antenna 1, nb_tx_antenna 1, threequarter_fs 0, ssb_start_subcarrier 24
+15583.443399 [PHY] I SA init parameters. DL freq 3604800000 UL offset 0 SSB numerology 1 N_RB_DL 24
+15583.443405 [PHY] I Init: N_RB_DL 24, first_carrier_offset 368, nb_prefix_samples 36,nb_prefix_samples0 44, ofdm_symbol_size 512
+15583.443406 [PHY] W samples_per_subframe 15360/per second 15360000, wCP 14336
+15583.443410 [UTIL] I threadCreate() for SYNC__actor: creating thread with affinity ffffffff, priority 97
+15583.443475 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+15583.443537 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+15583.443592 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+15583.443636 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+15583.443683 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
+15583.443735 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
+15583.443787 [PHY] I Initializing UE vars for gNB TXant 1, UE RXant 1
+15583.530983 [PHY] I prs_config configuration NOT found..!! Skipped configuring UE for the PRS reception
+15583.554025 [PHY] I HW: Configuring card 0, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+15583.554037 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+15583.554040 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
+15583.554040 [PHY] I HW: Configuring card 1, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+15583.554041 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+15583.554042 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
+15583.554043 [PHY] I HW: Configuring card 2, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+15583.554044 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+15583.554045 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
+15583.554045 [PHY] I HW: Configuring card 3, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+15583.554046 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+15583.554047 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
+15583.554048 [PHY] I HW: Configuring card 4, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+15583.554048 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+15583.554049 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
+15583.554050 [PHY] I HW: Configuring card 5, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+15583.554051 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+15583.554052 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
+15583.554052 [PHY] I HW: Configuring card 6, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+15583.554053 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+15583.554054 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
+15583.554055 [PHY] I HW: Configuring card 7, sample_rate 15360000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+15583.554056 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604800000 Hz, rx_freq 3604800000 Hz, tune_offset 0
+15583.554057 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 0, rx_gain 60
+15583.590124 [PHY] I Intializing UE Threads for instance 0 ...
+15583.590136 [UTIL] I threadCreate() for UEthread_0: creating thread with affinity ffffffff, priority 97
+15583.591748 [UTIL] I threadCreate() for L1_UE_stats_0: creating thread with affinity ffffffff, priority 1
+15583.599396 [HW] I openair0_cfg[0].sdr_addrs == 'addr=192.168.20.2'
+15583.599409 [HW] I openair0_cfg[0].clock_source == '0' (internal = 0, external = 1)
+15583.599415 [HW] I UHD version 4.8.0.HEAD-0-g308126a4 (4.8.0)
+15583.599417 [HW] I Checking for USRP with args addr=192.168.20.2
 [INFO] [UHD] linux; GNU C++ version 13.3.0; Boost_108300; UHD_4.8.0.HEAD-0-g308126a4
-15339.347339 [HW] I Found USRP x4xx
+15584.111739 [HW] I Found USRP x4xx
 sysctl: setting key "net.core.rmem_max": Operation not permitted
 sysctl: setting key "net.core.wmem_max": Operation not permitted
 [INFO] [MPMD] Initializing 1 device(s) in parallel with args: mgmt_addr=192.168.20.2,type=x4xx,product=x410,serial=35074B8,name=ni-x4xx-35074B8,fpga=UC_200,claimed=False,addr=192.168.20.2,master_clock_rate=245760000.000000
 [INFO] [MPM.PeriphManager] init() called with device args `fpga=UC_200,master_clock_rate=(245760000.0,),mgmt_addr=192.168.20.2,name=ni-x4xx-35074B8,product=x410,clock_source=internal,time_source=internal,initializing=True'.
-15341.480381 [HW] I Setting clock source to internal
-15341.488530 [HW] I Setting time source to internal
+15586.201560 [HW] I Setting clock source to internal
+15586.209862 [HW] I Setting time source to internal
+-- Using calibration table: calib_table_none
 Channel emulation enabled: CIR source=cir_file, folder=(null), num_taps=0
 Channel emulation disabled (--cir-folder and --cir-zmq-num-taps not set)
 
 Initialized plugins
 
-UE threads created by 50
+UE threads created by 49
 TYPE <CTRL-C> TO TERMINATE
 Found USRP x400
 Entering ITTI signals handler
 TYPE <CTRL-C> TO TERMINATE
-15341.494628 [HW] I device_init() sample_rate:15360000
--- Using calibration table: calib_table_none
-15341.499795 [HW] I cal 0: freq 3500000000.000000, offset 0.000000, diff 104800000.000000
-15341.499800 [HW] I cal 1: freq 2660000000.000000, offset 0.000000, diff 944800000.000000
-15341.499802 [HW] I cal 2: freq 2300000000.000000, offset 0.000000, diff 1304800000.000000
-15341.499802 [HW] I cal 3: freq 1880000000.000000, offset 0.000000, diff 1724800000.000000
-15341.499803 [HW] I cal 4: freq 816000000.000000, offset 0.000000, diff 2788800000.000000
-15341.500217 [HW] I RX Gain 0 60.000000 (0.000000) => 60.000000 (max 60.000000)
-15341.505430 [HW] I USRP TX_GAIN:60.00 gain_range:60.00 tx_gain:0.00
-15341.505442 [HW] I Actual master clock: 245.760000MHz...
-15341.507680 [HW] I Actual clock source internal...
-15341.509546 [HW] I Actual time source internal...
-15341.509551 [HW] I setting rx channel 0
-15341.510436 [HW] I RF board max packet size 360, size for 100µs jitter 1536 
-15341.510443 [HW] I rx_max_num_samps 360
+15586.215769 [HW] I device_init() sample_rate:15360000
+15586.221954 [HW] I cal 0: freq 3500000000.000000, offset 0.000000, diff 104800000.000000
+15586.221963 [HW] I cal 1: freq 2660000000.000000, offset 0.000000, diff 944800000.000000
+15586.221965 [HW] I cal 2: freq 2300000000.000000, offset 0.000000, diff 1304800000.000000
+15586.221967 [HW] I cal 3: freq 1880000000.000000, offset 0.000000, diff 1724800000.000000
+15586.221969 [HW] I cal 4: freq 816000000.000000, offset 0.000000, diff 2788800000.000000
+15586.222576 [HW] I RX Gain 0 60.000000 (0.000000) => 60.000000 (max 60.000000)
+15586.228668 [HW] I USRP TX_GAIN:60.00 gain_range:60.00 tx_gain:0.00
+15586.228685 [HW] I Actual master clock: 245.760000MHz...
+15586.230070 [HW] I Actual clock source internal...
+15586.231554 [HW] I Actual time source internal...
+15586.231566 [HW] I setting rx channel 0
+15586.235727 [HW] I RF board max packet size 360, size for 100µs jitter 1536 
+15586.235733 [HW] I rx_max_num_samps 360
 [WARNING] [0/Radio#0] Invalid analog bandwidth: 10 MHz.
 [WARNING] [0/Radio#0] Invalid analog bandwidth: 10 MHz.
-15341.517824 [HW] I RX Channel 0
-15341.517831 [HW] I   Actual RX sample rate: 15.360000MSps...
-15341.517835 [HW] I   Actual RX frequency: 3.604800GHz...
-15341.517842 [HW] I   Actual RX gain: 60.000000...
-15341.517845 [HW] I   Actual RX bandwidth: 400.000000M...
-15341.517849 [HW] I   Actual RX antenna: RX1...
-15341.517850 [HW] I TX Channel 0
-15341.517851 [HW] I   Actual TX sample rate: 15.360000MSps...
-15341.517854 [HW] I   Actual TX frequency: 3.604800GHz...
-15341.517859 [HW] I   Actual TX gain: 60.000000...
-15341.517862 [HW] I   Actual TX bandwidth: 400.000000M...
-15341.517866 [HW] I   Actual TX antenna: TX/RX0...
-15341.517867 [HW] I   Actual TX packet size: 360
+15586.240902 [HW] I RX Channel 0
+15586.240909 [HW] I   Actual RX sample rate: 15.360000MSps...
+15586.240913 [HW] I   Actual RX frequency: 3.604800GHz...
+15586.240919 [HW] I   Actual RX gain: 60.000000...
+15586.240922 [HW] I   Actual RX bandwidth: 400.000000M...
+15586.240926 [HW] I   Actual RX antenna: RX1...
+15586.240927 [HW] I TX Channel 0
+15586.240928 [HW] I   Actual TX sample rate: 15.360000MSps...
+15586.240931 [HW] I   Actual TX frequency: 3.604800GHz...
+15586.240935 [HW] I   Actual TX gain: 60.000000...
+15586.240938 [HW] I   Actual TX bandwidth: 400.000000M...
+15586.240941 [HW] I   Actual TX antenna: TX/RX0...
+15586.240942 [HW] I   Actual TX packet size: 360
 Using Device: Single USRP:
   Device: X400-Series Device
   Mboard 0: x410
@@ -199,969 +199,550 @@ Using Device: Single USRP:
     TX Dboard: B
     TX Subdev: 1
 
-15341.518579 [HW] I Device timestamp: 0.049796...
-15341.518593 [HW] I [RRU] has loaded USRP X400 device.
-15341.712816 [HW] I current pps at 0.000000, starting streaming at 1.000000
-15343.731990 [PHY] W SSB position provided
-15343.732139 [NR_PHY] W Starting sync detection
-15343.732151 [PHY] I [UE thread Synch] Running Initial Synch 
-15343.732152 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
-15343.732501 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
-15343.870448 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-15343.870460 [PHY] I pbch rx ok. rsrp:74 dB/RE, adjust_rxgain:-24 dB
-15343.870570 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 24, SSB Ref: 0.000000, PSS Corr peak: 120 dB, PSS Corr Average: 83
-15343.872304 [PHY] I [UE0] In synch, rx_offset 70156 samples
-15343.872307 [PHY] I [UE 0] Measured Carrier Frequency offset -104 Hz
-15343.872308 [PHY] A Initial sync successful, PCI: 0
-15343.872310 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3604799896 Hz, rx_freq 3604799896 Hz, tune_offset 0
-15343.876862 [PHY] I Got synch: hw_slot_offset 18, carrier off -104 Hz, rxgain 60.000000 (DL 3604799896.000000 Hz, UL 3604799896.000000 Hz)
-15343.892279 [PHY] A UE synchronized! decoded_frame_rx=62 UE->init_sync_frame=0 trashed_frames=16
-15343.892286 [PHY] I Resynchronizing RX by 70156 samples
-15343.895890 [HW] I received write reorder clear context
-15343.908255 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15343.927561 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15343.948078 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15343.968296 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15343.987069 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.007136 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.027980 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.048476 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.067558 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.088246 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.108082 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.127928 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.148138 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.167015 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.186797 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.208396 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.227093 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.247428 [PHY] W Deadline missed for tx slot 114.2 (current time 1781636289343625 us, deadline 1781636289343337 us, missed by 288)
-15344.247789 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.267937 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.287435 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.307724 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.327110 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.347875 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.367269 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.387350 [NR_PHY] I LDPC decoder:    360.67 us (   360.67 us / seg)
-
-15344.387366 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.408091 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.427966 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.448273 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.467586 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.487050 [PHY] E [UE 0] frame 138, nr_slot_rx 0, Error decoding PBCH!
-15344.507274 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.527494 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.548381 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.567183 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.586884 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.606937 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.627303 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.648220 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.668374 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.687364 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.707178 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.727772 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.747775 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.767599 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.786988 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.808118 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.828263 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.847341 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.867370 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.887247 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.907561 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.927033 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.948459 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.968016 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15344.987613 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.006741 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.027480 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.048325 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.067733 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.087943 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.107094 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.127870 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.147617 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.167908 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.187246 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.208227 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.228316 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.248280 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.267637 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.288075 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.307313 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.327873 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.348039 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.368303 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.387258 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.407178 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.427930 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.447966 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.467793 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.487314 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.507171 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.528274 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.548461 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.568140 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.588370 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.607366 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.627756 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.647879 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.668164 [NR_PHY] I LDPC decoder:    364.73 us (   364.73 us / seg)
-
-15345.668180 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.687404 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.706774 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.727524 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.747822 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.767482 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.786907 [PHY] E [UE 0] frame 268, nr_slot_rx 0, Error decoding PBCH!
-15345.807391 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.829050 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.848658 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.867944 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.888124 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.907797 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.928618 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.947948 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.967693 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15345.987885 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.007805 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.028598 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.047895 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.067923 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.087676 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.107299 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.128050 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.147814 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.168177 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.187869 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.208353 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.227258 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.247993 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.268227 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.287630 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.308494 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.328185 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.348159 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.367956 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.387615 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.407371 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.429036 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.448204 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.467547 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.487310 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.507121 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.527750 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.547725 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.567524 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.587527 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.607164 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.628165 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.647284 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.667991 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.686924 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.707613 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.728433 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.747945 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.767090 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.787160 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.808030 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.827888 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.848261 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.867223 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.888457 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.908090 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.926790 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.947913 [NR_PHY] I LDPC decoder:    377.61 us (   377.61 us / seg)
-
-15346.947928 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.967367 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15346.986892 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.007811 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.027122 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.047136 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.067542 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.088200 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.107497 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.127019 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.147794 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.168292 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.188387 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.207686 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.226770 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.247936 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.267354 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.287900 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.307431 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.327763 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.348496 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.368233 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.387409 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.407805 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.427307 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.447608 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.468428 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.487678 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.506700 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.527427 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.547010 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.568344 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.587776 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.608023 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.627769 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.646525 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.667443 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.687824 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.707616 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.727909 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.746502 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.768325 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.788171 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.807397 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.827714 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.848137 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.868192 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.887301 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.907326 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.927246 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.947938 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.967217 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15347.987928 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.006968 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.028306 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.046801 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.067940 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.087907 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.107831 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.127485 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.147961 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.167821 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.187116 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.207697 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.227340 [NR_PHY] I LDPC decoder:    355.50 us (   355.50 us / seg)
-
-15348.227355 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.247132 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.267951 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.287659 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.306864 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.327784 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.348139 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.367248 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.386589 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.407871 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.427452 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.448248 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.467731 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.487911 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.506808 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.527670 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.548167 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.567332 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.586828 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.607522 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.628279 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.647125 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.668615 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.688217 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.707593 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.726888 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.746863 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.766732 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.788252 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.807117 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.828149 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.847549 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.867040 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.886856 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.907835 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.928005 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.947594 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.967379 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15348.987948 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.007507 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.027714 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.047284 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.067943 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.087785 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.107587 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.128010 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.147276 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.167196 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.187958 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.208203 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.228086 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.247122 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.267852 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.288295 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.307272 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.328310 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.347258 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.367609 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.386802 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.406737 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.428393 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.447064 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.466963 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.487661 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.507270 [NR_PHY] I LDPC decoder:    352.47 us (   352.47 us / seg)
-
-15349.507283 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.527522 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.547527 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.568552 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.588318 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.607383 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.626991 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.647702 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.667134 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.688933 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.707826 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.727559 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.746913 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.767253 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.788125 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.808522 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.827855 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.847964 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.867310 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.887940 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.906727 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.927788 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.948319 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.967350 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15349.988490 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.007983 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.027758 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.047525 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.067376 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.087858 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.107398 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.128465 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.148087 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.168013 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.187632 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.207087 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.228533 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.247333 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.267438 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.288439 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.307272 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.327464 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.347159 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.367308 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.387936 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.407798 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.427396 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.447625 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.468068 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.488260 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.508329 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.527895 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.547855 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.567784 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.587351 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.607641 [PHY] E [UE 0] frame 750, nr_slot_rx 0, Error decoding PBCH!
-15350.626980 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.647814 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.668431 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.687456 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.706777 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.727944 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.748640 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.767525 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.787325 [NR_PHY] I LDPC decoder:    359.17 us (   359.17 us / seg)
-
-15350.787340 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.808129 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.827935 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.847175 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.868228 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.887297 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.908355 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.926883 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.948199 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.967778 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15350.988085 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.007117 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.028292 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.047280 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.068449 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.086925 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.107008 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.127113 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.147230 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.167196 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.186945 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.207653 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.228024 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.248015 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.267491 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.286788 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.307203 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.328196 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.347432 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.368202 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.387437 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.406861 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.428064 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.447474 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.467489 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.487596 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.507161 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.527523 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.547737 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.567621 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.587941 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.607016 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.628213 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.647383 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.668258 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.687295 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.708310 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.727336 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.747795 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.767199 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.788446 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.807467 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.827402 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.848502 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.868450 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.888357 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.907489 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.928046 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.948062 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.968088 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15351.987414 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.006826 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.027843 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.047255 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.067615 [NR_PHY] I LDPC decoder:    364.60 us (   364.60 us / seg)
-
-15352.067624 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.087882 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.108011 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.127864 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.147844 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.167878 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.188587 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.206883 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.227220 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.246762 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.268060 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.287457 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.307840 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.328149 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.347293 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.367470 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.388358 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.407971 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.427167 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.448009 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.467123 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.487708 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.508336 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.528126 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.548552 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.567278 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.588185 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.607642 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.626791 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.647541 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.667858 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.688245 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.708339 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.727388 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.748059 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.767690 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.787882 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.806824 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.828631 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.848208 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.866702 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.887927 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.907401 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.927814 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.947420 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.968170 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15352.987586 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.007521 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.027448 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.048363 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.066856 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.087606 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.107743 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.128153 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.148340 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.166738 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.187773 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.207669 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.228345 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.247327 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.268233 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.288147 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.307913 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.328133 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.347954 [NR_PHY] I LDPC decoder:    365.73 us (   365.73 us / seg)
-
-15353.347965 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.368349 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.387833 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.406967 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.426858 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.447921 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.467292 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.487721 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.506834 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.527385 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.548059 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.566818 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.587296 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.607191 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.628406 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.647964 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.668711 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.687429 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.707125 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.728308 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.747216 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.767154 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.787346 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.806766 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.827975 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.846824 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.868192 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.887885 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.908012 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.928146 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.947294 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.968227 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15353.988345 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.008329 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.027453 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.047913 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.068460 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.087960 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.107008 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.127734 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.148193 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.167691 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.188839 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.207355 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.228491 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.247681 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.267408 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.287530 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.307162 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.328152 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.347190 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.367527 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.387447 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.406676 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.427100 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.447851 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.467074 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.488020 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.508021 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.528063 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.548042 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.568371 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.587880 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.606882 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.628492 [NR_PHY] I LDPC decoder:    367.76 us (   367.76 us / seg)
-
-15354.628508 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.648142 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.667251 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.686914 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.707396 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.728369 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.746847 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.768464 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.787365 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.806933 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.828485 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.847749 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.866963 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.887012 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.908412 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.929186 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.947877 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.967012 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15354.989203 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.007888 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.026855 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.047848 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.067300 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.088040 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.107981 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.127024 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.147362 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.167204 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.187672 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.207600 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.227593 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.247370 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.267382 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.286489 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.308541 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.327947 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.347771 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.367197 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.387269 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.407867 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.427183 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.446776 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.467710 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.488229 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.508196 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.527283 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.548097 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.567730 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.588163 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.607546 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.628165 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.647696 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.668588 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.687196 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.707891 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.727906 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.749045 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.768213 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.787337 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.807016 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.827558 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.847549 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.868346 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.888028 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.908504 [NR_PHY] I LDPC decoder:    378.53 us (   378.53 us / seg)
-
-15355.908515 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.927821 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.947211 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.967260 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15355.987875 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.006506 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.027257 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.047577 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.067948 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.087271 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.108471 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.127519 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.147795 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.167937 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.187273 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.208948 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.228256 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.247226 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.267131 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.288250 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.307017 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.327031 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.347154 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.367620 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.387736 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.408368 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.427945 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.448033 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.467323 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.487626 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.507843 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.527234 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.547247 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.567182 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.587745 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.607272 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.627742 [PHY] E [UE 0] frame 328, nr_slot_rx 0, Error decoding PBCH!
-15356.647157 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.668625 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.688874 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.707065 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.728025 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.747485 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.766863 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.787947 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.807729 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.826873 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.846951 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.867515 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.888645 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.908683 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.927270 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.947275 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.968177 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15356.987986 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.008368 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.027446 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.048333 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.067863 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.088174 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.107776 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.128623 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.147575 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.167872 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.187181 [NR_PHY] I LDPC decoder:    382.89 us (   382.89 us / seg)
-
-15357.187191 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.208229 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.227231 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.247661 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.266789 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.288066 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.307199 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.327796 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.347537 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.367657 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.388257 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.408244 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.427610 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.447968 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.467876 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.488567 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.507463 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.527010 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.546680 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.568158 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.587235 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.608840 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.627304 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.647861 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.667834 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.686876 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.707252 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.728277 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.747955 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.767525 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.787796 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.807709 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.827798 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.847637 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.867973 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.887749 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.906904 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.927985 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.947968 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.967010 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15357.987718 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.007421 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.027056 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.046771 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.067506 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.088342 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.108059 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.127298 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.147008 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.167785 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.187751 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.208884 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.226812 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.247408 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.267716 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.288026 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.307195 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.327391 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.348704 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.368274 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.388192 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.407409 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.427857 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.447302 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.466878 [NR_PHY] I LDPC decoder:    384.89 us (   384.89 us / seg)
-
-15358.466893 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.487967 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.506939 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.528082 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.547475 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.567931 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.586946 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.608140 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.627600 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.648442 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.667796 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.687389 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.708946 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.729349 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.747302 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.767778 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.788551 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.808191 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.827312 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.848651 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.867521 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.886939 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.907751 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.927079 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.948388 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.967210 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15358.988231 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.008484 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.028373 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.047141 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.067962 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.088076 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.107013 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.127618 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.148723 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.167956 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.186812 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.207304 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.228276 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.248690 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.267156 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.286691 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.307758 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.327294 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.348688 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.367966 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.388018 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.407708 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.427210 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.446923 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.466945 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.487817 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.506961 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.528863 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.547125 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.567415 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.587694 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.607553 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.627409 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.647618 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.667469 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.688746 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.707511 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.728170 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.747838 [NR_PHY] I LDPC decoder:    388.46 us (   388.46 us / seg)
-
-15359.747849 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.768102 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.787934 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.808462 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.827826 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.848234 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.868588 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.887210 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.907128 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.926887 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.947123 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.968235 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15359.986966 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.007442 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.027620 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.048326 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.066820 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.087768 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.107418 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.126680 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.146993 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.167320 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.187656 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.207631 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.227610 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.246857 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.268174 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.288373 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.306808 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.327846 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.348524 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.366992 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.387066 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.407757 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.427488 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.447785 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.467344 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.487424 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.506718 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.527128 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.547929 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.567279 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.587616 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.607559 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.627020 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.648148 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.668820 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.687591 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.707133 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.727671 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.748448 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.768586 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.787316 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.807918 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.827415 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.848377 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.867599 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.888637 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.908189 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.927473 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.947041 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.967444 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15360.987073 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.008040 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.027773 [NR_PHY] I LDPC decoder:    397.08 us (   397.08 us / seg)
-
-15361.027784 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.047454 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.067263 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.087326 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.107768 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.127804 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.147669 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.167429 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.187202 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.206978 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.227509 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.247843 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.267264 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.287158 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.308500 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.328284 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.347825 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.368182 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.387071 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.406773 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.427891 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.447512 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.466949 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.488398 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.508628 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.528430 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.547753 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.567440 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.588454 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.607730 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.628176 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.648067 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.668406 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.687646 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.706831 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.727466 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.746887 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.767337 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.787216 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.808652 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.828220 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.847760 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.868413 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.888753 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.907371 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.927854 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.947672 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.967307 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15361.987528 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.007457 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.028379 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.047574 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.068446 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.087236 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.107505 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.128008 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.148036 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.167933 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.188486 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.208158 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.227286 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
-15362.246835 [NR_MAC] E Got NACK on NR-BCCH-DL-SCH-Message (SIB1)
+15586.241511 [HW] I Device timestamp: 0.053819...
+15586.241522 [HW] I [RRU] has loaded USRP X400 device.
+15586.713048 [HW] I current pps at 0.000000, starting streaming at 1.000000
+15588.732258 [PHY] W SSB position provided
+15588.732573 [NR_PHY] W Starting sync detection
+15588.732586 [PHY] I [UE thread Synch] Running Initial Synch 
+15588.732587 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15588.733019 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15588.877197 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15588.877565 [PHY] E synch Failed: 
+15588.911349 [PHY] W SSB position provided
+15588.911762 [NR_PHY] W Starting sync detection
+15588.911784 [PHY] I [UE thread Synch] Running Initial Synch 
+15588.911786 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15588.912155 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15588.958190 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15588.958297 [PHY] E synch Failed: 
+15588.991452 [PHY] W SSB position provided
+15588.991661 [NR_PHY] W Starting sync detection
+15588.991682 [PHY] I [UE thread Synch] Running Initial Synch 
+15588.991684 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15588.991865 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15589.135946 [PHY] E synch Failed: 
+15589.171806 [PHY] W SSB position provided
+15589.172232 [NR_PHY] W Starting sync detection
+15589.172254 [PHY] I [UE thread Synch] Running Initial Synch 
+15589.172256 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15589.172440 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15589.218467 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15589.218583 [PHY] E synch Failed: 
+15589.251913 [PHY] W SSB position provided
+15589.252597 [NR_PHY] W Starting sync detection
+15589.252608 [PHY] I [UE thread Synch] Running Initial Synch 
+15589.252609 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15589.252648 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15589.396816 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15589.396928 [PHY] E synch Failed: 
+15589.431619 [PHY] W SSB position provided
+15589.432043 [NR_PHY] W Starting sync detection
+15589.432065 [PHY] I [UE thread Synch] Running Initial Synch 
+15589.432067 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15589.432248 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15589.478323 [PHY] E synch Failed: 
+15589.511878 [PHY] W SSB position provided
+15589.512263 [NR_PHY] W Starting sync detection
+15589.512285 [PHY] I [UE thread Synch] Running Initial Synch 
+15589.512287 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15589.512457 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15589.656661 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15589.656778 [PHY] E synch Failed: 
+15589.691609 [PHY] W SSB position provided
+15589.691994 [NR_PHY] W Starting sync detection
+15589.692033 [PHY] I [UE thread Synch] Running Initial Synch 
+15589.692035 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15589.692186 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15589.738273 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15589.738406 [PHY] E synch Failed: 
+15589.771894 [PHY] W SSB position provided
+15589.772114 [NR_PHY] W Starting sync detection
+15589.772135 [PHY] I [UE thread Synch] Running Initial Synch 
+15589.772137 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15589.772318 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15589.916532 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15589.916649 [PHY] E synch Failed: 
+15589.952831 [PHY] W SSB position provided
+15589.953286 [NR_PHY] W Starting sync detection
+15589.953307 [PHY] I [UE thread Synch] Running Initial Synch 
+15589.953310 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15589.953480 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15589.999584 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15589.999706 [PHY] E synch Failed: 
+15590.032177 [PHY] W SSB position provided
+15590.032599 [NR_PHY] W Starting sync detection
+15590.032622 [PHY] I [UE thread Synch] Running Initial Synch 
+15590.032624 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15590.032780 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15590.177040 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15590.177160 [PHY] E synch Failed: 
+15590.211985 [PHY] W SSB position provided
+15590.212148 [NR_PHY] W Starting sync detection
+15590.212159 [PHY] I [UE thread Synch] Running Initial Synch 
+15590.212160 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15590.212199 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15590.258218 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15590.258348 [PHY] E synch Failed: 
+15590.292205 [PHY] W SSB position provided
+15590.292493 [NR_PHY] W Starting sync detection
+15590.292499 [PHY] I [UE thread Synch] Running Initial Synch 
+15590.292500 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15590.292540 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15590.430634 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15590.430764 [PHY] E synch Failed: 
+15590.452065 [PHY] W SSB position provided
+15590.452097 [NR_PHY] W Starting sync detection
+15590.452103 [PHY] I [UE thread Synch] Running Initial Synch 
+15590.452104 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15590.452148 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15590.498123 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15590.498149 [PHY] E synch Failed: 
+15590.531659 [PHY] W SSB position provided
+15590.531833 [NR_PHY] W Starting sync detection
+15590.531847 [PHY] I [UE thread Synch] Running Initial Synch 
+15590.531848 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15590.531888 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15590.675943 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15590.676065 [PHY] E synch Failed: 
+15590.711840 [PHY] W SSB position provided
+15590.712349 [NR_PHY] W Starting sync detection
+15590.712370 [PHY] I [UE thread Synch] Running Initial Synch 
+15590.712372 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15590.712470 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15590.758512 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15590.758629 [PHY] E synch Failed: 
+15590.791841 [PHY] W SSB position provided
+15590.792335 [NR_PHY] W Starting sync detection
+15590.792358 [PHY] I [UE thread Synch] Running Initial Synch 
+15590.792360 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15590.792541 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15590.936548 [PHY] E synch Failed: 
+15590.971345 [PHY] W SSB position provided
+15590.971880 [NR_PHY] W Starting sync detection
+15590.971892 [PHY] I [UE thread Synch] Running Initial Synch 
+15590.971893 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15590.971930 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15591.018023 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15591.018145 [PHY] E synch Failed: 
+15591.051308 [PHY] W SSB position provided
+15591.051747 [NR_PHY] W Starting sync detection
+15591.051770 [PHY] I [UE thread Synch] Running Initial Synch 
+15591.051772 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15591.051938 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15591.196141 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15591.196255 [PHY] E synch Failed: 
+15591.231432 [PHY] W SSB position provided
+15591.231836 [NR_PHY] W Starting sync detection
+15591.231858 [PHY] I [UE thread Synch] Running Initial Synch 
+15591.231860 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15591.232060 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15591.278214 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15591.278338 [PHY] E synch Failed: 
+15591.311648 [PHY] W SSB position provided
+15591.311832 [NR_PHY] W Starting sync detection
+15591.311847 [PHY] I [UE thread Synch] Running Initial Synch 
+15591.311849 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15591.312028 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15591.456249 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15591.456361 [PHY] E synch Failed: 
+15591.492661 [PHY] W SSB position provided
+15591.493077 [NR_PHY] W Starting sync detection
+15591.493099 [PHY] I [UE thread Synch] Running Initial Synch 
+15591.493101 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15591.493241 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15591.539497 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15591.539621 [PHY] E synch Failed: 
+15591.572329 [PHY] W SSB position provided
+15591.572425 [NR_PHY] W Starting sync detection
+15591.572440 [PHY] I [UE thread Synch] Running Initial Synch 
+15591.572442 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15591.572618 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15591.716888 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15591.717010 [PHY] E synch Failed: 
+15591.752269 [PHY] W SSB position provided
+15591.752682 [NR_PHY] W Starting sync detection
+15591.752705 [PHY] I [UE thread Synch] Running Initial Synch 
+15591.752707 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15591.752851 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15591.799021 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15591.799125 [PHY] E synch Failed: 
+15591.832426 [PHY] W SSB position provided
+15591.832832 [NR_PHY] W Starting sync detection
+15591.832853 [PHY] I [UE thread Synch] Running Initial Synch 
+15591.832855 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15591.833022 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15591.971365 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15591.971471 [PHY] E synch Failed: 
+15591.991933 [PHY] W SSB position provided
+15591.992097 [NR_PHY] W Starting sync detection
+15591.992116 [PHY] I [UE thread Synch] Running Initial Synch 
+15591.992118 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15591.992242 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15592.038428 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15592.038547 [PHY] E synch Failed: 
+15592.072675 [PHY] W SSB position provided
+15592.073067 [NR_PHY] W Starting sync detection
+15592.073082 [PHY] I [UE thread Synch] Running Initial Synch 
+15592.073084 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15592.073266 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15592.217573 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15592.217695 [PHY] E synch Failed: 
+15592.251388 [PHY] W SSB position provided
+15592.251819 [NR_PHY] W Starting sync detection
+15592.251842 [PHY] I [UE thread Synch] Running Initial Synch 
+15592.251844 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15592.251998 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15592.298183 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15592.298310 [PHY] E synch Failed: 
+15592.332360 [PHY] W SSB position provided
+15592.332470 [NR_PHY] W Starting sync detection
+15592.332479 [PHY] I [UE thread Synch] Running Initial Synch 
+15592.332480 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15592.332525 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15592.476731 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15592.476781 [PHY] E synch Failed: 
+15592.511714 [PHY] W SSB position provided
+15592.511979 [NR_PHY] W Starting sync detection
+15592.511985 [PHY] I [UE thread Synch] Running Initial Synch 
+15592.511986 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15592.512037 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15592.558360 [PHY] E synch Failed: 
+15592.591852 [PHY] W SSB position provided
+15592.591963 [NR_PHY] W Starting sync detection
+15592.591972 [PHY] I [UE thread Synch] Running Initial Synch 
+15592.591974 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15592.592016 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15592.736385 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15592.736514 [PHY] E synch Failed: 
+15592.772012 [PHY] W SSB position provided
+15592.772026 [NR_PHY] W Starting sync detection
+15592.772031 [PHY] I [UE thread Synch] Running Initial Synch 
+15592.772033 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15592.772074 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15592.818682 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15592.819063 [PHY] E synch Failed: 
+15592.852200 [PHY] W SSB position provided
+15592.852307 [NR_PHY] W Starting sync detection
+15592.852314 [PHY] I [UE thread Synch] Running Initial Synch 
+15592.852316 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15592.852351 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15592.996634 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15592.996774 [PHY] E synch Failed: 
+15593.032407 [PHY] W SSB position provided
+15593.032428 [NR_PHY] W Starting sync detection
+15593.032431 [PHY] I [UE thread Synch] Running Initial Synch 
+15593.032433 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15593.032467 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15593.079072 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15593.079440 [PHY] E synch Failed: 
+15593.112777 [PHY] W SSB position provided
+15593.112887 [NR_PHY] W Starting sync detection
+15593.112896 [PHY] I [UE thread Synch] Running Initial Synch 
+15593.112898 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15593.112933 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15593.257101 [PHY] E synch Failed: 
+15593.292278 [PHY] W SSB position provided
+15593.292629 [NR_PHY] W Starting sync detection
+15593.292638 [PHY] I [UE thread Synch] Running Initial Synch 
+15593.292639 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15593.292685 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15593.339186 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15593.339313 [PHY] E synch Failed: 
+15593.371826 [PHY] W SSB position provided
+15593.371935 [NR_PHY] W Starting sync detection
+15593.371941 [PHY] I [UE thread Synch] Running Initial Synch 
+15593.371943 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15593.371983 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15593.516248 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15593.516376 [PHY] E synch Failed: 
+15593.552392 [PHY] W SSB position provided
+15593.552406 [NR_PHY] W Starting sync detection
+15593.552411 [PHY] I [UE thread Synch] Running Initial Synch 
+15593.552412 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15593.552458 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15593.599120 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15593.599240 [PHY] E synch Failed: 
+15593.632375 [PHY] W SSB position provided
+15593.632481 [NR_PHY] W Starting sync detection
+15593.632487 [PHY] I [UE thread Synch] Running Initial Synch 
+15593.632489 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15593.632528 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15593.776790 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15593.776825 [PHY] E synch Failed: 
+15593.811358 [PHY] W SSB position provided
+15593.811468 [NR_PHY] W Starting sync detection
+15593.811474 [PHY] I [UE thread Synch] Running Initial Synch 
+15593.811476 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15593.811515 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15593.858247 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15593.858364 [PHY] E synch Failed: 
+15593.891792 [PHY] W SSB position provided
+15593.891906 [NR_PHY] W Starting sync detection
+15593.891913 [PHY] I [UE thread Synch] Running Initial Synch 
+15593.891915 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15593.891955 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15594.036390 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15594.036427 [PHY] E synch Failed: 
+15594.071889 [PHY] W SSB position provided
+15594.071910 [NR_PHY] W Starting sync detection
+15594.071914 [PHY] I [UE thread Synch] Running Initial Synch 
+15594.071915 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15594.071953 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15594.118644 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15594.118679 [PHY] E synch Failed: 
+15594.151621 [PHY] W SSB position provided
+15594.151640 [NR_PHY] W Starting sync detection
+15594.151643 [PHY] I [UE thread Synch] Running Initial Synch 
+15594.151644 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15594.151678 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15594.296165 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15594.296304 [PHY] E synch Failed: 
+15594.331403 [PHY] W SSB position provided
+15594.331546 [NR_PHY] W Starting sync detection
+15594.331554 [PHY] I [UE thread Synch] Running Initial Synch 
+15594.331555 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15594.331579 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15594.378095 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15594.378218 [PHY] E synch Failed: 
+15594.412452 [PHY] W SSB position provided
+15594.412562 [NR_PHY] W Starting sync detection
+15594.412567 [PHY] I [UE thread Synch] Running Initial Synch 
+15594.412569 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15594.412598 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15594.556702 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15594.556737 [PHY] E synch Failed: 
+15594.591244 [PHY] W SSB position provided
+15594.591265 [NR_PHY] W Starting sync detection
+15594.591269 [PHY] I [UE thread Synch] Running Initial Synch 
+15594.591270 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15594.591294 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15594.637957 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15594.638083 [PHY] E synch Failed: 
+15594.672554 [PHY] W SSB position provided
+15594.672755 [NR_PHY] W Starting sync detection
+15594.672758 [PHY] I [UE thread Synch] Running Initial Synch 
+15594.672759 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15594.672784 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15594.817326 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15594.817452 [PHY] E synch Failed: 
+15594.851550 [PHY] W SSB position provided
+15594.851796 [NR_PHY] W Starting sync detection
+15594.851801 [PHY] I [UE thread Synch] Running Initial Synch 
+15594.851802 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15594.851843 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15594.898052 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15594.898175 [PHY] E synch Failed: 
+15594.931988 [PHY] W SSB position provided
+15594.932008 [NR_PHY] W Starting sync detection
+15594.932013 [PHY] I [UE thread Synch] Running Initial Synch 
+15594.932014 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15594.932057 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15595.076289 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15595.076427 [PHY] E synch Failed: 
+15595.111616 [PHY] W SSB position provided
+15595.111789 [NR_PHY] W Starting sync detection
+15595.111794 [PHY] I [UE thread Synch] Running Initial Synch 
+15595.111796 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15595.111836 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15595.158114 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15595.158227 [PHY] E synch Failed: 
+15595.192006 [PHY] W SSB position provided
+15595.192116 [NR_PHY] W Starting sync detection
+15595.192124 [PHY] I [UE thread Synch] Running Initial Synch 
+15595.192126 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15595.192167 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15595.336672 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15595.336793 [PHY] E synch Failed: 
+15595.371394 [PHY] W SSB position provided
+15595.371408 [NR_PHY] W Starting sync detection
+15595.371412 [PHY] I [UE thread Synch] Running Initial Synch 
+15595.371414 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15595.371459 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15595.418161 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15595.418566 [PHY] E synch Failed: 
+15595.452139 [PHY] W SSB position provided
+15595.452246 [NR_PHY] W Starting sync detection
+15595.452254 [PHY] I [UE thread Synch] Running Initial Synch 
+15595.452255 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15595.452295 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15595.596950 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15595.597066 [PHY] E synch Failed: 
+15595.631009 [PHY] W SSB position provided
+15595.631029 [NR_PHY] W Starting sync detection
+15595.631035 [PHY] I [UE thread Synch] Running Initial Synch 
+15595.631036 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15595.631073 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15595.677721 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15595.677839 [PHY] E synch Failed: 
+15595.712047 [PHY] W SSB position provided
+15595.712153 [NR_PHY] W Starting sync detection
+15595.712161 [PHY] I [UE thread Synch] Running Initial Synch 
+15595.712162 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15595.712202 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15595.856964 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15595.857106 [PHY] E synch Failed: 
+15595.891264 [PHY] W SSB position provided
+15595.891375 [NR_PHY] W Starting sync detection
+15595.891383 [PHY] I [UE thread Synch] Running Initial Synch 
+15595.891385 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15595.891420 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15595.938145 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15595.938378 [PHY] E synch Failed: 
+15595.972209 [PHY] W SSB position provided
+15595.972569 [NR_PHY] W Starting sync detection
+15595.972577 [PHY] I [UE thread Synch] Running Initial Synch 
+15595.972579 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15595.972624 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15596.117042 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15596.117176 [PHY] E synch Failed: 
+15596.152599 [PHY] W SSB position provided
+15596.152811 [NR_PHY] W Starting sync detection
+15596.152817 [PHY] I [UE thread Synch] Running Initial Synch 
+15596.152818 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15596.152853 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15596.199198 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15596.199323 [PHY] E synch Failed: 
+15596.231809 [PHY] W SSB position provided
+15596.232011 [NR_PHY] W Starting sync detection
+15596.232019 [PHY] I [UE thread Synch] Running Initial Synch 
+15596.232020 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15596.232056 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15596.376196 [PHY] E synch Failed: 
+15596.411394 [PHY] W SSB position provided
+15596.411498 [NR_PHY] W Starting sync detection
+15596.411507 [PHY] I [UE thread Synch] Running Initial Synch 
+15596.411509 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15596.411547 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15596.458086 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15596.458218 [PHY] E synch Failed: 
+15596.492008 [PHY] W SSB position provided
+15596.492130 [NR_PHY] W Starting sync detection
+15596.492137 [PHY] I [UE thread Synch] Running Initial Synch 
+15596.492138 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15596.492176 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15596.636801 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15596.636935 [PHY] E synch Failed: 
+15596.671896 [PHY] W SSB position provided
+15596.672280 [NR_PHY] W Starting sync detection
+15596.672288 [PHY] I [UE thread Synch] Running Initial Synch 
+15596.672290 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15596.672332 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15596.718909 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15596.719036 [PHY] E synch Failed: 
+15596.752196 [PHY] W SSB position provided
+15596.752218 [NR_PHY] W Starting sync detection
+15596.752223 [PHY] I [UE thread Synch] Running Initial Synch 
+15596.752224 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15596.752258 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15596.897288 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15596.897424 [PHY] E synch Failed: 
+15596.931663 [PHY] W SSB position provided
+15596.932037 [NR_PHY] W Starting sync detection
+15596.932047 [PHY] I [UE thread Synch] Running Initial Synch 
+15596.932049 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15596.932093 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15596.978577 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15596.978942 [PHY] E synch Failed: 
+15597.011909 [PHY] W SSB position provided
+15597.011926 [NR_PHY] W Starting sync detection
+15597.011929 [PHY] I [UE thread Synch] Running Initial Synch 
+15597.011930 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15597.011954 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15597.156513 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15597.156622 [PHY] E synch Failed: 
+15597.191434 [PHY] W SSB position provided
+15597.191456 [NR_PHY] W Starting sync detection
+15597.191459 [PHY] I [UE thread Synch] Running Initial Synch 
+15597.191460 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15597.191484 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15597.238494 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15597.238611 [PHY] E synch Failed: 
+15597.271901 [PHY] W SSB position provided
+15597.272035 [NR_PHY] W Starting sync detection
+15597.272041 [PHY] I [UE thread Synch] Running Initial Synch 
+15597.272042 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15597.272067 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15597.416818 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15597.416934 [PHY] E synch Failed: 
+15597.452215 [PHY] W SSB position provided
+15597.452342 [NR_PHY] W Starting sync detection
+15597.452347 [PHY] I [UE thread Synch] Running Initial Synch 
+15597.452348 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15597.452372 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15597.499357 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15597.499473 [PHY] E synch Failed: 
+15597.532361 [PHY] W SSB position provided
+15597.532494 [NR_PHY] W Starting sync detection
+15597.532499 [PHY] I [UE thread Synch] Running Initial Synch 
+15597.532499 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15597.532527 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15597.677031 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15597.677141 [PHY] E synch Failed: 
+15597.712562 [PHY] W SSB position provided
+15597.713222 [NR_PHY] W Starting sync detection
+15597.713232 [PHY] I [UE thread Synch] Running Initial Synch 
+15597.713233 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15597.713275 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15597.759874 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15597.759906 [PHY] E synch Failed: 
+15597.792072 [PHY] W SSB position provided
+15597.792200 [NR_PHY] W Starting sync detection
+15597.792205 [PHY] I [UE thread Synch] Running Initial Synch 
+15597.792206 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15597.792241 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15597.936719 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15597.936852 [PHY] E synch Failed: 
+15597.972170 [PHY] W SSB position provided
+15597.972301 [NR_PHY] W Starting sync detection
+15597.972309 [PHY] I [UE thread Synch] Running Initial Synch 
+15597.972310 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15597.972352 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15598.018714 [PHY] E synch Failed: 
+15598.052233 [PHY] W SSB position provided
+15598.052346 [NR_PHY] W Starting sync detection
+15598.052354 [PHY] I [UE thread Synch] Running Initial Synch 
+15598.052355 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15598.052389 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15598.197134 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15598.197271 [PHY] E synch Failed: 
+15598.232015 [PHY] W SSB position provided
+15598.232035 [NR_PHY] W Starting sync detection
+15598.232039 [PHY] I [UE thread Synch] Running Initial Synch 
+15598.232041 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15598.232075 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15598.278931 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15598.279315 [PHY] E synch Failed: 
+15598.311905 [PHY] W SSB position provided
+15598.312022 [NR_PHY] W Starting sync detection
+15598.312028 [PHY] I [UE thread Synch] Running Initial Synch 
+15598.312030 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15598.312072 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15598.456588 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15598.456629 [PHY] E synch Failed: 
+15598.492813 [PHY] W SSB position provided
+15598.493252 [NR_PHY] W Starting sync detection
+15598.493257 [PHY] I [UE thread Synch] Running Initial Synch 
+15598.493259 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15598.493295 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15598.540153 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15598.540269 [PHY] E synch Failed: 
+15598.571526 [PHY] W SSB position provided
+15598.571550 [NR_PHY] W Starting sync detection
+15598.571554 [PHY] I [UE thread Synch] Running Initial Synch 
+15598.571555 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15598.571589 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15598.715869 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15598.715995 [PHY] E synch Failed: 
+15598.752137 [PHY] W SSB position provided
+15598.752270 [NR_PHY] W Starting sync detection
+15598.752275 [PHY] I [UE thread Synch] Running Initial Synch 
+15598.752277 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15598.752304 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
+15598.799107 [PHY] W Initial sync: pbch not decoded, ssb index 0
+15598.799212 [PHY] E synch Failed: 
+15598.831729 [PHY] W SSB position provided
+15598.831836 [NR_PHY] W Starting sync detection
+15598.831842 [PHY] I [UE thread Synch] Running Initial Synch 
+15598.831843 [NR_PHY] I Starting cell search with center freq: 3604800000, bandwidth: 24. Scanning for 1 number of GSCN.
+15598.831871 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 24, SSB Freq: 0.000000
