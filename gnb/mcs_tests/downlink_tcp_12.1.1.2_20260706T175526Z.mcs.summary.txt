@@ -1,0 +1,2 @@
+DL MCS: count=25 min=4 max=26 avg=23.200 stddev=4.214
+UL MCS: count=25 min=0 max=13 avg=6.000 stddev=4.445
