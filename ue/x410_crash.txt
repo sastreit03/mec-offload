@@ -49,74 +49,74 @@ channelmod = {
 [INFO] Target b2xx_common_fw_default is up to date.
 ==================================
 == Starting NR UE soft modem
-Additional option(s): --usrp-args serial=3273AC4 --ue-fo-compensation --band 78 --ue-txgain 5 --ue-rxgain 100 --log_config.global_log_options level,nocolor,time -C 3309480000 -r 51 --numerology 1 --ssb 238 --thread-pool 4,5
-/opt/oai-nr-ue/bin/nr-uesoftmodem -O /opt/oai-nr-ue/etc/nr-ue.conf --usrp-args serial=3273AC4 --ue-fo-compensation --band 78 --ue-txgain 5 --ue-rxgain 100 --log_config.global_log_options level,nocolor,time -C 3309480000 -r 51 --numerology 1 --ssb 238 --thread-pool 4,5
-83702.312259 [UTIL] I running in SA mode (no --phy-test, --do-ra, --nsa option present)
-83702.312276 [UTIL] I threadCreate() for Tpool0_4: creating thread with affinity 4, priority 97
-83702.312370 [UTIL] I threadCreate() for Tpool1_5: creating thread with affinity 5, priority 97
-83703.312936 [OPT] I OPT disabled
+Additional option(s): --usrp-args serial=3273AC4 --ue-fo-compensation --band 78 --ue-txgain 30 --ue-rxgain 100 --log_config.global_log_options level,nocolor,time -C 3309480000 -r 51 --numerology 1 --ssb 238 --thread-pool 4,5
+/opt/oai-nr-ue/bin/nr-uesoftmodem -O /opt/oai-nr-ue/etc/nr-ue.conf --usrp-args serial=3273AC4 --ue-fo-compensation --band 78 --ue-txgain 30 --ue-rxgain 100 --log_config.global_log_options level,nocolor,time -C 3309480000 -r 51 --numerology 1 --ssb 238 --thread-pool 4,5
+88988.438894 [UTIL] I running in SA mode (no --phy-test, --do-ra, --nsa option present)
+88988.438909 [UTIL] I threadCreate() for Tpool0_4: creating thread with affinity 4, priority 97
+88988.438995 [UTIL] I threadCreate() for Tpool1_5: creating thread with affinity 5, priority 97
+88989.439718 [OPT] I OPT disabled
 [LOADER] library libdemapper.so is not loaded: libdemapper.so: cannot open shared object file: No such file or directory
 [LOADER] library libreceiver.so is not loaded: libreceiver.so: cannot open shared object file: No such file or directory
-CMDLINE: "/opt/oai-nr-ue/bin/nr-uesoftmodem" "-O" "/opt/oai-nr-ue/etc/nr-ue.conf" "--usrp-args" "serial=3273AC4" "--ue-fo-compensation" "--band" "78" "--ue-txgain" "5" "--ue-rxgain" "100" "--log_config.global_log_options" "level,nocolor,time" "-C" "3309480000" "-r" "51" "--numerology" "1" "--ssb" "238" "--thread-pool" "4,5" 
+CMDLINE: "/opt/oai-nr-ue/bin/nr-uesoftmodem" "-O" "/opt/oai-nr-ue/etc/nr-ue.conf" "--usrp-args" "serial=3273AC4" "--ue-fo-compensation" "--band" "78" "--ue-txgain" "30" "--ue-rxgain" "100" "--log_config.global_log_options" "level,nocolor,time" "-C" "3309480000" "-r" "51" "--numerology" "1" "--ssb" "238" "--thread-pool" "4,5" 
 [CONFIG] function config_libconfig_init returned 0
-Error loading receiver_(null), ignoring receiver plugin83703.313209 [HW] I Version: Branch: HEAD Abrev. Hash: 207aac94d1 Date: Fri Aug 22 08:07:59 2025 +0000
-83703.314466 [NR_RRC] I create TASK_RRC_NRUE 
-83703.314474 [UTIL] I threadCreate() for TASK_RRC_NRUE: creating thread with affinity ffffffff, priority 50
-83703.314572 [UTIL] I threadCreate() for TASK_NAS_NRUE: creating thread with affinity ffffffff, priority 50
-83703.314698 [SIM] I UICC simulation: IMSI=262990100000832, IMEISV=6754567890123413, Ki=fec86ba6eb707ed08905757b1bb44b8f, OPc=C42449363BBAD02B66D16BC975D77CC1, DNN=oai, SST=0x01, SD=0xffffff
-83703.314724 [NR_MAC] I [UE0] Initializing MAC
-83703.314732 [NR_MAC] I Initializing dl and ul config_request. num_slots = 20
-83703.314765 [RLC] I Activated srb0 for UE 0
-83703.314778 [UTIL] I threadCreate() for time source realtime: creating thread with affinity ffffffff, priority 2
-83703.314805 [UTIL] I time manager configuration: [time source: reatime] [mode: standalone] [server IP: 127.0.0.1} [server port: 7374] (server IP/port not used)
-83703.314806 [PHY] I Set UE_fo_compensation 1, UE_scan_carrier 0, UE_no_timing_correction 0 
+Error loading receiver_(null), ignoring receiver plugin88989.440022 [HW] I Version: Branch: HEAD Abrev. Hash: 207aac94d1 Date: Fri Aug 22 08:07:59 2025 +0000
+88989.441598 [NR_RRC] I create TASK_RRC_NRUE 
+88989.441607 [UTIL] I threadCreate() for TASK_RRC_NRUE: creating thread with affinity ffffffff, priority 50
+88989.441702 [UTIL] I threadCreate() for TASK_NAS_NRUE: creating thread with affinity ffffffff, priority 50
+88989.441826 [SIM] I UICC simulation: IMSI=262990100000832, IMEISV=6754567890123413, Ki=fec86ba6eb707ed08905757b1bb44b8f, OPc=C42449363BBAD02B66D16BC975D77CC1, DNN=oai, SST=0x01, SD=0xffffff
+88989.441851 [NR_MAC] I [UE0] Initializing MAC
+88989.441860 [NR_MAC] I Initializing dl and ul config_request. num_slots = 20
+88989.441911 [RLC] I Activated srb0 for UE 0
+88989.441918 [UTIL] I threadCreate() for time source realtime: creating thread with affinity ffffffff, priority 2
+88989.441940 [UTIL] I time manager configuration: [time source: reatime] [mode: standalone] [server IP: 127.0.0.1} [server port: 7374] (server IP/port not used)
+88989.441942 [PHY] I Set UE_fo_compensation 1, UE_scan_carrier 0, UE_no_timing_correction 0 
 , chest-freq 0, chest-time 0
-83703.314806 [PHY] I Set UE nb_rx_antenna 1, nb_tx_antenna 1, threequarter_fs 0, ssb_start_subcarrier 238
-83703.314809 [PHY] I SA init parameters. DL freq 3309480000 UL offset 0 SSB numerology 1 N_RB_DL 51
-83703.314813 [PHY] I Init: N_RB_DL 51, first_carrier_offset 718, nb_prefix_samples 72,nb_prefix_samples0 88, ofdm_symbol_size 1024
-83703.314815 [PHY] W samples_per_subframe 30720/per second 30720000, wCP 28672
-83703.314817 [UTIL] I threadCreate() for SYNC__actor: creating thread with affinity ffffffff, priority 97
-83703.314851 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-83703.314880 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-83703.314903 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-83703.314927 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
-83703.314957 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
-83703.314983 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
-83703.315012 [PHY] I Initializing UE vars for gNB TXant 1, UE RXant 1
-83703.380256 [PHY] I prs_config configuration NOT found..!! Skipped configuring UE for the PRS reception
-83703.420789 [PHY] I HW: Configuring card 0, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-83703.420801 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
-83703.420803 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 5, rx_gain 100
-83703.420804 [PHY] I HW: Configuring card 1, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-83703.420805 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
-83703.420806 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 5, rx_gain 100
-83703.420807 [PHY] I HW: Configuring card 2, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-83703.420807 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
-83703.420808 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 5, rx_gain 100
-83703.420809 [PHY] I HW: Configuring card 3, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-83703.420810 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
-83703.420811 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 5, rx_gain 100
-83703.420811 [PHY] I HW: Configuring card 4, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-83703.420812 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
-83703.420813 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 5, rx_gain 100
-83703.420814 [PHY] I HW: Configuring card 5, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-83703.420814 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
-83703.420815 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 5, rx_gain 100
-83703.420816 [PHY] I HW: Configuring card 6, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-83703.420816 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
-83703.420817 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 5, rx_gain 100
-83703.420818 [PHY] I HW: Configuring card 7, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
-83703.420819 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
-83703.420819 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 5, rx_gain 100
-83703.459203 [PHY] I Intializing UE Threads for instance 0 ...
-83703.459215 [UTIL] I threadCreate() for UEthread_0: creating thread with affinity ffffffff, priority 97
-83703.460470 [UTIL] I threadCreate() for L1_UE_stats_0: creating thread with affinity ffffffff, priority 1
-83703.465361 [HW] I openair0_cfg[0].sdr_addrs == 'serial=3273AC4'
-83703.465368 [HW] I openair0_cfg[0].clock_source == '0' (internal = 0, external = 1)
-83703.465371 [HW] I UHD version 4.8.0.HEAD-0-g308126a4 (4.8.0)
-83703.465372 [HW] I Checking for USRP with args serial=3273AC4
+88989.441942 [PHY] I Set UE nb_rx_antenna 1, nb_tx_antenna 1, threequarter_fs 0, ssb_start_subcarrier 238
+88989.441945 [PHY] I SA init parameters. DL freq 3309480000 UL offset 0 SSB numerology 1 N_RB_DL 51
+88989.441949 [PHY] I Init: N_RB_DL 51, first_carrier_offset 718, nb_prefix_samples 72,nb_prefix_samples0 88, ofdm_symbol_size 1024
+88989.441950 [PHY] W samples_per_subframe 30720/per second 30720000, wCP 28672
+88989.441952 [UTIL] I threadCreate() for SYNC__actor: creating thread with affinity ffffffff, priority 97
+88989.441976 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+88989.442014 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+88989.442037 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+88989.442057 [UTIL] I threadCreate() for DL__actor: creating thread with affinity ffffffff, priority 97
+88989.442090 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
+88989.442122 [UTIL] I threadCreate() for UL__actor: creating thread with affinity ffffffff, priority 97
+88989.442145 [PHY] I Initializing UE vars for gNB TXant 1, UE RXant 1
+88989.508416 [PHY] I prs_config configuration NOT found..!! Skipped configuring UE for the PRS reception
+88989.568014 [PHY] I HW: Configuring card 0, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+88989.568025 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
+88989.568027 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 30, rx_gain 100
+88989.568028 [PHY] I HW: Configuring card 1, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+88989.568029 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
+88989.568030 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 30, rx_gain 100
+88989.568031 [PHY] I HW: Configuring card 2, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+88989.568032 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
+88989.568033 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 30, rx_gain 100
+88989.568033 [PHY] I HW: Configuring card 3, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+88989.568034 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
+88989.568035 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 30, rx_gain 100
+88989.568036 [PHY] I HW: Configuring card 4, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+88989.568037 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
+88989.568038 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 30, rx_gain 100
+88989.568038 [PHY] I HW: Configuring card 5, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+88989.568039 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
+88989.568040 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 30, rx_gain 100
+88989.568040 [PHY] I HW: Configuring card 6, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+88989.568041 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
+88989.568042 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 30, rx_gain 100
+88989.568043 [PHY] I HW: Configuring card 7, sample_rate 30720000.000000, tx/rx num_channels 1/1, duplex_mode TDD
+88989.568044 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480000 Hz, rx_freq 3309480000 Hz, tune_offset 0
+88989.568044 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_gain 30, rx_gain 100
+88989.620658 [PHY] I Intializing UE Threads for instance 0 ...
+88989.620669 [UTIL] I threadCreate() for UEthread_0: creating thread with affinity ffffffff, priority 97
+88989.622833 [UTIL] I threadCreate() for L1_UE_stats_0: creating thread with affinity ffffffff, priority 1
+88989.628570 [HW] I openair0_cfg[0].sdr_addrs == 'serial=3273AC4'
+88989.628578 [HW] I openair0_cfg[0].clock_source == '0' (internal = 0, external = 1)
+88989.628581 [HW] I UHD version 4.8.0.HEAD-0-g308126a4 (4.8.0)
+88989.628581 [HW] I Checking for USRP with args serial=3273AC4
 [INFO] [UHD] linux; GNU C++ version 13.3.0; Boost_108300; UHD_4.8.0.HEAD-0-g308126a4
-83703.989663 [HW] I Found USRP b200
+88990.153109 [HW] I Found USRP b200
 [INFO] [B200] Detected Device: B210
 [INFO] [B200] Operating over USB 3.
 [INFO] [B200] Initialize CODEC control...
@@ -127,46 +127,46 @@ Error loading receiver_(null), ignoring receiver plugin83703.313209 [HW] I Versi
 [INFO] [B200] Register loopback test passed
 [INFO] [B200] Asking for clock rate 30.720000 MHz... 
 [INFO] [B200] Actually got clock rate 30.720000 MHz.
-83705.869258 [HW] I Setting clock source to internal
-83705.869266 [HW] I Setting time source to internal
+88991.906843 [HW] I Setting clock source to internal
+88991.906852 [HW] I Setting time source to internal
+-- Using calibration table: calib_table_b210_38
+[INFO] [B200] Asking for clock rate 30.720000 MHz... 
+[INFO] [B200] OK
 Channel emulation enabled: CIR source=cir_file, folder=(null), num_taps=0
 Channel emulation disabled (--cir-folder and --cir-zmq-num-taps not set)
 
 Initialized plugins
 
-UE threads created by 48
+UE threads created by 49
 TYPE <CTRL-C> TO TERMINATE
 Entering ITTI signals handler
 TYPE <CTRL-C> TO TERMINATE
--- Using calibration table: calib_table_b210_38
-[INFO] [B200] Asking for clock rate 30.720000 MHz... 
-[INFO] [B200] OK
-83707.543725 [HW] I cal 0: freq 3500000000.000000, offset 44.000000, diff 190520000.000000
-83707.543736 [HW] I cal 1: freq 2660000000.000000, offset 49.800000, diff 649480000.000000
-83707.543738 [HW] I cal 2: freq 2300000000.000000, offset 51.000000, diff 1009480000.000000
-83707.543739 [HW] I cal 3: freq 1880000000.000000, offset 53.000000, diff 1429480000.000000
-83707.543740 [HW] I cal 4: freq 816000000.000000, offset 57.000000, diff 2493480000.000000
-83707.544025 [HW] I RX Gain 0 100.000000 (44.000000) => 56.000000 (max 76.000000)
-83707.574614 [HW] I USRP TX_GAIN:84.75 gain_range:89.75 tx_gain:5.00
-83707.574624 [HW] I Actual master clock: 30.720000MHz...
-83707.574627 [HW] I Actual clock source internal...
-83707.574629 [HW] I Actual time source internal...
-83707.574633 [HW] I setting rx channel 0
-83707.576097 [HW] I RF board max packet size 1916, size for 100µs jitter 3072 
-83707.576098 [HW] I rx_max_num_samps 1916
-83707.605521 [HW] I RX Channel 0
-83707.605524 [HW] I   Actual RX sample rate: 30.720000MSps...
-83707.605530 [HW] I   Actual RX frequency: 3.309480GHz...
-83707.605537 [HW] I   Actual RX gain: 56.000000...
-83707.605539 [HW] I   Actual RX bandwidth: 20.000000M...
-83707.605542 [HW] I   Actual RX antenna: RX2...
-83707.605543 [HW] I TX Channel 0
-83707.605546 [HW] I   Actual TX sample rate: 30.720000MSps...
-83707.605551 [HW] I   Actual TX frequency: 3.309480GHz...
-83707.605557 [HW] I   Actual TX gain: 84.750000...
-83707.605560 [HW] I   Actual TX bandwidth: 20.000000M...
-83707.605563 [HW] I   Actual TX antenna: TX/RX...
-83707.605563 [HW] I   Actual TX packet size: 1916
+88992.858320 [HW] I cal 0: freq 3500000000.000000, offset 44.000000, diff 190520000.000000
+88992.858331 [HW] I cal 1: freq 2660000000.000000, offset 49.800000, diff 649480000.000000
+88992.858332 [HW] I cal 2: freq 2300000000.000000, offset 51.000000, diff 1009480000.000000
+88992.858333 [HW] I cal 3: freq 1880000000.000000, offset 53.000000, diff 1429480000.000000
+88992.858334 [HW] I cal 4: freq 816000000.000000, offset 57.000000, diff 2493480000.000000
+88992.858554 [HW] I RX Gain 0 100.000000 (44.000000) => 56.000000 (max 76.000000)
+88992.889932 [HW] I USRP TX_GAIN:59.75 gain_range:89.75 tx_gain:30.00
+88992.889944 [HW] I Actual master clock: 30.720000MHz...
+88992.889948 [HW] I Actual clock source internal...
+88992.889951 [HW] I Actual time source internal...
+88992.889955 [HW] I setting rx channel 0
+88992.891882 [HW] I RF board max packet size 1916, size for 100µs jitter 3072 
+88992.891884 [HW] I rx_max_num_samps 1916
+88992.922946 [HW] I RX Channel 0
+88992.922951 [HW] I   Actual RX sample rate: 30.720000MSps...
+88992.922957 [HW] I   Actual RX frequency: 3.309480GHz...
+88992.922965 [HW] I   Actual RX gain: 56.000000...
+88992.922968 [HW] I   Actual RX bandwidth: 20.000000M...
+88992.922971 [HW] I   Actual RX antenna: RX2...
+88992.922971 [HW] I TX Channel 0
+88992.922975 [HW] I   Actual TX sample rate: 30.720000MSps...
+88992.922980 [HW] I   Actual TX frequency: 3.309480GHz...
+88992.922986 [HW] I   Actual TX gain: 59.750000...
+88992.922989 [HW] I   Actual TX bandwidth: 20.000000M...
+88992.922992 [HW] I   Actual TX antenna: TX/RX...
+88992.922992 [HW] I   Actual TX packet size: 1916
 Using Device: Single USRP:
   Device: B-Series Device
   Mboard 0: B210
@@ -187,726 +187,167 @@ Using Device: Single USRP:
     TX Dboard: A
     TX Subdev: FE-TX1
 
-83707.605767 [HW] I Device timestamp: 1.239555...
-83707.605771 [HW] I [RRU] has loaded USRP B200 device.
-83708.366109 [HW] I current pps at 2.000000, starting streaming at 3.000000
-83710.386226 [PHY] W SSB position provided
-83710.386247 [NR_PHY] W Starting sync detection
-83710.386251 [PHY] I [UE thread Synch] Running Initial Synch 
-83710.386252 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
-83710.386892 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
-83710.926215 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-83710.926230 [PHY] I pbch rx ok. rsrp:57 dB/RE, adjust_rxgain:-7 dB
-83710.926239 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 238, SSB Ref: 0.000000, PSS Corr peak: 104 dB, PSS Corr Average: 70
-83710.929170 [PHY] I [UE0] In synch, rx_offset 56880 samples
-83710.929172 [PHY] I [UE 0] Measured Carrier Frequency offset -7524 Hz
-83710.929173 [PHY] A Initial sync successful, PCI: 0
-83710.929174 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309472476 Hz, rx_freq 3309472476 Hz, tune_offset 0
-83710.936904 [PHY] I Got synch: hw_slot_offset 7, carrier off -7524 Hz, rxgain 56.000000 (DL 3309472476.000000 Hz, UL 3309472476.000000 Hz)
-83710.946184 [PHY] A UE synchronized! decoded_frame_rx=534 UE->init_sync_frame=0 trashed_frames=56
-83710.946193 [PHY] I Resynchronizing RX by 56880 samples
-83710.948064 [HW] I received write reorder clear context
-83710.959336 [NR_RRC] A SIB1 decoded
-83710.959589 [NR_MAC] I TDD period index = 6, based on the sum of dl_UL_TransmissionPeriodicity from Pattern1 (5.000000 ms) and Pattern2 (0.000000 ms): Total = 5.000000 ms
-83710.959594 [NR_MAC] I Set TDD configuration period to: 8 DL slots, 2 UL slots, 10 slots per period (NR_TDD_UL_DL_Pattern is 7 DL slots, 2 UL slots, 6 DL symbols, 0 UL symbols)
-83710.959595 [NR_MAC] I Configured 1 TDD patterns (total slots: pattern1 = 10, pattern2 = 0)
-83710.960084 [PHY] I N_TA_offset changed from 0 to 400
-83710.961189 [MAC] I Initialization of 4-Step CBRA procedure
-83710.961204 [NR_MAC] E RA-ResponseWindow need to be configured to a value lower than or equal to 10 ms
-83710.976705 [NR_MAC] I PRACH scheduler: Selected RO Frame 593, Slot 19, Symbol 8, Fdm 0
-83710.976841 [PHY] I PRACH [UE 0] in frame.slot 593.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 19, first_nonzero_root_idx 0, preambleIndex = 38
-83710.988843 [PHY] I RAR-Msg2 decoded
-83710.988849 [NR_MAC] I [UE 0][RAPROC][RA-RNTI 0113] Got BI RAR subPDU 5 ms
-83710.988851 [NR_MAC] I [UE 0][RAPROC][RA-RNTI 0113] Got RAPID RAR subPDU
-83710.988852 [NR_MAC] A [UE 0][RAPROC][595.0] Found RAR with the intended RAPID 38
-83710.988853 [MAC] W received TA command 42
-83710.991631 [NR_MAC] A [RAPROC][595.9] RA-Msg3 transmitted
-83711.001282 [NR_MAC] I [RAPROC][596.8] RA-Msg3 retransmitted
-83711.011231 [NR_MAC] I [RAPROC][597.8] RA-Msg3 retransmitted
-83711.019384 [MAC] A [UE 0][598.1][RAPROC] 4-Step RA procedure succeeded. CBRA: Contention Resolution is successful.
-83711.019518 [NR_RRC] I [UE0][RAPROC] Logical Channel DL-CCCH (SRB0), Received NR_RRCSetup
-83711.019617 [RLC] I Added srb 1 to UE 0
-83711.019625 [NR_RRC] I State = NR_RRC_CONNECTED
-83711.019634 [NAS] I Generate Initial NAS Message: Registration Request
-83711.019636 [NAS] I [UE 0] Received NR_NAS_CONN_ESTABLISH_IND: asCause 0
-83711.019642 [NR_RRC] I [UE 0][RAPROC] Logical Channel UL-DCCH (SRB1), Generating RRCSetupComplete (bytes33)
-83711.019646 [MAC] I [UE 0] Applying CellGroupConfig from gNodeB
-83711.074033 [NAS] I [UE 0] Received NAS_DOWNLINK_DATA_IND type FGS_AUTHENTICATION_REQUEST with length 42
-83711.113994 [NAS] I [UE 0] Received NAS_DOWNLINK_DATA_IND type FGS_SECURITY_MODE_COMMAND with length 21
-83711.114891 [NAS] I Generate Initial NAS Message: Registration Request
-83711.149887 [NR_RRC] I Received securityModeCommand (gNB 0)
-83711.149893 [NR_RRC] I Receiving from SRB1 (DL-DCCH), Processing securityModeCommand
-83711.149894 [NR_RRC] I Security algorithm is set to nea0
-83711.149894 [NR_RRC] I Integrity protection algorithm is set to nia2
-83711.151808 [NR_RRC] I Receiving from SRB1 (DL-DCCH), encoding securityModeComplete, rrc_TransactionIdentifier: 1
-83711.179328 [NR_RRC] I Received Capability Enquiry (gNB 0)
-83711.179331 [NR_RRC] I Receiving from SRB1 (DL-DCCH), Processing UECapabilityEnquiry
-sleep...
-sleep...
-sleep...
-sleep...
-sleep...
-sleep...
-sleep...
-sleep...
-sleep...
-sleep...
-Setting USRP TX Freq 3309472476.000000, RX Freq 3309472476.000000, tune_offset: 0.000000
-kausf:8b a6 93 ff 0 11 c1 a0 bc ad e 42 2 f4 ed 14 a3 26 27 3d c1 e0 4 bc 1b 82 c0 a2 4a ac 2 9a 
-kseaf:8 71 ae 27 e3 b6 e6 f7 81 e9 43 53 ff ed 1d 3f aa 9b bf 30 c6 73 9b 7 d3 50 39 c3 45 5d 33 21 
-kamf:47 71 ed b1 26 be 1b 5c 52 d8 86 7b f5 45 9a 6d 2c 7a 2d f9 42 d9 20 e4 f1 85 6d 88 b6 70 d6 cd 
-knas_int: 51 cf f2 14 8 a2 86 ec cf 34 ff fd 63 42 a8 74 
-knas_enc: 2b b4 e4 cb 1d 32 7c f3 68 a5 30 20 2 d8 18 bb 
-mac 78 e9 3b b 
-83711.150994 [NR_RRC] I deriving kRRCenc, kRRCint from KgNB=be 28 cf bf 77 c2 c5 2e fc d8 ee 84 d6 6e 6f 9f d8 54 09 dd ec 19 fb f6 cf 70 f7 70 63 02 6a 53 
-83711.151823 [NR_RRC] I securityModeComplete payload: 2a 00 01 04 01 e0 00 00 b0 48 6a 42 01 e0 00 00 
-<UE-NR-Capability>
-    <accessStratumRelease><rel15/></accessStratumRelease>
-    <pdcp-Parameters>
-        <supportedROHC-Profiles>
-            <profile0x0000><false/></profile0x0000>
-            <profile0x0001><false/></profile0x0001>
-            <profile0x0002><false/></profile0x0002>
-            <profile0x0003><false/></profile0x0003>
-            <profile0x0004><false/></profile0x0004>
-            <profile0x0006><false/></profile0x0006>
-            <profile0x0101><false/></profile0x0101>
-            <profile0x0102><false/></profile0x0102>
-            <profile0x0103><false/></profile0x0103>
-            <profile0x0104><false/></profile0x0104>
-        </supportedROHC-Profiles>
-        <maxNumberROHC-ContextSessions><cs2/></maxNumberROHC-ContextSessions>
-    </pdcp-Parameters>
-    <phy-Parameters>
-    </phy-Parameters>
-    <rf-Parameters>
-        <supportedBandListNR>
-            <BandNR>
-                <bandNR>1</bandNR>
-            </BandNR>
-        </supportedBandListNR>
-    </rf-Parameters>
-</UE-NR-Capability>
-83711.179346 [PHY] I [RRC]UE NR Capability encoded, 10 bytes (86 bits)
-83711.179349 [NR_RRC] I UECapabilityInformation Encoded 106 bits (14 bytes)
-83711.224422 [NAS] I [UE 0] Received NAS_DOWNLINK_DATA_IND type FGS_REGISTRATION_ACCEPT with length 53
-83711.224431 [NAS] I Received Registration Accept with result 3GPP
-83711.224433 [NAS] I SMS not allowed in 5GS Registration Result
-83711.224434 [NR_RRC] I 5G-GUTI: AMF pointer 1, AMF Set ID 1, 5G-TMSI 1221320151 
-83711.224447 [NAS] I Send NAS_UPLINK_DATA_REQ message(RegistrationComplete)
-83711.224456 [NAS] I Send NAS_UPLINK_DATA_REQ message(PduSessionEstablishRequest)
-83711.265632 [NR_RRC] I RRCReconfiguration includes radio Bearer Configuration
-83711.267444 [PDCP] I added drb 1 to UE ID 0
-83711.267464 [SDAP] I Default DRB for the created SDAP entity: 1 
-83711.267467 [NR_RRC] I State = NR_RRC_CONNECTED
-83711.267543 [RLC] I Added srb 2 to UE 0
-83711.267779 [RLC] I Added drb 1 to UE 0
-83711.267783 [RLC] I Added DRB to UE 0
-83711.267791 [NR_RRC] I RRCReconfiguration includes Measurement Configuration
-83711.267794 [NR_RRC] W Measurement gaps not yet supported!
-83711.267794 [NAS] I [UE 0] Received NAS_CONN_ESTABLI_CNF: errCode 1, length 98
-83711.267798 [NR_RRC] I rrcReconfigurationComplete Encoded 10 bits (2 bytes)
-83711.267797 [MAC] I [UE 0] Applying CellGroupConfig from gNodeB
-83711.267800 [NR_RRC] I  Logical Channel UL-DCCH (SRB1), Generating RRCReconfigurationComplete (bytes 2)
-Unknown IEI 129
-83711.267970 [NAS] I Received PDU Session Establishment Accept, UE IPv4: 12.1.1.2
-83711.268248 [OIP] I Interface oaitun_ue1 successfully configured, IPv4 12.1.1.2, IPv6 (null)
-83711.271823 [UTIL] I threadCreate() for ue_tun_read_0_p10: creating thread with affinity ffffffff, priority 1
-83711.442886 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 640.8, cumulated bad DCI 0
-    DL harq: 13/0
-    Ul harq: 29/1 avg code rate 0.1, avg bit/symbol 2.1, avg per TB: (nb RBs 7.2, nb symbols 13.0)
-mac d9 7b 5f b7 
-mac 28 1 53 f2 
-83712.008823 [NR_MAC] I [697.0] Received TA_COMMAND 35 TAGID 0 CC_id 0 
-83712.722597 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 768.8, cumulated bad DCI 0
-    DL harq: 14/0
-    Ul harq: 42/1 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 6.5, nb symbols 13.0)
-83714.002654 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 896.8, cumulated bad DCI 0
-    DL harq: 15/0
-    Ul harq: 55/2 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 6.1, nb symbols 13.0)
-83715.282622 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 0.8, cumulated bad DCI 0
-    DL harq: 18/0
-    Ul harq: 70/2 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 6.0, nb symbols 13.0)
-83716.562574 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 128.8, cumulated bad DCI 0
-    DL harq: 19/0
-    Ul harq: 83/2 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 5.9, nb symbols 13.0)
-83717.842588 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 256.8, cumulated bad DCI 0
-    DL harq: 20/0
-    Ul harq: 95/3 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 5.7, nb symbols 13.0)
-83718.008812 [NR_MAC] I [273.0] Received TA_COMMAND 30 TAGID 0 CC_id 0 
-83719.008931 [NR_MAC] I [373.0] Received TA_COMMAND 32 TAGID 0 CC_id 0 
-83719.122596 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 384.8, cumulated bad DCI 0
-    DL harq: 22/0
-    Ul harq: 108/3 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 5.7, nb symbols 13.0)
-83720.402609 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 512.8, cumulated bad DCI 0
-    DL harq: 23/0
-    Ul harq: 121/3 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 5.6, nb symbols 13.0)
-83721.682671 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 640.8, cumulated bad DCI 0
-    DL harq: 24/0
-    Ul harq: 134/3 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 5.5, nb symbols 13.0)
-83722.962571 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 768.8, cumulated bad DCI 0
-    DL harq: 25/0
-    Ul harq: 146/3 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 5.5, nb symbols 13.0)
-83724.242585 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 896.8, cumulated bad DCI 0
-    DL harq: 28/0
-    Ul harq: 161/3 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 5.5, nb symbols 13.0)
-83725.522596 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 0.8, cumulated bad DCI 0
-    DL harq: 29/0
-    Ul harq: 174/4 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 5.5, nb symbols 13.0)
-83726.802609 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 128.8, cumulated bad DCI 0
-    DL harq: 30/0
-    Ul harq: 187/4 avg code rate 0.1, avg bit/symbol 2.0, avg per TB: (nb RBs 5.4, nb symbols 13.0)
-83728.079377 [NR_PHY] I LDPC decoder:    195.48 us (   195.48 us / seg)
-
-83728.082626 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 256.8, cumulated bad DCI 0
-    DL harq: 214/0/0/0
-    Ul harq: 250/5/1/1 avg code rate 0.2, avg bit/symbol 2.0, avg per TB: (nb RBs 6.4, nb symbols 13.0)
-83729.009080 [NR_MAC] I [349.0] Received TA_COMMAND 30 TAGID 0 CC_id 0 
-83729.359534 [NR_PHY] I LDPC decoder:    242.76 us (   186.95 us / seg)
-
-83729.362571 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 384.8, cumulated bad DCI 0
-    DL harq: 1252/2/0/0
-    Ul harq: 429/6/1/1 avg code rate 0.4, avg bit/symbol 3.1, avg per TB: (nb RBs 5.9, nb symbols 13.0)
-83730.009234 [NR_MAC] I [449.0] Received TA_COMMAND 32 TAGID 0 CC_id 0 
-83730.642681 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 512.8, cumulated bad DCI 0
-    DL harq: 1738/3/0/0
-    Ul harq: 550/53/47/46 avg code rate 0.6, avg bit/symbol 5.6, avg per TB: (nb RBs 14.0, nb symbols 13.0)
-83731.922595 [NR_MAC] I UE 0 RNTI cb12 stats sfn: 640.8, cumulated bad DCI 0
-    DL harq: 1813/11/0/0
-    Ul harq: 648/108/98/96 avg code rate 0.6, avg bit/symbol 4.9, avg per TB: (nb RBs 20.0, nb symbols 13.0)
-83731.926969 [NR_PHY] I LDPC decoder:    277.95 us (   155.53 us / seg)
-
-83732.736188 [RLC] E max RETX reached on DRB 1
-83732.736200 [NR_RRC] W [UE 0 ID 0] Received indication that RLC reached max retransmissions
-83732.756598 [PHY] W SSB position provided
-83732.756611 [NR_PHY] W Starting re-sync detection for target Nid_cell 0
-83732.756614 [PHY] I [UE thread Synch] Running Initial Synch 
-83732.756615 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
-83732.757219 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
-83732.787623 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-83732.787633 [PHY] I pbch rx ok. rsrp:57 dB/RE, adjust_rxgain:-7 dB
-83732.787640 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 238, SSB Ref: 0.000000, PSS Corr peak: 105 dB, PSS Corr Average: 70
-83732.789207 [PHY] I [UE0] In synch, rx_offset 44972 samples
-83732.789209 [PHY] I [UE 0] Measured Carrier Frequency offset 4 Hz
-83732.789210 [PHY] A Initial sync successful, PCI: 0
-83732.789211 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309480004 Hz, rx_freq 3309480004 Hz, tune_offset 0
-83732.797854 [PHY] I Got synch: hw_slot_offset 6, carrier off 4 Hz, rxgain 56.000000 (DL 3309480004.000000 Hz, UL 3309480004.000000 Hz)
-83732.816601 [PHY] A UE synchronized! decoded_frame_rx=722 UE->init_sync_frame=1 trashed_frames=6
-83732.816608 [PHY] I Resynchronizing RX by 44972 samples
-83732.818032 [HW] I received write reorder clear context
-83732.821192 [MAC] I Initialization of 4-Step CBRA procedure
-83732.821206 [NR_MAC] E RA-ResponseWindow need to be configured to a value lower than or equal to 10 ms
-83732.836656 [NR_MAC] I PRACH scheduler: Selected RO Frame 731, Slot 19, Symbol 4, Fdm 0
-83732.836695 [PHY] I PRACH [UE 0] in frame.slot 731.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 4, first_nonzero_root_idx 0, preambleIndex = 9
-83732.843876 [PHY] W Received a RAR-Msg2 but LDPC decode failed
-83732.858579 [MAC] W [UE 0] RAR reception failed
-83732.876604 [NR_MAC] I PRACH scheduler: Selected RO Frame 735, Slot 19, Symbol 4, Fdm 0
-83732.876632 [PHY] I PRACH [UE 0] in frame.slot 735.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 29, first_nonzero_root_idx 0, preambleIndex = 58
-83732.898617 [MAC] W [UE 0] RAR reception failed
-83732.916586 [NR_MAC] I PRACH scheduler: Selected RO Frame 739, Slot 19, Symbol 0, Fdm 0
-83732.916614 [PHY] I PRACH [UE 0] in frame.slot 739.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 19, first_nonzero_root_idx 0, preambleIndex = 38
-83732.938596 [MAC] W [UE 0] RAR reception failed
-83732.956713 [NR_MAC] I PRACH scheduler: Selected RO Frame 743, Slot 19, Symbol 8, Fdm 0
-83732.956742 [PHY] I PRACH [UE 0] in frame.slot 743.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 28, first_nonzero_root_idx 0, preambleIndex = 57
-83732.978575 [MAC] W [UE 0] RAR reception failed
-83732.996692 [NR_MAC] I PRACH scheduler: Selected RO Frame 747, Slot 19, Symbol 4, Fdm 0
-83732.996721 [PHY] I PRACH [UE 0] in frame.slot 747.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 0, first_nonzero_root_idx 0, preambleIndex = 1
-83733.018618 [MAC] W [UE 0] RAR reception failed
-83733.036674 [NR_MAC] I PRACH scheduler: Selected RO Frame 751, Slot 19, Symbol 0, Fdm 0
-83733.036712 [PHY] I PRACH [UE 0] in frame.slot 751.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 12, first_nonzero_root_idx 0, preambleIndex = 24
-83733.058598 [MAC] W [UE 0] RAR reception failed
-83733.076720 [NR_MAC] I PRACH scheduler: Selected RO Frame 755, Slot 19, Symbol 0, Fdm 0
-83733.076757 [PHY] I PRACH [UE 0] in frame.slot 755.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 24, first_nonzero_root_idx 0, preambleIndex = 49
-83733.098571 [MAC] W [UE 0] RAR reception failed
-83733.116600 [NR_MAC] I PRACH scheduler: Selected RO Frame 759, Slot 19, Symbol 4, Fdm 0
-83733.116627 [PHY] I PRACH [UE 0] in frame.slot 759.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 1, first_nonzero_root_idx 0, preambleIndex = 3
-83733.138612 [MAC] W [UE 0] RAR reception failed
-83733.156670 [NR_MAC] I PRACH scheduler: Selected RO Frame 763, Slot 19, Symbol 8, Fdm 0
-83733.156699 [PHY] I PRACH [UE 0] in frame.slot 763.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 13, first_nonzero_root_idx 0, preambleIndex = 26
-83733.178592 [MAC] W [UE 0] RAR reception failed
-83733.196705 [NR_MAC] I PRACH scheduler: Selected RO Frame 767, Slot 19, Symbol 4, Fdm 0
-83733.196733 [PHY] I PRACH [UE 0] in frame.slot 767.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 14, first_nonzero_root_idx 0, preambleIndex = 29
-83733.218572 [MAC] W [UE 0] RAR reception failed
-83733.239091 [PHY] W SSB position provided
-83733.239102 [NR_PHY] W Starting re-sync detection for target Nid_cell 0
-83733.239105 [PHY] I [UE thread Synch] Running Initial Synch 
-83733.239106 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
-83733.239170 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
-83733.297279 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-83733.297292 [PHY] I pbch rx ok. rsrp:57 dB/RE, adjust_rxgain:-7 dB
-83733.297299 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 238, SSB Ref: 0.000000, PSS Corr peak: 104 dB, PSS Corr Average: 70
-83733.299694 [PHY] I [UE0] In synch, rx_offset 275372 samples
-83733.299698 [PHY] I [UE 0] Measured Carrier Frequency offset -7516 Hz
-83733.299698 [PHY] A Initial sync successful, PCI: 0
-83733.299699 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309472484 Hz, rx_freq 3309472484 Hz, tune_offset 0
-83733.308559 [PHY] I Got synch: hw_slot_offset 36, carrier off -7516 Hz, rxgain 56.000000 (DL 3309472484.000000 Hz, UL 3309472484.000000 Hz)
-83733.319113 [PHY] A UE synchronized! decoded_frame_rx=772 UE->init_sync_frame=0 trashed_frames=8
-83733.319121 [PHY] I Resynchronizing RX by 275372 samples
-83733.328028 [HW] I received write reorder clear context
-83733.331189 [MAC] I Initialization of 4-Step CBRA procedure
-83733.331202 [NR_MAC] E RA-ResponseWindow need to be configured to a value lower than or equal to 10 ms
-83733.336675 [NR_MAC] I PRACH scheduler: Selected RO Frame 781, Slot 19, Symbol 8, Fdm 0
-83733.336715 [PHY] I PRACH [UE 0] in frame.slot 781.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 12, first_nonzero_root_idx 0, preambleIndex = 24
-83733.348845 [PHY] I RAR-Msg2 decoded
-83733.348850 [NR_MAC] I [UE 0][RAPROC][RA-RNTI 0113] Got BI RAR subPDU 5 ms
-83733.348851 [NR_MAC] I [UE 0][RAPROC][RA-RNTI 0113] Got RAPID RAR subPDU
-83733.348852 [NR_MAC] A [UE 0][RAPROC][783.0] Found RAR with the intended RAPID 24
-83733.348853 [MAC] W received TA command 45
-83733.348977 [PDCP] I SRB 1 re-established
-83733.351728 [NR_MAC] A [RAPROC][783.9] RA-Msg3 transmitted
-83733.361306 [NR_MAC] I [RAPROC][784.8] RA-Msg3 retransmitted
-83733.371163 [NR_MAC] I [RAPROC][785.8] RA-Msg3 retransmitted
-83733.379567 [MAC] A [UE 0][786.1][RAPROC] 4-Step RA procedure succeeded. CBRA: Contention Resolution is successful.
-83733.379830 [NR_RRC] I Logical Channel DL-DCCH (SRB1), Received RRCReestablishment
-83733.381314 [NR_RRC] I [RAPROC] Logical Channel UL-DCCH (SRB1), Generating RRCReestablishmentComplete (bytes 2)
-Setting USRP TX Freq 3309480004.000000, RX Freq 3309480004.000000, tune_offset: 0.000000
-Setting USRP TX Freq 3309472484.000000, RX Freq 3309472484.000000, tune_offset: 0.000000
-83733.420061 [NR_RRC] I RRCReconfiguration includes radio Bearer Configuration
-83733.421981 [PDCP] I SRB 2 re-established
-83733.421989 [PDCP] I DRB 1 re-established
-83733.421993 [NR_RRC] I State = NR_RRC_CONNECTED
-83733.422165 [NR_RRC] I RRCReconfiguration includes Measurement Configuration
-83733.422175 [NR_RRC] W Measurement gaps not yet supported!
-83733.422179 [NR_RRC] I rrcReconfigurationComplete Encoded 10 bits (2 bytes)
-83733.422181 [NR_RRC] I  Logical Channel UL-DCCH (SRB1), Generating RRCReconfigurationComplete (bytes 2)
-83733.422669 [MAC] I [UE 0] Applying CellGroupConfig from gNodeB
-83734.482621 [NR_MAC] I UE 0 RNTI 0c26 stats sfn: 896.8, cumulated bad DCI 0
-    DL harq: 1844/16/5/4
-    Ul harq: 729/148/133/131 avg code rate 0.5, avg bit/symbol 4.4, avg per TB: (nb RBs 22.8, nb symbols 13.0)
-83735.368856 [NR_MAC] I [985.0] Received TA_COMMAND 32 TAGID 0 CC_id 0 
-83735.759297 [NR_PHY] I LDPC decoder:    239.06 us (   173.87 us / seg)
-
-83735.762652 [NR_MAC] I UE 0 RNTI 0c26 stats sfn: 0.8, cumulated bad DCI 0
-    DL harq: 2353/18/5/4
-    Ul harq: 801/149/133/131 avg code rate 0.5, avg bit/symbol 4.3, avg per TB: (nb RBs 21.8, nb symbols 13.0)
-83736.687027 [PHY] E received all 0 pdu, consider it false reception, even if the TS 38.212 7.2.1 says only we should attach the corresponding CRC, and nothing prevents to have a all 0 packet
-83737.039490 [NR_PHY] I LDPC decoder:    229.31 us (   183.26 us / seg)
-
-83737.042677 [NR_MAC] I UE 0 RNTI 0c26 stats sfn: 128.8, cumulated bad DCI 0
-    DL harq: 3382/25/6/4
-    Ul harq: 903/154/134/132 avg code rate 0.5, avg bit/symbol 4.3, avg per TB: (nb RBs 20.5, nb symbols 13.0)
-83737.867390 [NR_MAC] W NDI indicates re-transmission but computed TBS 8192 doesn't match with what previously stored 7552
-83738.141858 [PDCP] W discard NR PDU rcvd_count=2860, entity->rx_deliv 2963,sdu_in_list 0
-83738.322221 [NR_PHY] I LDPC decoder:    274.13 us (   164.08 us / seg)
-
-83738.322708 [NR_MAC] I UE 0 RNTI 0c26 stats sfn: 256.8, cumulated bad DCI 0
-    DL harq: 4106/33/6/4
-    Ul harq: 1015/178/155/152 avg code rate 0.6, avg bit/symbol 4.5, avg per TB: (nb RBs 19.3, nb symbols 13.0)
-83739.602611 [NR_MAC] I UE 0 RNTI 0c26 stats sfn: 384.8, cumulated bad DCI 0
-    DL harq: 4165/36/6/4
-    Ul harq: 1099/261/236/233 avg code rate 0.5, avg bit/symbol 4.4, avg per TB: (nb RBs 24.5, nb symbols 13.0)
-83740.126113 [RLC] E max RETX reached on DRB 1
-83740.126257 [NR_RRC] W [UE 0 ID 0] Received indication that RLC reached max retransmissions
-83740.146592 [PHY] W SSB position provided
-83740.146608 [NR_PHY] W Starting re-sync detection for target Nid_cell 0
-83740.146612 [PHY] I [UE thread Synch] Running Initial Synch 
-83740.146613 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
-83740.146665 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
-83740.209620 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-83740.209632 [PHY] I pbch rx ok. rsrp:57 dB/RE, adjust_rxgain:-7 dB
-83740.209731 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 238, SSB Ref: 0.000000, PSS Corr peak: 105 dB, PSS Corr Average: 70
-83740.214387 [PHY] I [UE0] In synch, rx_offset 44972 samples
-83740.214395 [PHY] I [UE 0] Measured Carrier Frequency offset -20 Hz
-83740.214396 [PHY] A Initial sync successful, PCI: 0
-83740.214398 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309479980 Hz, rx_freq 3309479980 Hz, tune_offset 0
-83740.222905 [PHY] I Got synch: hw_slot_offset 6, carrier off -20 Hz, rxgain 56.000000 (DL 3309479980.000000 Hz, UL 3309479980.000000 Hz)
-83740.226615 [PHY] A UE synchronized! decoded_frame_rx=438 UE->init_sync_frame=0 trashed_frames=8
-83740.226621 [PHY] I Resynchronizing RX by 44972 samples
-83740.228044 [HW] I received write reorder clear context
-83740.231192 [MAC] I Initialization of 4-Step CBRA procedure
-83740.231201 [NR_MAC] E RA-ResponseWindow need to be configured to a value lower than or equal to 10 ms
-83740.236597 [NR_MAC] I PRACH scheduler: Selected RO Frame 447, Slot 19, Symbol 0, Fdm 0
-83740.236639 [PHY] I PRACH [UE 0] in frame.slot 447.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 15, first_nonzero_root_idx 0, preambleIndex = 30
-83740.244495 [PHY] W Received a RAR-Msg2 but LDPC decode failed
-83740.258610 [MAC] W [UE 0] RAR reception failed
-83740.276577 [NR_MAC] I PRACH scheduler: Selected RO Frame 451, Slot 19, Symbol 0, Fdm 0
-83740.276604 [PHY] I PRACH [UE 0] in frame.slot 451.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 4, first_nonzero_root_idx 0, preambleIndex = 8
-83740.298588 [MAC] W [UE 0] RAR reception failed
-83740.316707 [NR_MAC] I PRACH scheduler: Selected RO Frame 455, Slot 19, Symbol 0, Fdm 0
-83740.316737 [PHY] I PRACH [UE 0] in frame.slot 455.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 10, first_nonzero_root_idx 0, preambleIndex = 20
-83740.338566 [MAC] W [UE 0] RAR reception failed
-83740.356685 [NR_MAC] I PRACH scheduler: Selected RO Frame 459, Slot 19, Symbol 8, Fdm 0
-83740.356713 [PHY] I PRACH [UE 0] in frame.slot 459.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 3, first_nonzero_root_idx 0, preambleIndex = 6
-83740.378766 [MAC] W [UE 0] RAR reception failed
-83740.396677 [NR_MAC] I PRACH scheduler: Selected RO Frame 463, Slot 19, Symbol 4, Fdm 0
-83740.396712 [PHY] I PRACH [UE 0] in frame.slot 463.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 6, first_nonzero_root_idx 0, preambleIndex = 12
-83740.418585 [MAC] W [UE 0] RAR reception failed
-83740.436711 [NR_MAC] I PRACH scheduler: Selected RO Frame 467, Slot 19, Symbol 8, Fdm 0
-83740.436743 [PHY] I PRACH [UE 0] in frame.slot 467.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 3, first_nonzero_root_idx 0, preambleIndex = 7
-83740.458565 [MAC] W [UE 0] RAR reception failed
-83740.476604 [NR_MAC] I PRACH scheduler: Selected RO Frame 471, Slot 19, Symbol 0, Fdm 0
-83740.476642 [PHY] I PRACH [UE 0] in frame.slot 471.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 19, first_nonzero_root_idx 0, preambleIndex = 39
-83740.498606 [MAC] W [UE 0] RAR reception failed
-83740.516662 [NR_MAC] I PRACH scheduler: Selected RO Frame 475, Slot 19, Symbol 8, Fdm 0
-83740.516689 [PHY] I PRACH [UE 0] in frame.slot 475.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 18, first_nonzero_root_idx 0, preambleIndex = 36
-83740.538584 [MAC] W [UE 0] RAR reception failed
-83740.556710 [NR_MAC] I PRACH scheduler: Selected RO Frame 479, Slot 19, Symbol 4, Fdm 0
-83740.556742 [PHY] I PRACH [UE 0] in frame.slot 479.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 22, first_nonzero_root_idx 0, preambleIndex = 45
-83740.578564 [MAC] W [UE 0] RAR reception failed
-83740.596688 [NR_MAC] I PRACH scheduler: Selected RO Frame 483, Slot 19, Symbol 8, Fdm 0
-83740.596722 [PHY] I PRACH [UE 0] in frame.slot 483.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 12, first_nonzero_root_idx 0, preambleIndex = 25
-83740.618606 [MAC] W [UE 0] RAR reception failed
-83740.639062 [PHY] W SSB position provided
-83740.639081 [NR_PHY] W Starting re-sync detection for target Nid_cell 0
-83740.639086 [PHY] I [UE thread Synch] Running Initial Synch 
-83740.639087 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
-83740.639140 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
-83740.697228 [PHY] A Initial sync: pbch decoded sucessfully, ssb index 0
-83740.697241 [PHY] I pbch rx ok. rsrp:57 dB/RE, adjust_rxgain:-7 dB
-83740.697251 [NR_PHY] I Cell Detected with GSCN: 0, SSB SC offset: 238, SSB Ref: 0.000000, PSS Corr peak: 104 dB, PSS Corr Average: 70
-83740.699605 [PHY] I [UE0] In synch, rx_offset 275372 samples
-83740.699609 [PHY] I [UE 0] Measured Carrier Frequency offset -7515 Hz
-83740.699609 [PHY] A Initial sync successful, PCI: 0
-83740.699611 [PHY] I HW: Configuring channel 0 (rf_chain 0): setting tx_freq 3309472485 Hz, rx_freq 3309472485 Hz, tune_offset 0
-83740.707127 [PHY] I Got synch: hw_slot_offset 36, carrier off -7515 Hz, rxgain 56.000000 (DL 3309472485.000000 Hz, UL 3309472485.000000 Hz)
-83740.719085 [PHY] A UE synchronized! decoded_frame_rx=488 UE->init_sync_frame=0 trashed_frames=8
-83740.719090 [PHY] I Resynchronizing RX by 275372 samples
-83740.728064 [HW] I received write reorder clear context
-83740.731154 [MAC] I Initialization of 4-Step CBRA procedure
-83740.731167 [NR_MAC] E RA-ResponseWindow need to be configured to a value lower than or equal to 10 ms
-83740.736615 [NR_MAC] I PRACH scheduler: Selected RO Frame 497, Slot 19, Symbol 4, Fdm 0
-83740.736656 [PHY] I PRACH [UE 0] in frame.slot 497.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 19, first_nonzero_root_idx 0, preambleIndex = 39
-83740.743828 [PHY] I RAR-Msg2 decoded
-83740.743833 [NR_MAC] I [UE 0][RAPROC][RA-RNTI 010f] Got BI RAR subPDU 5 ms
-83740.743834 [NR_MAC] I [UE 0][RAPROC][RA-RNTI 010f] Got RAPID RAR subPDU
-83740.743835 [NR_MAC] A [UE 0][RAPROC][498.10] Found RAR with the intended RAPID 39
-83740.743837 [MAC] W received TA command 45
-83740.743849 [PDCP] I SRB 1 re-established
-83740.746700 [NR_MAC] A [RAPROC][498.19] RA-Msg3 transmitted
-83740.756187 [NR_MAC] I [RAPROC][499.18] RA-Msg3 retransmitted
-83740.766233 [NR_MAC] I [RAPROC][500.18] RA-Msg3 retransmitted
-83740.773878 [MAC] A [UE 0][501.10][RAPROC] 4-Step RA procedure succeeded. CBRA: Contention Resolution is successful.
-83740.774020 [NR_RRC] I [UE0][RAPROC] Logical Channel DL-CCCH (SRB0), Received NR_RRCSetup
-83740.774026 [NR_RRC] W [UE 0] Recived RRCSetup in response to RRCReestablishment request
-83740.774029 [PDCP] I release DRB 1 of UE 0
-Setting USRP TX Freq 3309479980.000000, RX Freq 3309479980.000000, tune_offset: 0.000000
-Setting USRP TX Freq 3309472485.000000, RX Freq 3309472485.000000, tune_offset: 0.000000
-83740.878582 [ITTI] I Queue for TASK_RRC_NRUE task size: 22 (last message NR_RRC_MAC_SYNC_IND)
-83740.881216 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83740.881844 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83740.882627 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 512.8, cumulated bad DCI 0
-    DL harq: 4182/36/6/4
-    Ul harq: 1135/295/271/268 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 26.1, nb symbols 13.0)
-83740.886224 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83740.886768 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83740.908560 [ITTI] I Queue for TASK_RRC_NRUE task size: 28 (last message NRRRC_FRAME_PROCESS)
-83740.938606 [ITTI] I Queue for TASK_RRC_NRUE task size: 35 (last message NR_RRC_MAC_BCCH_DATA_IND)
-83740.988580 [ITTI] I Queue for TASK_RRC_NRUE task size: 44 (last message NRRRC_FRAME_PROCESS)
-83741.038729 [ITTI] I Queue for TASK_RRC_NRUE task size: 55 (last message NR_RRC_MAC_BCCH_DATA_IND)
-83741.118559 [ITTI] I Queue for TASK_RRC_NRUE task size: 69 (last message NRRRC_FRAME_PROCESS)
-83741.198604 [ITTI] I Queue for TASK_RRC_NRUE task size: 87 (last message NR_RRC_MAC_BCCH_DATA_IND)
-83741.318578 [ITTI] I Queue for TASK_RRC_NRUE task size: 109 (last message NRRRC_FRAME_PROCESS)
-83741.458598 [ITTI] I Queue for TASK_RRC_NRUE task size: 137 (last message NRRRC_FRAME_PROCESS)
-83741.628895 [ITTI] I Queue for TASK_RRC_NRUE task size: 172 (last message NRRRC_FRAME_PROCESS)
-83741.759296 [NR_MAC] I [600.1] Received TA_COMMAND 32 TAGID 0 CC_id 0 
-83741.768798 [NR_MAC] I [601.0] Received TA_COMMAND 32 TAGID 0 CC_id 0 
-83741.779320 [NR_MAC] I [602.1] Received TA_COMMAND 32 TAGID 0 CC_id 0 
-83741.781245 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83741.788804 [NR_MAC] I [603.0] Received TA_COMMAND 32 TAGID 0 CC_id 0 
-83741.838639 [TMR] E Queue for TASK_RRC_NRUE task contains 214 messages
-83742.118595 [TMR] E Queue for TASK_RRC_NRUE task contains 268 messages
-83742.161170 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83742.161669 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83742.162568 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 640.8, cumulated bad DCI 0
-    DL harq: 4183/37/7/5
-    Ul harq: 1147/296/271/268 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 26.0, nb symbols 13.0)
-83742.166155 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83742.166667 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83742.458572 [TMR] E Queue for TASK_RRC_NRUE task contains 336 messages
-83742.759301 [NR_MAC] I [700.1] Received TA_COMMAND 28 TAGID 0 CC_id 0 
-83742.768811 [NR_MAC] I [701.0] Received TA_COMMAND 28 TAGID 0 CC_id 0 
-83742.779297 [NR_MAC] I [702.1] Received TA_COMMAND 28 TAGID 0 CC_id 0 
-83742.788753 [NR_MAC] I [703.0] Received TA_COMMAND 28 TAGID 0 CC_id 0 
-83742.791122 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83742.878599 [TMR] E Queue for TASK_RRC_NRUE task contains 421 messages
-83743.408584 [TMR] E Queue for TASK_RRC_NRUE task contains 527 messages
-83743.441095 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83743.441723 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83743.442588 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 768.8, cumulated bad DCI 0
-    DL harq: 4184/38/8/6
-    Ul harq: 1160/296/271/268 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 25.9, nb symbols 13.0)
-83743.446138 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83743.446793 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83743.759332 [NR_MAC] I [800.1] Received TA_COMMAND 39 TAGID 0 CC_id 0 
-83743.768771 [NR_MAC] I [801.0] Received TA_COMMAND 39 TAGID 0 CC_id 0 
-83743.779354 [NR_MAC] I [802.1] Received TA_COMMAND 39 TAGID 0 CC_id 0 
-83743.788802 [NR_MAC] I [803.0] Received TA_COMMAND 39 TAGID 0 CC_id 0 
-83743.791206 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83744.068580 [TMR] E Queue for TASK_RRC_NRUE task contains 659 messages
-83744.721188 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83744.721886 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83744.722683 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 896.8, cumulated bad DCI 0
-    DL harq: 4185/39/9/7
-    Ul harq: 1171/304/279/275 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 25.5, nb symbols 13.0)
-83744.726122 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83744.726697 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83744.759308 [NR_MAC] I [900.1] Received TA_COMMAND 39 TAGID 0 CC_id 0 
-83744.768761 [NR_MAC] I [901.0] Received TA_COMMAND 39 TAGID 0 CC_id 0 
-83744.779315 [NR_MAC] I [902.1] Received TA_COMMAND 39 TAGID 0 CC_id 0 
-83744.788781 [NR_MAC] I [903.0] Received TA_COMMAND 39 TAGID 0 CC_id 0 
-83744.898697 [TMR] E Queue for TASK_RRC_NRUE task contains 824 messages
-83745.759338 [NR_MAC] I [1000.1] Received TA_COMMAND 40 TAGID 0 CC_id 0 
-83745.761231 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83745.768808 [NR_MAC] I [1001.0] Received TA_COMMAND 40 TAGID 0 CC_id 0 
-83745.771196 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83745.779282 [NR_MAC] I [1002.1] Received TA_COMMAND 40 TAGID 0 CC_id 0 
-83745.788917 [NR_MAC] I [1003.0] Received TA_COMMAND 40 TAGID 0 CC_id 0 
-83745.928569 [TMR] E Queue for TASK_RRC_NRUE task contains 1031 messages
-83746.001208 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83746.001749 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83746.002613 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 0.8, cumulated bad DCI 0
-    DL harq: 4187/41/11/9
-    Ul harq: 1181/313/288/285 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 25.1, nb symbols 13.0)
-83746.006716 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83746.006824 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83746.781213 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83746.791229 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83747.218582 [TMR] E Queue for TASK_RRC_NRUE task contains 1289 messages
-83747.281234 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83747.281752 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83747.282628 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 128.8, cumulated bad DCI 0
-    DL harq: 4188/42/12/10
-    Ul harq: 1190/323/298/295 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 24.8, nb symbols 13.0)
-83747.286138 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83747.286636 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83748.561166 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83748.561645 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83748.562568 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 256.8, cumulated bad DCI 0
-    DL harq: 4189/43/13/11
-    Ul harq: 1200/333/308/305 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 24.4, nb symbols 13.0)
-83748.566197 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83748.566734 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83748.761211 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83748.838611 [TMR] E Queue for TASK_RRC_NRUE task contains 1612 messages
-83749.841093 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83749.841710 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83749.842582 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 384.8, cumulated bad DCI 0
-    DL harq: 4191/45/15/13
-    Ul harq: 1210/343/318/315 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 24.0, nb symbols 13.0)
-83749.846503 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83749.847076 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83750.858576 [TMR] E Queue for TASK_RRC_NRUE task contains 2016 messages
-83751.121193 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83751.121604 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83751.122594 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 512.8, cumulated bad DCI 0
-    DL harq: 4192/46/16/14
-    Ul harq: 1220/353/328/325 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 23.7, nb symbols 13.0)
-83751.126206 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83751.126726 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83752.401149 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83752.401757 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83752.402607 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 640.8, cumulated bad DCI 0
-    DL harq: 4193/47/17/15
-    Ul harq: 1230/363/338/335 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 23.4, nb symbols 13.0)
-83752.406113 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83752.406619 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83753.378581 [TMR] E Queue for TASK_RRC_NRUE task contains 2521 messages
-83753.681288 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83753.681871 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83753.682622 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 768.8, cumulated bad DCI 0
-    DL harq: 4194/48/18/16
-    Ul harq: 1240/373/347/344 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 23.1, nb symbols 13.0)
-83753.686178 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83753.686819 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83754.961173 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83754.961667 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83754.962569 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 896.8, cumulated bad DCI 0
-    DL harq: 4196/50/20/18
-    Ul harq: 1249/382/357/354 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 22.8, nb symbols 13.0)
-83754.966157 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83754.966741 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83756.241179 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83756.241692 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83756.242579 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 0.8, cumulated bad DCI 0
-    DL harq: 4197/51/21/19
-    Ul harq: 1259/392/367/364 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 22.5, nb symbols 13.0)
-83756.246248 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83756.246698 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83756.538581 [TMR] E Queue for TASK_RRC_NRUE task contains 3152 messages
-83757.521323 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83757.521888 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83757.522754 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 128.8, cumulated bad DCI 0
-    DL harq: 4198/52/22/20
-    Ul harq: 1269/402/377/374 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 22.2, nb symbols 13.0)
-83757.526186 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83757.526697 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83758.761188 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83758.771223 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83758.801114 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83758.801716 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83758.802606 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 256.8, cumulated bad DCI 0
-    DL harq: 4200/54/24/22
-    Ul harq: 1279/412/387/384 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 21.9, nb symbols 13.0)
-83758.806120 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83758.806608 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83759.781240 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83759.791229 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83760.081145 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83760.081815 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83760.082678 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 384.8, cumulated bad DCI 0
-    DL harq: 4201/55/25/23
-    Ul harq: 1289/422/397/394 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 21.6, nb symbols 13.0)
-83760.086206 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83760.086730 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83760.478644 [TMR] E Queue for TASK_RRC_NRUE task contains 3941 messages
-83761.361179 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83761.361762 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83761.362620 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 512.8, cumulated bad DCI 0
-    DL harq: 4202/56/26/24
-    Ul harq: 1299/432/407/403 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 21.4, nb symbols 13.0)
-83761.366193 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83761.366855 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83761.761124 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83762.641177 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83762.641607 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83762.642673 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 640.8, cumulated bad DCI 0
-    DL harq: 4203/57/27/25
-    Ul harq: 1309/441/416/413 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 21.1, nb symbols 13.0)
-83762.646185 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83762.646837 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83762.771215 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83762.781283 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83762.791181 [NR_MAC] E UCI on PUSCH need to be configured to schedule UCI on PUSCH
-83763.921335 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83763.921699 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83763.922591 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 768.8, cumulated bad DCI 0
-    DL harq: 4205/59/29/27
-    Ul harq: 1318/451/426/423 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 20.9, nb symbols 13.0)
-83763.926187 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83763.926678 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83765.201204 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83765.201614 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83765.202605 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 896.8, cumulated bad DCI 0
-    DL harq: 4206/60/30/28
-    Ul harq: 1328/461/436/433 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 20.7, nb symbols 13.0)
-83765.206269 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83765.206682 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83765.408608 [TMR] E Queue for TASK_RRC_NRUE task contains 4927 messages
-83766.481233 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83766.481661 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83766.482619 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 0.8, cumulated bad DCI 0
-    DL harq: 4206/60/30/28
-    Ul harq: 1332/465/439/436 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 20.6, nb symbols 13.0)
-83766.486204 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83766.486747 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83767.761168 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83767.761668 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83767.762566 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 128.8, cumulated bad DCI 0
-    DL harq: 4206/60/30/28
-    Ul harq: 1332/465/439/436 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 20.6, nb symbols 13.0)
-83767.766216 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83767.766636 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83769.041178 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83769.041617 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83769.042580 [NR_MAC] I UE 0 RNTI e7b4 stats sfn: 256.8, cumulated bad DCI 0
-    DL harq: 4206/60/30/28
-    Ul harq: 1332/465/439/436 avg code rate 0.5, avg bit/symbol 4.1, avg per TB: (nb RBs 20.6, nb symbols 13.0)
-83769.046286 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83769.046748 [RLC] W Radio Bearer (channel ID 1) is NULL for UE 0
-83769.843056 [PDCP] E [UE 0] DRB 1 not found
-83769.843062 [SDAP] E /oai-ran/openair2/SDAP/nr_sdap/nr_sdap_entity.c:140:nr_sdap_tx_entity: PDCP refused PDU
-83769.845087 [OIP] W trying to remove non-existant device oaitun_ue1
-83769.845089 [UTIL] I Interface oaitun_ue1 is now down.
-83769.845322 [RLC] I Added srb 1 to UE 0
-83769.845332 [NR_RRC] I State = NR_RRC_CONNECTED
-83769.845341 [NAS] I Generate Initial NAS Message: Registration Request
-83769.845346 [NAS] I [UE 0] Received NR_NAS_CONN_ESTABLISH_IND: asCause 0
-83769.845587 [MAC] I [UE 0] Applying CellGroupConfig from gNodeB
-83769.845900 [NR_RRC] I [UE 0][RAPROC] Logical Channel UL-DCCH (SRB1), Generating RRCSetupComplete (bytes44)
-83769.845948 [ITTI] I Queue for TASK_MAC_UE task size: 22 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.845959 [ITTI] I Queue for TASK_MAC_UE task size: 28 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.845968 [ITTI] I Queue for TASK_MAC_UE task size: 35 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.845979 [ITTI] I Queue for TASK_MAC_UE task size: 44 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.845993 [ITTI] I Queue for TASK_MAC_UE task size: 55 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846022 [ITTI] I Queue for TASK_MAC_UE task size: 69 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846048 [ITTI] I Queue for TASK_MAC_UE task size: 87 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846079 [ITTI] I Queue for TASK_MAC_UE task size: 109 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846365 [ITTI] I Queue for TASK_MAC_UE task size is back under 10% of max size
-83769.846390 [ITTI] I Queue for TASK_MAC_UE task size: 22 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846401 [ITTI] I Queue for TASK_MAC_UE task size: 28 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846413 [ITTI] I Queue for TASK_MAC_UE task size: 35 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846427 [ITTI] I Queue for TASK_MAC_UE task size: 44 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846443 [ITTI] I Queue for TASK_MAC_UE task size: 55 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846463 [ITTI] I Queue for TASK_MAC_UE task size: 69 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846551 [ITTI] I Queue for TASK_MAC_UE task size is back under 10% of max size
-83769.846610 [ITTI] I Queue for TASK_MAC_UE task size: 22 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846617 [ITTI] I Queue for TASK_MAC_UE task size: 28 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846644 [ITTI] I Queue for TASK_MAC_UE task size is back under 10% of max size
-83769.846647 [ITTI] I Queue for TASK_MAC_UE task size: 22 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846659 [ITTI] I Queue for TASK_MAC_UE task size is back under 10% of max size
-83769.846721 [ITTI] I Queue for TASK_MAC_UE task size: 22 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846732 [ITTI] I Queue for TASK_MAC_UE task size: 28 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846737 [ITTI] I Queue for TASK_MAC_UE task size: 35 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846744 [ITTI] I Queue for TASK_MAC_UE task size: 44 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846753 [ITTI] I Queue for TASK_MAC_UE task size: 55 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846762 [ITTI] I Queue for TASK_MAC_UE task size: 69 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846774 [ITTI] I Queue for TASK_MAC_UE task size: 87 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846790 [ITTI] I Queue for TASK_MAC_UE task size: 109 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846820 [ITTI] I Queue for TASK_MAC_UE task size: 137 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846848 [ITTI] I Queue for TASK_MAC_UE task size: 172 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.846892 [TMR] E Queue for TASK_MAC_UE task contains 214 messages
-83769.846945 [TMR] E Queue for TASK_MAC_UE task contains 268 messages
-83769.847018 [TMR] E Queue for TASK_MAC_UE task contains 336 messages
-83769.847108 [TMR] E Queue for TASK_MAC_UE task contains 421 messages
-83769.847264 [ITTI] I Queue for TASK_MAC_UE task size is back under 10% of max size
-83769.847308 [ITTI] I Queue for TASK_MAC_UE task size: 22 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.847318 [ITTI] I Queue for TASK_MAC_UE task size: 28 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.847329 [ITTI] I Queue for TASK_MAC_UE task size: 35 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.847341 [ITTI] I Queue for TASK_MAC_UE task size: 44 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.847356 [ITTI] I Queue for TASK_MAC_UE task size: 55 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.847373 [ITTI] I Queue for TASK_MAC_UE task size: 69 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.847394 [ITTI] I Queue for TASK_MAC_UE task size: 87 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.847421 [ITTI] I Queue for TASK_MAC_UE task size: 109 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.847453 [ITTI] I Queue for TASK_MAC_UE task size: 137 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.847494 [ITTI] I Queue for TASK_MAC_UE task size: 172 (last message NR_MAC_RRC_CONFIG_MIB)
-83769.847542 [TMR] E Queue for TASK_MAC_UE task contains 214 messages
-83769.848599 [ITTI] I Queue for TASK_RRC_NRUE task size is back under 10% of max size
-83769.858585 [ITTI] I Queue for TASK_MAC_UE task size is back under 10% of max size
-83770.171195 [NR_MAC] W [UE 0] SR not served! SR counter 64 reached sr_MaxTransmissions 64
-83770.171203 [NR_MAC] W Triggering new RA procedure for UE with RNTI e7b4
-83770.171606 [MAC] I Initialization of 4-Step CBRA procedure
-83770.171612 [NR_MAC] E RA-ResponseWindow need to be configured to a value lower than or equal to 10 ms
-83770.176676 [NR_MAC] I PRACH scheduler: Selected RO Frame 369, Slot 19, Symbol 8, Fdm 0
-83770.176714 [PHY] I PRACH [UE 0] in frame.slot 369.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 20, first_nonzero_root_idx 0, preambleIndex = 40
-83770.183793 [PHY] I RAR-Msg2 decoded
-83770.183800 [NR_MAC] I [UE 0][RAPROC][RA-RNTI 0113] Got BI RAR subPDU 5 ms
-83770.183801 [NR_MAC] I [UE 0][RAPROC][RA-RNTI 0113] Got RAPID RAR subPDU
-83770.183802 [NR_MAC] A [UE 0][RAPROC][370.10] Found RAR with the intended RAPID 40
-83770.186666 [NR_MAC] A [RAPROC][370.19] RA-Msg3 transmitted
-83770.250714 [MAC] W [UE 0] Contention resolution failed
-ULLLLULLULULLLLLLLLLLLLLLLULLLLLLULLLLLLULLULLLLLLLLUULLLLLLLULLLLLLULLLLLLLUULLLLLLLULULLLLLLLLLULLULLLLLLULLLLLLLLLLLULLLLLLLLLLLLULLLUULLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLULLLLLLLLLLLULLLLULLLLLLLLLLLLLLLULLLLLLLULLLLLLLLLLLLULLLULLLLLLLLLLLLLLULULULLLLLLLLLLLLUULLLLLLLLLLLLULLLLLLLLLLLLULLLLULLULLLLLLLLLLLLLLLLLULLLLLLLLLLLLLULLLULLLULLLLLLULULLLLULLLLLLLLULLLLLLLLLLLLULLLLLLLLLLLLLLLULULLLLLLLLULULLLLLLLLLLLULLLLLLLULLLULLLLUULULLLLULLLLLLLLLLLULLLLLLLLLLLLLULLLLLLLLLLLLLLULLLLLLLLLLLLLULLULLLLLLLLULLLLLLLLLLLULLLLLLLLLLLLULLLLULLULLLULLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLULLLLLLLLLLLULLLLLULLLLLLULLULLLLLULLLLLLLLULLLLLLLULLLLLLLLLLLLLULLLLLLLLLLLULLLLLLLULLLLLLLLLLLLLUULLLLLLLLLLLLLLLLLULLLLLUUULLLLLLLLLLLLLLLLLULLLLUULLLLUULLLLLLLLLLLLLLLLULLLLULLLLLLLLULLLLLLULLLLLLLLLLLLLLULLLLLLULLLLLULLULULLLLLLLLLLLLLLLLLLULLLLLLULLLLLLULLLLULLLUULLLLLLULLLLLLLLLLLLULLLLLLULLLULLLUULLLLLLLLLLULLLLLLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLULLLLLLLULLLLLLLUULLLLLLLLLLLULLLLLLULLLLLULLLULLLLLLLLLLLLLLLLLLLLLLLUULLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLULLLLLLLLLLLLLLLULLLLLLULLLLLLLLLLULLLLLLULLLLULLULLLLLLLLLLLUULLLLLULLLLLULLULLLLLLLLLLLLULLLLLUULULLLLULLLLLLLLLLLLLLLLLULLLLLLLLLLULLLLLLUULLLLLLULLLLLLLLULLLLLLLLLLLLLLULLLLLLULLLLLLLLLLLLLLLULLLLLLLLLLLLLLLLLUULLULLLULLLLUUULLLULLLLLLULLLLLLLLUULLLLLLLLULLLLLLLLLLLLLLULLLLULLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLULULLLLLL
-Assertion (0) failed!
-In nr_rrc_prepare_msg3_payload() /oai-ran/openair2/RRC/NR_UE/rrc_UE.c:1010
-RA trigger not implemented
-83770.256605 [NR_MAC] I PRACH scheduler: Selected RO Frame 377, Slot 19, Symbol 0, Fdm 0
-83770.256633 [PHY] I PRACH [UE 0] in frame.slot 377.19, placing PRACH in position 1440, Msg1/MsgA-Preamble frequency start 0 (k1 0), preamble_offset 8, first_nonzero_root_idx 0, preambleIndex = 17
-83770.263795 [PHY] I RAR-Msg2 decoded
-83770.263799 [NR_MAC] I [UE 0][RAPROC][RA-RNTI 010b] Got BI RAR subPDU 5 ms
-83770.263800 [NR_MAC] I [UE 0][RAPROC][RA-RNTI 010b] Got RAPID RAR subPDU
-83770.263800 [NR_MAC] A [UE 0][RAPROC][378.10] Found RAR with the intended RAPID 17
-83770.266634 [NR_MAC] A [RAPROC][378.19] RA-Msg3 transmitted
-GNU gdb (Ubuntu 15.0.50.20240403-0ubuntu1) 15.0.50.20240403-git
-Copyright (C) 2024 Free Software Foundation, Inc.
-License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
-This is free software: you are free to change and redistribute it.
-There is NO WARRANTY, to the extent permitted by law.
-Type "show copying" and "show warranty" for details.
-This GDB was configured as "aarch64-linux-gnu".
-Type "show configuration" for configuration details.
-For bug reporting instructions, please see:
-<https://www.gnu.org/software/gdb/bugs/>.
-Find the GDB manual and other documentation resources online at:
-    <http://www.gnu.org/software/gdb/documentation/>.
-
-For help, type "help".
-Type "apropos word" to search for commands related to "word".
-ptrace: Inappropriate ioctl for device.
-Attaching to process 48
-Could not attach to process.  If your uid matches the uid of the target
-process, check the setting of /proc/sys/kernel/yama/ptrace_scope, or try
-again as the root user.  For more details, see /etc/sysctl.d/10-ptrace.conf
-83770.329012 [HW] I releasing USRP
-
-Exiting execution
-[INFO  tini (1)] Spawned child process '/opt/oai-nr-ue/bin/entrypoint.sh' with pid '48'
-[INFO  tini (1)] Main child exited with signal (with signal 'Aborted')
+88992.923184 [HW] I Device timestamp: 0.223612...
+88992.923188 [HW] I [RRU] has loaded USRP B200 device.
+88993.699826 [HW] I current pps at 2.871850, starting streaming at 3.871850
+88995.719605 [PHY] W SSB position provided
+88995.719623 [NR_PHY] W Starting sync detection
+88995.719626 [PHY] I [UE thread Synch] Running Initial Synch 
+88995.719628 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+88995.720313 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+88996.260334 [PHY] E synch Failed: 
+88996.299579 [PHY] W SSB position provided
+88996.299591 [NR_PHY] W Starting sync detection
+88996.299593 [PHY] I [UE thread Synch] Running Initial Synch 
+88996.299594 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+88996.300190 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+88996.469644 [PHY] E synch Failed: 
+88996.499600 [PHY] W SSB position provided
+88996.499614 [NR_PHY] W Starting sync detection
+88996.499616 [PHY] I [UE thread Synch] Running Initial Synch 
+88996.499616 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+88996.499673 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+88997.038795 [PHY] E synch Failed: 
+88997.059554 [PHY] W SSB position provided
+88997.059567 [NR_PHY] W Starting sync detection
+88997.059568 [PHY] I [UE thread Synch] Running Initial Synch 
+88997.059569 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+88997.059632 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+88997.228910 [PHY] E synch Failed: 
+88997.259573 [PHY] W SSB position provided
+88997.259581 [NR_PHY] W Starting sync detection
+88997.259583 [PHY] I [UE thread Synch] Running Initial Synch 
+88997.259584 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+88997.259637 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+88997.798770 [PHY] E synch Failed: 
+88997.819907 [PHY] W SSB position provided
+88997.819918 [NR_PHY] W Starting sync detection
+88997.819921 [PHY] I [UE thread Synch] Running Initial Synch 
+88997.819922 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+88997.819991 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+88997.989939 [PHY] E synch Failed: 
+88998.019547 [PHY] W SSB position provided
+88998.019558 [NR_PHY] W Starting sync detection
+88998.019561 [PHY] I [UE thread Synch] Running Initial Synch 
+88998.019562 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+88998.019629 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+88998.558774 [PHY] E synch Failed: 
+88998.579566 [PHY] W SSB position provided
+88998.579583 [NR_PHY] W Starting sync detection
+88998.579584 [PHY] I [UE thread Synch] Running Initial Synch 
+88998.579585 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+88998.579642 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+88998.748826 [PHY] E synch Failed: 
+88998.779584 [PHY] W SSB position provided
+88998.779592 [NR_PHY] W Starting sync detection
+88998.779594 [PHY] I [UE thread Synch] Running Initial Synch 
+88998.779595 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+88998.779648 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+88999.318734 [PHY] E synch Failed: 
+88999.339539 [PHY] W SSB position provided
+88999.339551 [NR_PHY] W Starting sync detection
+88999.339553 [PHY] I [UE thread Synch] Running Initial Synch 
+88999.339554 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+88999.339608 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+88999.508902 [PHY] E synch Failed: 
+88999.539558 [PHY] W SSB position provided
+88999.539576 [NR_PHY] W Starting sync detection
+88999.539579 [PHY] I [UE thread Synch] Running Initial Synch 
+88999.539579 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+88999.539630 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89000.078781 [PHY] E synch Failed: 
+89000.099575 [PHY] W SSB position provided
+89000.099590 [NR_PHY] W Starting sync detection
+89000.099592 [PHY] I [UE thread Synch] Running Initial Synch 
+89000.099593 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89000.099648 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89000.268797 [PHY] E synch Failed: 
+89000.299594 [PHY] W SSB position provided
+89000.299605 [NR_PHY] W Starting sync detection
+89000.299606 [PHY] I [UE thread Synch] Running Initial Synch 
+89000.299607 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89000.299658 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89000.838660 [PHY] E synch Failed: 
+89000.859548 [PHY] W SSB position provided
+89000.859562 [NR_PHY] W Starting sync detection
+89000.859566 [PHY] I [UE thread Synch] Running Initial Synch 
+89000.859568 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89000.859623 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89001.028857 [PHY] E synch Failed: 
+89001.059568 [PHY] W SSB position provided
+89001.059580 [NR_PHY] W Starting sync detection
+89001.059582 [PHY] I [UE thread Synch] Running Initial Synch 
+89001.059583 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89001.059635 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89001.599011 [PHY] E synch Failed: 
+89001.619584 [PHY] W SSB position provided
+89001.619593 [NR_PHY] W Starting sync detection
+89001.619595 [PHY] I [UE thread Synch] Running Initial Synch 
+89001.619596 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89001.619658 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89001.788879 [PHY] E synch Failed: 
+89001.819542 [PHY] W SSB position provided
+89001.819556 [NR_PHY] W Starting sync detection
+89001.819559 [PHY] I [UE thread Synch] Running Initial Synch 
+89001.819560 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89001.819610 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89002.358850 [PHY] E synch Failed: 
+89002.379559 [PHY] W SSB position provided
+89002.379572 [NR_PHY] W Starting sync detection
+89002.379574 [PHY] I [UE thread Synch] Running Initial Synch 
+89002.379575 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89002.379629 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89002.548879 [PHY] E synch Failed: 
+89002.579578 [PHY] W SSB position provided
+89002.579590 [NR_PHY] W Starting sync detection
+89002.579591 [PHY] I [UE thread Synch] Running Initial Synch 
+89002.579592 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89002.579643 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89003.118979 [PHY] E synch Failed: 
+89003.139531 [PHY] W SSB position provided
+89003.139540 [NR_PHY] W Starting sync detection
+89003.139541 [PHY] I [UE thread Synch] Running Initial Synch 
+89003.139542 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89003.139598 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89003.308810 [PHY] E synch Failed: 
+89003.339551 [PHY] W SSB position provided
+89003.339559 [NR_PHY] W Starting sync detection
+89003.339561 [PHY] I [UE thread Synch] Running Initial Synch 
+89003.339562 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89003.339626 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89003.878950 [PHY] E synch Failed: 
+89003.899568 [PHY] W SSB position provided
+89003.899579 [NR_PHY] W Starting sync detection
+89003.899581 [PHY] I [UE thread Synch] Running Initial Synch 
+89003.899581 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89003.899637 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89004.069020 [PHY] E synch Failed: 
+89004.099526 [PHY] W SSB position provided
+89004.099542 [NR_PHY] W Starting sync detection
+89004.099545 [PHY] I [UE thread Synch] Running Initial Synch 
+89004.099546 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89004.099603 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89004.638614 [PHY] E synch Failed: 
+89004.659541 [PHY] W SSB position provided
+89004.659549 [NR_PHY] W Starting sync detection
+89004.659550 [PHY] I [UE thread Synch] Running Initial Synch 
+89004.659551 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89004.659614 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89004.828800 [PHY] E synch Failed: 
+89004.859560 [PHY] W SSB position provided
+89004.859570 [NR_PHY] W Starting sync detection
+89004.859573 [PHY] I [UE thread Synch] Running Initial Synch 
+89004.859574 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89004.859630 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89005.398892 [PHY] E synch Failed: 
+89005.419578 [PHY] W SSB position provided
+89005.419585 [NR_PHY] W Starting sync detection
+89005.419587 [PHY] I [UE thread Synch] Running Initial Synch 
+89005.419588 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89005.419649 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
+89005.588855 [PHY] E synch Failed: 
+89005.619535 [PHY] W SSB position provided
+89005.619551 [NR_PHY] W Starting sync detection
+89005.619555 [PHY] I [UE thread Synch] Running Initial Synch 
+89005.619556 [NR_PHY] I Starting cell search with center freq: 3309480000, bandwidth: 51. Scanning for 1 number of GSCN.
+89005.619609 [NR_PHY] I Scanning GSCN: 0, with SSB offset: 238, SSB Freq: 0.000000
