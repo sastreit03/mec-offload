@@ -1,2 +1,0 @@
-DL MCS: count=42 min=0 max=18 avg=0.976 stddev=3.074
-UL MCS: count=42 min=0 max=0 avg=0.000 stddev=0.000
