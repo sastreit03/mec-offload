@@ -1,10 +1,12 @@
-# sionna-rk-x410
+# mec-offloading-ad
+Contains code for mobile edge computing (MEC) 5G O-RAN task offloading of anomaly detection tasks.
 
-This private repository tracks two modified copies of NVIDIA's public sionna-rk repository.
+This private repository tracks three modified copies of NVIDIA's public sionna-rk repository.
 
 ## Layout
 
-- `gnb/`: code and configuration for the DGX Spark running the 5GC, gNB, and X410 RU
-- `ue/`: code and configuration for the DGX Spark running the OAI NR UE and X410
+- `core-mec/`: code and configuration for the DGX Spark functioning as the core network and MEC server.
+- `gnb/`: code and configuration for the DGX Spark functioning as the gNB.
+- `ue/`: code and configuration for the PC functioning as the UE.
 
-The two folders intentionally contain separate copies so that gNB-side and UE-side changes can be tracked independently.
+The three folders intentionally contain separate copies so that core/MEC-, gNB-, and UE-side changes can be tracked independently.
