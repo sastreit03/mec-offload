@@ -1,0 +1,9 @@
+NAMES          IMAGE                                     STATUS                    NETWORKS
+monitor_xapp   oai-flexric:latest                        Up 20 minutes             oai-e2-net
+oai-gnb        oai-gnb-cuda:latest                       Up 20 minutes (healthy)   oai-e2-net,oai-public-net
+oai-ext-dn     oaisoftwarealliance/trf-gen-cn5g:latest   Up 20 minutes (healthy)   oai-traffic-net
+oai-upf        oaisoftwarealliance/oai-upf:v2.1.10       Up 20 minutes (healthy)   oai-public-net,oai-traffic-net
+oai-smf        oaisoftwarealliance/oai-smf:v2.1.10       Up 20 minutes (healthy)   oai-public-net
+oai-amf        oaisoftwarealliance/oai-amf:v2.1.10       Up 20 minutes (healthy)   oai-public-net
+nearRT-RIC     oai-flexric:latest                        Up 20 minutes             oai-e2-net
+oai-mysql      mysql:8.0                                 Up 20 minutes (healthy)   oai-public-net

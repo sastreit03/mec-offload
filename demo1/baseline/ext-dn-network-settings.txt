@@ -1,0 +1,27 @@
+{
+    "oai-traffic-net": {
+        "IPAMConfig": {
+            "IPv4Address": "192.168.72.135"
+        },
+        "Links": null,
+        "Aliases": [
+            "oai-ext-dn",
+            "oai-ext-dn"
+        ],
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "5017f4580c8ccfff722269ee71296ed1a32a6e53b38c81280921b0ee966d2493",
+        "EndpointID": "15a8a5477ef9bce13db040842edcba0fb87d879188567c97aa2714d3d7061816",
+        "Gateway": "192.168.72.129",
+        "IPAddress": "192.168.72.135",
+        "MacAddress": "42:11:94:b0:69:db",
+        "IPPrefixLen": 26,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+            "oai-ext-dn",
+            "5ca83f21a020"
+        ]
+    }
+}
