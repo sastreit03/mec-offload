@@ -1,8 +1,0 @@
-{
-    "channel_emulation": {
-        "num_taps": 1,
-        "num_cirs": 14,
-        "sigma_scaling": 0.0,
-        "sigma_max": 0.0
-    }
-}
