@@ -1,0 +1,8 @@
+monitor_xapp oai-flexric:latest
+oai-gnb oai-gnb-cuda:latest
+oai-ext-dn oaisoftwarealliance/trf-gen-cn5g:latest
+oai-upf oaisoftwarealliance/oai-upf:v2.1.10
+oai-smf oaisoftwarealliance/oai-smf:v2.1.10
+oai-amf oaisoftwarealliance/oai-amf:v2.1.10
+nearRT-RIC oai-flexric:latest
+oai-mysql mysql:8.0
