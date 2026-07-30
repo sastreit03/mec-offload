@@ -1,0 +1,3 @@
+3: oaitun_ue1: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UNKNOWN group default qlen 500
+    inet 12.1.1.4/24 scope global oaitun_ue1
+       valid_lft forever preferred_lft forever
