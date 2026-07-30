@@ -1,0 +1,12 @@
+[2026-07-30 20:28:05.445] [config ] [info]     + PDU session type.........................: IPV4
+[2026-07-30 20:28:05.447] [pfcp   ] [info] pfcp_l4_stack created listening to 192.168.71.134:8805
+[2026-07-30 20:28:05.457] [pfcp_switch] [info] Source NAT added
+[2026-07-30 20:28:06.284] [upf_n4 ] [info] Handle SX ASSOCIATION SETUP REQUEST
+[2026-07-30 20:29:07.075] [upf_app] [info] Received N4_SESSION_ESTABLISHMENT_REQUEST seid 0x1 
+[2026-07-30 20:29:07.075] [upf_n4 ] [info] pfcp_session::add(far) seid 0x1 
+[2026-07-30 20:29:07.075] [upf_n4 ] [info] pfcp_session::add(pdr) seid 0x1 
+| PFCP switch Packet Detection Rule list ordered by established sessions:                                                                                                                          |
+[2026-07-30 20:29:07.118] [upf_app] [info] Received N4_SESSION_MODIFICATION_REQUEST seid 0x1 
+[2026-07-30 20:29:07.118] [upf_n4 ] [info] pfcp_session::add(far) seid 0x1 
+[2026-07-30 20:29:07.118] [upf_n4 ] [info] pfcp_session::add(pdr) seid 0x1 
+| PFCP switch Packet Detection Rule list ordered by established sessions:                                                                                                                          |

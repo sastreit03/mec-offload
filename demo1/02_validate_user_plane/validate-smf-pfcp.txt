@@ -1,0 +1,389 @@
+[2026-07-30 20:28:05.265] [config ] [debug] Unknown NF upf in configuration. Ignored
+[2026-07-30 20:28:05.270] [config ] [info]   UPF List:
+[2026-07-30 20:28:05.270] [config ] [info]       + upf_info:
+[2026-07-30 20:28:05.270] [config ] [info]         - snssai_upf_info_item:
+[2026-07-30 20:28:05.270] [config ] [info]         - interface_upf_info_item:
+[2026-07-30 20:28:05.270] [config ] [info]         - interface_upf_info_item:
+[2026-07-30 20:28:05.270] [config ] [info]     + PDU session type.........................: IPV4
+[2026-07-30 20:28:05.271] [pfcp   ] [info] pfcp_l4_stack created listening to 192.168.71.133:8805
+[2026-07-30 20:28:06.282] [smf_app] [debug] Start a PFCP Association procedure with an UPF
+[2026-07-30 20:28:06.282] [common] [debug] Resolving an FQDN/IP Addr for an UPF node
+[2026-07-30 20:28:06.283] [common] [debug] Resolve IP Addr 192.168.71.134, FQDN oai-upf.oai-public-net
+[2026-07-30 20:28:06.284] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 6 length 36
+[2026-07-30 20:28:06.284] [smf_n4 ] [info] Received N4 ASSOCIATION SETUP RESPONSE from an UPF
+[2026-07-30 20:28:06.284] [common] [debug] Resolving an FQDN/IP Addr for an UPF node
+[2026-07-30 20:28:06.285] [common] [debug] Resolve IP Addr 192.168.71.134, FQDN oai-upf.oai-public-net
+[2026-07-30 20:28:06.285] [smf_app] [debug] Found UPF config for pending PFCP association 192.168.71.134
+[2026-07-30 20:28:06.285] [smf_app] [info] Successfully added UPF node: 192.168.71.134
+[2026-07-30 20:28:06.285] [smf_app] [debug] Successfully added UPF graph edge for 192.168.71.134: - UPF Graph Edge
+[2026-07-30 20:28:06.285] [smf_app] [debug] Successfully added UPF graph edge for 192.168.71.134: - UPF Graph Edge
+[2026-07-30 20:28:06.285] [smf_app] [debug] UPF graph
+    - UPF Graph Edge
+    - UPF Graph Edge
+[2026-07-30 20:28:06.285] [smf_app] [debug] Added PFCP association with UPF config: 
+      + upf_info:
+        - snssai_upf_info_item:
+        - interface_upf_info_item:
+        - interface_upf_info_item:
+[2026-07-30 20:28:08.284] [common] [debug] Resolving an FQDN/IP Addr for an UPF node
+[2026-07-30 20:28:16.285] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:28:16.286] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:28:26.286] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:28:26.286] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:28:36.286] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:28:36.287] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:28:46.287] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:28:46.287] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:28:56.287] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:28:56.288] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:29:06.288] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:29:06.288] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:29:07.074] [smf_api] [info] PDU Session Create SM Context Request.
+[2026-07-30 20:29:07.074] [smf_app] [debug] PDU Session ID 10
+[2026-07-30 20:29:07.074] [smf_app] [info] Handle a PDU Session Create SM Context Request from an AMF (HTTP version 1)
+[2026-07-30 20:29:07.074] [nas] [debug] Decoding PDU Session Identity
+[2026-07-30 20:29:07.074] [nas] [debug] Decoded PDU Session Identity, len (1)
+[2026-07-30 20:29:07.074] [nas] [debug] Decoding PDU Session Identity
+[2026-07-30 20:29:07.074] [nas] [debug] Decoded PDU Session Identity, len (1)
+[2026-07-30 20:29:07.074] [smf_app] [debug] PDU Session Type 1
+[2026-07-30 20:29:07.074] [smf_app] [info] Handle a PDU Session Create SM Context Request message from AMF, SUPI imsi-262990100000832, SNSSAI - snssai:
+[2026-07-30 20:29:07.074] [smf_app] [debug] PDU Session Type 1, PDN Type 1
+[2026-07-30 20:29:07.074] [smf_app] [info] Handle a PDU Session Create SM Context Request message from AMF (HTTP version 1)
+[2026-07-30 20:29:07.074] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.074] [smf_app] [debug] Create a new PDU session
+[2026-07-30 20:29:07.074] [smf_app] [info] Add PDU Session with Id 10
+[2026-07-30 20:29:07.074] [smf_app] [debug] PDU Session Id (10) has been added successfully
+[2026-07-30 20:29:07.074] [smf_app] [debug] PDU Session Type IPv4
+[2026-07-30 20:29:07.074] [smf_app] [debug] Trigger PDU Session Create SM Context Response: Set promise with ID 8 to ready
+[2026-07-30 20:29:07.074] [smf_app] [info] Get default QoS for a PDU Session, key 1
+[2026-07-30 20:29:07.074] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.074] [smf_app] [debug] UPF selection DFS: Handle UPF 192.168.71.134
+[2026-07-30 20:29:07.074] [smf_app] [info] Verifying if UPF edge serves network
+[2026-07-30 20:29:07.074] [smf_app] [debug] UPF Edge: - UPF Graph Edge
+[2026-07-30 20:29:07.074] [smf_app] [debug] Selection Criteria: - UPF Selection Criteria
+[2026-07-30 20:29:07.074] [smf_app] [debug] UPF 192.168.71.134 serves SNSSAI
+[2026-07-30 20:29:07.074] [smf_app] [info] Successfully added UPF node: 192.168.71.134
+[2026-07-30 20:29:07.074] [smf_app] [debug] Successfully added UPF graph edge for 192.168.71.134: - UPF Graph Edge
+[2026-07-30 20:29:07.074] [smf_app] [info] Verifying if UPF edge serves network
+[2026-07-30 20:29:07.074] [smf_app] [debug] UPF Edge: - UPF Graph Edge
+[2026-07-30 20:29:07.074] [smf_app] [debug] Selection Criteria: - UPF Selection Criteria
+[2026-07-30 20:29:07.074] [smf_app] [debug] UPF 192.168.71.134 serves SNSSAI
+[2026-07-30 20:29:07.074] [smf_app] [debug] Successfully added UPF graph edge for 192.168.71.134: - UPF Graph Edge
+[2026-07-30 20:29:07.074] [smf_app] [info] UPF selection was successful.
+[2026-07-30 20:29:07.074] [smf_app] [debug] UPF graph
+    - UPF Graph Edge
+    - UPF Graph Edge
+[2026-07-30 20:29:07.074] [smf_app] [debug] DFS Asynch: Handle UPF 192.168.71.134
+[2026-07-30 20:29:07.075] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 51 length 66
+[2026-07-30 20:29:07.075] [smf_app] [debug] Received N4 Session Establishment Response sender teid 0x1  pfcp_tx_id 9
+[2026-07-30 20:29:07.075] [smf_app] [debug] Handle N4 Session Establishment Response (PDU Session Id 10)
+[2026-07-30 20:29:07.075] [smf_app] [debug] UPF graph in SMF finished
+[2026-07-30 20:29:07.075] [smf_app] [debug] Prepare a PDU Session Establishment Accept message and send to UE
+[2026-07-30 20:29:07.075] [smf_n1 ] [info] Create N1 SM Container, PDU Session Establishment Accept
+[2026-07-30 20:29:07.075] [smf_n1 ] [debug] PDU Session Establishment Accept, PDU Session Identity 0xa, Procedure Transaction Identity 0x1
+[2026-07-30 20:29:07.075] [smf_n1 ] [debug] PDU Session Type: 1
+[2026-07-30 20:29:07.075] [smf_n1 ] [debug] sm_context: PDU Session Type IPV4
+[2026-07-30 20:29:07.075] [smf_n1 ] [debug] Pdu_session_type: PDU Session Type 1
+[2026-07-30 20:29:07.075] [smf_n1 ] [debug] Size of PDU Session Establishment Accept message: 83 (octets)
+[2026-07-30 20:29:07.075] [nas] [debug] Encoding PDU Session Identity
+[2026-07-30 20:29:07.075] [nas] [debug] Encoded PDU Session Identity, len (1)
+[2026-07-30 20:29:07.075] [smf_n2 ] [info] Create N2 SM Information, PDU Session Resource Setup Request Transfer
+[2026-07-30 20:29:07.075] [smf_n2 ] [info] Create N2 SM Information, PDU Session Resource Setup Request Transfer
+[2026-07-30 20:29:07.075] [smf_n2 ] [debug] PDU Session Type: 1 
+[2026-07-30 20:29:07.077] [smf_app] [info] Update PDU Session Status
+[2026-07-30 20:29:07.077] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.077] [smf_app] [info] Set PDU Session Status to PDU Session Status Establishment Pending
+[2026-07-30 20:29:07.077] [smf_app] [info] Set PDU Session Status to PDU Session Status Establishment Pending
+[2026-07-30 20:29:07.077] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.077] [smf_app] [info] Set PDU Session UpCnxState to UPCNX_STATE_DEACTIVATED
+[2026-07-30 20:29:07.077] [smf_app] [debug] Got successful response from AMF (response code 200), set session status to PDU Session Status Establishment Pending
+[2026-07-30 20:29:07.118] [smf_app] [info] Handle a PDU Session Update SM Context Request from an AMF (HTTP version 1)
+[2026-07-30 20:29:07.118] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.118] [smf_app] [info] Handle a PDU Session Update SM Context Request message from an AMF (HTTP version 1)
+[2026-07-30 20:29:07.118] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.118] [smf_app] [info] PDU Session Resource Setup Response Transfer
+[2026-07-30 20:29:07.118] [smf_app] [info] PDU Session Establishment Request, processing N2 SM Information
+[2026-07-30 20:29:07.118] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.118] [smf_app] [debug] DFS Asynch: Handle UPF 192.168.71.134
+[2026-07-30 20:29:07.119] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 53 length 27
+[2026-07-30 20:29:07.119] [smf_app] [debug] Received N4 Session Modification Response sender teid 0x1  pfcp_tx_id B 
+[2026-07-30 20:29:07.119] [smf_app] [info] Handle N4 Session Modification Response (PDU Session Id 10)
+[2026-07-30 20:29:07.119] [smf_app] [debug] UPF graph in SMF finished
+[2026-07-30 20:29:07.119] [smf_sbi] [debug] Register with the UDM for this PDU Session (ID 10)
+[2026-07-30 20:29:07.119] [smf_sbi] [debug] Register with the UDM for this PDU Session (ID 10)
+[2026-07-30 20:29:07.122] [smf_sbi] [debug] Register with UDM for this PDU Session, response from UDM
+[2026-07-30 20:29:07.122] [smf_app] [info] PDU Session Establishment Request (UE-Initiated)
+[2026-07-30 20:29:07.122] [smf_app] [info] Set PDU Session Status to PDU Session Status Active
+PDU SESSION:				
+	PDU Session ID:			10
+- UPF Graph Edge
+[2026-07-30 20:29:07.122] [smf_app] [debug] Get PDU Session information related to SMF Context ID 0x1 
+[2026-07-30 20:29:07.122] [smf_app] [debug] Get PDU Session information related to SMF Context ID 0x1 
+[2026-07-30 20:29:07.122] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.122] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.122] [smf_app] [debug] Send request to N11 to triger FlexCN (Event Exposure), SUPI imsi-262990100000832 , PDU Session ID 10, HTTP version 1
+[2026-07-30 20:29:07.122] [smf_app] [debug] Get PDU Session information related to SMF Context ID 0x1 
+[2026-07-30 20:29:07.122] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.122] [smf_app] [debug] Get PDU Session information related to SMF Context ID 0x1 
+[2026-07-30 20:29:07.122] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.122] [smf_app] [debug] Get PDU Session information related to SMF Context ID 0x1 
+[2026-07-30 20:29:07.122] [smf_app] [debug] Get PDU Session information related to SMF Context ID 0x1 
+[2026-07-30 20:29:07.122] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.122] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.122] [smf_app] [debug] Send request to N11 to triger PDU_SES_EST (Event Exposure), SUPI imsi-262990100000832, PDU Session ID 10, HTTP version 1
+[2026-07-30 20:29:07.122] [smf_app] [debug] Get PDU Session information related to SMF Context ID 0x1 
+[2026-07-30 20:29:07.122] [smf_app] [debug] Get PDU Session information related to SMF Context ID 0x1 
+[2026-07-30 20:29:07.122] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.122] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:29:07.122] [smf_app] [debug] Send request to N11 to triger FlexCN (Event Exposure), SUPI imsi-262990100000832, PDU Session ID 10, HTTP version  1
+[2026-07-30 20:29:07.122] [smf_app] [debug] PDU Session Update SM Context: Set promise with ID 10 to ready
+[2026-07-30 20:29:16.289] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:29:16.289] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:29:26.289] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:29:26.289] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:29:36.290] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:29:36.290] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:29:46.290] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:29:46.291] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:29:56.291] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:29:56.291] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:30:06.291] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:30:06.291] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:30:16.292] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:30:16.292] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:30:26.292] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:30:26.293] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:30:36.293] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:30:36.293] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:30:46.293] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:30:46.294] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:30:56.294] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:30:56.294] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:31:06.294] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:31:06.295] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:31:16.295] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:31:16.295] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:31:26.295] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:31:26.295] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:31:36.295] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:31:36.296] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:31:46.296] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:31:46.296] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:31:56.296] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:31:56.296] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:32:06.297] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:32:06.297] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:32:16.297] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:32:16.298] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:32:26.298] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:32:26.298] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:32:36.299] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:32:36.299] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:32:46.299] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:32:46.299] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:32:56.300] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:32:56.300] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:33:06.300] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:33:06.301] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:33:16.301] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:33:16.301] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:33:26.302] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:33:26.302] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:33:36.302] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:33:36.303] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:33:46.303] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:33:46.303] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:33:56.303] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:33:56.304] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:34:06.304] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:34:06.304] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:34:16.305] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:34:16.305] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:34:26.305] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:34:26.306] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:34:36.306] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:34:36.306] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:34:46.306] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:34:46.307] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:34:56.307] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:34:56.308] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:35:06.308] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:35:06.308] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:35:16.308] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:35:16.309] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:35:26.309] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:35:26.309] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:35:36.309] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:35:36.310] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:35:46.310] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:35:46.310] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:35:56.311] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:35:56.311] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:36:06.311] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:36:06.311] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:36:16.311] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:36:16.312] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:36:26.312] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:36:26.312] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:36:36.313] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:36:36.313] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:36:46.313] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:36:46.313] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:36:56.314] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:36:56.314] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:37:06.314] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:37:06.315] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:37:16.315] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:37:16.316] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:37:26.316] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:37:26.316] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:37:36.317] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:37:36.317] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:37:46.317] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:37:46.318] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:37:56.318] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:37:56.318] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:38:06.318] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:38:06.319] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:38:16.319] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:38:16.319] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:38:26.320] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:38:26.320] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:38:36.320] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:38:36.321] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:38:46.321] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:38:46.321] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:38:56.321] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:38:56.322] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:39:06.322] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:39:06.322] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:39:16.322] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:39:16.323] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:39:26.323] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:39:26.323] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:39:36.324] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:39:36.324] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:39:46.324] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:39:46.324] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:39:56.325] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:39:56.325] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:40:06.325] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:40:06.326] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:40:16.326] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:40:16.326] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:40:26.327] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:40:26.327] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:40:36.327] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:40:36.328] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:40:46.328] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:40:46.328] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:40:56.329] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:40:56.329] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:41:06.329] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:41:06.330] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:41:16.330] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:41:16.330] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:41:26.331] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:41:26.331] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:41:36.331] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:41:36.332] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:41:46.332] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:41:46.332] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:41:56.332] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:41:56.333] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:42:06.333] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:42:06.333] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:42:16.334] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:42:16.334] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:42:26.334] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:42:26.335] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:42:36.335] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:42:36.335] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:42:46.335] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:42:46.336] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:42:56.336] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:42:56.336] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:43:06.337] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:43:06.337] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:43:16.337] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:43:16.337] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:43:26.338] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:43:26.338] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:43:36.338] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:43:36.339] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:43:46.339] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:43:46.339] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:43:56.339] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:43:56.340] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:44:06.340] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:44:06.340] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:44:16.341] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:44:16.341] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:44:26.341] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:44:26.341] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:44:36.342] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:44:36.342] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:44:46.342] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:44:46.343] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:44:56.343] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:44:56.343] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:45:04.445] [smf_app] [info] Handle a PDU Session Update SM Context Request from an AMF (HTTP version 1)
+[2026-07-30 20:45:04.445] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:45:04.445] [smf_app] [info] Handle a PDU Session Update SM Context Request message from an AMF (HTTP version 1)
+[2026-07-30 20:45:04.445] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:45:04.445] [smf_app] [info] Deactivation of User Plane connectivity of a PDU session
+[2026-07-30 20:45:04.445] [smf_app] [info] Find PDU Session with ID 10
+[2026-07-30 20:45:04.445] [smf_app] [debug] DFS Asynch: Handle UPF 192.168.71.134
+[2026-07-30 20:45:04.446] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 53 length 17
+[2026-07-30 20:45:04.446] [smf_app] [debug] Received N4 Session Modification Response sender teid 0x1  pfcp_tx_id 6D 
+[2026-07-30 20:45:04.446] [smf_app] [info] Handle N4 Session Modification Response (PDU Session Id 10)
+[2026-07-30 20:45:04.446] [smf_sbi] [debug] Register with the UDM for this PDU Session (ID 10)
+[2026-07-30 20:45:04.446] [smf_sbi] [debug] Register with the UDM for this PDU Session (ID 10)
+[2026-07-30 20:45:04.449] [smf_sbi] [debug] Register with UDM for this PDU Session, response from UDM
+[2026-07-30 20:45:04.449] [smf_app] [debug] PDU Session Update SM Context: Set promise with ID 108 to ready
+[2026-07-30 20:45:06.343] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:45:06.344] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:45:16.344] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:45:16.345] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:45:26.345] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:45:26.345] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:45:36.346] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:45:36.346] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:45:46.346] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:45:46.347] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:45:56.347] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:45:56.347] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:46:06.347] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:46:06.348] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:46:16.348] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:46:16.348] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:46:26.349] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:46:26.349] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:46:36.349] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:46:36.349] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:46:46.350] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:46:46.350] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:46:56.350] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:46:56.351] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:47:06.351] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:47:06.351] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:47:16.352] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:47:16.352] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:47:26.352] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:47:26.353] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:47:36.353] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:47:36.353] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:47:46.353] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:47:46.354] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:47:56.354] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:47:56.354] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:48:06.355] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:48:06.355] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:48:16.355] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:48:16.356] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:48:26.356] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:48:26.356] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:48:36.356] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:48:36.357] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12
+[2026-07-30 20:48:46.357] [smf_n4 ] [info] PFCP HEARTBEAT PROCEDURE hash 2252843200 starting
+[2026-07-30 20:48:46.357] [smf_n4 ] [debug] handle_receive_pfcp_msg msg type 2 length 12

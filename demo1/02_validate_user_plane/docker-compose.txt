@@ -1,0 +1,9 @@
+NAME           IMAGE                                     COMMAND                  SERVICE        CREATED          STATUS                    PORTS
+monitor_xapp   oai-flexric:latest                        "python3 /xapp/xapp.…"   monitor_xapp   18 minutes ago   Up 18 minutes             0.0.0.0:5555->5555/tcp, [::]:5555->5555/tcp, 36421-36422/sctp
+nearRT-RIC     oai-flexric:latest                        "stdbuf -o0 nearRT-R…"   nearRT-RIC     19 minutes ago   Up 19 minutes             5555/tcp, 36421-36422/sctp
+oai-amf        oaisoftwarealliance/oai-amf:v2.1.10       "/openair-amf/bin/oa…"   oai-amf        19 minutes ago   Up 19 minutes (healthy)   80/tcp, 5342-5344/tcp, 9090/tcp, 38412/sctp
+oai-ext-dn     oaisoftwarealliance/trf-gen-cn5g:latest   "/bin/bash -c ' ipta…"   oai-ext-dn     19 minutes ago   Up 19 minutes (healthy)   
+oai-gnb        oai-gnb-cuda:latest                       "/tini -v -- /opt/oa…"   oai-gnb        19 minutes ago   Up 19 minutes (healthy)   0.0.0.0:5556->5555/tcp, [::]:5556->5555/tcp
+oai-mysql      mysql:8.0                                 "docker-entrypoint.s…"   mysql          19 minutes ago   Up 19 minutes (healthy)   3306/tcp, 33060/tcp
+oai-smf        oaisoftwarealliance/oai-smf:v2.1.10       "/openair-smf/bin/oa…"   oai-smf        19 minutes ago   Up 19 minutes (healthy)   80/tcp, 5342-5344/tcp, 9090/tcp, 8805/udp
+oai-upf        oaisoftwarealliance/oai-upf:v2.1.10       "/bin/bash -c ' echo…"   oai-upf        19 minutes ago   Up 19 minutes (healthy)   2152/udp, 8805/udp, 5342-5344/tcp
