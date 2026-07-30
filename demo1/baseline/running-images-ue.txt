@@ -1,0 +1,1 @@
+oai-nr-ue oai-nr-ue-cuda:latest
