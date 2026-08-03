@@ -1,0 +1,35 @@
+name: mec-server
+services:
+  mec-yolo:
+    build:
+      context: /home/sstreit/mec-offload-ad/demo1/03_build_mec/mec-server
+      dockerfile: Dockerfile
+      args:
+        BASE_IMAGE: nvcr.io/nvidia/pytorch:25.12-py3
+    cap_drop:
+      - ALL
+    container_name: mec-yolo
+    environment:
+      DEFAULT_CONF: "0.25"
+      DEFAULT_IMGSZ: "640"
+      DEFAULT_IOU: "0.70"
+      DEVICE: "0"
+      MAX_CONCURRENT_INFERENCE: "1"
+      MAX_IMAGE_BYTES: "8388608"
+      MODEL_PATH: /models/yolo11n.pt
+    gpus:
+      - count: -1
+    image: mec-yolo:demo1
+    network_mode: container:oai-ext-dn
+    read_only: true
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m
+    volumes:
+      - type: bind
+        source: /home/sstreit/mec-offload-ad/demo1/03_build_mec/mec-server/models
+        target: /models
+        read_only: true
+        bind: {}

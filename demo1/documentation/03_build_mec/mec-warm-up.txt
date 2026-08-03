@@ -1,0 +1,1 @@
+{"status":"ready","model":"yolo11n.pt","device":"0","cuda_available":true,"gpu":"NVIDIA GB10","max_concurrent_inference":1,"startup_warmup_ms":1046.827}
