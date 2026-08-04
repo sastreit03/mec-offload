@@ -12,6 +12,7 @@
 #
 # Acknowledgement: Commands below were written by Generative AI.
 
+set -e  # Stop script on any error
 
 # Download pip on UE docker container
 docker exec -u 0 oai-nr-ue sh -c '

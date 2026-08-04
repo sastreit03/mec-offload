@@ -19,6 +19,8 @@
 #       testing, a docker image based on the oai-nr-ue image should have
 #       pip and a python virtual environment
 
+set -e  # Stop script on any error
+
 # Copy files from current directory to the UE docker container
 docker cp ../ue-client/ue_client.py oai-nr-ue:/tmp/ue_client.py
 docker cp ../ue-client/coco_test.jpg oai-nr-ue:/tmp/coco_test.jpg

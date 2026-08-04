@@ -14,6 +14,7 @@
 #
 # Acknowledgement: Commands below were written by Generative AI.
 
+set -e  # Stop script on any error
 
 # Copy test image to docker container
 docker cp ../ue-client/coco_test.jpg oai-nr-ue:/tmp/coco_test.jpg
