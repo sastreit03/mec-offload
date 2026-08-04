@@ -7,7 +7,7 @@
 #
 # Prerequisites:
 # - modify_oai-nr-ue.sh must be run first to modify oai-nr-ue docker container.
-# - Script must be run in same directory as test image and ue_client.py.
+# - Script must be run in directory mec-offload-ad/demo1/scripts.
 # - The following docker containers must be running:
 #    - Unmodified 5GC and gNB containers.
 #    - Modified UE container.
@@ -20,8 +20,8 @@
 #       pip and a python virtual environment
 
 # Copy files from current directory to the UE docker container
-docker cp ue_client.py oai-nr-ue:/tmp/ue_client.py
-docker cp coco_test.jpg oai-nr-ue:/tmp/coco_test.jpg
+docker cp ../ue-client/ue_client.py oai-nr-ue:/tmp/ue_client.py
+docker cp ../ue-client/coco_test.jpg oai-nr-ue:/tmp/coco_test.jpg
 
 # Run inference on MEC server
 docker exec oai-nr-ue python3 /tmp/ue_client.py \
@@ -37,5 +37,5 @@ docker exec oai-nr-ue python3 /tmp/ue_client.py \
 
 # Copy resulting json and annotated image from UE docker container
 # to current directory
-docker cp oai-nr-ue:/tmp/annotated.jpg .
-docker cp oai-nr-ue:/tmp/mec-inference-result.json .
+docker cp oai-nr-ue:/tmp/annotated.jpg ../ue-client/
+docker cp oai-nr-ue:/tmp/mec-inference-result.json ../ue-client/

@@ -5,7 +5,8 @@
 # Purpose: Run an inference test on MEC server and receive results.
 #
 # Prerequisites:
-# - Script must be run in same directory as test image.
+# - Must be run on UE PC.
+# - Must be run in same directory as test image.
 # - OAI 5GC, gNB, and UE docker containers must be running.
 # - mec-yolo container must be running.
 # - If necessary, change source_ip if UE disconnects and reconnects with
@@ -15,10 +16,10 @@
 
 
 # Copy test image to docker container
-docker cp coco_test.jpg oai-nr-ue:/tmp/coco_test.jpg
+docker cp ../ue-client/coco_test.jpg oai-nr-ue:/tmp/coco_test.jpg
 
 # Run test
-docker exec -i oai-nr-ue python3 - <<'PY' | tee mec-inference-test.txt
+docker exec -i oai-nr-ue python3 - <<'PY' | tee ../ue-client/mec-inference-test.txt
 import http.client
 import json
 import uuid
