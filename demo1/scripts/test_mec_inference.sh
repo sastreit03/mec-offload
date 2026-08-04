@@ -6,7 +6,7 @@
 #
 # Prerequisites:
 # - Must be run on UE PC.
-# - Must be run in same directory as test image.
+# - Script must be run in directory mec-offload-ad/demo1/scripts.
 # - OAI 5GC, gNB, and UE docker containers must be running.
 # - mec-yolo container must be running.
 # - If necessary, change source_ip if UE disconnects and reconnects with

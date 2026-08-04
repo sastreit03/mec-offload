@@ -6,12 +6,13 @@
 #          results, and annotates the original image. 
 #
 # Prerequisites:
-# - modify_oai-nr-ue.sh must be run first to modify oai-nr-ue docker container.
+# - modify_oai-nr-ue.sh must be run before this script.
 # - Script must be run in directory mec-offload-ad/demo1/scripts.
 # - The following docker containers must be running:
 #    - Unmodified 5GC and gNB containers.
 #    - Modified UE container.
 #    - MEC server container.
+# - The image coco_test.jpg must be in the directory ../ue-client/
 #
 # Acknowledgement: Commands below were written by Generative AI.
 #
@@ -20,6 +21,20 @@
 #       pip and a python virtual environment
 
 set -e  # Stop script on any error
+
+# Check that the UE image is running
+UE_IMAGE="${UE_IMAGE:-oai-nr-ue-cuda:latest}"
+[[ -n "$(docker ps -q --filter "ancestor=$UE_IMAGE")" ]] \
+  || { echo "ERROR: no active docker container found for image $UE_IMAGE" >&2; exit 1; }
+
+# Check that python dependencies are present.
+docker exec oai-nr-ue python3 -c 'from importlib.metadata 
+  import version; from pip._vendor.packaging.version import 
+  Version as V; assert V("2.32") <= V(version("requests")) < V("3"); 
+  assert V("4.10") <= V(version("opencv-python-headless")) < V("5")'
+
+# Check that the test image is present.
+[[ -f ../ue-client/coco_test.jpg ]] || { echo "ERROR: ../ue-client/coco_test.jpg not found" >&2; exit 1; }
 
 # Copy files from current directory to the UE docker container
 docker cp ../ue-client/ue_client.py oai-nr-ue:/tmp/ue_client.py
