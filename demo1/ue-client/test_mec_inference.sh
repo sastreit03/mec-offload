@@ -1,9 +1,15 @@
 #!/bin/bash
 #
+# test_mec_inference.sh
+#
+# Purpose: Run an inference test on MEC server and receive results.
+#
 # Prerequisites:
 # - Script must be run in same directory as test image.
 # - OAI 5GC, gNB, and UE docker containers must be running.
 # - mec-yolo container must be running.
+# - If necessary, change source_ip if UE disconnects and reconnects with
+#   new IP address
 #
 # Acknowledgement: Commands below were written by Generative AI.
 
