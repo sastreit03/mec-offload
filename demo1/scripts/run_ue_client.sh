@@ -26,21 +26,25 @@ set -e  # Stop script on any error
 UE_IMAGE="${UE_IMAGE:-oai-nr-ue-cuda:latest}"
 [[ -n "$(docker ps -q --filter "ancestor=$UE_IMAGE")" ]] \
   || { echo "ERROR: no active docker container found for image $UE_IMAGE" >&2; exit 1; }
+printf 'Found oai-nr-ue container\n'
 
 # Check that python dependencies are present.
-docker exec oai-nr-ue python3 -c 'from importlib.metadata 
-  import version; from pip._vendor.packaging.version import 
-  Version as V; assert V("2.32") <= V(version("requests")) < V("3"); 
-  assert V("4.10") <= V(version("opencv-python-headless")) < V("5")'
+docker exec oai-nr-ue python3 -c 'from importlib.metadata import version;
+from pip._vendor.packaging.version import Version as V;
+assert V("2.32") <= V(version("requests")) < V("3");
+assert V("4.10") <= V(version("opencv-python-headless")) < V("5")'
+printf 'Python dependencies are present\n'
 
 # Check that the test image is present.
 [[ -f ../ue-client/coco_test.jpg ]] || { echo "ERROR: ../ue-client/coco_test.jpg not found" >&2; exit 1; }
+printf 'Found test image\n\n'
 
 # Copy files from current directory to the UE docker container
 docker cp ../ue-client/ue_client.py oai-nr-ue:/tmp/ue_client.py
 docker cp ../ue-client/coco_test.jpg oai-nr-ue:/tmp/coco_test.jpg
 
 # Run inference on MEC server
+printf '\nRunning request for inference from MEC server\n'
 docker exec oai-nr-ue python3 /tmp/ue_client.py \
   --server "http://192.168.72.135:8080" \
   --source-ip "12.1.1.2" \
