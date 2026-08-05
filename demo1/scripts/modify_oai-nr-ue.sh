@@ -8,6 +8,7 @@
 #          is built.
 #
 # Prerequisites:
+# - Must be run on the UE PC.
 # - Unmodified UE docker container must be running.
 #
 # Acknowledgement: Commands below were written by Generative AI.
