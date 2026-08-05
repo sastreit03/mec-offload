@@ -2,7 +2,8 @@
 #
 # run_ue_client.sh
 #
-# Purpose: Uploads image to MEC server for inference, receives metadata
+# Purpose: Script to be run on UE.
+#          Uploads image to MEC server for inference, receives metadata
 #          results, and annotates the original image. 
 #
 # Prerequisites:

@@ -2,7 +2,8 @@
 #
 # start_mec.sh
 #
-# Purpose: Build the MEC server docker container.
+# Purpose: Script to be run on MEC PC.
+#          Build the MEC server docker container.
 #
 # Prerequisites:
 # - OAI 5GC docker containers must be running.

@@ -2,7 +2,8 @@
 #
 # check_ue_connection.sh
 #
-# Purpose: Gets and prints the UE's tunnel interface and IP address,
+# Purpose: Script to be run on UE.
+#          Gets and prints the UE's tunnel interface and IP address,
 #          checks UE's routing table, and pings MEC server.
 #          To save variables in parent shell process, run this scripts
 #          as ". ./get_tun_ip.sh" or "source ./get_tun_ip.sh"

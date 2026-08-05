@@ -2,7 +2,8 @@
 #
 # verify_mec_up.sh
 #
-# Purpose: Verifies that the MEC server docker container is available listening on port 
+# Purpose: Script to be run on MEC PC.
+#          Verifies that the MEC server docker container is available listening on port 
 #          8080 of the external data network docker container's N6 IP address.
 #
 # Prerequisites:

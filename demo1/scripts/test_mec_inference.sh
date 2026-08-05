@@ -2,7 +2,8 @@
 #
 # test_mec_inference.sh
 #
-# Purpose: Run an inference test on MEC server and receive results.
+# Purpose: Script to be run on UE.
+#          Run an inference test on MEC server and receive results.
 #
 # Prerequisites:
 # - Must be run on UE PC.

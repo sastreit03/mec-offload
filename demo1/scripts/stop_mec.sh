@@ -2,7 +2,8 @@
 #
 # stop_mec.sh
 #
-# Purpose: Remove the MEC server docker container.
+# Purpose: Script to be run on MEC PC.
+#          Remove the MEC server docker container.
 #
 # Prerequisites:
 # - MEC server container should be running before removing it.

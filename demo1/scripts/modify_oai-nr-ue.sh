@@ -2,7 +2,8 @@
 #
 # modify_oai-nr-ue.sh
 #
-# Purpose: Adds pip and python packages on base oai-nr-ue docker container
+# Purpose: Script to be run on UE.
+#          Adds pip and python packages on base oai-nr-ue docker container
 #          to be able to run ue_client.sh on run_ue_client.sh. This
 #          script only needs to be run once when the UE docker container
 #          is built.
