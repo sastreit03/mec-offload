@@ -1,0 +1,96 @@
+2026-08-05T17:01:13.507217192Z 
+2026-08-05T17:01:13.507250584Z =============
+2026-08-05T17:01:13.507252376Z == PyTorch ==
+2026-08-05T17:01:13.507253464Z =============
+2026-08-05T17:01:13.509945298Z 
+2026-08-05T17:01:13.509973474Z NVIDIA Release 25.12 (build 245654591)
+2026-08-05T17:01:13.509976178Z PyTorch Version 2.10.0a0+b4e4ee8
+2026-08-05T17:01:13.511017237Z Container image Copyright (c) 2025, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+2026-08-05T17:01:13.512223386Z Copyright (c) 2014-2024 Facebook Inc.
+2026-08-05T17:01:13.512228218Z Copyright (c) 2011-2014 Idiap Research Institute (Ronan Collobert)
+2026-08-05T17:01:13.512229546Z Copyright (c) 2012-2014 Deepmind Technologies    (Koray Kavukcuoglu)
+2026-08-05T17:01:13.512230586Z Copyright (c) 2011-2012 NEC Laboratories America (Koray Kavukcuoglu)
+2026-08-05T17:01:13.512231706Z Copyright (c) 2011-2013 NYU                      (Clement Farabet)
+2026-08-05T17:01:13.512232986Z Copyright (c) 2006-2010 NEC Laboratories America (Ronan Collobert, Leon Bottou, Iain Melvin, Jason Weston)
+2026-08-05T17:01:13.512234282Z Copyright (c) 2006      Idiap Research Institute (Samy Bengio)
+2026-08-05T17:01:13.512235530Z Copyright (c) 2001-2004 Idiap Research Institute (Ronan Collobert, Samy Bengio, Johnny Mariethoz)
+2026-08-05T17:01:13.512236634Z Copyright (c) 2015      Google Inc.
+2026-08-05T17:01:13.512237706Z Copyright (c) 2015      Yangqing Jia
+2026-08-05T17:01:13.512238682Z Copyright (c) 2013-2016 The Caffe contributors
+2026-08-05T17:01:13.512239674Z All rights reserved.
+2026-08-05T17:01:13.513204174Z 
+2026-08-05T17:01:13.513213214Z Various files include modifications (c) NVIDIA CORPORATION & AFFILIATES.  All rights reserved.
+2026-08-05T17:01:13.513214734Z 
+2026-08-05T17:01:13.513215838Z GOVERNING TERMS: The software and materials are governed by the NVIDIA Software License Agreement
+2026-08-05T17:01:13.513216926Z (found at https://www.nvidia.com/en-us/agreements/enterprise-software/nvidia-software-license-agreement/)
+2026-08-05T17:01:13.513218142Z and the Product-Specific Terms for NVIDIA AI Products
+2026-08-05T17:01:13.513219150Z (found at https://www.nvidia.com/en-us/agreements/enterprise-software/product-specific-terms-for-ai-products/).
+2026-08-05T17:01:13.702687138Z 
+2026-08-05T17:01:13.702704018Z NOTE: CUDA Forward Compatibility mode ENABLED.
+2026-08-05T17:01:13.702705490Z   Using CUDA 13.1 driver version 590.44.01 with kernel driver version 580.173.02.
+2026-08-05T17:01:13.702706754Z   See https://docs.nvidia.com/deploy/cuda-compatibility/ for details.
+2026-08-05T17:01:13.711218049Z 
+2026-08-05T17:01:13.711235553Z NOTE: The SHMEM allocation limit is set to the default of 64MB.  This may be
+2026-08-05T17:01:13.711237265Z    insufficient for PyTorch.  NVIDIA recommends the use of the following flags:
+2026-08-05T17:01:13.711253841Z    docker run --gpus all --ipc=host --ulimit memlock=-1 --ulimit stack=67108864 ...
+2026-08-05T17:01:13.711290049Z 
+2026-08-05T17:01:14.522447240Z WARNING ⚠️ user config directory '/home/app/.config/Ultralytics' is not writable, using '/tmp/Ultralytics'. Set YOLO_CONFIG_DIR to override.
+2026-08-05T17:01:14.524107758Z Creating new Ultralytics Settings v0.0.7 file ✅ 
+2026-08-05T17:01:14.524113950Z View Ultralytics Settings with 'yolo settings' or at '/tmp/Ultralytics/settings.json'
+2026-08-05T17:01:14.524116782Z Update Settings with 'yolo settings key=value', i.e. 'yolo settings runs_dir=path/to/dir'. For help see https://docs.ultralytics.com/quickstart/#ultralytics-settings.
+2026-08-05T17:01:14.593513484Z mkdir -p failed for path /home/app/.config/matplotlib: [Errno 30] Read-only file system: '/home/app/.config'
+2026-08-05T17:01:14.593540477Z Matplotlib created a temporary cache directory at /tmp/matplotlib-9u50rayb because there was an issue with the default path (/home/app/.config/matplotlib); it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+2026-08-05T17:01:14.767571273Z INFO:     Started server process [1]
+2026-08-05T17:01:14.767598873Z INFO:     Waiting for application startup.
+2026-08-05T17:01:14.847284957Z 2026-08-05 17:01:14,846 INFO mec-yolo Loading YOLO checkpoint /models/yolo11n.pt on device 0
+2026-08-05T17:01:15.845716774Z 2026-08-05 17:01:15,845 INFO mec-yolo MEC YOLO service ready model=yolo11n.pt device=0 gpu=NVIDIA GB10 warmup_s=1.078
+2026-08-05T17:01:15.845740966Z INFO:     Application startup complete.
+2026-08-05T17:01:15.846185112Z INFO:     Uvicorn running on http://0.0.0.0:8080 (Press CTRL+C to quit)
+2026-08-05T17:01:18.431265178Z INFO:     127.0.0.1:41230 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:01:28.833063696Z INFO:     127.0.0.1:41680 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:01:39.250317419Z INFO:     127.0.0.1:44504 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:01:49.649395170Z INFO:     127.0.0.1:53476 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:02:00.053978900Z INFO:     127.0.0.1:50798 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:02:10.459211064Z INFO:     127.0.0.1:53746 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:02:20.856905187Z INFO:     127.0.0.1:38972 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:02:31.257607366Z INFO:     127.0.0.1:57664 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:02:41.657958331Z INFO:     127.0.0.1:45438 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:02:52.080120659Z INFO:     127.0.0.1:55898 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:03:02.506387056Z INFO:     127.0.0.1:59404 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:03:12.900220100Z INFO:     127.0.0.1:53358 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:03:23.294958494Z INFO:     127.0.0.1:42814 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:03:33.713542262Z INFO:     127.0.0.1:55392 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:03:44.131562128Z INFO:     127.0.0.1:60830 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:03:54.537353556Z INFO:     127.0.0.1:44930 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:04:04.933837123Z INFO:     127.0.0.1:59748 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:04:15.324206437Z INFO:     127.0.0.1:41280 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:04:25.735026918Z INFO:     127.0.0.1:51514 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:04:36.124155272Z INFO:     127.0.0.1:51976 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:04:46.518010838Z INFO:     127.0.0.1:34942 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:04:56.917918129Z INFO:     127.0.0.1:58464 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:05:07.336550060Z INFO:     127.0.0.1:34506 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:05:17.733713883Z INFO:     127.0.0.1:48600 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:05:28.136792996Z INFO:     127.0.0.1:34484 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:05:38.539027202Z INFO:     127.0.0.1:42948 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:05:48.957788815Z INFO:     127.0.0.1:53606 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:05:59.376835484Z INFO:     127.0.0.1:32860 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:06:09.765793252Z INFO:     127.0.0.1:44886 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:06:20.182172750Z INFO:     127.0.0.1:45368 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:06:30.595455750Z INFO:     127.0.0.1:41328 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:06:41.010652046Z INFO:     127.0.0.1:52842 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:06:51.417468785Z INFO:     127.0.0.1:59682 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:07:01.820112444Z INFO:     127.0.0.1:57508 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:07:11.515678080Z 2026-08-05 17:07:11,515 INFO mec-yolo task_id=demo1-87dbe002-9476-4074-83b0-3f9337b72929 bytes=120773 image=600x413 detections=3 decode_ms=2.216 queue_ms=0.009 inference_ms=28.295 server_ms=31.679
+2026-08-05T17:07:11.515803073Z INFO:     192.168.72.134:46951 - "POST /v1/detect HTTP/1.1" 200 OK
+2026-08-05T17:07:12.212537277Z INFO:     127.0.0.1:41236 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:07:22.622618438Z INFO:     127.0.0.1:59020 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:07:33.014508147Z INFO:     127.0.0.1:55948 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:07:43.421398450Z INFO:     127.0.0.1:35892 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:07:53.822865963Z INFO:     127.0.0.1:41340 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:08:04.222265848Z INFO:     127.0.0.1:38006 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:08:14.628549603Z INFO:     127.0.0.1:34872 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:08:25.040733761Z INFO:     127.0.0.1:54944 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:08:35.437964550Z INFO:     127.0.0.1:37662 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:08:45.862050257Z INFO:     127.0.0.1:40408 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:08:56.282802309Z INFO:     127.0.0.1:59234 - "GET /readyz HTTP/1.1" 200 OK
+2026-08-05T17:09:06.671482765Z INFO:     127.0.0.1:51520 - "GET /readyz HTTP/1.1" 200 OK
