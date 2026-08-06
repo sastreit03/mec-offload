@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=nvcr.io/nvidia/pytorch:24.08-py3
+ARG BASE_IMAGE=nvcr.io/nvidia/pytorch:25.12-py3
 FROM ${BASE_IMAGE}
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

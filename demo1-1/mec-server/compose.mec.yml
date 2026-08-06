@@ -4,11 +4,13 @@ services:
       context: .
       args:
         BASE_IMAGE: ${BASE_IMAGE:-nvcr.io/nvidia/pytorch:25.12-py3}
-    image: mec-yolo:demo1
+    image: mec-yolo:demo1-1
     container_name: mec-yolo
-    network_mode: "container:${EXT_DN_CONTAINER:-oai-ext-dn}"
     gpus: all
     restart: unless-stopped
+    networks:
+      traffic_net:
+        ipv4_address: 192.168.72.136
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=512m
@@ -26,3 +28,25 @@ services:
       MAX_CONCURRENT_INFERENCE: ${MAX_CONCURRENT_INFERENCE:-1}
     volumes:
       - ./models:/models:ro
+
+  mec-route-init:
+    image: alpine:3.20
+    container_name: mec-route-init
+    network_mode: "service:mec-yolo"
+    depends_on:
+      mec-yolo:
+        condition: service_started
+    cap_add:
+      - NET_ADMIN
+    command:
+      - /bin/sh
+      - -c
+      - |
+        ip route replace 12.1.1.0/24 via 192.168.72.134 dev eth0
+        ip route
+    restart: "no"
+
+networks:
+  traffic_net:
+    external: true
+    name: oai-traffic-net
