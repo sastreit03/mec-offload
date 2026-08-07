@@ -25,8 +25,9 @@ mkdir -p tmp/
 On all three terminals:
 
 ```bash
-cp path/to/unmodified_file /tmp/unmodified_file
+cp path/to/unmodified_file tmp/unmodified_file
 ```
+Be sure not to include ```/``` before tmp!
 
 ### 3. Make changes to unmodified file in its original directory
 
