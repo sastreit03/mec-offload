@@ -1,4 +1,4 @@
-"""GPU-backed YOLO inference API for the OAI MEC Demo 1.
+"""GPU-backed YOLO inference API for the OAI MEC Demo 1-1.
 
 The module is intended to be started by Uvicorn as:
 
