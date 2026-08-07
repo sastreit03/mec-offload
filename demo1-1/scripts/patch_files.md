@@ -17,7 +17,7 @@ Contains commands to be run for creating patch files for differences in a file w
 ```bash
 cd mec-offload-ad
 
-mkdir tmp/
+mkdir -p tmp/
 ```
 
 ### 2. Copy unmodified file into the tmp/ folder
