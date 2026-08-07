@@ -15,7 +15,7 @@ Contains commands to be run for creating patch files for differences in a file w
 ### 1. Change to repository root directory and create a temp folder
 
 ```bash
-cd mec-offload-ad
+cd path/to/repo_root_directory
 
 mkdir -p tmp/
 ```
