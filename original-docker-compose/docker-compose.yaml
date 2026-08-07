@@ -56,7 +56,6 @@ services:
         entrypoint: /bin/bash -c \
                     "echo '200 eth1_table' >> /etc/iproute2/rt_tables;"\
                     "ip route del default || true;"\
-                    "ip route add 192.168.72.128/26 dev eth1 src 192.168.72.134 table eth1_table;"\
                     "ip route add default via 192.168.72.135 dev eth1 table eth1_table;"\
                     "ip rule add from 12.1.1.0/24 table eth1_table;"\
                     "/openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"

@@ -1,0 +1,10 @@
+[download_model] Staging yolo11n.pt with container image mec-yolo:demo1-1
+[download_model] Output directory: /home/sstreit/mec-offload-ad/demo1-1/mec-server/models
+Creating new Ultralytics Settings v0.0.7 file ✅ 
+View Ultralytics Settings with 'yolo settings' or at '/tmp/Ultralytics/settings.json'
+Update Settings with 'yolo settings key=value', i.e. 'yolo settings runs_dir=path/to/dir'. For help see https://docs.ultralytics.com/quickstart/#ultralytics-settings.
+[KDownloading https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11n.pt to 'yolo11n.pt': 25% ━━━───────── 1.4/5.4MB 13.5MB/s 0.1s<0.3s[KDownloading https://github.com/ultralytics/assets/releases/download/v8.4.0/yolo11n.pt to 'yolo11n.pt': 100% ━━━━━━━━━━━━ 5.4MB 32.4MB/s 0.2s
+staged yolo11n.pt (5613764 bytes)
+0ebbc80d4a7680d14987a577cd21342b65ecfd94632bd9a8da63ae6417644ee1  yolo11n.pt
+[download_model] Checkpoint: /home/sstreit/mec-offload-ad/demo1-1/mec-server/models/yolo11n.pt
+[download_model] Checksum record: /home/sstreit/mec-offload-ad/demo1-1/mec-server/models/model.sha256

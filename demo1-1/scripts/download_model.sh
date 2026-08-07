@@ -10,7 +10,7 @@
 
 set -Eeuo pipefail
 
-MEC_IMAGE="${MEC_IMAGE:-mec-yolo:demo1}"
+MEC_IMAGE="${MEC_IMAGE:-mec-yolo:demo1-1}"
 MODEL_DIR="${MODEL_DIR:-$PWD/models}"
 MODEL_NAME="${MODEL_NAME:-yolo11n.pt}"
 CHECKSUM_FILE="${CHECKSUM_FILE:-$MODEL_DIR/model.sha256}"

@@ -39,11 +39,13 @@ services:
     cap_add:
       - NET_ADMIN
     command:
-      - /bin/sh
-      - -c
-      - |
-        ip route replace 12.1.1.0/24 via 192.168.72.134 dev eth0
-        ip route
+        - /bin/sh
+        - -c
+        - |
+          until ip link show eth0 >/dev/null 2>&1; do sleep 1; done
+          until ping -c 1 -W 1 192.168.72.134 >/dev/null 2>&1; do sleep 1; done
+          ip route replace 12.1.1.0/24 via 192.168.72.134 dev eth0
+          ip route
     restart: "no"
 
 networks:

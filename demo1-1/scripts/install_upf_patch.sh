@@ -55,7 +55,7 @@ ENV_FILE="${REPO_ROOT}/gnb/config/${CONFIG_NAME}/.env"
 BACKUP_DIR="${REPO_ROOT}/original-docker-compose"
 BACKUP_FILE="${BACKUP_DIR}/docker-compose.yaml"
 
-# Commands expected in
+# Commands to add and what's expected
 ROUTE_COMMAND='ip route add 192.168.72.128/26 dev eth1 src 192.168.72.134 table eth1_table'
 EXPECTED_COMMAND='ip route add default via 192.168.72.135 dev eth1 table eth1_table'
 
