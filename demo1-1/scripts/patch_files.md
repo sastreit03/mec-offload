@@ -12,7 +12,7 @@ Contains commands to be run for creating patch files for differences in a file w
 
 ## Code Sequence
 
-### 1. Change to repository directory and create a temp folder
+### 1. Change to repository root directory and create a temp folder
 
 ```bash
 cd mec-offload-ad
