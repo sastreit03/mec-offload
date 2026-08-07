@@ -27,7 +27,7 @@ import json
 import uuid
 
 source_ip = "12.1.1.2"
-mec_ip = "192.168.72.135"
+mec_ip = "192.168.72.136"
 image_path = "/tmp/coco_test.jpg"
 
 boundary = "----MECBoundary"

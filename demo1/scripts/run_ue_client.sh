@@ -47,7 +47,7 @@ docker cp ../ue-client/coco_test.jpg oai-nr-ue:/tmp/coco_test.jpg
 # Run inference on MEC server
 printf '\nRunning request for inference from MEC server\n'
 docker exec oai-nr-ue python3 /tmp/ue_client.py \
-  --server "http://192.168.72.135:8080" \
+  --server "http://192.168.72.136:8080" \
   --source-ip "12.1.1.2" \
   --image /tmp/coco_test.jpg \
   --output /tmp/annotated.jpg \

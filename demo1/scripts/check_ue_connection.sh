@@ -15,7 +15,7 @@
 # Parameters
 UE_IMAGE="${UE_IMAGE:-oai-nr-ue-cuda:latest}"
 UE_CONTAINER=oai-nr-ue
-MEC_IP=192.168.72.135
+MEC_IP=192.168.72.136
 
 # Check that the UE docker container is running
 [[ -n "$(docker ps -q --filter "ancestor=$UE_IMAGE")" ]] \
