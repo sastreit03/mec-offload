@@ -7,7 +7,7 @@
 #
 # Prerequisites:
 # - Must be run on UE PC.
-# - Script must be run in directory mec-offload-ad/demo1/scripts.
+# - Script must be run in directory mec-offload-ad/demo1-1/scripts.
 # - OAI 5GC, gNB, and UE docker containers must be running.
 # - mec-yolo container must be running.
 # - If necessary, change source_ip if UE disconnects and reconnects with
@@ -15,19 +15,31 @@
 #
 # Acknowledgement: Commands below were written by Generative AI.
 
-set -e  # Stop script on any error
+set -oe pipefail # Stop script on any error
+
+# Set parameters
+UE_CONTAINER=oai-nr-ue
+
+UE_TUN=$(docker exec "$UE_CONTAINER" ip -o link show | awk -F': ' '$2 ~ /^oaitun_ue/ {print $2; exit}')
+[[ -n "$UE_TUN" ]] || { echo "ERROR: no oaitun_ue interface found in $UE_CONTAINER" >&2; exit 1; }
+
+UE_IP=$(docker exec "$UE_CONTAINER" ip -4 -o addr show dev "$UE_TUN" | awk '{print $4}' | cut -d/ -f1 | head -n1)
+[[ -n "$UE_IP" ]] || { echo "ERROR: no IPv4 address found for $UE_TUN in $UE_CONTAINER" >&2; exit 1; }
+
+MEC_IP=192.168.72.136
+
 
 # Copy test image to docker container
-docker cp ../ue-client/coco_test.jpg oai-nr-ue:/tmp/coco_test.jpg
+docker cp ../ue-client/coco_test.jpg "$UE_CONTAINER":/tmp/coco_test.jpg
 
 # Run test
-docker exec -i oai-nr-ue python3 - <<'PY' | tee ../ue-client/mec-inference-test.txt
+docker exec -i "$UE_CONTAINER" /opt/ueclientvenv/bin/python - <<PY | tee ../ue-client/mec-inference-test.txt
 import http.client
 import json
 import uuid
 
-source_ip = "12.1.1.2"
-mec_ip = "192.168.72.136"
+source_ip = "${UE_IP}"
+mec_ip = "${MEC_IP}"
 image_path = "/tmp/coco_test.jpg"
 
 boundary = "----MECBoundary"

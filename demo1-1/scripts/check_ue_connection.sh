@@ -6,24 +6,27 @@
 #          Gets and prints the UE's tunnel interface and IP address,
 #          checks UE's routing table, and pings MEC server.
 #          To save variables in parent shell process, run this scripts
-#          as ". ./get_tun_ip.sh" or "source ./get_tun_ip.sh"
+#          as ". ./check_ue_connection.sh" or "source ./check_ue_connection.sh"
 # Prerequisites:
 # - UE docker container must be running.
 #
 # Acknowledgement: Commands below were written by Generative AI.
 
 # Parameters
-UE_IMAGE="${UE_IMAGE:-oai-nr-ue-cuda:latest}"
+UE_IMAGE="${UE_IMAGE:-oai-nr-ue-cuda-mec:demo1-1}"
 UE_CONTAINER=oai-nr-ue
 MEC_IP=192.168.72.136
 
 # Check that the UE docker container is running
-[[ -n "$(docker ps -q --filter "ancestor=$UE_IMAGE")" ]] \
+[[ -n "$(docker ps -q --filter "ancestor=$UE_IMAGE" --filter "status=running")" ]] \
   || { echo "ERROR: no active docker container found for image $UE_IMAGE" >&2; exit 1; }
 
-# Get tunnel interface name
+# Get tunnel interface name and IP address
 UE_TUN=$(docker exec "$UE_CONTAINER" ip -o link show | awk -F': ' '$2 ~ /^oaitun_ue/ {print $2; exit}')
+[[ -n "$UE_TUN" ]] || { echo "ERROR: no oaitun_ue interface found in $UE_CONTAINER" >&2; exit 1; }
+
 UE_IP=$(docker exec "$UE_CONTAINER" ip -4 -o addr show dev "$UE_TUN" | awk '{print $4}' | cut -d/ -f1 | head -n1)
+[[ -n "$UE_IP" ]] || { echo "ERROR: no IPv4 address found for $UE_TUN in $UE_CONTAINER" >&2; exit 1; }
 
 # Print interface and IP address of UE
 printf 'UE interface and IP address\n'

@@ -34,10 +34,10 @@ REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 CONFIG_NAME="${1:-b200}"
 
 case "${CONFIG_NAME}" in
-    b200|rfsim)
+    b200|x410|rfsim)
         ;;
     *)
-        die "Unsupported configuration '${CONFIG_NAME}'. Use b200 or rfsim."
+        die "Unsupported configuration '${CONFIG_NAME}'. Use b200, x410, or rfsim."
         ;;
 esac
 
@@ -52,7 +52,7 @@ COMPOSE_DIR="$(dirname -- "${COMPOSE_FILE}")"
 ENV_FILE="${REPO_ROOT}/gnb/config/${CONFIG_NAME}/.env"
 
 # Directory to create backup of original docker file
-BACKUP_DIR="${REPO_ROOT}/original-docker-compose"
+BACKUP_DIR="${REPO_ROOT}/original-srk-files"
 BACKUP_FILE="${BACKUP_DIR}/docker-compose.yaml"
 
 # Commands to add and what's expected

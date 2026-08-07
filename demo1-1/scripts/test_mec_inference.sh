@@ -7,7 +7,7 @@
 #
 # Prerequisites:
 # - Must be run on UE PC.
-# - Script must be run in directory mec-offload-ad/demo1/scripts.
+# - Script must be run in directory mec-offload-ad/demo1-1/scripts.
 # - OAI 5GC, gNB, and UE docker containers must be running.
 # - mec-yolo container must be running.
 # - If necessary, change source_ip if UE disconnects and reconnects with
@@ -16,19 +16,25 @@
 # Acknowledgement: Commands below were written by Generative AI.
 
 set -e  # Stop script on any error
+set -o pipefail
+
+UE_CONTAINER=oai-nr-ue
+SOURCE_IP=12.1.1.2
+MEC_IP=192.168.72.136
+IMAGE_PATH=/tmp/coco_test.jpg
 
 # Copy test image to docker container
-docker cp ../ue-client/coco_test.jpg oai-nr-ue:/tmp/coco_test.jpg
+docker cp ../ue-client/coco_test.jpg "$UE_CONTAINER":"$IMAGE_PATH"
 
 # Run test
-docker exec -i oai-nr-ue python3 - <<'PY' | tee ../ue-client/mec-inference-test.txt
+docker exec -i "$UE_CONTAINER" python3 - <<PY | tee ../ue-client/mec-inference-test.txt
 import http.client
 import json
 import uuid
 
-source_ip = "12.1.1.2"
-mec_ip = "192.168.72.135"
-image_path = "/tmp/coco_test.jpg"
+source_ip = "$SOURCE_IP"
+mec_ip = "$MEC_IP"
+image_path = "$IMAGE_PATH"
 
 boundary = "----MECBoundary"
 task_id = f"ue-test-{uuid.uuid4()}"
