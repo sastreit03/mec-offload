@@ -1,87 +1,133 @@
 #!/usr/bin/env bash
-# Stage an Ultralytics YOLO checkpoint outside the MEC application image.
 #
-# Typical use from mec-server/:
-#   mkdir -p models
-#   MEC_IMAGE=mec-yolo:demo1 \
-#   MODEL_DIR="$PWD/models" \
-#   MODEL_NAME=yolo11n.pt \
-#   ../scripts/download_model.sh | tee model-stage.txt
+# download_model.sh
+#
+# Purpose: Script to be run on MEC PC.
+#          Downloads and verifies the ML model and records its SHA-256 checksum.
+#
+# Prerequisites:
+# - build_mec_image.sh must already be run to build the MEC docker image.
+#
+# Acknowledgement: Commands below were written by Generative AI.
 
 set -Eeuo pipefail
 
-MEC_IMAGE="${MEC_IMAGE:-mec-yolo:demo1-1}"
-MODEL_DIR="${MODEL_DIR:-$PWD/models}"
-MODEL_NAME="${MODEL_NAME:-yolo11n.pt}"
-CHECKSUM_FILE="${CHECKSUM_FILE:-$MODEL_DIR/model.sha256}"
-EXPECTED_SHA256="${EXPECTED_SHA256:-}"
-FORCE="${FORCE:-0}"
-
+# Helper functions
 log() {
-    printf '[download_model] %s\n' "$*"
+    printf '[download-model] %s\n' "$*"
 }
 
-fail() {
-    printf '[download_model] ERROR: %s\n' "$*" >&2
+die() {
+    printf '[download-model] ERROR: %s\n' "$*" >&2
     exit 1
 }
 
-command -v docker >/dev/null 2>&1 || fail "docker was not found in PATH"
-command -v sha256sum >/dev/null 2>&1 || fail "sha256sum was not found in PATH"
+
+# List parameters
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+DEMO_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd -P)"
+
+MEC_IMAGE="${MEC_IMAGE:-mec-yolo:latest}"
+
+MODEL_DIR="${DEMO_DIR}/mec-server/models"
+MODEL_NAME="${MODEL_NAME:-yolo11n.pt}"
+TARGET="$MODEL_DIR/$MODEL_NAME"
+
+CHECKSUM_DIR="${DEMO_DIR}/install-logs/model-checksums"
+CHECKSUM_FILE="${CHECKSUM_DIR}/${MODEL_NAME}.sh256"
+EXPECTED_SHA256="${EXPECTED_SHA256:-}"
+FORCE="${FORCE:-0}"
+
+
+# Check that docker and sha256sum are available.
+command -v docker >/dev/null 2>&1 || die "docker was not found in PATH"
+command -v sha256sum >/dev/null 2>&1 || die "sha256sum was not found in PATH"
+log "Verified that docker and sha256sum are in PATH."
+
 
 # MODEL_NAME is deliberately restricted to one plain checkpoint filename. This
 # prevents path traversal and keeps the bind-mounted output location explicit.
 case "$MODEL_NAME" in
     ""|*/*|*..*|*[!A-Za-z0-9._-]*)
-        fail "MODEL_NAME must be a simple filename containing letters, digits, '.', '_' or '-'"
+        die "MODEL_NAME must be a simple filename containing letters, digits, '.', '_' or '-'"
         ;;
 esac
 case "$MODEL_NAME" in
     *.pt) ;;
-    *) fail "MODEL_NAME must end in .pt" ;;
+    *) die "MODEL_NAME must end in .pt" ;;
 esac
 
-mkdir -p "$MODEL_DIR"
-MODEL_DIR="$(cd "$MODEL_DIR" && pwd -P)"
-TARGET="$MODEL_DIR/$MODEL_NAME"
-CHECKSUM_FILE="${CHECKSUM_FILE/#\~/$HOME}"
 
-[[ -w "$MODEL_DIR" ]] || fail "MODEL_DIR is not writable: $MODEL_DIR"
+# Make model and checksum directories if they don't exist. Check that they are writable.
+mkdir -p "$MODEL_DIR" "$CHECKSUM_DIR" ||
+    die "Failed to create model or checksum directory"
+
+[[ -w "$MODEL_DIR" ]] ||
+    die "Model directory is not writable: $MODEL_DIR"
+
+[[ -w "$CHECKSUM_DIR" ]] ||
+    die "Checksum directory is not writable: $CHECKSUM_DIR"
+
+
+# Check that the docker is built
 docker image inspect "$MEC_IMAGE" >/dev/null 2>&1 || \
-    fail "Docker image $MEC_IMAGE does not exist; build the MEC image first"
+    die "Docker image $MEC_IMAGE does not exist; build the MEC image first."
+log "Docker image $MEC_IMAGE found."
 
+
+
+# Helper function to verify checksum and write it to log file
 write_and_verify_checksum() {
     local actual
-    actual="$(sha256sum "$TARGET" | awk '{print $1}')"
+
+    actual="$(sha256sum "$TARGET")" ||
+        die "Failed to calculate checksum: $TARGET"
+    actual="${actual%% *}"
 
     if [[ -n "$EXPECTED_SHA256" ]]; then
-        [[ "$EXPECTED_SHA256" =~ ^[A-Fa-f0-9]{64}$ ]] || \
-            fail "EXPECTED_SHA256 must contain exactly 64 hexadecimal characters"
-        if [[ "${actual,,}" != "${EXPECTED_SHA256,,}" ]]; then
-            fail "checksum mismatch: expected $EXPECTED_SHA256 but received $actual"
-        fi
-        log "Expected SHA-256 checksum verified"
+        [[ "$EXPECTED_SHA256" =~ ^[A-Fa-f0-9]{64}$ ]] ||
+            die "EXPECTED_SHA256 must contain exactly 64 hexadecimal characters"
+
+        [[ "${actual,,}" == "${EXPECTED_SHA256,,}" ]] ||
+            die "Checksum mismatch: expected $EXPECTED_SHA256, received $actual"
     fi
 
-    mkdir -p "$(dirname "$CHECKSUM_FILE")"
-    printf '%s  %s\n' "$actual" "$MODEL_NAME" | tee "$CHECKSUM_FILE"
+    if [[ ! -f "$CHECKSUM_FILE" ]]; then
+        printf '%s  %s\n' "$actual" "$MODEL_NAME" >"$CHECKSUM_FILE" ||
+            die "Failed to write checksum: $CHECKSUM_FILE"
+    fi
+
+    (cd "$MODEL_DIR" && sha256sum --check "$CHECKSUM_FILE") ||
+        die "Checksum verification failed: $MODEL_NAME"
+
     log "Checkpoint: $TARGET"
-    log "Checksum record: $CHECKSUM_FILE"
+    log "Checksum: $CHECKSUM_FILE"
 }
 
-if [[ -s "$TARGET" && "$FORCE" != "1" ]]; then
+
+# Validate FORCE parameter
+case "$FORCE" in
+    0|1) ;;
+    *) die "FORCE parameter must be 0 or 1" ;;
+esac
+
+# If force is 0 (default), don't download the model if it exists.
+if [[ -s "$TARGET" && -f "$CHECKSUM_FILE" && "$FORCE" != "1" ]]; then
     log "Checkpoint already exists; skipping download (set FORCE=1 to replace it)"
     write_and_verify_checksum
     exit 0
 fi
 
+# If force is 1, remove the model and proceed to download it.
 if [[ "$FORCE" == "1" ]]; then
-    log "FORCE=1; removing any existing checkpoint before staging"
-    rm -f "$TARGET"
+    log "FORCE=1; removing existing checkpoint and checksum"
+    rm -f "$TARGET" "$CHECKSUM_FILE" ||
+        die "Failed to remove existing model artifacts"
 fi
 
 log "Staging $MODEL_NAME with container image $MEC_IMAGE"
 log "Output directory: $MODEL_DIR"
+
 
 # Run the download through the already-built MEC image so the exact installed
 # Ultralytics version performs checkpoint resolution. The container runs with
@@ -124,5 +170,5 @@ YOLO(str(destination))
 print(f"staged {destination.name} ({destination.stat().st_size} bytes)")
 PY
 
-[[ -s "$TARGET" ]] || fail "download container completed but $TARGET is missing or empty"
+[[ -s "$TARGET" ]] || die "Download container completed but $TARGET is missing or empty."
 write_and_verify_checksum

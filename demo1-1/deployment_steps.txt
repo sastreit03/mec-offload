@@ -2,18 +2,16 @@ Task Offloading Deployment
 
 Part 1 - MEC Server Deployment
 
-1.1  - Verify OAI/SRK are downloaded
-1.2  - Verify GPU is active
-1.3  - Give execution permissions to shell scripts.
-1.4  - Build MEC docker image
-1.5  - Record MEC image digest
-1.6  - Select, download, and checksum the AI model.
-1.7  - Patch SRK UPF in docker-compose file.
-1.8  - Start SRK containers.
-1.9  - Start MEC docker container.
-1.10 - Start Sionna RK
-1.11 - Confirm MEC server has connection to N6
-1.12 - Confirm MEC server can be reached
+1.1  - Verify OAI/SRK are downloaded--done
+1.2  - Verify GPU is active--done
+1.3  - Give execution permissions to shell scripts--will be completed in Makefile
+1.4  - Build MEC docker image and record MEC image digest--done
+1.5  - Select, download, and checksum the AI model--done
+1.6  - Patch SRK UPF in docker-compose file--done
+1.7  - Compose MEC image.
+1.7  - Start SRK containers--script exists
+1.8  - Start MEC docker container--script exists
+1.9  - Confirm MEC server has connection to N6 and can be reached--done
 
 
 Part 2 - UE Client Deployment

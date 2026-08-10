@@ -16,6 +16,7 @@
 
 set -Eeuo pipefail
 
+# Helper functions
 log() {
     printf '[install-upf-patch] %s\n' "$*"
 }
@@ -25,9 +26,11 @@ die() {
     exit 1
 }
 
+
 # Get script and repo root directories
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
+
 
 # Select the Sionna-RK configuration used for Compose validation.
 # Supported values: b200 or rfsim.
@@ -40,6 +43,7 @@ case "${CONFIG_NAME}" in
         die "Unsupported configuration '${CONFIG_NAME}'. Use b200, x410, or rfsim."
         ;;
 esac
+
 
 # Location of patch file
 PATCH_FILE="${REPO_ROOT}/demo1-1/patches/add-upf-mec-route.patch"
@@ -59,6 +63,7 @@ BACKUP_FILE="${BACKUP_DIR}/docker-compose.yaml"
 ROUTE_COMMAND='ip route add 192.168.72.128/26 dev eth1 src 192.168.72.134 table eth1_table'
 EXPECTED_COMMAND='ip route add default via 192.168.72.135 dev eth1 table eth1_table'
 
+
 # Check that git, docker, and docker compose are installed
 command -v git >/dev/null 2>&1 ||
     die "git is not installed"
@@ -68,6 +73,7 @@ command -v docker >/dev/null 2>&1 ||
 
 docker compose version >/dev/null 2>&1 ||
     die "Docker Compose plugin is unavailable"
+
 
 # Check that the patch, docker compose, and env files are present
 [[ -f "${PATCH_FILE}" ]] ||
@@ -82,6 +88,7 @@ docker compose version >/dev/null 2>&1 ||
 git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
     die "Repository root is not a Git working tree: ${REPO_ROOT}"
 
+
 # Make repeated installation safe.
 if grep -Fq "${ROUTE_COMMAND}" "${COMPOSE_FILE}"; then
     log "UPF MEC route patch is already installed"
@@ -95,10 +102,12 @@ if grep -Fq "${ROUTE_COMMAND}" "${COMPOSE_FILE}"; then
     exit 0
 fi
 
+
 # Refuse to modify a Compose file whose expected UPF entrypoint differs.
 if ! grep -Fq "${EXPECTED_COMMAND}" "${COMPOSE_FILE}"; then
     die "Expected UPF route command was not found. The Compose file may be from a different revision."
 fi
+
 
 # Save the untouched Compose file before applying the patch.
 mkdir -p "${BACKUP_DIR}"
@@ -118,6 +127,7 @@ log "${BACKUP_FILE}"
 
 cd "${REPO_ROOT}"
 
+
 # Check if applies cleanly
 log "Checking whether the patch applies cleanly"
 if ! git apply --check "${PATCH_FILE}"; then
@@ -125,9 +135,11 @@ if ! git apply --check "${PATCH_FILE}"; then
     die "Patch does not apply cleanly. The newly created backup was removed."
 fi
 
+
 # Apply patch
 log "Applying patch"
 git apply "${PATCH_FILE}"
+
 
 # Check if applies cleanly
 log "Validating patched Compose configuration with '${CONFIG_NAME}'"
@@ -146,6 +158,7 @@ if ! (
 
     die "Patch was reversed. The original backup remains at ${BACKUP_FILE}."
 fi
+
 
 log "Patch installed successfully"
 log "Modified file: ${COMPOSE_FILE}"

@@ -1,4 +1,4 @@
-"""GPU-backed YOLO inference API for the OAI MEC Demo 1-1.
+"""GPU-backed YOLO inference API for the OAI MEC.
 
 The module is intended to be started by Uvicorn as:
 
@@ -170,7 +170,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="OAI MEC YOLO Demo 1",
+    title="OAI MEC YOLO",
     version="1.0",
     lifespan=lifespan,
 )

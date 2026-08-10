@@ -4,7 +4,7 @@ services:
       context: .
       args:
         BASE_IMAGE: ${BASE_IMAGE:-nvcr.io/nvidia/pytorch:25.12-py3}
-    image: mec-yolo:demo1-1
+    image: mec-yolo:latest
     container_name: mec-yolo
     gpus: all
     restart: unless-stopped
