@@ -3,8 +3,6 @@
 # Default for typing "make"
 .DEFAULT_GOAL := help
 
-#SCRIPTS_DIR := demo1-1/scripts
-
 .PHONY: help prepare-mec-server prepare-ue-client
 
 help:
