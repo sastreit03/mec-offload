@@ -28,4 +28,12 @@ prepare-mec-server:
 
 # Prepare UE client
 prepare-ue-client:
-	@:
+	./scripts/verify_srk_ue.sh
+	./scripts/build_ue_image.sh
+	./scripts/install_ue_patch.sh
+	@echo "Install is verified. SRK UE is ready to start."
+	@echo "Start the UE with ./../ue/scripts/start_system_ue.sh b200"
+	@echo "After starting the UE, check the connection between the UE and"
+	@echo "the MEC server with ./scripts/check_ue_connection.sh"
+	@echo "Then, test inference on the MEC server with"
+	@echo "./scripts/run_ue_client.sh"

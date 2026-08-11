@@ -12,30 +12,50 @@
 #
 # Acknowledgement: Commands below were written by Generative AI.
 
-# Parameters
-UE_IMAGE="${UE_IMAGE:-oai-nr-ue-cuda-mec:demo1-1}"
-UE_CONTAINER=oai-nr-ue
-MEC_IP=192.168.72.136
+set -Eeuo pipefail
 
-# Check that the UE docker container is running
-[[ -n "$(docker ps -q --filter "ancestor=$UE_IMAGE" --filter "status=running")" ]] \
-  || { echo "ERROR: no active docker container found for image $UE_IMAGE" >&2; exit 1; }
+# Helper functions
+log() {
+    printf '[check-ue-connection] %s\n' "$*"
+}
+
+die() {
+    printf '[check-ue-connection] ERROR: %s\n' "$*" >&2
+    exit 1
+}
+
+
+# Parameters
+UE_CONTAINER="${UE_CONTAINER:-oai-nr-ue}"
+MEC_IP="${MEC_IP:-192.168.72.136}"
+
+
+# Check that UE container is running
+log "Checking that UE container is running..."
+[[ "$(docker inspect -f '{{.State.Running}}' "$UE_CONTAINER" 2>/dev/null)" == "true" ]] ||
+    die "Container is missing or not running: $UE_CONTAINER"
+
 
 # Get tunnel interface name and IP address
 UE_TUN=$(docker exec "$UE_CONTAINER" ip -o link show | awk -F': ' '$2 ~ /^oaitun_ue/ {print $2; exit}')
-[[ -n "$UE_TUN" ]] || { echo "ERROR: no oaitun_ue interface found in $UE_CONTAINER" >&2; exit 1; }
+[[ -n "$UE_TUN" ]] || die "no oaitun_ue interface found in $UE_CONTAINER"
 
 UE_IP=$(docker exec "$UE_CONTAINER" ip -4 -o addr show dev "$UE_TUN" | awk '{print $4}' | cut -d/ -f1 | head -n1)
-[[ -n "$UE_IP" ]] || { echo "ERROR: no IPv4 address found for $UE_TUN in $UE_CONTAINER" >&2; exit 1; }
+[[ -n "$UE_IP" ]] || die "no IPv4 address found for $UE_TUN in $UE_CONTAINER"
 
 # Print interface and IP address of UE
-printf 'UE interface and IP address\n'
-printf 'UE_TUN=%s\nUE_IP=%s\n' "$UE_TUN" "$UE_IP"
+log "UE interface and IP address:"
+log "UE_TUN=$UE_TUN"
+log "UE_IP=$UE_IP"
 
 # Get route decision on UE
-printf '\nRouting table from UE to MEC server\n'
-docker exec "$UE_CONTAINER" ip route get "$MEC_IP" from "$UE_IP"
+log "Routing table from UE to MEC server:"
+docker exec "$UE_CONTAINER" ip route get "$MEC_IP" from "$UE_IP" ||
+    die "Unable to get routing table from container: $UE_CONTAINER"
 
 # Ping MEC server from UE tunnel interface
-printf '\nPing MEC server from UE tunnel interface\n'
-docker exec "$UE_CONTAINER" ping -I "$UE_TUN" -c 5 "$MEC_IP"
+log "Pinging MEC server from UE tunnel interface..."
+docker exec "$UE_CONTAINER" ping -I "$UE_TUN" -c 5 "$MEC_IP" ||
+    die "Unable to ping $MEC_IP from interface $UE_TUN in container $UE_CONTAINER"
+
+log "Connection verified."

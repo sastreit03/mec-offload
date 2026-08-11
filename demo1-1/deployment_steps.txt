@@ -16,10 +16,10 @@ Part 1 - MEC Server Deployment
 
 Part 2 - UE Client Deployment
 
-2.1 - Verify OAI/SRK are downloaded.
-2.2 - Give execution permissions to shell scripts.
-2.3 - Build new UE image.
-2.4 - Patch SRK UE env files.
-2.5 - Start UE container.
-2.6 - Verify UE can talk to MEC server.
-2.7 - Send request to server.
+2.1 - Verify OAI/SRK are downloaded--done.
+2.2 - Give execution permissions to shell scripts--not needed.
+2.3 - Build new UE image--done.
+2.4 - Patch SRK UE env files--done.
+2.5 - Start UE container--script exists.
+2.6 - Verify UE can talk to MEC server--done.
+2.7 - Send request to server--done.

@@ -2,16 +2,8 @@
 #
 # install_ue_patch.sh
 #
-# Applies the MEC UE image/tag changes in ue_env_files.patch to each UE .env
-# file independently. A failure for one file does not prevent the others from
-# being checked/applied.
-
-#!/usr/bin/env bash
-#
-# install_upf_patch.sh
-#
 # Purpose: Script to be run on UE PC.
-#          Applies the MEC UE image/tag changes in ue_env_files.patch to each
+#          Applies the MEC UE image changes in ue_env_files.patch to each
 #          UE .env file independently.
 #          Copies the original compose file, checks the patch applies
 #          cleanly, applies the patch, and validates the patch.
@@ -21,9 +13,17 @@
 #
 # Acknowledgement: Commands below were written by Generative AI.
 
-set -u
+set -Eeuo pipefail
 
-log() { printf '[install-ue-patch] %s\n' "$*"; }
+# Helper functions
+log() {
+    printf '[install-ue-patch] %s\n' "$*"
+}
+
+die() {
+    printf '[install-ue-patch] ERROR: %s\n' "$*" >&2
+    exit 1
+}
 
 # Get files and directories
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -40,16 +40,14 @@ FILES=(
 )
 
 # Check that git is installed
-command -v git >/dev/null 2>&1 || { log "ERROR: git is not installed"; exit 1; }
+command -v git >/dev/null 2>&1 || die "git is not installed."
 
 # Check existence of patch file
-[[ -f "${PATCH_FILE}" ]] || { log "ERROR: Patch file not found: ${PATCH_FILE}"; exit 1; }
+[[ -f "${PATCH_FILE}" ]] || die "Patch file not found: ${PATCH_FILE}"
 
 # Check that repo root directory is a Git working tree
-git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
-    log "ERROR: Repository root is not a Git working tree: ${REPO_ROOT}"
-    exit 1
-}
+git -C "${REPO_ROOT}" rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
+    die "Repository root is not a Git working tree: ${REPO_ROOT}"
 
 cd "${REPO_ROOT}"
 mkdir -p "${BACKUP_DIR}"
@@ -66,8 +64,8 @@ for file in "${FILES[@]}"; do
     fi
 
     # Treat an already-patched file as success.
-    if grep -Fxq 'UE_IMAGE=oai-nr-ue-cuda-mec' "${file}" && \
-       grep -Fxq 'UE_TAG=demo1-1' "${file}"; then
+    if grep -Fxq 'UE_IMAGE=oai-nr-ue-cuda-mec' "${file}" &&
+        grep -Fxq 'UE_TAG=latest' "${file}"; then
         log "Already patched: ${file}"
         continue
     fi

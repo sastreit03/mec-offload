@@ -16,58 +16,105 @@
 #
 # Acknowledgement: Commands below were written by Generative AI.
 
-set -e  # Stop script on any error
+set -Eeuo pipefail
 
-# UE image and container names
-UE_IMAGE="${UE_IMAGE:-oai-nr-ue-cuda-mec:demo1-1}"
-UE_CONTAINER=oai-nr-ue
+# Helper functions
+log() {
+    printf '[run-ue-client] %s\n' "$*"
+}
 
-# Check that the UE container is running
-[[ "$(docker inspect -f '{{.State.Running}} {{.Config.Image}}' "$UE_CONTAINER" \
-  2>/dev/null)" == "true $UE_IMAGE" ]] \
-  || { echo "ERROR: $UE_CONTAINER is not running from image $UE_IMAGE" >&2; exit 1; }
-printf 'Found "%s" container\n' "$UE_CONTAINER"
+die() {
+    printf '[run-ue-client] ERROR: %s\n' "$*" >&2
+    exit 1
+}
 
-# Get UE and MEC IP addresses
+
+# Parameters
+UE_CONTAINER="${UE_CONTAINER:-oai-nr-ue}"
+MEC_IP="${MEC_IP:-192.168.72.136}"
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+DEMO_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd -P)"
+RESULTS_DIR="${DEMO_DIR}/inference-results"
+CLIENT_DIR="${DEMO_DIR}/ue-client"
+
+IMAGE_FILE_NAME="${IMAGE_FILE_NAME:-coco_test.jpg}"
+IMAGE_FILE_PATH="$CLIENT_DIR/$IMAGE_FILE_NAME"
+CLIENT_FILE_NAME="${CLIENT_FILE_NAME:-ue_client.py}"
+CLIENT_FILE_PATH="$CLIENT_DIR/$CLIENT_FILE_NAME"
+
+RUN_ID=$(date +%Y%m%d-%H%M%S)
+ANNOTATED_FILE_NAME="${RUN_ID}_annotated.jpg"
+JSON_FILE_NAME="${RUN_ID}_inference_result.json"
+
+
+# Make the results directory if it does not exist
+mkdir -p "$RESULTS_DIR" || die "Unable to create results directory: $RESULTS_DIR"
+
+
+# Check that UE container is running
+log "Checking that UE container is running..."
+[[ "$(docker inspect -f '{{.State.Running}}' "$UE_CONTAINER" 2>/dev/null)" == "true" ]] ||
+    die "Container is missing or not running: $UE_CONTAINER"
+
+
+
+# Get tunnel interface name and IP address
 UE_TUN=$(docker exec "$UE_CONTAINER" ip -o link show | awk -F': ' '$2 ~ /^oaitun_ue/ {print $2; exit}')
-[[ -n "$UE_TUN" ]] || { echo "ERROR: no oaitun_ue interface found in $UE_CONTAINER" >&2; exit 1; }
+[[ -n "$UE_TUN" ]] || die "no oaitun_ue interface found in $UE_CONTAINER"
 
 UE_IP=$(docker exec "$UE_CONTAINER" ip -4 -o addr show dev "$UE_TUN" | awk '{print $4}' | cut -d/ -f1 | head -n1)
-[[ -n "$UE_IP" ]] || { echo "ERROR: no IPv4 address found for $UE_TUN in $UE_CONTAINER" >&2; exit 1; }
+[[ -n "$UE_IP" ]] || die "no IPv4 address found for $UE_TUN in $UE_CONTAINER"
 
-MEC_IP=192.168.72.136
+log "UE interface and IP address:"
+log "UE_TUN=$UE_TUN"
+log "UE_IP=$UE_IP"
+
 
 # Check that python dependencies are present.
 docker exec "$UE_CONTAINER" /opt/ueclientvenv/bin/python -c 'from importlib.metadata import version;
 from pip._vendor.packaging.version import Version as V;
 assert V("2.32") <= V(version("requests")) < V("3");
-assert V("4.10") <= V(version("opencv-python-headless")) < V("5")'
-printf 'Python dependencies are present\n'
+assert V("4.10") <= V(version("opencv-python-headless")) < V("5")' ||
+    die "Python dependencies could not be verified."
+log "Python dependencies are present."
 
-# Check that the test image is present.
-[[ -f ../ue-client/coco_test.jpg ]] || { echo "ERROR: ../ue-client/coco_test.jpg not found" >&2; exit 1; }
-printf 'Found test image\n\n'
+
+# Check that the files are present.
+[[ -f "$IMAGE_FILE_PATH" ]] || die "Image not found: $IMAGE_FILE_PATH"
+log "Found test image: $IMAGE_FILE_PATH"
+[[ -f "$CLIENT_FILE_PATH" ]] || die "File not found: $CLIENT_FILE_PATH"
+log "Found Python script: $CLIENT_FILE_PATH"
 
 # Copy files from current directory to the UE docker container
-docker cp ../ue-client/ue_client.py "$UE_CONTAINER":/tmp/ue_client.py
-docker cp ../ue-client/coco_test.jpg "$UE_CONTAINER":/tmp/coco_test.jpg
+log "Copying files to $UE_CONTAINER..."
+docker cp "$CLIENT_FILE_PATH" "$UE_CONTAINER:/tmp/$CLIENT_FILE_NAME" ||
+    die "Unable to copy $CLIENT_FILE_PATH to $UE_CONTAINER."
+docker cp "$IMAGE_FILE_PATH" "$UE_CONTAINER:/tmp/$IMAGE_FILE_NAME" ||
+    die "Unable to copy $IMAGE_FILE_PATH to $UE_CONTAINER."
+
 
 # Run inference on MEC server
-printf '\nRunning request for inference from MEC server\n'
+log "Running request for inference from MEC server ($MEC_IP)..."
 docker exec "$UE_CONTAINER" \
   /opt/ueclientvenv/bin/python \
-  /tmp/ue_client.py \
+  /tmp/$CLIENT_FILE_NAME \
   --server "http://$MEC_IP:8080" \
   --source-ip "$UE_IP" \
-  --image /tmp/coco_test.jpg \
-  --output /tmp/annotated.jpg \
+  --image /tmp/$IMAGE_FILE_NAME \
+  --output /tmp/$ANNOTATED_FILE_NAME \
   --conf 0.25 \
   --iou 0.70 \
   --imgsz 640 \
   --count 1 \
-  --result-json /tmp/mec-inference-result.json
+  --result-json /tmp/$JSON_FILE_NAME ||
+  die "Failure in running requested inference."
+log "MEC inference completed."
 
 # Copy resulting json and annotated image from UE docker container
 # to current directory
-docker cp "$UE_CONTAINER":/tmp/annotated.jpg ../ue-client/
-docker cp "$UE_CONTAINER":/tmp/mec-inference-result.json ../ue-client/
+log "Copying files from $UE_CONTAINER to $RESULTS_DIR"
+docker cp "$UE_CONTAINER:/tmp/$ANNOTATED_FILE_NAME" "$RESULTS_DIR/" ||
+    die "Unable to copy annotated image to $RESULTS_DIR"
+docker cp "$UE_CONTAINER:/tmp/$JSON_FILE_NAME" "$RESULTS_DIR/" ||
+    die "Unable to copy inference result JSON to $RESULTS_DIR"

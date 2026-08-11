@@ -1,4 +1,5 @@
-FROM oai-nr-ue-cuda:latest
+ARG BASE_IMAGE=oai-nr-ue-cuda:latest
+FROM ${BASE_IMAGE}
 
 USER root
 
