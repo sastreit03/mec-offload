@@ -4,7 +4,7 @@
 #
 # Purpose: Script to be run on MEC PC.
 #          Determines if docker and docker compose are installed, if
-#          required OAI/Sionna RK docker images have been 
+#          required OAI/Sionna RK docker images have been
 #          built, and if necessary files are present.
 #
 # Prerequisites:
@@ -32,8 +32,8 @@ Options:
   --gnb-image IMAGE       gNB image to verify
   --upf-image IMAGE       UPF image to verify
   --ext-dn-image IMAGE    External data-network image to verify
-  --compose-file FILE     Docker Compose file to verify
-  --config-dir DIR        Configuration directory to verify
+  --compose-file FILE     Path to Docker Compose file to verify
+  --config-dir DIR        Path to configuration directory to verify
   -h, --help              Show this help message
 EOF
 }
@@ -172,7 +172,7 @@ log "Found Sionna RK Docker compose file."
 log "Found Sionna RK config directory. Searching for a .env file..."
 find "$CONFIG_DIR" -mindepth 2 -maxdepth 2 -type f -name '.env' -print -quit | grep -q . ||
     die "No $CONFIG_DIR/{directory}/.env file found."
-log "Found one Sionra RK .env file."
+log "Found one Sionna RK .env file."
 
 
 # End sequence

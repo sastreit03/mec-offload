@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # stop_mec.sh
 #
@@ -10,7 +10,7 @@
 # - Every time the OAI 5GC containers are removed, the MEC container
 #   must be restarted, too.
 
-set -e  # Stop script on any error
+set -Eeuo pipefail  # Stop script on any error
 
 # Remove docker container
 echo "Removing mec-yolo container."

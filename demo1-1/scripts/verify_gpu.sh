@@ -56,6 +56,7 @@ docker run --rm --gpus=all "$CUDA_IMAGE" nvidia-smi ||
     die "GPU access failed in CUDA container"
 log "GPU access in docker verified."
 
+
 # Download Nvidia Pytorch image
 log "Pulling Nvidia Pytorch image..."
 ensure_image "$PYTORCH_IMAGE"
