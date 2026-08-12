@@ -51,7 +51,7 @@ On both the N3 and N6 terminals:
 ```bash
 EXT_DN_CONTAINER=oai-ext-dn
 UE_IP=<UE_PDU_SESSION_IP>
-MEC_IP=192.168.72.135
+MEC_IP=192.168.72.136
 ```
 
 ### 5. Start the capture on the UE interface terminal
