@@ -39,7 +39,7 @@ On the UE PC:
 UE_CONTAINER=oai-nr-ue
 UE_TUN=$(docker exec "$UE_CONTAINER" ip -o link show | awk -F': ' '$2 ~ /^oaitun_ue/ {print $2; exit}')
 UE_IP=$(docker exec "$UE_CONTAINER" ip -4 -o addr show dev "$UE_TUN" | awk '{print $4}' | cut -d/ -f1 | head -n1)
-MEC_IP=192.168.72.135
+MEC_IP=192.168.72.136
 
 printf 'UE_TUN=%s\nUE_IP=%s\n' "$UE_TUN" "$UE_IP"
 ```
