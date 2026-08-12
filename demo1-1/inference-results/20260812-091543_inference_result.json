@@ -1,9 +1,9 @@
 [
   {
     "request_index": 1,
-    "client_total_ms": 5033.446,
+    "client_total_ms": 784.768,
     "response": {
-      "task_id": "demo1-1-704426ba-24a3-476d-86b9-2c20d6553563",
+      "task_id": "demo1-1-9ee6d61b-dbc9-41a4-8216-6b95c7fcc5f0",
       "model": "yolo11n.pt",
       "device": "0",
       "input": {
@@ -50,15 +50,15 @@
         }
       ],
       "timing_ms": {
-        "decode": 1.402,
-        "queue_wait": 0.007,
-        "inference_call": 27.042,
-        "postprocess_response": 0.492,
-        "server_total": 29.316,
+        "decode": 1.492,
+        "queue_wait": 0.006,
+        "inference_call": 29.944,
+        "postprocess_response": 0.462,
+        "server_total": 32.431,
         "ultralytics": {
-          "preprocess": 1.33,
-          "inference": 12.73,
-          "postprocess": 12.186
+          "preprocess": 1.659,
+          "inference": 13.371,
+          "postprocess": 13.987
         }
       }
     }
