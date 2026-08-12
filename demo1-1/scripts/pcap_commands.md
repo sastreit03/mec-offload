@@ -49,7 +49,7 @@ printf 'UE_TUN=%s\nUE_IP=%s\n' "$UE_TUN" "$UE_IP"
 On both the N3 and N6 terminals:
 
 ```bash
-EXT_DN_CONTAINER=oai-ext-dn
+MEC_CONTAINER=mec-yolo
 UE_IP=<UE_PDU_SESSION_IP>
 MEC_IP=192.168.72.136
 ```
@@ -82,8 +82,8 @@ sudo tcpdump -U -ni any \
 On the N6 terminal:
 
 ```bash
-EXT_DN_PID=$(docker inspect -f '{{.State.Pid}}' "$EXT_DN_CONTAINER")
-sudo nsenter -t "$EXT_DN_PID" -n -- tcpdump -ni any tcp port 8080 -w "demo1-${RUN_ID}-n6.pcap"
+MEC_PID=$(docker inspect -f '{{.State.Pid}}' "$MEC_CONTAINER")
+sudo nsenter -t "$MEC_PID" -n -- tcpdump -ni any tcp port 8080 -w "demo1-${RUN_ID}-n6.pcap"
 ```
 
 ### 8. Send the inference request
