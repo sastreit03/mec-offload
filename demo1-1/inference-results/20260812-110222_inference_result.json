@@ -1,0 +1,66 @@
+[
+  {
+    "request_index": 1,
+    "client_total_ms": 738.565,
+    "response": {
+      "task_id": "demo1-1-8ee91901-cdb7-4093-8cc6-d8c1f75e0120",
+      "model": "yolo11n.pt",
+      "device": "0",
+      "input": {
+        "filename": "coco_test.jpg",
+        "content_type": "image/jpeg",
+        "bytes": 120773,
+        "width": 600,
+        "height": 413,
+        "imgsz": 640
+      },
+      "detections": [
+        {
+          "class_id": 0,
+          "class_name": "person",
+          "confidence": 0.916972,
+          "bbox_xyxy_norm": [
+            0.13801,
+            0.047587,
+            0.498457,
+            0.923512
+          ]
+        },
+        {
+          "class_id": 16,
+          "class_name": "dog",
+          "confidence": 0.885528,
+          "bbox_xyxy_norm": [
+            0.60698,
+            0.438633,
+            0.75294,
+            0.576305
+          ]
+        },
+        {
+          "class_id": 1,
+          "class_name": "bicycle",
+          "confidence": 0.751946,
+          "bbox_xyxy_norm": [
+            0.047298,
+            0.509188,
+            0.735979,
+            0.9471
+          ]
+        }
+      ],
+      "timing_ms": {
+        "decode": 0.93,
+        "queue_wait": 0.003,
+        "inference_call": 5.281,
+        "postprocess_response": 0.326,
+        "server_total": 6.875,
+        "ultralytics": {
+          "preprocess": 0.845,
+          "inference": 3.027,
+          "postprocess": 0.643
+        }
+      }
+    }
+  }
+]

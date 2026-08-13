@@ -150,6 +150,9 @@ def main() -> int:
         started = time.perf_counter()
 
         with args.image.open("rb") as image_file:
+            # Get start time of HTTP post transfer
+            post_start_time_ns = time.time_ns()
+
             response = session.post(
                 f"{server}/v1/detect",
                 files={
@@ -168,7 +171,13 @@ def main() -> int:
                 timeout=args.timeout,
             )
 
+        # Log timings
+        response_complete_time_ns = time.time_ns()
         client_total_ms = (time.perf_counter() - started) * 1000.0
+
+        # Calculate response latency
+        response_start_time_ns = int(response.headers["x-response-start-time-ns"])
+        response_latency_ms = (response_complete_time_ns - response_start_time_ns) / 1_000_000.0
 
         try:
             payload = response.json()
@@ -180,16 +189,32 @@ def main() -> int:
             print(json.dumps(payload, indent=2), file=sys.stderr)
             return 1
 
+        # Calculate HTTP post transmission time
+        post_complete_time_ns = payload["transfer"]["post_complete_time_ns"]
+        upload_latency_ms = (post_complete_time_ns - post_start_time_ns) / 1_000_000.0
+
+        postprocess_ms = None
+
+        # Perform and time postprocessing on image with the metadata from server
+        if index == args.count - 1:
+            postprocess_start_time_ns = time.perf_counter_ns()
+            draw_detections(args.image, payload, args.output)
+            postprocess_ms = (time.perf_counter_ns() - postprocess_start_time_ns) / 1_000_000.0
+
         record = {
             "request_index": index + 1,
             "client_total_ms": round(client_total_ms, 3),
+            "upload_latency_ms": round(upload_latency_ms, 3),
+            "response_latency_ms": round(response_latency_ms, 3),
+            "postprocessing_ms": (
+                round(postprocess_ms, 3)
+                if postprocess_ms is not None
+                else None
+            ),
             "response": payload,
         }
         all_results.append(record)
         print(json.dumps(record, indent=2))
-
-        if index == args.count - 1:
-            draw_detections(args.image, payload, args.output)
 
     if args.result_json:
         args.result_json.parent.mkdir(parents=True, exist_ok=True)
