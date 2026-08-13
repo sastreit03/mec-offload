@@ -24,7 +24,7 @@ from typing import Any
 import cv2
 import numpy as np
 import torch
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile, status
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile, status, Request
 from ultralytics import YOLO
 
 
@@ -168,6 +168,72 @@ async def lifespan(_: FastAPI):
         _model = None
         LOGGER.info("MEC YOLO service stopped")
 
+# HTTP transfer timing
+class RequestReceiveTimingMiddleware:
+    """Measure how long an HTTP request body takes to arrive through ASGI."""
+
+    def __init__(self, app: Any) -> None:
+        self.app = app
+
+    async def __call__(
+        self,
+        scope: dict[str, Any],
+        receive: Any,
+        send: Any,
+    ) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        start_ns = time.perf_counter_ns()
+        body_bytes = 0
+
+        async def timed_receive() -> dict[str, Any]:
+            nonlocal body_bytes
+
+            message = await receive()
+
+            if message["type"] == "http.request":
+                body = message.get("body", b"")
+
+                if body:
+                    body_bytes += len(body)
+
+                if not message.get("more_body", False):
+                    state = scope.setdefault("state", {})
+
+                    receive_ns = time.perf_counter_ns() - start_ns
+
+                    # Record time of end of HTTP post transmission
+                    state["post_complete_time_ns"] = time.time_ns()
+
+                    state["request_receive_ms"] = receive_ns / 1_000_000.0
+                    state["request_body_bytes"] = body_bytes
+
+                    if receive_ns > 0:
+                        state["request_receive_mbps"] = (
+                            body_bytes * 8 * 1000 / receive_ns
+                        )
+                    else:
+                        state["request_receive_mbps"] = None
+
+            return message
+
+        # custom send function to get start time of HTTP response
+        async def timed_send(message):
+            if message["type"] == "http.response.start":
+                start_ns = time.time_ns()
+
+                headers = list(message.get("headers", []))
+                headers.append(
+                    (b"x-response-start-time-ns", str(start_ns).encode())
+                )
+                message["headers"] = headers
+
+            await send(message)
+
+        await self.app(scope, timed_receive, timed_send)
+
 
 app = FastAPI(
     title="OAI MEC YOLO",
@@ -175,6 +241,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+app.add_middleware(RequestReceiveTimingMiddleware)
 
 @app.get("/healthz")
 async def healthz() -> dict[str, str]:
@@ -310,6 +378,7 @@ def _serialize_detections(result: Any, width: int, height: int) -> list[dict[str
 
 @app.post("/v1/detect")
 async def detect(
+    request: Request,
     image: UploadFile = File(...),
     task_id: str | None = Form(default=None),
     conf: float = Form(default=DEFAULT_CONF),
@@ -318,6 +387,32 @@ async def detect(
 ) -> dict[str, Any]:
     """Decode one uploaded image, run YOLO, and return metadata only."""
     request_started = time.perf_counter()
+
+    # Get transfer timing from middleware
+    request_receive_ms = getattr(
+        request.state,
+        "request_receive_ms",
+        None,
+    )
+
+    request_body_bytes = getattr(
+        request.state,
+        "request_body_bytes",
+        None,
+    )
+
+    request_receive_mbps = getattr(
+        request.state,
+        "request_receive_mbps",
+        None,
+    )
+
+    # Get HTTP post end time from request state
+    post_complete_time_ns = getattr(
+        request.state,
+        "post_complete_time_ns",
+        None
+    )
 
     if not _ready or _model is None:
         raise HTTPException(
@@ -415,6 +510,24 @@ async def detect(
                 "width": width,
                 "height": height,
                 "imgsz": imgsz,
+            },
+            "transfer": {
+                "http_request_body_bytes": request_body_bytes,
+                "server_receive_ms": (
+                    round(request_receive_ms, 3)
+                    if request_receive_ms is not None
+                    else None
+                ),
+                "server_receive_mbps": (
+                    round(request_receive_mbps, 3)
+                    if request_receive_mbps is not None
+                    else None
+                ),
+                "post_complete_time_ns": (
+                    post_complete_time_ns
+                    if post_complete_time_ns is not None
+                    else None
+                ),
             },
             "detections": detections,
             "timing_ms": {
