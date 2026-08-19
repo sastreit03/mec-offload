@@ -118,3 +118,6 @@ docker cp "$UE_CONTAINER:/tmp/$ANNOTATED_FILE_NAME" "$RESULTS_DIR/" ||
     die "Unable to copy annotated image to $RESULTS_DIR"
 docker cp "$UE_CONTAINER:/tmp/$JSON_FILE_NAME" "$RESULTS_DIR/" ||
     die "Unable to copy inference result JSON to $RESULTS_DIR"
+
+log "chrony NTP statistics..."
+chronyc tracking
