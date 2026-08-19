@@ -1,0 +1,29 @@
+services:
+  mec-yolo:
+    build:
+      context: .
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-nvcr.io/nvidia/pytorch:25.12-py3}
+    image: mec-yolo:latest
+    container_name: mec-yolo-sa
+    gpus: all
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      MODEL_PATH: ${MODEL_PATH:-/models/yolo11n.pt}
+      DEVICE: ${DEVICE:-0}
+      DEFAULT_IMGSZ: ${DEFAULT_IMGSZ:-640}
+      DEFAULT_CONF: ${DEFAULT_CONF:-0.25}
+      DEFAULT_IOU: ${DEFAULT_IOU:-0.70}
+      MAX_IMAGE_BYTES: ${MAX_IMAGE_BYTES:-8388608}
+      MAX_CONCURRENT_INFERENCE: ${MAX_CONCURRENT_INFERENCE:-1}
+    volumes:
+      - ./models:/models:ro

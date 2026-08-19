@@ -16,11 +16,11 @@ set -Eeuo pipefail  # Stop script on any error
 
 # Helper functions
 log() {
-    printf '[build-mec-image] %s\n' "$*"
+    printf '[start-mec] %s\n' "$*"
 }
 
 die() {
-    printf '[build-mec-image] ERROR: %s\n' "$*" >&2
+    printf '[start-mec] ERROR: %s\n' "$*" >&2
     exit 1
 }
 

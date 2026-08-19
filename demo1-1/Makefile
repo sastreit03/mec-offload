@@ -3,13 +3,13 @@
 # Default for typing "make"
 .DEFAULT_GOAL := help
 
-.PHONY: help prepare-mec-server prepare-ue-client
+.PHONY: help prepare-mec-server prepare-ue-client prepare-mec-server-sa
 
 help:
 	@echo "Specify a target:"
 	@echo "  make prepare-mec-server"
 	@echo "  make prepare-ue-client"
-	@echo "  make prepare-mec-server-standalone"
+	@echo "  make prepare-mec-server-sa"
 
 # Prepare MEC server
 prepare-mec-server:
@@ -38,12 +38,12 @@ prepare-ue-client:
 	@echo "./scripts/run_ue_client.sh"
 
 # Preapre MEC server for standalone installation apart from OAI
-prepare-mec-server-standalone:
+prepare-mec-server-sa:
 	./scripts/verify_gpu.sh
-	./scripts/build_mec_image.sh
+	./scripts/build_mec_image_sa.sh
 	./scripts/download_model.sh
-	./scripts/compose_mec_image.sh
+	./scripts/compose_mec_image_sa.sh
 	@echo "Install is verified. MEC server is ready to start."
-	@echo "Start the MEC server with ./scripts/start_mec_standalone.sh"
+	@echo "Start the MEC server with ./scripts/start_mec_sa.sh"
 	@echo "After starting MEC, verify MEC server is ready by running:"
-	@echo "./scripts/verify_mec_active_standalone.sh"
+	@echo "./scripts/verify_mec_active_sa.sh"
