@@ -55,6 +55,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--imgsz", type=int, default=640)
     parser.add_argument("--count", type=int, default=1)
     parser.add_argument("--timeout", type=float, default=30.0)
+    parser.add_argument("--ntp", action='store_true')
     parser.add_argument("--result-json", type=Path)
     return parser.parse_args()
 
@@ -176,8 +177,9 @@ def main() -> int:
         client_total_ms = (time.perf_counter() - started) * 1000.0
 
         # Calculate response latency
-        response_start_time_ns = int(response.headers["x-response-start-time-ns"])
-        response_latency_ms = (response_complete_time_ns - response_start_time_ns) / 1_000_000.0
+        if args.ntp:
+            response_start_time_ns = int(response.headers["x-response-start-time-ns"])
+            response_latency_ms = (response_complete_time_ns - response_start_time_ns) / 1_000_000.0
 
         try:
             payload = response.json()
@@ -190,8 +192,9 @@ def main() -> int:
             return 1
 
         # Calculate HTTP post transmission time
-        post_complete_time_ns = payload["transfer"]["post_complete_time_ns"]
-        upload_latency_ms = (post_complete_time_ns - post_start_time_ns) / 1_000_000.0
+        if args.ntp:
+            post_complete_time_ns = payload["transfer"]["post_complete_time_ns"]
+            upload_latency_ms = (post_complete_time_ns - post_start_time_ns) / 1_000_000.0
 
         postprocess_ms = None
 
@@ -204,8 +207,16 @@ def main() -> int:
         record = {
             "request_index": index + 1,
             "client_total_ms": round(client_total_ms, 3),
-            "upload_latency_ms": round(upload_latency_ms, 3),
-            "response_latency_ms": round(response_latency_ms, 3),
+            "upload_latency_ms": (
+                round(upload_latency_ms, 3)
+                if args.ntp
+                else "NTP not used"
+            ),
+            "response_latency_ms": (
+                round(response_latency_ms, 3)
+                if args.ntp
+                else "NTP not used"
+            ),
             "postprocessing_ms": (
                 round(postprocess_ms, 3)
                 if postprocess_ms is not None
