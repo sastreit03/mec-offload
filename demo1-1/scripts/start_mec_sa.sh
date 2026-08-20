@@ -28,12 +28,11 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 MEC_DIR="$(cd -- "${SCRIPT_DIR}/../mec-server" && pwd -P)"
 
 # Build docker container
-# Development mode: rebuild the MEC image before starting containers.
-# This may make the digest recorded by build_mec_image.sh outdated.
+# --no-build preserves the image produced and recorded during preparation.
 log "Starting MEC server container..."
 docker compose \
     --env-file "$MEC_DIR/.env" \
     -f "$MEC_DIR/compose.mec.sa.yml" \
-    up -d --build ||
+    up -d --no-build ||
     die "Failed to start MEC server container."
 log "MEC server started."
