@@ -1,0 +1,47 @@
+video:
+  # This file must exist inside the UE container.
+  source: /opt/ue-demo/video/demo.mp4
+
+  # Frames sampled from the original prerecorded video before H.264 encoding.
+  fps: 5
+  width: 640
+  height: 360
+
+  # x264enc bitrate is in kbit/s.
+  bitrate_kbps: 400
+
+  # Maximum number of encoded frames between keyframes. With 5 FPS and GOP=10,
+  # the maximum keyframe interval is approximately 2 seconds.
+  gop_frames: 10
+
+  crop_left: 0
+  crop_right: 0
+  crop_top: 0
+  crop_bottom: 0
+
+  preview_jpeg_quality: 80
+
+  # Conservative RTP payload packet size to leave room for UDP/IP/tunnel headers
+  # and reduce the chance of IP fragmentation in the 5G user-plane path.
+  rtp_mtu: 1200
+
+  # Prefer false for measurements. A seek-to-zero loop can create a media-timestamp
+  # discontinuity. Use a sufficiently long prerecorded clip for the formal demo.
+  loop_video: false
+
+network:
+  # Replace with the MEC-reachable IP address behind the OAI UPF.
+  mec_ip: 192.168.72.136
+  video_port: 5000
+
+  # MEC should expose a WebSocket server at this URL.
+  control_ws_url: ws://192.168.72.136:8765/ws/ue
+
+  # Change if your OAI UE tunnel has a different name. Set null to disable the
+  # interface-name assertion while still displaying `ip route get` in the UI.
+  expected_ue_interface: oaitun_ue1
+  strict_route_check: true
+
+dashboard:
+  host: 0.0.0.0
+  port: 8080

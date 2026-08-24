@@ -1,0 +1,46 @@
+network:
+  # Listen for UE RTP/H.264 on this UDP address/port.
+  video_bind_address: 0.0.0.0
+  video_port: 5000
+
+  # FastAPI serves the WebSocket path below on the SAME host/port as the dashboard.
+  # One Uvicorn process owns both HTTP and WebSocket routes, so this port is also
+  # the MEC dashboard port. 8765 matches the UE default ws://MEC_IP:8765/ws/ue.
+  control_host: 0.0.0.0
+  control_port: 8765
+  control_path: /ws/ue
+
+receiver:
+  rtp_payload_type: 96
+  jitter_latency_ms: 50
+  udp_buffer_bytes: 2097152
+  preview_jpeg_quality: 80
+  frame_buffer_max_frames: 180
+
+vlm:
+  # Start with "mock" to validate RTP + decode + dashboards + WebSocket end to end.
+  # Change to "transformers" for real Qwen3-VL inference.
+  backend: mock
+  model_id: Qwen/Qwen3-VL-4B-Instruct
+
+  # sdpa is portable and avoids making FlashAttention a hard dependency.
+  attn_implementation: sdpa
+
+  inference_interval_s: 2.0
+  window_seconds: 3.0
+  max_frames: 10
+  min_frames: 3
+
+  # Frames are resized again only for the VLM. The received/preview stream stays at
+  # the UE-selected resolution.
+  frame_width: 448
+  frame_height: 252
+
+  max_new_tokens: 128
+  temperature: 0.0
+
+  # New questions apply only to frames arriving after that question by default.
+  clear_buffer_on_new_question: true
+  discard_result_if_question_changed: true
+  include_raw_model_output: false
+

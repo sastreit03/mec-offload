@@ -1,0 +1,6 @@
+fastapi>=0.115,<1
+uvicorn[standard]>=0.34,<1
+PyYAML>=6,<7
+pydantic>=2.10,<3
+numpy>=1.26,<3
+Pillow>=10,<13

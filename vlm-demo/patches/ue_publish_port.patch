@@ -1,0 +1,13 @@
+diff --git a/ue/config/common/docker-compose.yaml b/ue/config/common/docker-compose.yaml
+index a766cc0..844b54b 100644
+--- a/ue/config/common/docker-compose.yaml
++++ b/ue/config/common/docker-compose.yaml
+@@ -146,6 +146,8 @@ services:
+         networks:
+             public_net:
+                 ipv4_address: 192.168.71.150
++        ports:
++            - "8080:8080"
+         devices:
+             - /dev/net/tun:/dev/net/tun
+             - /dev/bus/usb/:/dev/bus/usb/
