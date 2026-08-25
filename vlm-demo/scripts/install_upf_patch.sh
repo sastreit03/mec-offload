@@ -58,7 +58,7 @@ ENV_FILE="${REPO_ROOT}/gnb/config/${CONFIG_NAME}/.env"
 
 # Directory to create backup of original docker file
 BACKUP_DIR="${REPO_ROOT}/original-srk-files/gnb"
-BACKUP_FILE="${BACKUP_DIR}/gnb/docker-compose.yaml"
+BACKUP_FILE="${BACKUP_DIR}/docker-compose.yaml"
 
 # Commands to add and what's expected
 ROUTE_COMMAND='ip route add 192.168.72.128/26 dev eth1 src 192.168.72.134 table eth1_table'
