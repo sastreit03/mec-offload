@@ -80,7 +80,7 @@ class VideoStreamer:
                 avdec_h264 ! videoconvert !
                 jpegenc quality={cfg.preview_jpeg_quality} !
                 appsink name=preview emit-signals=true max-buffers=1 drop=true
-                        sync=true wait-on-eos=false
+                        sync=true async=false wait-on-eos=false
         """
 
     def start(self) -> None:
