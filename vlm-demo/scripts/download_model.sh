@@ -48,6 +48,8 @@ log "Cache directory: $HF_CACHE_DIR"
 docker run --rm -i \
     --read-only \
     --user "$(id -u):$(id -g)" \
+    -e USER="$(id -un)" \
+    -e LOGNAME="$(id -un)" \
     --cap-drop ALL \
     --security-opt no-new-privileges \
     --tmpfs /tmp:rw,noexec,nosuid,nodev,size=1g \
