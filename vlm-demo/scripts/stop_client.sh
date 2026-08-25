@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 #
-# start_client.sh
+# stop_client.sh
 #
 # Purpose: Script to be run on UE PC.
-#          Runs the MEC client on UE DGX Spark. Run on separate terminal.
+#          Stops the MEC client on UE DGX Spark.
 #
 # Prerequisites:
-# - The oai-nr-ue container must be running, and the MEC client application
-#   must not be running.
-# - Every time the oai-nr-ue container is removed, this script
-#   must be re-run, too.
 #
 # Acknowledgement: Commands below were written by Generative AI.
 
@@ -17,11 +13,11 @@ set -Eeuo pipefail  # Stop script on any error
 
 # Helper functions
 log() {
-    printf '[start-client] %s\n' "$*"
+    printf '[stop-client] %s\n' "$*"
 }
 
 die() {
-    printf '[start-client] ERROR: %s\n' "$*" >&2
+    printf '[stop-client] ERROR: %s\n' "$*" >&2
     exit 1
 }
 
@@ -38,16 +34,19 @@ log "Container is running: $UE_CONTAINER"
 if docker exec "$UE_CONTAINER" \
     pgrep -f '/opt/ue-demo/app.py' >/dev/null
 then
-    die "UE demo application is already running."
+    docker exec "$UE_CONTAINER" pkill -TERM -f 'opt/ue-demo/app.py'
+    log "Stopping UE MEC client application gracefully."
+else
+    log "UE MEC client application is not running."
 fi
 
+# Wait 10 seconds before exiting
+for _ in {1..10}; do
+    if ! docker exec "$UE_CONTAINER" pgrep -f '/opt/ue-demo/app.py' >/dev/null; then
+        log "UE demo application stopped."
+        exit 0
+    fi
+    sleep 1
+done
 
-# Run client application
-docker exec \
-    --workdir /opt/ue-demo \
-    "$UE_CONTAINER" \
-    /opt/ue-demo-venv/bin/python \
-    /opt/ue-demo/app.py \
-    --config /opt/ue-demo/config.yaml
-
-echo "UE demo application started."
+die "UE demo application did not stop within timeout."
