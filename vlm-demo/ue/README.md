@@ -37,7 +37,7 @@ Inside the UE container:
 
 ```bash
 ip addr show
-ip route get 12.1.1.2
+ip route get 192.168.72.136 from $UE_IP
 ```
 
 For the sample config, the route must contain:

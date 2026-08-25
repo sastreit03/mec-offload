@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from control import ControlClient
 from dashboard import router
 from models import SharedState, load_config
-from network import validate_route
+from network import validate_route, get_interface_ipv4
 from streamer import VideoStreamer
 
 
@@ -24,9 +24,10 @@ LOG = logging.getLogger("ue.app")
 
 def create_app(config_path: str) -> FastAPI:
     config = load_config(config_path)
+    ue_ip = get_interface_ipv4(config.network.expected_ue_interface)
     shared = SharedState()
-    streamer = VideoStreamer(config.video, config.network, shared)
-    control = ControlClient(config.network, shared, config.video)
+    streamer = VideoStreamer(config.video, config.network, shared, ue_ip)
+    control = ControlClient(config.network, shared, config.video, ue_ip)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -34,6 +35,7 @@ def create_app(config_path: str) -> FastAPI:
             config.network.mec_ip,
             config.network.expected_ue_interface,
             config.network.strict_route_check,
+            ue_ip
         )
         shared.set_route(route)
         LOG.info("Route to MEC: %s", route)

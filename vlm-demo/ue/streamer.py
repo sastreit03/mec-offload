@@ -27,6 +27,7 @@ class VideoStreamer:
         video_config: VideoConfig,
         network_config: NetworkConfig,
         state: SharedState,
+        ue_ip: str,
     ) -> None:
         self._cfg = video_config.model_copy(deep=True)
         self._network = network_config.model_copy(deep=True)
@@ -35,6 +36,7 @@ class VideoStreamer:
         self._pipeline: Gst.Pipeline | None = None
         self._bus_thread: threading.Thread | None = None
         self._bus_stop = threading.Event()
+        self._ue_ip = ue_ip
 
     def get_config(self) -> VideoConfig:
         with self._lock:
@@ -71,6 +73,7 @@ class VideoStreamer:
             encoded. ! queue max-size-time=1000000000 max-size-bytes=0 max-size-buffers=0 !
                 rtph264pay name=pay pt=96 config-interval=-1 mtu={cfg.rtp_mtu} !
                 udpsink host={self._network.mec_ip} port={self._network.video_port}
+                        bind-address={self._ue_ip} bind-port=0
                         sync=true async=false
 
             encoded. ! queue leaky=downstream max-size-buffers=2 !

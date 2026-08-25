@@ -37,8 +37,7 @@ network:
   # MEC should expose a WebSocket server at this URL.
   control_ws_url: ws://192.168.72.136:8765/ws/ue
 
-  # Change if your OAI UE tunnel has a different name. Set null to disable the
-  # interface-name assertion while still displaying `ip route get` in the UI.
+  # Change if your OAI UE tunnel has a different name.
   expected_ue_interface: oaitun_ue1
   strict_route_check: true
 

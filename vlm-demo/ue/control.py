@@ -27,11 +27,13 @@ class ControlClient:
         network: NetworkConfig,
         state: SharedState,
         initial_video_config: VideoConfig,
+        ue_ip: str
     ) -> None:
         self._network = network
         self._state = state
         self._latest_video_config = initial_video_config.model_copy(deep=True)
         self._outgoing: asyncio.Queue[dict[str, Any]] = asyncio.Queue(maxsize=32)
+        self._ue_ip = ue_ip
 
     async def run(self) -> None:
         # Current websockets asyncio API supports automatic reconnect when connect()
@@ -47,6 +49,7 @@ class ControlClient:
                 max_size=1_048_576,
                 compression=None,
                 proxy=None,
+                local_addr=(self._ue_ip, 0),
             ):
                 self._state.set_control_connected(True, None)
                 LOG.info("Control channel connected to %s", self._network.control_ws_url)

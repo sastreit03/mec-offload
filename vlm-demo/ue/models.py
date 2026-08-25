@@ -37,7 +37,7 @@ class NetworkConfig(BaseModel):
     mec_ip: str
     video_port: int = Field(default=5000, ge=1, le=65535)
     control_ws_url: str
-    expected_ue_interface: str | None = "oaitun_ue1"
+    expected_ue_interface: str = "oaitun_ue1"
     strict_route_check: bool = True
 
 
