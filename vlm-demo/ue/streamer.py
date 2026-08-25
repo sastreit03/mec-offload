@@ -227,21 +227,10 @@ class VideoStreamer:
             if msg.type == Gst.MessageType.EOS:
                 cfg = self.get_config()
                 if cfg.loop_video:
-                    # This is useful for a simple local demo. For formal RTP timing
-                    # experiments, prefer a long file or press Restart because seeking
-                    # to zero can create a media-timestamp discontinuity.
-                    ok = pipeline.seek_simple(
-                        Gst.Format.TIME,
-                        Gst.SeekFlags.FLUSH | Gst.SeekFlags.KEY_UNIT,
-                        0,
-                    )
-                    if not ok:
-                        text = "Reached EOS and failed to seek to beginning"
-                        LOG.error(text)
-                        self._state.set_stream_running(False, text)
-                        self._release_finished_pipeline(pipeline)
-                        return
-                    LOG.info("Looped video to beginning")
+                    LOG.info("Reached EOS; restarting video pipeline")
+                    self.stop()
+                    self.start()
+                    return
                 else:
                     LOG.info("Reached end of prerecorded video")
                     self._state.set_stream_running(False)
