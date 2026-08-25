@@ -8,6 +8,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   python3 \
   python3-venv \
   python3-gi \
+  python3-gst-1.0 \
   gir1.2-gstreamer-1.0 \
   gir1.2-gst-plugins-base-1.0 \
   gstreamer1.0-tools \
@@ -19,11 +20,41 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
   iproute2 \
   ca-certificates
 
+# Create python venv and install requirements
 python3 -m venv --system-site-packages /opt/ue-demo-venv
 /opt/ue-demo-venv/bin/python -m pip install --upgrade pip
 /opt/ue-demo-venv/bin/pip install -r /opt/ue-demo/requirements.txt
 
-for element in x264enc rtph264pay h264parse avdec_h264 jpegenc appsink; do
-  gst-inspect-1.0 "$element" >/dev/null
-  echo "OK: GStreamer element $element"
-done
+# Check GStreamer packages import properly
+/opt/ue-demo-venv/bin/python - <<'PY'
+import gi
+
+gi.require_version("Gst", "1.0")
+from gi.repository import Gst
+
+Gst.init(None)
+
+required = [
+    "filesrc",
+    "decodebin",
+    "queue",
+    "tee",
+    "videoconvert",
+    "videorate",
+    "videocrop",
+    "videoscale",
+    "x264enc",
+    "h264parse",
+    "rtph264pay",
+    "udpsink",
+    "avdec_h264",
+    "jpegenc",
+    "appsink",
+]
+
+missing = [name for name in required if Gst.ElementFactory.find(name) is None]
+if missing:
+    raise RuntimeError(f"Missing GStreamer elements: {', '.join(missing)}")
+
+print("Python GStreamer bindings and required elements are available.")
+PY

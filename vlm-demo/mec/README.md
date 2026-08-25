@@ -85,7 +85,7 @@ python3 app.py --config config.yaml
 Open:
 
 ```
-http://MEC_IP:8765/
+http://MEC_HOST_IP:8765/
 ```
 
 Start the UE. You should see:
@@ -135,11 +135,11 @@ The MEC must accept:
 
 If a host firewall is enabled, open only the required trusted/private interfaces/subnets.
 
-To verify reception:
+To verify reception, run on the MEC host:
 
 ```bash
-sudo tcpdump -ni any udp port 5000
-sudo tcpdump -ni any tcp port 8765
+sudo tcpdump -ni oai-traffic udp port 5000
+sudo tcpdump -ni oai-traffic tcp port 8765
 ```
 
 The UE should independently verify that its route to `MEC_IP` uses `oaitun_ue1`.

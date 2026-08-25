@@ -48,8 +48,12 @@ def main() -> int:
         print(f"CUDA available: {torch.cuda.is_available()}")
         if torch.cuda.is_available():
             print(f"CUDA device: {torch.cuda.get_device_name(0)}")
-    except Exception:
-        pass
+        else:
+            print("[FAIL] CUDA is not available to PyTorch")
+            ok = False
+    except Exception as exc:
+        print(f"[FAIL] CUDA availability: {exc}")
+        ok = False
 
     return 0 if ok else 1
 

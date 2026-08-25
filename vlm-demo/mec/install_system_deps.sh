@@ -19,5 +19,10 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 
 rm -rf /var/lib/apt/lists/*
 
+python3 -m venv --system-site-packages /opt/mec-vlm-venv
+/opt/mec-vlm-venv/bin/python -m pip install --upgrade pip
+/opt/mec-vlm-venv/bin/pip install -r /tmp/requirements.txt
+/opt/mec-vlm-venv/bin/pip install -r /tmp/requirements-vlm.txt
+
 echo "Installed GStreamer RTP/H.264 decode dependencies."
 echo "Create/use a Python environment that can see python3-gi and your CUDA PyTorch installation."

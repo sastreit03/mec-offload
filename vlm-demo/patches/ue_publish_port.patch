@@ -7,7 +7,7 @@ index a766cc0..844b54b 100644
              public_net:
                  ipv4_address: 192.168.71.150
 +        ports:
-+            - "8080:8080"
++            - "8080:8080/tcp"
          devices:
              - /dev/net/tun:/dev/net/tun
              - /dev/bus/usb/:/dev/bus/usb/

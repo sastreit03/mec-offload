@@ -1,0 +1,52 @@
+services:
+  mec-vlm:
+    build:
+      context: .
+      args:
+        BASE_IMAGE: ${BASE_IMAGE:-nvcr.io/nvidia/pytorch:25.12-py3}
+    image: mec-vlm:latest
+    container_name: mec-vlm
+    gpus: all
+    restart: unless-stopped
+    networks:
+      traffic_net:
+        ipv4_address: 192.168.72.136
+    ports:
+      - "8765:8765/tcp"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      HF_HOME: /models/huggingface
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+    volumes:
+      - ./models/huggingface:/models/huggingface:ro
+
+  mec-route-init:
+    image: alpine:3.20
+    container_name: mec-route-init
+    network_mode: "service:mec-vlm"
+    depends_on:
+      mec-vlm:
+        condition: service_started
+    cap_add:
+      - NET_ADMIN
+    command:
+        - /bin/sh
+        - -c
+        - |
+          until ip link show eth0 >/dev/null 2>&1; do sleep 1; done
+          until ping -c 1 -W 1 192.168.72.134 >/dev/null 2>&1; do sleep 1; done
+          ip route replace 12.1.1.0/24 via 192.168.72.134 dev eth0
+          ip route
+    restart: "no"
+
+networks:
+  traffic_net:
+    external: true
+    name: oai-traffic-net

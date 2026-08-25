@@ -10,8 +10,7 @@ RUN /opt/ue-demo/install_deps.sh
 
 COPY . /opt/ue-demo/
 
-EXPOSE 8080
+# Keep working directory from base UE image
+WORKDIR /opt/oai-nr-ue
 
-# Keep your existing OAI entrypoint/startup behavior if the UE process is started
-# elsewhere. This CMD only illustrates launching the demo application.
-CMD ["/opt/ue-demo-venv/bin/python", "/opt/ue-demo/app.py", "--config", "/opt/ue-demo/config.yaml"]
+EXPOSE 8080

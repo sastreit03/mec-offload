@@ -102,7 +102,7 @@ if [[ ! -f "${COMPOSE_FILE}" ]]; then
 elif awk '
     /^    oai-nr-ue:$/ { in_ue_service = 1; next }
     in_ue_service && /^    [^[:space:]]/ { exit }
-    in_ue_service && /^[[:space:]]+- "8080:8080"[[:space:]]*$/ { found = 1 }
+    in_ue_service && /^[[:space:]]+- "8080:8080/tcp"[[:space:]]*$/ { found = 1 }
     END { exit !found }
 ' "${COMPOSE_FILE}"; then
     log "Already patched: ${COMPOSE_FILE}"

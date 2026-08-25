@@ -36,6 +36,7 @@ ensure_image() {
 # Set docker image names
 CUDA_IMAGE="nvcr.io/nvidia/cuda:13.0.1-devel-ubuntu24.04"
 PYTORCH_IMAGE="nvcr.io/nvidia/pytorch:25.12-py3"
+ALPINE_IMAGE="alpine:3.20"
 
 
 # Verify nvidia-smi can communicate with GPU
@@ -55,6 +56,10 @@ ensure_image "$CUDA_IMAGE"
 docker run --rm --gpus=all "$CUDA_IMAGE" nvidia-smi ||
     die "GPU access failed in CUDA container"
 log "GPU access in docker verified."
+
+# Download apline image for creating IP route in MEC
+log "Pulling Alpine image..."
+ensure_image "$ALPINE_IMAGE"
 
 
 # Download Nvidia Pytorch image
