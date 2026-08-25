@@ -27,7 +27,7 @@ video:
 
   # Prefer false for measurements. A seek-to-zero loop can create a media-timestamp
   # discontinuity. Use a sufficiently long prerecorded clip for the formal demo.
-  loop_video: false
+  loop_video: true
 
 network:
   # Replace with the MEC-reachable IP address behind the OAI UPF.
