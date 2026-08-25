@@ -34,5 +34,5 @@ prepare-ue:
 	@echo "Start the UE with ./../ue/scripts/start_system_ue.sh b200"
 	@echo "After starting the UE, check the connection between the UE and"
 	@echo "the MEC server with ./scripts/check_ue_connection.sh"
-	@echo "To start the MEC client application, run ./scritps/start_client.sh"
+	@echo "To start the MEC client application, run ./scripts/start_client.sh"
 	@echo "Then, open the UE dashboard on a browser with http://HOST_IP:8080"
