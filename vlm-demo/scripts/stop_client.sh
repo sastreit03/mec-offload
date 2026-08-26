@@ -34,19 +34,22 @@ log "Container is running: $UE_CONTAINER"
 if docker exec "$UE_CONTAINER" \
     pgrep -f '/opt/ue-demo/app.py' >/dev/null
 then
-    docker exec "$UE_CONTAINER" pkill -TERM -f 'opt/ue-demo/app.py'
-    log "Stopping UE MEC client application gracefully."
+    log "Shutting down UE application gracefully..."
+    docker exec "$UE_CONTAINER" pkill -TERM -f '/opt/ue-demo/app.py'
+
+    for _ in {1..10}; do
+        if ! docker exec "$UE_CONTAINER" pgrep -f '/opt/ue-demo/app.py' >/dev/null; then
+            log "UE demo application stopped."
+            exit 0
+        fi
+        sleep 1
+    done
+
+    log "Graceful stop timed out; forcing stop."
+
+    docker exec "$UE_CONTAINER" pkill -KILL -f '/opt/ue-demo/app.py'
+
+    log "UE demo application force-stopped."
 else
     log "UE MEC client application is not running."
 fi
-
-# Wait 10 seconds before exiting
-for _ in {1..10}; do
-    if ! docker exec "$UE_CONTAINER" pgrep -f '/opt/ue-demo/app.py' >/dev/null; then
-        log "UE demo application stopped."
-        exit 0
-    fi
-    sleep 1
-done
-
-die "UE demo application did not stop within timeout."
