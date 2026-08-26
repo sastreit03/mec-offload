@@ -20,7 +20,7 @@ receiver:
 vlm:
   # Start with "mock" to validate RTP + decode + dashboards + WebSocket end to end.
   # Change to "transformers" for real Qwen3-VL inference.
-  backend: mock
+  backend: transformers
   model_id: Qwen/Qwen3-VL-4B-Instruct
 
   # sdpa is portable and avoids making FlashAttention a hard dependency.

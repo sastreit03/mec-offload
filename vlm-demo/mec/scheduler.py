@@ -27,7 +27,7 @@ class InferenceScheduler:
         self._engine = engine
         self._control: ControlHub | None = None
         self._wake = asyncio.Event()
-        self._last_inferred_frame_sequence: int | None = None
+        self._answered_question_id: int | None = None
 
     def attach_control(self, control: ControlHub) -> None:
         self._control = control
@@ -62,6 +62,10 @@ class InferenceScheduler:
         if question is None:
             return
 
+        question_id = question.get("question_id")
+        if question_id == self._answered_question_id:
+            return
+
         frames = self._frames.snapshot_window(
             window_seconds=self._cfg.window_seconds,
             max_frames=self._cfg.max_frames,
@@ -70,10 +74,10 @@ class InferenceScheduler:
         if len(frames) < self._cfg.min_frames:
             return
 
-        newest_seq = frames[-1].sequence
-        if newest_seq == self._last_inferred_frame_sequence:
-            return
-        self._last_inferred_frame_sequence = newest_seq
+        #newest_seq = frames[-1].sequence
+        #if newest_seq == self._last_inferred_frame_sequence:
+        #    return
+        #self._last_inferred_frame_sequence = newest_seq
 
         question_id = question.get("question_id")
         self._state.inference_started(len(frames))
@@ -149,6 +153,8 @@ class InferenceScheduler:
 
         self._state.set_latest_result(result)
         await self._control.send(result)
+        self._answered_question_id = question_id
+
         LOG.info(
             "VLM result q=%s frames=%d inference=%.1fms event=%s answer=%s",
             question_id,
