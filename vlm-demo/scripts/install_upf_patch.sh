@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# install_upf_patch.sh
+# install_mec_patch.sh
 #
 # Purpose: Script to be run on MEC PC.
-#          Applies a patch to SRK's docker-compose.yaml file
+#          Applies a patch to SRK's docker-compose.override.yaml file
 #          to allow the MEC server to have its own IP address
 #          on the N6 network.
 #          Copies the original compose file, checks the patch applies
@@ -47,10 +47,10 @@ esac
 
 
 # Location of patch file
-PATCH_FILE="${REPO_ROOT}/vlm-demo/patches/add-upf-mec-route.patch"
+PATCH_FILE="${REPO_ROOT}/vlm-demo/patches/mec-upf.patch"
 
 # Location of compose file to patch
-COMPOSE_FILE="${REPO_ROOT}/gnb/config/common/docker-compose.yaml"
+COMPOSE_FILE="${REPO_ROOT}/gnb/config/common/docker-compose.override.yaml"
 COMPOSE_DIR="$(dirname -- "${COMPOSE_FILE}")"
 
 # b200 or rfsim env file
@@ -58,11 +58,10 @@ ENV_FILE="${REPO_ROOT}/gnb/config/${CONFIG_NAME}/.env"
 
 # Directory to create backup of original docker file
 BACKUP_DIR="${REPO_ROOT}/original-srk-files/gnb"
-BACKUP_FILE="${BACKUP_DIR}/docker-compose.yaml"
+BACKUP_FILE="${BACKUP_DIR}/docker-compose.override.yaml"
 
 # Commands to add and what's expected
 ROUTE_COMMAND='ip route add 192.168.72.128/26 dev eth1 src 192.168.72.134 table eth1_table'
-EXPECTED_COMMAND='ip route add default via 192.168.72.135 dev eth1 table eth1_table'
 
 
 # Check that git, docker, and docker compose are installed
@@ -97,34 +96,12 @@ if grep -Fq "${ROUTE_COMMAND}" "${COMPOSE_FILE}"; then
     if [[ -f "${BACKUP_FILE}" ]]; then
         log "Original Compose backup exists at: ${BACKUP_FILE}"
     else
-        log "WARNING: Patch is installed, but no original backup was found"
+        log "WARNING: Patch is installed, but no original backup was found at ${BACKUP_DIR}"
     fi
 
     exit 0
 fi
 
-
-# Refuse to modify a Compose file whose expected UPF entrypoint differs.
-if ! grep -Fq "${EXPECTED_COMMAND}" "${COMPOSE_FILE}"; then
-    die "Expected UPF route command was not found. The Compose file may be from a different revision."
-fi
-
-
-# Save the untouched Compose file before applying the patch.
-mkdir -p "${BACKUP_DIR}"
-
-if [[ -e "${BACKUP_FILE}" ]]; then
-    die "Backup file already exists: ${BACKUP_FILE}
-Refusing to overwrite it because it should represent the original Compose file."
-fi
-
-log "Saving original Docker Compose file"
-cp --preserve=mode,timestamps \
-    "${COMPOSE_FILE}" \
-    "${BACKUP_FILE}"
-
-log "Original saved to:"
-log "${BACKUP_FILE}"
 
 cd "${REPO_ROOT}"
 
@@ -132,8 +109,23 @@ cd "${REPO_ROOT}"
 # Check if applies cleanly
 log "Checking whether the patch applies cleanly"
 if ! git apply --check "${PATCH_FILE}"; then
-    rm -f "${BACKUP_FILE}"
-    die "Patch does not apply cleanly. The newly created backup was removed."
+    die "Patch does not apply cleanly. No backup was created or removed."
+fi
+
+
+# Save the untouched Compose file only if no original backup exists.
+if [[ -e "${BACKUP_FILE}" ]]; then
+    log "Original Compose backup exists: ${BACKUP_FILE}
+    Applying patch but not backing up compose file."
+else
+    mkdir -p "${BACKUP_DIR}"
+    log "Saving original Docker Compose file"
+    cp --preserve=mode,timestamps \
+        "${COMPOSE_FILE}" \
+        "${BACKUP_FILE}"
+
+    log "Original saved to:"
+    log "${BACKUP_FILE}"
 fi
 
 
@@ -150,6 +142,7 @@ if ! (
     docker compose \
         --env-file "${ENV_FILE}" \
         -f docker-compose.yaml \
+        -f docker-compose.override.yaml \
         config --quiet
 ); then
     log "Compose validation failed; reversing the patch"

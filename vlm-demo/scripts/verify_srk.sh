@@ -32,7 +32,7 @@ Options:
   --gnb-image IMAGE       gNB image to verify
   --upf-image IMAGE       UPF image to verify
   --ext-dn-image IMAGE    External data-network image to verify
-  --compose-file FILE     Path to Docker Compose file to verify
+  --compose-file FILE     Path to Docker Compose file (also checks sibling docker-compose.override.yaml)
   --config-dir DIR        Path to configuration directory to verify
   -h, --help              Show this help message
 EOF
@@ -48,6 +48,7 @@ require_value() {
 GNB_IMAGE="${GNB_IMAGE:-oai-gnb-cuda:latest}"
 UPF_IMAGE="${UPF_IMAGE:-oaisoftwarealliance/oai-upf:v2.1.10}"
 EXT_DN_IMAGE="${EXT_DN_IMAGE:-oaisoftwarealliance/trf-gen-cn5g:latest}"
+RIC_IMAGE="${RIC_IMAGE:-oai-flexric:latest}"
 
 # Get script and repo root directories
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -55,6 +56,7 @@ REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 
 # Set files to verify
 COMPOSE_FILE="${REPO_ROOT}/gnb/config/common/docker-compose.yaml"
+COMPOSE_OVERRIDE_FILE="$(dirname -- "$COMPOSE_FILE")/docker-compose.override.yaml"
 CONFIG_DIR="${REPO_ROOT}/gnb/config"
 
 
@@ -142,6 +144,7 @@ IMAGES=(
     "$GNB_IMAGE"
     "$UPF_IMAGE"
     "$EXT_DN_IMAGE"
+    "$RIC_IMAGE"
 )
 
 
@@ -168,6 +171,8 @@ done
 # Check that files exist.
 [[ -f "$COMPOSE_FILE" ]] || die "Compose file not found: $COMPOSE_FILE"
 log "Found Sionna RK Docker compose file."
+[[ -f "$COMPOSE_OVERRIDE_FILE" ]] || die "Compose override file not found: $COMPOSE_OVERRIDE_FILE"
+log "Found Sionna RK Docker compose override file."
 [[ -d "$CONFIG_DIR" ]] || die "Config directory not found: $CONFIG_DIR"
 log "Found Sionna RK config directory. Searching for a .env file..."
 find "$CONFIG_DIR" -mindepth 2 -maxdepth 2 -type f -name '.env' -print -quit | grep -q . ||

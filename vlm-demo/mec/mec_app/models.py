@@ -27,6 +27,30 @@ class ReceiverConfig(BaseModel):
     preview_jpeg_quality: int = Field(default=80, ge=30, le=95)
     frame_buffer_max_frames: int = Field(default=180, ge=2, le=5000)
 
+class RANTelemetryConfig(BaseModel):
+    """Configuration for the MEC -> RAN telemetry gRPC client."""
+
+    # Allow telemetry integration to be disabled without changing code.
+    enabled: bool = True
+
+    # Reachable address of the host/container exposing the xApp gRPC server.
+    # Change to RAN PC IP When the xApp and MEC are on different PCs
+    host: str = "127.0.0.1"
+
+    # Published gRPC server port.
+    port: int = Field(default=50051, ge=1, le=65535)
+
+    # How often the xApp sends a current RAN snapshot over the gRPC stream.
+    stream_interval_s: float = Field(default=0.5, ge=0.01, le=60.0)
+
+    # Delay between connection attempts when the xApp is unavailable.
+    reconnect_delay_s: float = Field(default=2.0, ge=0.1, le=60.0)
+
+    # Maximum time to wait for the gRPC channel to become ready.
+    connect_timeout_s: float = Field(default=5.0, ge=0.1, le=60.0)
+
+    # Cached telemetry older than this is reported as stale.
+    stale_after_s: float = Field(default=2.0, ge=0.1, le=300.0)
 
 class VLMConfig(BaseModel):
     # Set backend to "mock" first to validate the full network/media path.
@@ -69,6 +93,7 @@ class VLMConfig(BaseModel):
 
 class AppConfig(BaseModel):
     network: NetworkConfig = NetworkConfig()
+    ran_telemetry: RANTelemetryConfig = RANTelemetryConfig()
     receiver: ReceiverConfig = ReceiverConfig()
     vlm: VLMConfig = VLMConfig()
 

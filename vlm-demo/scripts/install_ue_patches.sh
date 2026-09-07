@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 #
-# install_ue_patch.sh
+# install_ue_patches.sh
 #
 # Purpose: Script to be run on UE PC.
-#          Applies the MEC UE image changes in ue_env_files.patch to each
-#          UE .env file independently and publishes the MEC application port
-#          with ue_publish_port.patch.
-#          Copies the original files, checks each patch applies cleanly,
-#          applies the patches, and validates the results.
+#          1. Applies the MEC UE image changes in ue_env_files.patch to each
+#             UE .env file independently and publishes the MEC application port
+#             with ue_publish_port.patch.
+#             Copies the original files, checks each patch applies cleanly,
+#             applies the patches, and validates the results.
+#          2. Applies patch to UE docker-compose file to publish port 8080
+#             on the host.
 #
 # Prerequisites:
 # - OAI/Sionna RK must already be installed.

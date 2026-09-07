@@ -15,6 +15,7 @@ prepare-mec:
 	./scripts/verify_srk.sh
 	./scripts/verify_gpu.sh
 	./scripts/build_mec_image.sh
+	./scripts/build_ric_image.sh
 	./scripts/download_model.sh
 	./scripts/install_upf_patch.sh
 	./scripts/compose_mec_image.sh
@@ -29,7 +30,7 @@ prepare-mec:
 prepare-ue:
 	./scripts/verify_srk_ue.sh
 	./scripts/build_ue_image.sh
-	./scripts/install_ue_patch.sh
+	./scripts/install_ue_patches.sh
 	@echo "Install is verified. SRK UE is ready to start."
 	@echo "Start the UE with ./../ue/scripts/start_system_ue.sh b200"
 	@echo "After starting the UE, check the connection between the UE and"

@@ -27,7 +27,7 @@ DEMO_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd -P)"
 MEC_IMAGE="${MEC_IMAGE:-mec-vlm:latest}"
 MODEL_ID="${MODEL_ID:-Qwen/Qwen3-VL-4B-Instruct}"
 
-MODEL_ROOT="${DEMO_DIR}/mec/models"
+MODEL_ROOT="${DEMO_DIR}/mec/mec_app/models"
 HF_CACHE_DIR="${MODEL_ROOT}/huggingface"
 
 command -v docker >/dev/null 2>&1 ||

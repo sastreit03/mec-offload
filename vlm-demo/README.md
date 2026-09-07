@@ -15,4 +15,4 @@ The matching MEC receiver/VLM service should implement:
 A complete matching MEC implementation is now included under `mec/`.
 It receives RTP/H.264/UDP on port 5000, serves the UE WebSocket and MEC dashboard on TCP port 8765, buffers decoded RGB frames, and runs a sliding-window Qwen3-VL inference worker.
 
-Start with `mec/config.yaml` using `vlm.backend: mock` to validate the communication path before enabling the actual model.
+Start with `mec/mec_app/config.yaml` using `vlm.backend: mock` to validate the communication path before enabling the actual model.

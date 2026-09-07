@@ -25,10 +25,10 @@ die() {
 # List file and directory names
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 DEMO_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd -P)"
-MEC_DIR="${DEMO_DIR}/mec"
+DOCKER_DIR="${DEMO_DIR}/mec/docker"
 RENDERED_DIR="${DEMO_DIR}/install-logs/image-compose"
 
-COMPOSE_FILE="${MEC_DIR}/compose.mec.yml"
+COMPOSE_FILE="${DOCKER_DIR}/compose.mec.yml"
 RENDERED_FILE="${RENDERED_DIR}/compose.mec.rendered.yml"
 
 
@@ -60,9 +60,12 @@ mkdir -p "$RENDERED_DIR" ||
 
 
 # Compose docker image
-cd "$MEC_DIR"
+cd "$DOCKER_DIR"
 
-docker compose -f compose.mec.yml config |
+docker compose  \
+    -f "$COMPOSE_FILE" \
+    --env-file "$DOCKER_DIR/.env" \
+    config |
     tee "$RENDERED_FILE" ||
     die "Failed to render Compose configuration"
 

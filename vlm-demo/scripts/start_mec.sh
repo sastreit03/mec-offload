@@ -25,12 +25,13 @@ die() {
 }
 
 
-# Check that UPF and gNB containers are running
+# Check that UPF, gNB, and RIC containers are running
 UPF_CONTAINER="${UPF_CONTAINER:-oai-upf}"
 GNB_CONTAINER="${GNB_CONTAINER:-oai-gnb}"
+RIC_CONTAINER="${RIC_CONTAINER:-nearRT-RIC}"
 
 log "Checking that UPF and gNB containers are running..."
-for container in "$UPF_CONTAINER" "$GNB_CONTAINER"; do
+for container in "$UPF_CONTAINER" "$GNB_CONTAINER" "$RIC_CONTAINER"; do
     [[ "$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null)" == "true" ]] ||
         die "Container is missing or not running: $container"
     log "Container is running: $container"
@@ -39,14 +40,15 @@ done
 
 # Get script directory mec-server directory
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
-MEC_DIR="$(cd -- "${SCRIPT_DIR}/../mec" && pwd -P)"
+DOCKER_DIR="$(cd -- "${SCRIPT_DIR}/../mec/docker" && pwd -P)"
 
 # Build docker container
 # Development mode: rebuild the MEC image before starting containers.
 # This may make the digest recorded by build_mec_image.sh outdated.
 log "Starting MEC server container..."
 docker compose \
-    -f "$MEC_DIR/compose.mec.yml" \
+    --env-file "$DOCKER_DIR/.env" \
+    -f "$DOCKER_DIR/compose.mec.yml" \
     up -d --build ||
     die "Failed to start MEC server container."
 log "MEC server started."

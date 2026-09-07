@@ -10,6 +10,24 @@ network:
   control_port: 8765
   control_path: /ws/ue
 
+ran_telemetry:
+  # Enable the gRPC client that receives RAN state from ran_telemetry_xapp.
+  enabled: true
+
+  # Address of the machine exposing ran_telemetry_xapp TCP/50051.
+  host: 130.127.199.86
+  port: 50051
+
+  # Interval in seconds that xApp sends indications
+  stream_interval_s: 0.5
+
+  # Retry automatically if the xApp or network is unavailable.
+  reconnect_delay_s: 2.0
+  connect_timeout_s: 5.0
+
+  # Allow future offloading logic to distinguish current from stale state.
+  stale_after_s: 2.0
+
 receiver:
   rtp_payload_type: 96
   jitter_latency_ms: 50

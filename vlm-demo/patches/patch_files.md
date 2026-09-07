@@ -22,8 +22,6 @@ mkdir -p tmp/
 
 ### 2. Copy unmodified file into the tmp/ folder
 
-On all three terminals:
-
 ```bash
 cp path/to/unmodified_file tmp/unmodified_file
 ```
@@ -55,5 +53,5 @@ git checkout -- path/to/modified_file
 Check that the target file is back to its previous unmodified version. Then, delete the temp folder.
 
 ```bash
-rm -rf /tmp
+rm -rf tmp/
 ```

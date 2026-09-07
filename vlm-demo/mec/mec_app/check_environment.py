@@ -23,6 +23,7 @@ def main() -> int:
     ok &= check("FastAPI", "fastapi")
     ok &= check("PyTorch", "torch")
     ok &= check("Transformers", "transformers")
+    ok &= check("gRPC", "grpc")
 
     try:
         import gi

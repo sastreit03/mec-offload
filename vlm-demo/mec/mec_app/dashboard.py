@@ -154,6 +154,7 @@ async def preview(request: Request) -> StreamingResponse:
 async def status(request: Request) -> dict:
     return {
         "state": request.app.state.shared.snapshot(request.app.state.frame_buffer),
+        "ran_telemetry": request.app.state.ran_telemetry.snapshot(),
         "config": request.app.state.config.model_dump(),
     }
 

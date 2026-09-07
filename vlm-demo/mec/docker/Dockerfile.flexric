@@ -1,0 +1,4 @@
+ARG BASE_IMAGE=oai-flexric:latest
+FROM ${BASE_IMAGE}
+
+RUN python3 -m pip install --no-cache-dir grpcio

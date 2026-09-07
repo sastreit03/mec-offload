@@ -6,14 +6,23 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1
 
 WORKDIR /tmp/
-COPY install_system_deps.sh /tmp/install_system_deps.sh
-COPY requirements.txt /tmp/requirements.txt
-COPY requirements-vlm.txt /tmp/requirements-vlm.txt
-
-COPY ./*.py /opt/mec-vlm/
-COPY config.yaml /opt/mec-vlm/config.yaml
+COPY mec_app/install_system_deps.sh /tmp/install_system_deps.sh
+COPY mec_app/requirements.txt /tmp/requirements.txt
+COPY mec_app/requirements-vlm.txt /tmp/requirements-vlm.txt
 
 RUN ./install_system_deps.sh
+
+COPY mec_app/app.py \
+    mec_app/check_environment.py \
+    mec_app/control.py \
+    mec_app/dashboard.py \
+    mec_app/models.py \
+    mec_app/ran_telemetry.py \
+    mec_app/receiver.py \
+    mec_app/scheduler.py \
+    mec_app/vlm.py \
+    /opt/mec-vlm/
+COPY mec_app/config.yaml /opt/mec-vlm/config.yaml
 
 WORKDIR /opt/mec-vlm/
 RUN groupadd --gid 10001 app && \

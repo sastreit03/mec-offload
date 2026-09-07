@@ -12,6 +12,7 @@ from fastapi import FastAPI, WebSocket
 from control import ControlHub
 from dashboard import router as dashboard_router
 from models import FrameBuffer, SharedState, load_config
+from ran_telemetry import RANTelemetryClient, RANTelemetryState
 from receiver import VideoReceiver
 from scheduler import InferenceScheduler
 from vlm import VLMEngine
@@ -23,6 +24,8 @@ LOG = logging.getLogger("mec.app")
 def create_app(config_path: str) -> FastAPI:
     cfg = load_config(config_path)
     state = SharedState()
+    ran_state = RANTelemetryState(stale_after_s=cfg.ran_telemetry.stale_after_s)
+    ran_client = RANTelemetryClient(cfg.ran_telemetry, ran_state)
     frame_buffer = FrameBuffer(cfg.receiver.frame_buffer_max_frames)
     receiver = VideoReceiver(cfg.network, cfg.receiver, state, frame_buffer)
     engine = VLMEngine(cfg.vlm, state)
@@ -44,17 +47,21 @@ def create_app(config_path: str) -> FastAPI:
         app.state.engine = engine
         app.state.scheduler = scheduler
         app.state.control = control
+        app.state.ran_telemetry = ran_state
+        app.state.ran_telemetry_client = ran_client
 
         # Start receiving video immediately. Load the VLM concurrently so the
         # dashboard/media path can be debugged even while model initialization occurs.
         await asyncio.to_thread(receiver.start)
         model_task = asyncio.create_task(asyncio.to_thread(engine.load))
         scheduler_task = asyncio.create_task(scheduler.run())
+        ran_telemetry_task = asyncio.create_task(ran_client.run())
         try:
             yield
         finally:
             scheduler_task.cancel()
             model_task.cancel()
+            ran_telemetry_task.cancel()
             await asyncio.gather(scheduler_task, model_task, return_exceptions=True)
             await asyncio.to_thread(receiver.stop)
 

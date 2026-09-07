@@ -1,7 +1,10 @@
+name: mec
+
 services:
   mec-vlm:
     build:
-      context: .
+      context: ..
+      dockerfile: docker/Dockerfile.mec
       args:
         BASE_IMAGE: ${BASE_IMAGE:-nvcr.io/nvidia/pytorch:25.12-py3}
     image: mec-vlm:latest
@@ -25,7 +28,7 @@ services:
       HF_HUB_OFFLINE: "1"
       TRANSFORMERS_OFFLINE: "1"
     volumes:
-      - ./models/huggingface:/models/huggingface:ro
+      - ../mec_app/models/huggingface:/models/huggingface:ro
 
   mec-route-init:
     image: alpine:3.20
@@ -46,7 +49,33 @@ services:
           ip route
     restart: "no"
 
+  ran_telemetry_xapp:
+    image: oai-flexric-grpc:latest
+    container_name: ran-telemetry-xapp
+    restart: unless-stopped
+    networks:
+      e2_net:
+        ipv4_address: 192.168.73.156
+    ports:
+      - "50051:50051/tcp"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      XAPP_INTERVAL: Interval_ms_10
+      MAX_DUMPS_PER_SM: "5"
+      GRPC_BIND_ADDRESS: 0.0.0.0
+      GRPC_PORT: "50051"
+      GRPC_MAX_WORKERS: "4"
+      GRPC_STREAM_INTERVAL_S: "1.0"
+    volumes:
+      - ${FLEXRIC_CONF}:/usr/local/etc/flexric/flexric.conf:ro
+      - ../xapp/ran_telemetry_xapp.py:/xapp/ran_telemetry_xapp.py:ro
+    entrypoint: python3 /xapp/ran_telemetry_xapp.py
+
 networks:
   traffic_net:
     external: true
     name: oai-traffic-net
+
+  e2_net:
+    external: true
+    name: oai-e2-net

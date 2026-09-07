@@ -2,6 +2,13 @@
 
 This directory matches the UE implementation in `../ue/`.
 
+Application code and configuration live in `mec_app/`, Docker build and Compose
+files in `docker/`, and RAN telemetry scripts in `xapp/`. Run the application
+commands below from `mec_app/`. For the container workflow, run
+`make prepare-mec` from `vlm-demo/`, then `./scripts/start_mec.sh` after SRK starts.
+The MEC image uses `mec/` as its build context; `docker/Dockerfile.mec.dockerignore`
+excludes the downloaded model cache from that context.
+
 ## Data paths
 
 Video path:
