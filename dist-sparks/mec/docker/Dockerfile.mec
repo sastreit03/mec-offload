@@ -1,0 +1,35 @@
+ARG BASE_IMAGE=nvcr.io/nvidia/pytorch:25.12-py3
+FROM ${BASE_IMAGE}
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /tmp/
+COPY src/install_system_deps.sh /tmp/install_system_deps.sh
+COPY src/requirements.txt /tmp/requirements.txt
+COPY src/requirements-vlm.txt /tmp/requirements-vlm.txt
+
+RUN ./install_system_deps.sh
+
+COPY src/app.py \
+    src/check_environment.py \
+    src/control.py \
+    src/dashboard.py \
+    src/models.py \
+    src/ran_telemetry.py \
+    src/receiver.py \
+    src/scheduler.py \
+    src/vlm.py \
+    /opt/mec-vlm/
+COPY src/config.yaml /opt/mec-vlm/config.yaml
+
+WORKDIR /opt/mec-vlm/
+RUN groupadd --gid 10001 app && \
+    useradd --uid 10001 --gid 10001 --create-home --shell /usr/sbin/nologin app && \
+    chown -R app:app /opt/mec-vlm
+
+USER app
+EXPOSE 8765
+
+CMD ["/opt/mec-vlm-venv/bin/python", "/opt/mec-vlm/app.py", "--config", "/opt/mec-vlm/config.yaml"]

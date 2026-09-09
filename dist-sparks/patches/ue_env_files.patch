@@ -1,0 +1,52 @@
+diff --git a/ue/config/b200/.env b/ue/config/b200/.env
+index 46d4d15..958ff21 100644
+--- a/ue/config/b200/.env
++++ b/ue/config/b200/.env
+@@ -14,7 +14,7 @@ CUDA_MPS_LOG_DIRECTORY=/tmp/nvidia-log
+ 
+ GNB_IMAGE=oai-gnb-cuda
+ GNB_TAG=latest
+-UE_IMAGE=oai-nr-ue-cuda
++UE_IMAGE=oai-nr-ue-cuda-mec
+ UE_TAG=latest
+ AMF_TAG=v2.1.10
+ SMF_TAG=v2.1.10
+diff --git a/ue/config/rfsim/.env b/ue/config/rfsim/.env
+index 475f3f5..b3749aa 100644
+--- a/ue/config/rfsim/.env
++++ b/ue/config/rfsim/.env
+@@ -14,7 +14,7 @@ CUDA_MPS_LOG_DIRECTORY=/tmp/nvidia-log
+ # =============================================================================
+ 
+ GNB_IMAGE=oai-gnb-cuda
+-UE_IMAGE=oai-nr-ue-cuda
++UE_IMAGE=oai-nr-ue-cuda-mec
+ 
+ GNB_TAG=latest
+ UE_TAG=latest
+diff --git a/ue/config/testing/.env b/ue/config/testing/.env
+index febf5bd..c50ba1d 100644
+--- a/ue/config/testing/.env
++++ b/ue/config/testing/.env
+@@ -10,7 +10,7 @@ GNB_CONFIG="../common/gnb.sa.band78.24prbs.conf" # nrx requires 24 prbs
+ # =============================================================================
+ 
+ GNB_IMAGE=oai-gnb-cuda
+-UE_IMAGE=oai-nr-ue-cuda
++UE_IMAGE=oai-nr-ue-cuda-mec
+ 
+ GNB_TAG=latest
+ UE_TAG=latest
+diff --git a/ue/config/x410/.env b/ue/config/x410/.env
+index 8ad61bb..5f9fd9b 100644
+--- a/ue/config/x410/.env
++++ b/ue/config/x410/.env
+@@ -14,7 +14,7 @@ CUDA_MPS_LOG_DIRECTORY=/tmp/nvidia-log
+ 
+ GNB_IMAGE=oai-gnb-cuda
+ GNB_TAG=latest
+-UE_IMAGE=oai-nr-ue-cuda
++UE_IMAGE=oai-nr-ue-cuda-mec
+ UE_TAG=latest
+ AMF_TAG=v2.1.10
+ SMF_TAG=v2.1.10

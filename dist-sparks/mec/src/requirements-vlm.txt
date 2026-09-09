@@ -1,0 +1,5 @@
+# Install this into an environment that already has a CUDA-enabled PyTorch build
+# appropriate for the DGX Spark / NVIDIA software stack.
+transformers>=4.57,<6
+accelerate>=1.2,<2
+safetensors>=0.5,<1

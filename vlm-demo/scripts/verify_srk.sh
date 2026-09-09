@@ -55,9 +55,9 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 
 # Set files to verify
-COMPOSE_FILE="${REPO_ROOT}/gnb/config/common/docker-compose.yaml"
+COMPOSE_FILE="${REPO_ROOT}/gnb-core/config/common/docker-compose.yaml"
 COMPOSE_OVERRIDE_FILE="$(dirname -- "$COMPOSE_FILE")/docker-compose.override.yaml"
-CONFIG_DIR="${REPO_ROOT}/gnb/config"
+CONFIG_DIR="${REPO_ROOT}/gnb-core/config"
 
 
 # Parse command lines

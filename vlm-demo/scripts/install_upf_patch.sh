@@ -50,14 +50,14 @@ esac
 PATCH_FILE="${REPO_ROOT}/vlm-demo/patches/mec-upf.patch"
 
 # Location of compose file to patch
-COMPOSE_FILE="${REPO_ROOT}/gnb/config/common/docker-compose.override.yaml"
+COMPOSE_FILE="${REPO_ROOT}/gnb-core/config/common/docker-compose.override.yaml"
 COMPOSE_DIR="$(dirname -- "${COMPOSE_FILE}")"
 
 # b200 or rfsim env file
-ENV_FILE="${REPO_ROOT}/gnb/config/${CONFIG_NAME}/.env"
+ENV_FILE="${REPO_ROOT}/gnb-core/config/${CONFIG_NAME}/.env"
 
 # Directory to create backup of original docker file
-BACKUP_DIR="${REPO_ROOT}/original-srk-files/gnb"
+BACKUP_DIR="${REPO_ROOT}/srk-file-backups/gnb-core"
 BACKUP_FILE="${BACKUP_DIR}/docker-compose.override.yaml"
 
 # Commands to add and what's expected

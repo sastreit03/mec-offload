@@ -1,0 +1,33 @@
+name: xapp
+
+services:
+  ran_telemetry_xapp:
+    image: oai-flexric-grpc:latest
+    container_name: ran-telemetry-xapp
+    restart: unless-stopped
+    networks:
+      e2_net:
+        ipv4_address: 192.168.73.156
+    ports:
+      - "50051:50051/tcp"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      XAPP_INTERVAL: Interval_ms_10
+      MAX_DUMPS_PER_SM: "5"
+      GRPC_BIND_ADDRESS: 0.0.0.0
+      GRPC_PORT: "50051"
+      GRPC_MAX_WORKERS: "4"
+      GRPC_STREAM_INTERVAL_S: "1.0"
+    volumes:
+      - ${FLEXRIC_CONF}:/usr/local/etc/flexric/flexric.conf:ro
+      - ../src/ran_telemetry_xapp.py:/src/ran_telemetry_xapp.py:ro
+    entrypoint: python3 /src/ran_telemetry_xapp.py
+
+networks:
+  traffic_net:
+    external: true
+    name: oai-traffic-net
+
+  e2_net:
+    external: true
+    name: oai-e2-net
