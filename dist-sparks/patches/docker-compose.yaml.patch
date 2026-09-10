@@ -1,0 +1,43 @@
+diff --git a/gnb-core/config/common/docker-compose.yaml b/gnb-core/config/common/docker-compose.yaml
+index a766cc0..8085e7f 100644
+--- a/gnb-core/config/common/docker-compose.yaml
++++ b/gnb-core/config/common/docker-compose.yaml
+@@ -56,6 +56,7 @@ services:
+         entrypoint: /bin/bash -c \
+                     "echo '200 eth1_table' >> /etc/iproute2/rt_tables;"\
+                     "ip route del default || true;"\
++                    "ip route add 192.168.72.128/26 dev eth1 src 192.168.72.134 table eth1_table;"\
+                     "ip route add default via 192.168.72.135 dev eth1 table eth1_table;"\
+                     "ip rule add from 12.1.1.0/24 table eth1_table;"\
+                     "/openair-upf/bin/oai_upf -c /openair-upf/etc/config.yaml -o"
+@@ -109,8 +110,9 @@ services:
+             USE_B2XX: ${USE_B2XX:-}
+             USE_ADDITIONAL_OPTIONS: ${GNB_RF_OPTIONS:-} --telnetsrv --reorder-thread-disable 1 --log_config.global_log_options level,nocolor,time ${GNB_EXTRA_OPTIONS:-} ${GNB_THREAD_POOL:-}
+             ASAN_OPTIONS: detect_leaks=0
+-        depends_on:
+-            - oai-ext-dn
++        # Remove dependency due to distributed RAN-core split
++        #depends_on:
++        #    - oai-ext-dn
+         networks:
+             public_net:
+                 ipv4_address: 192.168.71.140
+@@ -179,13 +181,16 @@ services:
+         entrypoint: python3 /xapp/xapp.py
+ networks:
+     public_net:
+-        driver: bridge
++        # Connecting distributed Sparks via IPvlan
++        driver: ipvlan # was driver: bridge
+         name: oai-public-net
+         ipam:
+             config:
+                 - subnet: 192.168.71.128/26
+         driver_opts:
+-            com.docker.network.bridge.name: "oai-public"
++            #com.docker.network.bridge.name: "oai-public"
++            ipvlan_mode: l2 # added for ipvlan
++            parent: "${PUBLIC_NET_PARENT:-enp1s0f1np1}" # added for ipvlan
+     traffic_net:
+         driver: bridge
+         name: oai-traffic-net
