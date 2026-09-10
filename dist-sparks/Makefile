@@ -17,10 +17,10 @@ prepare-mec:
 	./scripts/verify_gpu.sh
 	./scripts/build_mec_image.sh
 	./scripts/download_model.sh
-	./scripts/install_upf_patch.sh
+	./scripts/install_compose_patch.sh
 	./scripts/compose_mec_image.sh
 	@echo "Install is verified. SRK and MEC server are ready to start."
-	@echo "Start SRK with ./../gnb/scripts/start_system.sh b200"
+	@echo "Start SRK with ./../gnb-core/scripts/start_system.sh b200"
 	@echo "Then start the MEC server with ./scripts/start_mec.sh"
 	@echo "After starting MEC, verify MEC container is ready:"
 	@echo "./scripts/verify_mec.sh"
@@ -42,5 +42,7 @@ prepare-ue:
 prepare-xapp:
 	./scripts/verify_srk_gnb.sh
 	./scripts/build_ric_image.sh
+	./scripts/install_compose_patch.sh
 	@echo "xApp installed successfully."
-	@echo "Start the xApp with ./scripts/start_xapp.sh"
+	@echo "Start SRK with ./../gnb-core/scripts/start_system.sh b200"
+	@echo "Then, start the xApp with ./scripts/start_xapp.sh"

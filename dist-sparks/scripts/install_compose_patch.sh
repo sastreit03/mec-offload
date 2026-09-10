@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 #
-# install_mec_patch.sh
+# install_compose_patch.sh
 #
 # Purpose: Script to be run on MEC PC.
-#          Applies a patch to SRK's docker-compose.override.yaml file
-#          to allow the MEC server to have its own IP address
-#          on the N6 network.
+#          Applies a patch to SRK's docker-compose.yaml file.
 #          Copies the original compose file, checks the patch applies
 #          cleanly, applies the patch, and validates the patch.
 #          
@@ -19,11 +17,11 @@ set -Eeuo pipefail
 
 # Helper functions
 log() {
-    printf '[install-upf-patch] %s\n' "$*"
+    printf '[install-compose-patch] %s\n' "$*"
 }
 
 die() {
-    printf '[install-upf-patch] ERROR: %s\n' "$*" >&2
+    printf '[install-compose-patch] ERROR: %s\n' "$*" >&2
     exit 1
 }
 
@@ -47,10 +45,10 @@ esac
 
 
 # Location of patch file
-PATCH_FILE="${REPO_ROOT}/dist-sparks/patches/mec-upf.patch"
+PATCH_FILE="${REPO_ROOT}/dist-sparks/patches/docker-compose.yaml.patch"
 
 # Location of compose file to patch
-COMPOSE_FILE="${REPO_ROOT}/gnb-core/config/common/docker-compose.override.yaml"
+COMPOSE_FILE="${REPO_ROOT}/gnb-core/config/common/docker-compose.yaml"
 COMPOSE_DIR="$(dirname -- "${COMPOSE_FILE}")"
 
 # b200 or rfsim env file
@@ -58,7 +56,7 @@ ENV_FILE="${REPO_ROOT}/gnb-core/config/${CONFIG_NAME}/.env"
 
 # Directory to create backup of original docker file
 BACKUP_DIR="${REPO_ROOT}/srk-file-backups/gnb-core"
-BACKUP_FILE="${BACKUP_DIR}/docker-compose.override.yaml"
+BACKUP_FILE="${BACKUP_DIR}/docker-compose.yaml"
 
 # Commands to add and what's expected
 ROUTE_COMMAND='ip route add 192.168.72.128/26 dev eth1 src 192.168.72.134 table eth1_table'
@@ -142,7 +140,6 @@ if ! (
     docker compose \
         --env-file "${ENV_FILE}" \
         -f docker-compose.yaml \
-        -f docker-compose.override.yaml \
         config --quiet
 ); then
     log "Compose validation failed; reversing the patch"
@@ -158,4 +155,4 @@ log "Patch installed successfully"
 log "Modified file: ${COMPOSE_FILE}"
 log "Validation environment: ${ENV_FILE}"
 log "Original backup: ${BACKUP_FILE}"
-log "The new route will take effect the next time oai-upf is created."
+log "The patched compose file will take effect the next time oai is started."
