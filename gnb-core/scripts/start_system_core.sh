@@ -92,7 +92,7 @@ echo "All services are up and healthy!"
 # Start xApp
 #docker compose --env-file "$env_file" up -d monitor_xapp
 
-echo "5G network is ready to connect!"
+echo "5G core network is ready for gNB to connect!"
 
 # back to original directory
 popd

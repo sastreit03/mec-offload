@@ -64,7 +64,6 @@ cd "$DOCKER_DIR"
 
 docker compose  \
     -f "$COMPOSE_FILE" \
-    --env-file "$DOCKER_DIR/.env" \
     config |
     tee "$RENDERED_FILE" ||
     die "Failed to render Compose configuration"

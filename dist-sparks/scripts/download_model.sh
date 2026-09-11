@@ -100,7 +100,7 @@ PY
 
 # Ensure UID 10001 in the runtime container can traverse and read the cache,
 # regardless of the UID that downloaded it.
-chmod -R a+rX "$HF_CACHE_DIR" ||
+sudo chmod -R a+rX "$HF_CACHE_DIR" ||
     die "Failed to make the model cache readable"
 
 log "Model download and validation completed."
