@@ -8,8 +8,10 @@ services:
     networks:
       e2_net:
         ipv4_address: 192.168.73.156
-    ports:
-      - "50051:50051/tcp"
+        interface_name: eth0
+      public_net:
+        ipv4_address: 192.168.71.141
+        interface_name: eth1
     environment:
       PYTHONUNBUFFERED: "1"
       XAPP_INTERVAL: Interval_ms_10
@@ -27,7 +29,9 @@ networks:
   traffic_net:
     external: true
     name: oai-traffic-net
-
   e2_net:
     external: true
     name: oai-e2-net
+  public_net:
+    external: true
+    name: oai-public-net

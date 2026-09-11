@@ -15,7 +15,7 @@ ran_telemetry:
   enabled: true
 
   # Address of the machine exposing ran_telemetry_xapp TCP/50051.
-  host: 130.127.199.86
+  host: 192.168.71.141
   port: 50051
 
   # Interval in seconds that xApp sends indications
