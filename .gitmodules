@@ -1,0 +1,4 @@
+[submodule "gnb-core/ext/openairinterface5g"]
+	path = gnb-core/ext/openairinterface5g
+	url = git@github.com:sastreit03/openairinterface5g-srk.git
+	branch = srk-edgeric

@@ -14,7 +14,8 @@ configs/**/docker-compose.override.yaml
 .vscode/settings.json
 plugins/ldpc_cuda/build
 plugins/ldpc_cuda/test/*.so
-ext/
+ext/*
+!ext/openairinterface5g/
 env/
 **/.venv/
 .vscode/
