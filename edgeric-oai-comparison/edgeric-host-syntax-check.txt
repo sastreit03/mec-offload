@@ -1,0 +1,50 @@
+c++ -std=gnu++17 -Wall -fsyntax-only -isystem /usr/include/mit-krb5 -I/usr/include/pgm-5.3 -I/usr/include/libxml2 -I/usr/include/aarch64-linux-gnu /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/wrapper.cpp /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/control_mcs.pb.cc /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/control_weights.pb.cc /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/metrics.pb.cc
+/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp: In static member function ‘static void edgeric::init()’:
+/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:79:34: warning: ‘void zmq::detail::socket_base::setsockopt(int, const void*, size_t)’ is deprecated: from 4.7.0, use `set` taking option from zmq::sockopt [-Wdeprecated-declarations]
+   79 |     subscriber_weights.setsockopt(ZMQ_CONFLATE, &conflate, sizeof(conflate));
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.h:8,
+                 from /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:1:
+/usr/include/zmq.hpp:1741:10: note: declared here
+ 1741 |     void setsockopt(int option_, const void *optval_, size_t optvallen_)
+      |          ^~~~~~~~~~
+/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:85:30: warning: ‘void zmq::detail::socket_base::setsockopt(int, const void*, size_t)’ is deprecated: from 4.7.0, use `set` taking option from zmq::sockopt [-Wdeprecated-declarations]
+   85 |     subscriber_mcs.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+/usr/include/zmq.hpp:1741:10: note: declared here
+ 1741 |     void setsockopt(int option_, const void *optval_, size_t optvallen_)
+      |          ^~~~~~~~~~
+/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:87:30: warning: ‘void zmq::detail::socket_base::setsockopt(int, const void*, size_t)’ is deprecated: from 4.7.0, use `set` taking option from zmq::sockopt [-Wdeprecated-declarations]
+   87 |     subscriber_mcs.setsockopt(ZMQ_CONFLATE, &conflate, sizeof(conflate));
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/zmq.hpp:1741:10: note: declared here
+ 1741 |     void setsockopt(int option_, const void *optval_, size_t optvallen_)
+      |          ^~~~~~~~~~
+
+Exit code: 0
+
+c++ -std=gnu++17 -Wall -Werror -fsyntax-only -isystem /usr/include/mit-krb5 -I/usr/include/pgm-5.3 -I/usr/include/libxml2 -I/usr/include/aarch64-linux-gnu /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/wrapper.cpp /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/control_mcs.pb.cc /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/control_weights.pb.cc /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/metrics.pb.cc
+/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp: In static member function ‘static void edgeric::init()’:
+/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:79:34: error: ‘void zmq::detail::socket_base::setsockopt(int, const void*, size_t)’ is deprecated: from 4.7.0, use `set` taking option from zmq::sockopt [-Werror=deprecated-declarations]
+   79 |     subscriber_weights.setsockopt(ZMQ_CONFLATE, &conflate, sizeof(conflate));
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.h:8,
+                 from /home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:1:
+/usr/include/zmq.hpp:1741:10: note: declared here
+ 1741 |     void setsockopt(int option_, const void *optval_, size_t optvallen_)
+      |          ^~~~~~~~~~
+/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:85:30: error: ‘void zmq::detail::socket_base::setsockopt(int, const void*, size_t)’ is deprecated: from 4.7.0, use `set` taking option from zmq::sockopt [-Werror=deprecated-declarations]
+   85 |     subscriber_mcs.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+/usr/include/zmq.hpp:1741:10: note: declared here
+ 1741 |     void setsockopt(int option_, const void *optval_, size_t optvallen_)
+      |          ^~~~~~~~~~
+/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:87:30: error: ‘void zmq::detail::socket_base::setsockopt(int, const void*, size_t)’ is deprecated: from 4.7.0, use `set` taking option from zmq::sockopt [-Werror=deprecated-declarations]
+   87 |     subscriber_mcs.setsockopt(ZMQ_CONFLATE, &conflate, sizeof(conflate));
+      |     ~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/usr/include/zmq.hpp:1741:10: note: declared here
+ 1741 |     void setsockopt(int option_, const void *optval_, size_t optvallen_)
+      |          ^~~~~~~~~~
+cc1plus: all warnings being treated as errors
+
+Exit code: 1

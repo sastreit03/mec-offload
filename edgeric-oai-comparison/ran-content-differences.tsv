@@ -1,0 +1,2043 @@
+path	status	mode_diff	edgeric_mode	sionna_mode
+.gitignore	content-different	True	100755	100644
+.gitmodules	content-different	True	100755	100644
+CHANGELOG.md	content-different	False	100755	100755
+CMakeLists.txt	content-different	True	100755	100644
+CMakeLists1212.txt	EdgeRIC-only	False	100755	
+CMakePresets.json	Sionna-only	False		100644
+README.md	content-different	True	100755	100644
+charts/physims-4g/Chart.yaml	Sionna-only	False		100644
+charts/physims-4g/charts/physims.4g/Chart.yaml	Sionna-only	False		100644
+charts/physims-4g/charts/physims.4g/templates/_helpers.tpl	Sionna-only	False		100644
+charts/physims-4g/charts/physims.4g/templates/job.yaml	Sionna-only	False		100644
+charts/physims-4g/charts/physims.4g/values.yaml	Sionna-only	False		100644
+charts/physims-4g/templates/rbac.yaml	Sionna-only	False		100644
+charts/physims-4g/templates/serviceaccount.yaml	Sionna-only	False		100644
+charts/physims-4g/values.yaml	Sionna-only	False		100644
+charts/physims-5g/Chart.yaml	Sionna-only	False		100644
+charts/physims-5g/charts/physims.5g/Chart.yaml	Sionna-only	False		100644
+charts/physims-5g/charts/physims.5g/templates/_helpers.tpl	Sionna-only	False		100644
+charts/physims-5g/charts/physims.5g/templates/job.yaml	Sionna-only	False		100644
+charts/physims-5g/charts/physims.5g/values.yaml	Sionna-only	False		100644
+charts/physims-5g/templates/rbac.yaml	Sionna-only	False		100644
+charts/physims-5g/templates/serviceaccount.yaml	Sionna-only	False		100644
+charts/physims-5g/values.yaml	Sionna-only	False		100644
+charts/physims/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/dlsim.100rb+tm2/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/dlsim.100rb+tm2/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/dlsim.100rb+tm2/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/dlsim.100rb+tm2/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/dlsim.basic/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/dlsim.basic/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/dlsim.basic/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/dlsim.basic/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/ldpctest/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/ldpctest/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/ldpctest/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/ldpctest/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlschsim/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlschsim/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlschsim/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlschsim/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.basic/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.basic/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.basic/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.basic/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.dmrs+ptrs/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.dmrs+ptrs/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.dmrs+ptrs/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.dmrs+ptrs/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.mcs+mimo/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.mcs+mimo/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.mcs+mimo/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.mcs+mimo/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.offset/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.offset/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.offset/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-dlsim.offset/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pbchsim.106rb/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pbchsim.106rb/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pbchsim.106rb/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pbchsim.106rb/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pbchsim.217rb/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pbchsim.217rb/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pbchsim.217rb/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pbchsim.217rb/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pbchsim.273rb/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pbchsim.273rb/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pbchsim.273rb/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pbchsim.273rb/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-prachsim/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-prachsim/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-prachsim/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-prachsim/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-psbchsim/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-psbchsim/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-psbchsim/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-psbchsim/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pucchsim/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pucchsim/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pucchsim/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-pucchsim/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulschsim/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulschsim/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulschsim/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulschsim/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.3gpp/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.3gpp/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.3gpp/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.3gpp/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.mimo/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.mimo/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.mimo/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.mimo/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.misc/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.misc/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.misc/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.misc/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.sc-fdma/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.sc-fdma/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.sc-fdma/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/nr-ulsim.sc-fdma/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/polartest/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/polartest/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/polartest/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/polartest/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/smallblocktest/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/smallblocktest/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/smallblocktest/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/smallblocktest/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/ulsim/Chart.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/ulsim/templates/_helpers.tpl	EdgeRIC-only	False	100755	
+charts/physims/charts/ulsim/templates/job.yaml	EdgeRIC-only	False	100755	
+charts/physims/charts/ulsim/values.yaml	EdgeRIC-only	False	100755	
+charts/physims/templates/rbac.yaml	EdgeRIC-only	False	100755	
+charts/physims/templates/serviceaccount.yaml	EdgeRIC-only	False	100755	
+charts/physims/values.yaml	EdgeRIC-only	False	100755	
+ci-scripts/Jenkinsfile-GitLab-Container	content-different	True	100755	100644
+ci-scripts/Jenkinsfile-cluster	content-different	True	100755	100644
+ci-scripts/Jenkinsfile-colosseum	Sionna-only	False		100644
+ci-scripts/Jenkinsfile-nrue	content-different	True	100755	100644
+ci-scripts/Jenkinsfile-physim-deploy	content-different	True	100755	100644
+ci-scripts/Jenkinsfile-tmp-full-ran	content-different	True	100755	100644
+ci-scripts/Jenkinsfile-tmp-multi-enb	content-different	True	100755	100644
+ci-scripts/Jenkinsfile-tmp-multi-enb-nsa	content-different	True	100755	100644
+ci-scripts/Jenkinsfile-tmp-ran	content-different	True	100755	100644
+ci-scripts/Jenkinsfile-tmp-ue	EdgeRIC-only	False	100755	
+ci-scripts/Jenkinsfile-trig-nsa	EdgeRIC-only	False	100755	
+ci-scripts/README.md	Sionna-only	False		100644
+ci-scripts/args_parse.py	content-different	True	100755	100644
+ci-scripts/as_ue/aw2s-multi-00102-20.cfg	Sionna-only	False		100644
+ci-scripts/as_ue/aw2s-multi-00102-2x2-v2.cfg	Sionna-only	False		100644
+ci-scripts/as_ue/aw2s-multi-00102-2x2.cfg	EdgeRIC-only	False	100755	
+ci-scripts/as_ue/config.cfg	Sionna-only	False		100644
+ci-scripts/build_fr1_from_yaml.py	EdgeRIC-only	False	100755	
+ci-scripts/build_fr1_template.yaml	EdgeRIC-only	False	100755	
+ci-scripts/checkAddedWarnings.sh	content-different	False	100755	100755
+ci-scripts/checkCodingFormattingRules.sh	content-different	False	100755	100755
+ci-scripts/checkGitLabMergeRequestLabels.sh	content-different	False	100755	100755
+ci-scripts/ci_infra.yaml	content-different	True	100755	100644
+ci-scripts/cls_analysis.py	Sionna-only	False		100644
+ci-scripts/cls_ci_helper.py	Sionna-only	False		100644
+ci-scripts/cls_cluster.py	content-different	True	100755	100644
+ci-scripts/cls_cmd.py	content-different	True	100755	100644
+ci-scripts/cls_containerize.py	content-different	True	100755	100644
+ci-scripts/cls_corenetwork.py	Sionna-only	False		100644
+ci-scripts/cls_log_mgt.py	EdgeRIC-only	False	100755	
+ci-scripts/cls_module.py	content-different	True	100755	100644
+ci-scripts/cls_native.py	Sionna-only	False		100644
+ci-scripts/cls_oai_html.py	content-different	True	100755	100644
+ci-scripts/cls_oaicitest.py	content-different	True	100755	100644
+ci-scripts/cls_physim.py	EdgeRIC-only	False	100755	
+ci-scripts/cls_physim1.py	EdgeRIC-only	False	100755	
+ci-scripts/cls_static_code_analysis.py	content-different	True	100755	100644
+ci-scripts/colosseum_scripts/README.md	Sionna-only	False		100644
+ci-scripts/colosseum_scripts/check-results.sh	Sionna-only	False		100755
+ci-scripts/colosseum_scripts/get-test-results.sh	Sionna-only	False		100755
+ci-scripts/colosseum_scripts/launch-job.sh	Sionna-only	False		100755
+ci-scripts/colosseum_scripts/set-job-status.sh	Sionna-only	False		100755
+ci-scripts/colosseum_scripts/wait-job-end.sh	Sionna-only	False		100755
+ci-scripts/conf_files/enb-rcc.band7.25prb.tm1.if4p5.conf	content-different	True	100755	100644
+ci-scripts/conf_files/enb.band38.lte_2x2.100prb.usrpn310.conf	content-different	True	100755	100644
+ci-scripts/conf_files/enb.band38.lte_2x2_tm2.100prb.usrpn310.conf	content-different	True	100755	100644
+ci-scripts/conf_files/enb.band38.nsa_2x2.100prb.usrpn310.conf	content-different	True	100755	100644
+ci-scripts/conf_files/enb.band40.100prb.usrpb200.tm1-defaultscheduler.conf	content-different	True	100755	100644
+ci-scripts/conf_files/enb.band40.25prb.usrpb200.conf	content-different	True	100755	100644
+ci-scripts/conf_files/enb.band7.100prb.rfsim.conf	content-different	True	100755	100644
+ci-scripts/conf_files/enb.band7.100prb.usrpb200.tm1.conf	content-different	True	100755	100644
+ci-scripts/conf_files/enb.band7.25prb.rfsim.conf	content-different	True	100755	100644
+ci-scripts/conf_files/enb.band7.25prb.rfsim.nos1.conf	content-different	True	100755	100644
+ci-scripts/conf_files/enb.band7.50prb.rfsim.conf	content-different	True	100755	100644
+ci-scripts/conf_files/enb.band7.50prb.usrpb200.tm1.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb-cu.sa.band78.106prb.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb-cu.sa.f1.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb-cucp.sa.f1.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb-cucp.sa.f1.quectel.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb-cuup.sa.f1.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb-cuup.sa.f1.quectel.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb-du.band78.106prb.rfsim.conf	EdgeRIC-only	False	100755	
+ci-scripts/conf_files/gnb-du.sa.band1.52prb.usrpb210.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb-du.sa.band78.106prb.rfsim.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb-du.sa.band78.106prb.usrpb200.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb-pnf.band66.rfsim.conf	Sionna-only	False		100644
+ci-scripts/conf_files/gnb-pnf.band77.usrpn310.4x4.conf	Sionna-only	False		100644
+ci-scripts/conf_files/gnb-vnf.sa.band66.u0.25prb.nfapi.conf	Sionna-only	False		100644
+ci-scripts/conf_files/gnb-vnf.sa.band77.162prb.nfapi.4x4.conf	Sionna-only	False		100644
+ci-scripts/conf_files/gnb-vnf.sa.band78.273prb.aerial.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.band66.106prb.rfsim.phytest-dora.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.band78.106prb.rfsim.phytest-dora.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.band78.106prb.usrpn300.phytest-dora.conf	EdgeRIC-only	False	100755	
+ci-scripts/conf_files/gnb.band78.162prb.usrpn300.phytest-dora.conf	EdgeRIC-only	False	100755	
+ci-scripts/conf_files/gnb.band78.273prb.usrpn300.phytest-dora.conf	EdgeRIC-only	False	100755	
+ci-scripts/conf_files/gnb.band79.106prb.usrpn300.phytest-dora.conf	Sionna-only	False		100644
+ci-scripts/conf_files/gnb.band79.162prb.usrpn300.phytest-dora.conf	Sionna-only	False		100644
+ci-scripts/conf_files/gnb.band79.273prb.usrpn300.phytest-dora.conf	Sionna-only	False		100644
+ci-scripts/conf_files/gnb.nsa.band78.106prb.usrpb200.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.nsa.band78.106prb.usrpn310.2x2.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band254.u0.25prb.rfsim.ntn-leo.conf	Sionna-only	False		100644
+ci-scripts/conf_files/gnb.sa.band254.u0.25prb.rfsim.ntn.conf	Sionna-only	False		100644
+ci-scripts/conf_files/gnb.sa.band261.u3.32prb.rfsim.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band66.106prb.rfsim.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band66.ntn.25prb.rfsim.conf	EdgeRIC-only	False	100755	
+ci-scripts/conf_files/gnb.sa.band66.u0.25prb.rfsim.conf	EdgeRIC-only	False	100755	
+ci-scripts/conf_files/gnb.sa.band77.162prb.usrpn310.2x2.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band77.273prb.fhi72.4x4-vvdn.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band77.273prb.fhi72.4x4.2L-metanoia.conf	Sionna-only	False		100644
+ci-scripts/conf_files/gnb.sa.band77.273prb.usrpn310.2x2.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band78.106prb.l2sim.conf	EdgeRIC-only	False	100755	
+ci-scripts/conf_files/gnb.sa.band78.106prb.n310.7ds2u.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band78.106prb.rfsim.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band78.106prb.rfsim.flexric.conf	Sionna-only	False		100644
+ci-scripts/conf_files/gnb.sa.band78.106prb.rfsim.neighbour.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band78.106prb.rfsim.yaml	Sionna-only	False		100644
+ci-scripts/conf_files/gnb.sa.band78.106prb.usrp310.2x2.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band78.106prb.usrpb200.sc-fdma.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band78.106prb.usrpn310.ddsuu-2x2.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band78.162prb.usrpn310.2x2.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band78.24prb.rfsim.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band78.273prb.fhi72.4x4-benetel550.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band78.273prb.rfsim.2x2.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band78.51prb.aw2s.ddsuu.2x2.conf	Sionna-only	False		100644
+ci-scripts/conf_files/gnb.sa.band78.51prb.aw2s.ddsuu.conf	content-different	True	100755	100644
+ci-scripts/conf_files/gnb.sa.band78.51prb.usrpb200.conf	content-different	True	100755	100644
+ci-scripts/conf_files/neighbour-config.conf	content-different	True	100755	100644
+ci-scripts/conf_files/nrue.uicc.conf	content-different	True	100755	100644
+ci-scripts/conf_files/nrue.uicc.ntn-leo.conf	Sionna-only	False		100644
+ci-scripts/conf_files/nrue.uicc.yaml	Sionna-only	False		100644
+ci-scripts/conf_files/ue.sa.conf	content-different	True	100755	100644
+ci-scripts/conf_files/untested/benetel-5g.conf	content-different	True	100755	100644
+ci-scripts/conf_files/untested/episci/episci_rcc.band78.tm1.106PRB.nfapi.conf	content-different	True	100755	100644
+ci-scripts/conf_files/untested/episci/gnb_band78.sa.fr1.106PRB.2x2.l2sim.conf	content-different	True	100755	100644
+ci-scripts/conf_files/untested/episci/proxy_rcc.band78.tm1.106PRB.nfapi.conf	content-different	True	100755	100644
+ci-scripts/conf_files/untested/gNB_SA_n78_106PRB.2x2_usrpn310.conf	content-different	True	100755	100644
+ci-scripts/conf_files/untested/gNB_SA_n78_133PRB.2x2_usrpn310.conf	content-different	True	100755	100644
+ci-scripts/conf_files/untested/gnb.band78.sa.fr1.106PRB.usrpn310.conf	content-different	True	100755	100644
+ci-scripts/conf_files/untested/gnb.band78.tm1.fr1.106PRB.usrpb210.conf	content-different	True	100755	100644
+ci-scripts/conf_files/untested/gnb.band78.tm1.fr1.106PRB.usrpn310.conf	content-different	True	100755	100644
+ci-scripts/conf_files/untested/gnb.sa.band66.fr1.106PRB.usrpn300.conf	content-different	True	100755	100644
+ci-scripts/conf_files/untested/gnb.sa.band78.fr1.51PRB.usrpb210.conf	content-different	True	100755	100644
+ci-scripts/conf_files/untested/proxy_gnb.band78.sa.fr1.106PRB.usrpn310.conf	content-different	True	100755	100644
+ci-scripts/cots_ue_ctl.yaml	EdgeRIC-only	False	100755	
+ci-scripts/datalog_rt_stats.100.2x2.yaml	content-different	True	100755	100644
+ci-scripts/datalog_rt_stats.1x1.60.yaml	content-different	True	100755	100644
+ci-scripts/datalog_rt_stats.60.2x2.yaml	content-different	True	100755	100644
+ci-scripts/datalog_rt_stats.default.yaml	content-different	True	100755	100644
+ci-scripts/doGitLabMerge.sh	content-different	False	100755	100755
+ci-scripts/docker/Dockerfile.cppcheck.xenial	content-different	True	100755	100644
+ci-scripts/docker/Dockerfile.formatting.bionic	EdgeRIC-only	False	100755	
+ci-scripts/docker/Dockerfile.formatting.ubuntu	Sionna-only	False		100644
+ci-scripts/docker/Dockerfile.unittest.ubuntu	Sionna-only	False		100644
+ci-scripts/docker/Dockerfile.unittest.ubuntu22	EdgeRIC-only	False	100755	
+ci-scripts/epc.py	EdgeRIC-only	False	100755	
+ci-scripts/flatten_image.py	EdgeRIC-only	False	100755	
+ci-scripts/helpreadme.py	content-different	True	100755	100644
+ci-scripts/main.py	content-different	True	100755	100644
+ci-scripts/provideUniqueImageTag.py	content-different	True	100755	100644
+ci-scripts/py_params.yaml	EdgeRIC-only	False	100755	
+ci-scripts/py_params_template.yaml	EdgeRIC-only	False	100755	
+ci-scripts/ran.py	content-different	True	100755	100644
+ci-scripts/ran_dashboard/Hdashboard.py	EdgeRIC-only	False	100755	
+ci-scripts/run_locally.sh	Sionna-only	False		100755
+ci-scripts/scripts/create_workspace.sh	Sionna-only	False		100755
+ci-scripts/scripts/magma-epc-deploy.sh	Sionna-only	False		100755
+ci-scripts/scripts/magma-epc-logcollect.sh	Sionna-only	False		100755
+ci-scripts/scripts/oc-cn5g-deploy.sh	Sionna-only	False		100755
+ci-scripts/scripts/oc-cn5g-logcollect.sh	Sionna-only	False		100755
+ci-scripts/scripts/oc-cn5g-undeploy.sh	Sionna-only	False		100755
+ci-scripts/scripts/oc-deploy-physims.sh	Sionna-only	False		100755
+ci-scripts/sshconnection.py	EdgeRIC-only	False	100755	
+ci-scripts/stats_monitor.py	EdgeRIC-only	False	100755	
+ci-scripts/template-host.xml	EdgeRIC-only	False	100755	
+ci-scripts/tests/README.md	Sionna-only	False		100644
+ci-scripts/tests/build.py	Sionna-only	False		100644
+ci-scripts/tests/cmd.py	Sionna-only	False		100644
+ci-scripts/tests/config/infra_ping_iperf.yaml	Sionna-only	False		100644
+ci-scripts/tests/config/test_core_infra.yaml	Sionna-only	False		100644
+ci-scripts/tests/config/test_module_infra.yaml	Sionna-only	False		100644
+ci-scripts/tests/corenetwork.py	Sionna-only	False		100644
+ci-scripts/tests/deployment.py	Sionna-only	False		100644
+ci-scripts/tests/iperf-analysis.py	Sionna-only	False		100644
+ci-scripts/tests/log/iperf_udp_msg_nok.txt	Sionna-only	False		100644
+ci-scripts/tests/log/iperf_udp_msg_nok2.txt	Sionna-only	False		100644
+ci-scripts/tests/log/iperf_udp_msg_nok3.txt	Sionna-only	False		100644
+ci-scripts/tests/log/iperf_udp_msg_ok.txt	Sionna-only	False		100644
+ci-scripts/tests/log/iperf_udp_msg_ok2.txt	Sionna-only	False		100644
+ci-scripts/tests/log/iperf_udp_test_nok.log	Sionna-only	False		100644
+ci-scripts/tests/log/iperf_udp_test_nok2.log	Sionna-only	False		100644
+ci-scripts/tests/log/iperf_udp_test_nok3.log	Sionna-only	False		100644
+ci-scripts/tests/log/iperf_udp_test_ok.log	Sionna-only	False		100644
+ci-scripts/tests/log/iperf_udp_test_ok2.log	Sionna-only	False		100644
+ci-scripts/tests/log/iperf_udp_v2_ok.log	Sionna-only	False		100644
+ci-scripts/tests/log/iperf_udp_v2_ok.txt	Sionna-only	False		100644
+ci-scripts/tests/module.py	Sionna-only	False		100644
+ci-scripts/tests/ping-iperf.py	Sionna-only	False		100644
+ci-scripts/tests/pull-clean-int-registry.py	Sionna-only	False		100644
+ci-scripts/tests/scripts/deploy-core.sh	Sionna-only	False		100755
+ci-scripts/tests/scripts/hello-fail.sh	Sionna-only	False		100755
+ci-scripts/tests/scripts/hello-world.sh	Sionna-only	False		100755
+ci-scripts/tests/simple-dep/docker-compose.yml	Sionna-only	False		100644
+ci-scripts/tests/simple-fail-2svc/docker-compose.yml	Sionna-only	False		100644
+ci-scripts/tests/simple-fail/docker-compose.yml	Sionna-only	False		100644
+ci-scripts/tests/test-runner/run.sh	Sionna-only	False		100755
+ci-scripts/tests/test-runner/test.xml	Sionna-only	False		100644
+ci-scripts/xml_class_list.yml	content-different	False	100755	100755
+ci-scripts/xml_files/cluster_image_build.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_4g_l2sim_proxy.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_4g_l2sim_tdd.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_4g_l2sim_tdd_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_4g_rfsim_fdd_05MHz.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_4g_rfsim_fdd_05MHz_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_4g_rfsim_fdd_05MHz_noS1.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_4g_rfsim_fdd_05MHz_noS1_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_4g_rfsim_fdd_10MHz.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_4g_rfsim_fdd_10MHz_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_4g_rfsim_fdd_20MHz.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_4g_rfsim_fdd_20MHz_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_4g_rfsim_fembms.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_4g_rfsim_fembms_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_4g_rfsim_mbms.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_4g_rfsim_mbms_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_4g_rfsim_tdd_05MHz.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_4g_rfsim_tdd_05MHz_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_e1_rfsim.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_5g_e1_rfsim_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_f1_rfsim.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_5g_f1_rfsim_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_fdd_rfsim.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_5g_fdd_rfsim_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_flexric_rfsim.xml	Sionna-only	False		100644
+ci-scripts/xml_files/container_5g_l2sim_tdd.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_l2sim_tdd_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_rfsim.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_5g_rfsim_24prb.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_5g_rfsim_24prb_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_rfsim_2x2.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_5g_rfsim_2x2_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_rfsim_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_rfsim_f1_accelleran.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_rfsim_f1_accelleran_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_rfsim_fdd_phytest.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_5g_rfsim_fdd_phytest_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_rfsim_fr2_32prb.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_5g_rfsim_fr2_32prb_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_rfsim_ntn_geo.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_5g_rfsim_ntn_geo_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_rfsim_ntn_leo.xml	Sionna-only	False		100644
+ci-scripts/xml_files/container_5g_rfsim_sidelink.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_5g_rfsim_sidelink_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_rfsim_simple.xml	Sionna-only	False		100644
+ci-scripts/xml_files/container_5g_rfsim_tdd_dora.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_5g_rfsim_tdd_dora_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_5g_rfsim_u0_25prb.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_5g_rfsim_u0_25prb_down.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_build_run_tests.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_image_build.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_image_build_arm.xml	Sionna-only	False		100644
+ci-scripts/xml_files/container_image_build_cross.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_l2sim_proxy.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_fdd_05Mhz_tm1.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_fdd_05Mhz_tm1_if4_5.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_fdd_05Mhz_tm1_no_rrc_activity.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_fdd_10Mhz_tm1.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_fdd_10Mhz_tm1_cdrx.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_fdd_10Mhz_tm1_oaiue.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_fdd_10Mhz_tm1_oaiue_cleanup.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_lte_b200_fdd_20Mhz_tm1.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_fdd_cleanup.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_lte_b200_tdd_05Mhz_tm1.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_tdd_05Mhz_tm1_if4_5.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_tdd_05Mhz_tm2.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_lte_b200_tdd_10Mhz_tm1.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_tdd_20Mhz_tm1.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_tdd_20Mhz_tm1_default_scheduler.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_b200_tdd_cleanup.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_lte_n3xx_tdd_2x2_cleanup.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_lte_n3xx_tdd_2x2_tm1.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_lte_n3xx_tdd_2x2_tm2.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_nsa_b200_quectel.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_nsa_b200_terminate.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_sa_aerial_quectel.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_sa_aerial_quectel_cleanup.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_sa_aw2s_asue.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_sa_aw2s_asue_2x2.xml	Sionna-only	False		100644
+ci-scripts/xml_files/container_sa_aw2s_asue_cleanup.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_sa_b200_quectel.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_sa_b200_terminate.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_sa_e1_b200_quectel.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_sa_e1_b200_terminate.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_sa_f1_b200_quectel.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_sa_f1_b200_terminate.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_sa_fhi72_metanoia_up2_2x2.xml	Sionna-only	False		100644
+ci-scripts/xml_files/container_sa_fhi72_vvdn_up2.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_sa_fhi72_vvdn_up2_cleanup.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_sa_n310_2X2_100MHz_cleanup.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_sa_n310_2X2_100MHz_quectel.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_sa_n310_2X2_60MHz_cleanup.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_sa_n310_2X2_60MHz_quectel.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_sa_n310_4X4_60MHz_quectel.xml	Sionna-only	False		100644
+ci-scripts/xml_files/container_sa_n310_nrue.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_sa_n310_nrue_cleanup.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/container_sa_sc_b200_quectel.xml	content-different	True	100755	100644
+ci-scripts/xml_files/container_sa_sc_b200_terminate.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/cppcheck.xml	content-different	True	100755	100644
+ci-scripts/xml_files/formatting_check.xml	content-different	True	100755	100644
+ci-scripts/xml_files/fr1_5gc_closure.xml	content-different	True	100755	100644
+ci-scripts/xml_files/fr1_5gc_start.xml	content-different	True	100755	100644
+ci-scripts/xml_files/fr1_cn5g_basic_deploy.xml	content-different	True	100755	100644
+ci-scripts/xml_files/fr1_cn5g_basic_undeploy.xml	content-different	True	100755	100644
+ci-scripts/xml_files/fr1_enb_build.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_epc_closure.xml	content-different	True	100755	100644
+ci-scripts/xml_files/fr1_epc_start.xml	content-different	True	100755	100644
+ci-scripts/xml_files/fr1_gnb_build.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_multi_node_build.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_nsa_2x2_quectel.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_nsa_2x2_quectel_attach_detach.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_nsa_quectel.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_nsa_quectel_attach_detach.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_nsa_quectel_long.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_oai_cn_deploy.xml	content-different	True	100755	100644
+ci-scripts/xml_files/fr1_oai_cn_undeploy.xml	content-different	True	100755	100644
+ci-scripts/xml_files/fr1_sa_oaiue_b200.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_sa_oaiue_n310.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_sa_oaiue_x300.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_sa_quectel.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_sa_quectel_162prb.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/fr1_sa_quectel_stages.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/gnb_nr_ue_usrp_run.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/gnb_nr_ue_usrp_run_multi_thread.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/gnb_nr_ue_usrp_terminate.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/gnb_phytest_rfemulator_run_100_2x2.xml	Sionna-only	False		100644
+ci-scripts/xml_files/gnb_phytest_usrp_run.xml	content-different	True	100755	100644
+ci-scripts/xml_files/gnb_phytest_usrp_run_100_2x2.xml	content-different	True	100755	100644
+ci-scripts/xml_files/gnb_phytest_usrp_run_60.xml	content-different	True	100755	100644
+ci-scripts/xml_files/gnb_phytest_usrp_run_60_2x2.xml	content-different	True	100755	100644
+ci-scripts/xml_files/gnb_usrp_build.xml	content-different	True	100755	100644
+ci-scripts/xml_files/if4p5_usrp210_band40_build.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/if4p5_usrp210_band40_epc_closure.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/if4p5_usrp210_band40_epc_start.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/if4p5_usrp210_band7_build.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/if4p5_usrp210_band7_epc_closure.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/if4p5_usrp210_band7_epc_start.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/ldpc_gpu_test.xml	content-different	True	100755	100644
+ci-scripts/xml_files/lte_oai_cn_deploy.xml	content-different	True	100755	100644
+ci-scripts/xml_files/lte_oai_cn_undeploy.xml	content-different	True	100755	100644
+ci-scripts/xml_files/multi_rru_band38_build.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/multi_rru_band38_full_termination.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/multi_rru_band38_test_10mhz_tm1.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/nr_ue_usrp_build.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/physim_4g_deploy_run.xml	Sionna-only	False		100644
+ci-scripts/xml_files/physim_5g_deploy_run.xml	Sionna-only	False		100644
+ci-scripts/xml_files/physim_build_source.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/physim_deploy_run.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/sa_cn5g_20897_closure.xml	content-different	True	100755	100644
+ci-scripts/xml_files/sa_cn5g_20897_start.xml	content-different	True	100755	100644
+ci-scripts/xml_files/sa_cn5g_asue_closure.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/sa_cn5g_asue_start.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/sa_cn5g_closure.xml	content-different	True	100755	100644
+ci-scripts/xml_files/sa_cn5g_start.xml	content-different	True	100755	100644
+ci-scripts/xml_files/simple_dummy_build.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/t2_offload_dec_nr_ulsim.xml	content-different	True	100755	100644
+ci-scripts/xml_files/t2_offload_enc_nr_dlsim.xml	content-different	True	100755	100644
+ci-scripts/xml_files/test_case_list_template.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/ue_band20_build.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/ue_band20_test_10mhz_orange.xml	EdgeRIC-only	False	100755	
+ci-scripts/xml_files/ue_band20_test_10mhz_sfr.xml	EdgeRIC-only	False	100755	
+ci-scripts/yaml_files/4g_l2sim_fdd/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/4g_rfsimulator_fdd_05MHz/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/4g_rfsimulator_fdd_05MHz/entrypoint.sh	content-different	False	100755	100755
+ci-scripts/yaml_files/4g_rfsimulator_fdd_05MHz_noS1/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/4g_rfsimulator_fdd_10MHz/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/4g_rfsimulator_fdd_20MHz/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/4g_rfsimulator_fembms/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/4g_rfsimulator_mbms/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/4g_rfsimulator_tdd_05MHz/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_f1_rfsimulator/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_fdd_rfsimulator/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_l2sim_tdd/README.md	EdgeRIC-only	False	100755	
+ci-scripts/yaml_files/5g_l2sim_tdd/docker-compose.yaml	EdgeRIC-only	False	100755	
+ci-scripts/yaml_files/5g_rfsimulator/README.md	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_rfsimulator/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_rfsimulator/local-override-ue-gdb.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_rfsimulator_24prb/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_rfsimulator_2x2/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_rfsimulator_accelleran/docker-compose.yaml	EdgeRIC-only	False	100755	
+ci-scripts/yaml_files/5g_rfsimulator_e1/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_rfsimulator_fdd_phytest/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_rfsimulator_flexric/conf/flexric.conf	Sionna-only	False		100644
+ci-scripts/yaml_files/5g_rfsimulator_flexric/docker-compose.yml	Sionna-only	False		100644
+ci-scripts/yaml_files/5g_rfsimulator_fr2_32prb/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_rfsimulator_ntn_geo/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_rfsimulator_ntn_leo/docker-compose.yaml	Sionna-only	False		100644
+ci-scripts/yaml_files/5g_rfsimulator_sidelink/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_rfsimulator_tdd_dora/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_rfsimulator_u0_25prb/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_sa_n310_2x2_100MHz/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_sa_n310_2x2_60MHz/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_sa_n310_4x4_60MHz/docker-compose.yml	Sionna-only	False		100644
+ci-scripts/yaml_files/5g_sa_n310_gnb/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/5g_sa_n310_nrue/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/fr1_enb_mono_fdd_tim/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/fr1_epc_20897/entrypoint.sh	content-different	False	100755	100755
+ci-scripts/yaml_files/local_common_overrides/build_images.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_fdd_05Mhz_if4.5/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_fdd_05Mhz_tm1/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_fdd_05Mhz_tm1_no_rrc_activity/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_fdd_10Mhz_oai_ue_magma/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_fdd_10Mhz_tm1/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_fdd_10Mhz_tm1_cdrx/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_fdd_10Mhz_tm1_magma/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_fdd_20Mhz_tm1/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_tdd_05Mhz_if4.5/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_tdd_05Mhz_tm1/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_tdd_05Mhz_tm2/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_tdd_10Mhz_tm1/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_tdd_20Mhz_tm1/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_b200_tdd_20Mhz_tm1_default_scheduler/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_n3xx_tdd_2x2_tm1/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/lte_n3xx_tdd_2x2_tm2/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/magma_lte_20892/entrypoint.sh	content-different	False	100755	100755
+ci-scripts/yaml_files/magma_nsa_20897/entrypoint.sh	content-different	False	100755	100755
+ci-scripts/yaml_files/magma_nsa_20897/oai_db.cql	Sionna-only	False		100644
+ci-scripts/yaml_files/nsa_b200_enb/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/nsa_b200_gnb/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/sa_aw2s_2x2_gnb/docker-compose.yml	Sionna-only	False		100644
+ci-scripts/yaml_files/sa_aw2s_gnb/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/sa_b200_gnb/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/sa_e1_b200_gnb/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/sa_f1_b200_gnb/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/sa_fhi_7.2_benetel550_gnb/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/sa_fhi_7.2_metanoia_2x2_gnb/README.md	Sionna-only	False		100644
+ci-scripts/yaml_files/sa_fhi_7.2_metanoia_2x2_gnb/docker-compose.yml	Sionna-only	False		100644
+ci-scripts/yaml_files/sa_fhi_7.2_metanoia_2x2_gnb/setup_cleanup.sh	Sionna-only	False		100644
+ci-scripts/yaml_files/sa_fhi_7.2_metanoia_2x2_gnb/setup_sriov_metanoia.sh	Sionna-only	False		100644
+ci-scripts/yaml_files/sa_fhi_7.2_vvdn_gnb/docker-compose.yml	content-different	True	100755	100644
+ci-scripts/yaml_files/sa_gnb_aerial/aerial_l1_entrypoint.sh	content-different	False	100755	100755
+ci-scripts/yaml_files/sa_gnb_aerial/docker-compose.yaml	content-different	True	100755	100644
+ci-scripts/yaml_files/sa_sc_b200_gnb/docker-compose.yml	content-different	True	100755	100644
+cmake_targets/CPM.cmake	Sionna-only	False		100644
+cmake_targets/at_commands/CMakeLists.txt	content-different	False	100755	100755
+cmake_targets/autotests/README.txt	EdgeRIC-only	False	100755	
+cmake_targets/autotests/run_exec_autotests.bash	EdgeRIC-only	False	100755	
+cmake_targets/autotests/test_case_list.xml	EdgeRIC-only	False	100755	
+cmake_targets/build_oai	content-different	False	100755	100755
+cmake_targets/cross-arm.cmake	content-different	True	100755	100644
+cmake_targets/macros.cmake	content-different	True	100755	100644
+cmake_targets/nas_sim_tools/CMakeLists.txt	EdgeRIC-only	False	100755	
+cmake_targets/tools/MODULES/FindLibXml2.cmake	EdgeRIC-only	False	100755	
+cmake_targets/tools/MODULES/FindSCTP.cmake	EdgeRIC-only	False	100755	
+cmake_targets/tools/MODULES/Findarmral.cmake	Sionna-only	False		100644
+cmake_targets/tools/MODULES/Findsctp.cmake	Sionna-only	False		100644
+cmake_targets/tools/MODULES/Findxran.cmake	content-different	True	100755	100644
+cmake_targets/tools/build_helper	content-different	False	100755	100755
+cmake_targets/tools/install_wls_lib.patch	Sionna-only	False		100644
+cmake_targets/tools/oran_fhi_integration_patches/E/oaioran_E.patch	content-different	True	100755	100644
+cmake_targets/tools/oran_fhi_integration_patches/F/oaioran_F.patch	Sionna-only	False		100644
+common/5g_platform_types.h	Sionna-only	False		100644
+common/CMakeLists.txt	content-different	True	100755	100644
+common/config/DOC/config/rtusage.md	content-different	True	100755	100644
+common/config/config_common.c	content-different	True	100755	100644
+common/config/config_common.h	content-different	True	100755	100644
+common/config/config_load_configmodule.c	content-different	True	100755	100644
+common/config/config_load_configmodule.h	content-different	True	100755	100644
+common/config/config_paramdesc.h	content-different	True	100755	100644
+common/config/libconfig/config_libconfig.c	content-different	True	100755	100644
+common/config/yaml/CMakeLists.txt	Sionna-only	False		100644
+common/config/yaml/config_yaml.cpp	Sionna-only	False		100644
+common/config/yaml/tests/CMakeLists.txt	Sionna-only	False		100644
+common/config/yaml/tests/malformed.yaml	Sionna-only	False		100644
+common/config/yaml/tests/test1.yaml	Sionna-only	False		100644
+common/config/yaml/tests/test_int_array.yaml	Sionna-only	False		100644
+common/config/yaml/tests/test_ipv4.yaml	Sionna-only	False		100644
+common/config/yaml/tests/test_list.yaml	Sionna-only	False		100644
+common/config/yaml/tests/test_list_of_mappings.yml	Sionna-only	False		100644
+common/config/yaml/tests/test_read_mapping_as_list.yaml	Sionna-only	False		100644
+common/config/yaml/tests/test_read_str_as_int.yaml	Sionna-only	False		100644
+common/config/yaml/tests/test_recursion.yaml	Sionna-only	False		100644
+common/config/yaml/tests/test_string.yaml	Sionna-only	False		100644
+common/config/yaml/tests/test_yaml_config.cpp	Sionna-only	False		100644
+common/instrumentation.h	Sionna-only	False		100644
+common/ngran_types.h	content-different	True	100755	100644
+common/oai_version.h.in	Sionna-only	False		100644
+common/platform_constants.h	content-different	True	100755	100644
+common/platform_types.h	content-different	True	100755	100644
+common/ran_context.h	content-different	True	100755	100644
+common/utils/CMakeLists.txt	content-different	True	100755	100644
+common/utils/DOC/loader/devusage/api.md	content-different	True	100755	100644
+common/utils/LOG/CMakeLists.txt	content-different	True	100755	100644
+common/utils/LOG/DOC/lttng_logs.md	content-different	True	100755	100644
+common/utils/LOG/DOC/rtusage.md	content-different	True	100755	100644
+common/utils/LOG/log.c	content-different	True	100755	100644
+common/utils/LOG/log.h	content-different	True	100755	100644
+common/utils/T/CMakeLists.txt	content-different	True	100755	100644
+common/utils/T/DOC/T/basic.md	content-different	True	100755	100644
+common/utils/T/DOC/T/wireshark.md	content-different	True	100755	100644
+common/utils/T/T.h	content-different	True	100755	100644
+common/utils/T/T_defs.h	content-different	True	100755	100644
+common/utils/T/T_messages.txt	content-different	True	100755	100644
+common/utils/T/tracer/Makefile	content-different	True	100755	100644
+common/utils/T/tracer/event.c	content-different	True	100755	100644
+common/utils/T/tracer/event.h	content-different	True	100755	100644
+common/utils/T/tracer/extract_config.c	content-different	True	100755	100644
+common/utils/T/tracer/hacks/Makefile	content-different	True	100755	100644
+common/utils/T/tracer/hacks/ant0.c	Sionna-only	False		100644
+common/utils/T/tracer/hacks/dump_nack_signal.c	content-different	True	100755	100644
+common/utils/T/tracer/hacks/multi-rru-clean.c	content-different	True	100755	100644
+common/utils/T/tracer/hacks/plot-ofdm.c	Sionna-only	False		100644
+common/utils/T/tracer/hacks/time_meas.c	content-different	True	100755	100644
+common/utils/T/tracer/logger/textlog.c	content-different	True	100755	100644
+common/utils/T/tracer/macpdu2wireshark.c	content-different	True	100755	100644
+common/utils/T/tracer/multi.c	content-different	True	100755	100644
+common/utils/T/tracer/record.c	content-different	True	100755	100644
+common/utils/T/tracer/replay.c	content-different	True	100755	100644
+common/utils/T/tracer/shared_memory_config.h	Sionna-only	False		100644
+common/utils/T/tracer/t_tracer_app_gnb.c	Sionna-only	False		100644
+common/utils/T/tracer/t_tracer_app_ue.c	Sionna-only	False		100644
+common/utils/T/tracer/utils.c	content-different	True	100755	100644
+common/utils/T/tracer/utils.h	content-different	True	100755	100644
+common/utils/actor/CMakeLists.txt	Sionna-only	False		100644
+common/utils/actor/README.md	Sionna-only	False		100644
+common/utils/actor/actor.c	Sionna-only	False		100644
+common/utils/actor/actor.h	Sionna-only	False		100644
+common/utils/actor/tests/CMakeLists.txt	Sionna-only	False		100644
+common/utils/actor/tests/test_actor.cpp	Sionna-only	False		100644
+common/utils/barrier/CMakeLists.txt	Sionna-only	False		100644
+common/utils/barrier/barrier.c	Sionna-only	False		100644
+common/utils/barrier/barrier.h	Sionna-only	False		100644
+common/utils/barrier/tests/CMakeLists.txt	Sionna-only	False		100644
+common/utils/barrier/tests/test_barrier.cpp	Sionna-only	False		100644
+common/utils/data_recording/config/config_data_recording.json	Sionna-only	False		100644
+common/utils/data_recording/config/wireless_link_parameter_map.yaml	Sionna-only	False		100644
+common/utils/data_recording/data_recording_app_v1.0.py	Sionna-only	False		100644
+common/utils/data_recording/lib/__init__.py	Sionna-only	False		100644
+common/utils/data_recording/lib/common_utils.py	Sionna-only	False		100644
+common/utils/data_recording/lib/config_interface.py	Sionna-only	False		100644
+common/utils/data_recording/lib/data_recording_messages_def.py	Sionna-only	False		100644
+common/utils/data_recording/lib/sigmf_interface.py	Sionna-only	False		100644
+common/utils/data_recording/lib/sync_service.py	Sionna-only	False		100644
+common/utils/data_recording/requirements.txt	Sionna-only	False		100644
+common/utils/data_recording/sync_validation_demo.py	Sionna-only	False		100644
+common/utils/ds/CMakeLists.txt	content-different	True	100755	100644
+common/utils/ds/byte_array.c	content-different	True	100755	100644
+common/utils/ds/byte_array.h	content-different	True	100755	100644
+common/utils/ds/byte_array_producer.c	Sionna-only	False		100644
+common/utils/ds/byte_array_producer.h	Sionna-only	False		100644
+common/utils/ds/seq_arr.c	content-different	True	100755	100644
+common/utils/ds/seq_arr.h	content-different	True	100755	100644
+common/utils/ds/tests/test_seq_array.c	content-different	True	100755	100644
+common/utils/hashtable/hashtable.c	content-different	True	100755	100644
+common/utils/hashtable/hashtable.h	content-different	True	100755	100644
+common/utils/hashtable/tests/CMakeLists.txt	Sionna-only	False		100644
+common/utils/hashtable/tests/test_hashtable.cpp	Sionna-only	False		100644
+common/utils/load_module_shlib.c	content-different	True	100755	100644
+common/utils/load_module_shlib.h	content-different	True	100755	100644
+common/utils/nr/CMakeLists.txt	content-different	True	100755	100644
+common/utils/nr/nr_common.c	content-different	True	100755	100644
+common/utils/nr/nr_common.h	content-different	True	100755	100644
+common/utils/nr/tests/test_nr_common.cpp	content-different	True	100755	100644
+common/utils/oai_asn1.h	content-different	True	100755	100644
+common/utils/ocp_itti/intertask_interface.cpp	content-different	True	100755	100644
+common/utils/ocp_itti/intertask_interface.h	content-different	True	100755	100644
+common/utils/shm_iq_channel/CMakeLists.txt	Sionna-only	False		100644
+common/utils/shm_iq_channel/shm_td_iq_channel.c	Sionna-only	False		100644
+common/utils/shm_iq_channel/shm_td_iq_channel.h	Sionna-only	False		100644
+common/utils/shm_iq_channel/tests/CMakeLists.txt	Sionna-only	False		100644
+common/utils/shm_iq_channel/tests/test_shm_td_iq_channel.c	Sionna-only	False		100644
+common/utils/telnetsrv/CMakeLists.txt	content-different	True	100755	100644
+common/utils/telnetsrv/DOC/telneto1.md	Sionna-only	False		100644
+common/utils/telnetsrv/DOC/telnetsrv.md	content-different	True	100755	100644
+common/utils/telnetsrv/telnetsrv.c	content-different	True	100755	100644
+common/utils/telnetsrv/telnetsrv_ci.c	content-different	True	100755	100644
+common/utils/telnetsrv/telnetsrv_ciUE.c	content-different	True	100755	100644
+common/utils/telnetsrv/telnetsrv_o1.c	Sionna-only	False		100644
+common/utils/telnetsrv/telnetsrv_proccmd.c	content-different	True	100755	100644
+common/utils/telnetsrv/telnetsrv_rrc.c	content-different	True	100755	100644
+common/utils/threadPool/CMakeLists.txt	content-different	True	100755	100644
+common/utils/threadPool/bounded_notified_fifo.h	Sionna-only	False		100644
+common/utils/threadPool/notified_fifo.h	Sionna-only	False		100644
+common/utils/threadPool/pthread_utils.h	Sionna-only	False		100644
+common/utils/threadPool/task.h	Sionna-only	False		100644
+common/utils/threadPool/task_ans.c	Sionna-only	False		100644
+common/utils/threadPool/task_ans.h	Sionna-only	False		100644
+common/utils/threadPool/test/test_thread-pool.c	content-different	True	100755	100644
+common/utils/threadPool/thread-pool.c	content-different	True	100755	100644
+common/utils/threadPool/thread-pool.h	content-different	True	100755	100644
+common/utils/threadPool/thread-pool.md	content-different	True	100755	100644
+common/utils/time_manager/CMakeLists.txt	Sionna-only	False		100644
+common/utils/time_manager/tests/CMakeLists.txt	Sionna-only	False		100644
+common/utils/time_manager/tests/test_auto.c	Sionna-only	False		100644
+common/utils/time_manager/tests/test_manual.c	Sionna-only	False		100644
+common/utils/time_manager/time_client.c	Sionna-only	False		100644
+common/utils/time_manager/time_client.h	Sionna-only	False		100644
+common/utils/time_manager/time_manager.c	Sionna-only	False		100644
+common/utils/time_manager/time_manager.h	Sionna-only	False		100644
+common/utils/time_manager/time_server.c	Sionna-only	False		100644
+common/utils/time_manager/time_server.h	Sionna-only	False		100644
+common/utils/time_manager/time_source.c	Sionna-only	False		100644
+common/utils/time_manager/time_source.h	Sionna-only	False		100644
+common/utils/time_meas.c	content-different	True	100755	100644
+common/utils/time_meas.h	content-different	True	100755	100644
+common/utils/tun_if.c	content-different	True	100755	100644
+common/utils/tun_if.h	content-different	True	100755	100644
+common/utils/utils.c	content-different	True	100755	100644
+common/utils/utils.h	content-different	True	100755	100644
+common/utils/websrv/CMakeLists.txt	content-different	True	100755	100644
+common/utils/websrv/DOC/websrvuse.md	content-different	True	100755	100644
+common/utils/websrv/websrv.c	content-different	True	100755	100644
+common/utils/websrv/websrv_scope.c	content-different	True	100755	100644
+detect_host.sh	Sionna-only	False		100755
+doc/5Gnas.md	content-different	True	100755	100644
+doc/Aerial_FAPI_Split_Tutorial.md	content-different	True	100755	100644
+doc/BUILD.md	content-different	True	100755	100644
+doc/CMakeLists.txt	content-different	True	100755	100644
+doc/Doxyfile	content-different	True	100755	100644
+doc/E1AP/E1-design.md	content-different	True	100755	100644
+doc/F1-design.md	EdgeRIC-only	False	100755	
+doc/F1AP/F1-design.md	Sionna-only	False		100644
+doc/F1AP/F1AP-lib.md	Sionna-only	False		100644
+doc/FEATURE_SET.md	content-different	True	100755	100644
+doc/L2NFAPI.md	content-different	True	100755	100644
+doc/LDPC_OFFLOAD_SETUP.md	Sionna-only	False		100644
+doc/LDPC_T2_OFFLOAD_SETUP.md	EdgeRIC-only	False	100755	
+doc/LDPC_XDMA_offload_setup.md	Sionna-only	False		100644
+doc/MAC/TDD_Frame_Structure.png	Sionna-only	False		100644
+doc/MAC/mac-usage.md	Sionna-only	False		100644
+doc/NR_NFAPI_archi.md	content-different	True	100755	100644
+doc/NR_SA_Tutorial_COTS_UE.md	content-different	True	100755	100644
+doc/NR_SA_Tutorial_OAI_CN5G.md	content-different	True	100755	100644
+doc/NR_SA_Tutorial_OAI_multi_UE.md	Sionna-only	False		100644
+doc/NR_SA_Tutorial_OAI_nrUE.md	content-different	True	100755	100644
+doc/ORAN_FHI7.2_Tutorial.md	content-different	True	100755	100644
+doc/README.md	content-different	True	100755	100644
+doc/RRC/ho.mmd	Sionna-only	False		100644
+doc/RRC/ho.png	Sionna-only	False		100644
+doc/RRC/rrc-dev.md	Sionna-only	False		100644
+doc/RRC/rrc-usage.md	Sionna-only	False		100644
+doc/RUNMODEM.md	content-different	True	100755	100644
+doc/RUN_NR_NFAPI.md	EdgeRIC-only	False	100755	
+doc/RUN_NR_multiple_BWPs.md	content-different	True	100755	100644
+doc/SW_archi.md	content-different	True	100755	100644
+doc/TESTBenches.md	content-different	True	100755	100644
+doc/TESTING_GNB_W_COTS_UE.md	content-different	True	100755	100644
+doc/UnitTests.md	content-different	True	100755	100644
+doc/analog_beamforming.md	Sionna-only	False		100644
+doc/clang-format.md	content-different	True	100755	100644
+doc/code-style-contrib.md	content-different	True	100755	100644
+doc/cross-compile.md	content-different	True	100755	100644
+doc/data_recording.md	Sionna-only	False		100644
+doc/dev_tools/sanitizers.md	content-different	True	100755	100644
+doc/environment-variables.md	content-different	True	100755	100644
+doc/gNB_frequency_setup.md	Sionna-only	False		100644
+doc/handover-tutorial.md	Sionna-only	False		100644
+doc/images/USRP_tune_offset.png	Sionna-only	False		100644
+doc/images/data_recording_arch.svg	Sionna-only	False		100644
+doc/images/data_serialization_tx_scrambled_bit_message.svg	Sionna-only	False		100644
+doc/images/sigmf_dataset.svg	Sionna-only	False		100644
+doc/iqrecordplayer_usage.md	content-different	True	100755	100644
+doc/nfapi.md	Sionna-only	False		100644
+doc/nr-ue-design.md	content-different	True	100755	100644
+doc/nr-ue-threads.svg	Sionna-only	False		100644
+doc/physical-simulators.md	content-different	True	100755	100644
+doc/system_requirements.md	Sionna-only	False		100644
+doc/testbenches_doc_resources/5g-ota-bench.pdf	content-different	True	100755	100644
+doc/testbenches_doc_resources/5g-ota-bench.png	content-different	True	100755	100644
+doc/testbenches_doc_resources/5g-ota-bench.tex	content-different	True	100755	100644
+doc/testing_gnb_w_cots_ue_resources/gnb.conf	content-different	False	100755	100755
+doc/testing_gnb_w_cots_ue_resources/oai_enb.log	Sionna-only	False		100755
+doc/testing_gnb_w_cots_ue_resources/oai_gnb.log	Sionna-only	False		100755
+doc/time_management.md	Sionna-only	False		100644
+doc/tuning_and_security.md	content-different	True	100755	100644
+doc/tutorial_resources/oai-cn5g/conf/config.yaml	content-different	True	100755	100644
+docker/Dockerfile.base.rhel9	content-different	True	100755	100644
+docker/Dockerfile.base.rocky	content-different	True	100755	100644
+docker/Dockerfile.base.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.base.ubuntu.cross-arm64	Sionna-only	False		100644
+docker/Dockerfile.base.ubuntu.cuda	Sionna-only	False		100644
+docker/Dockerfile.base.ubuntu22	EdgeRIC-only	False	100755	
+docker/Dockerfile.base.ubuntu22.cross-arm64	EdgeRIC-only	False	100755	
+docker/Dockerfile.build.fhi72.native_arm.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.build.fhi72.rhel9	content-different	True	100755	100644
+docker/Dockerfile.build.fhi72.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.build.fhi72.ubuntu22	EdgeRIC-only	False	100755	
+docker/Dockerfile.build.rhel9	content-different	True	100755	100644
+docker/Dockerfile.build.rocky	content-different	True	100755	100644
+docker/Dockerfile.build.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.build.ubuntu.cross-arm64	Sionna-only	False		100644
+docker/Dockerfile.build.ubuntu.cuda	Sionna-only	False		100644
+docker/Dockerfile.build.ubuntu22	EdgeRIC-only	False	100755	
+docker/Dockerfile.build.ubuntu22.cross-arm64	EdgeRIC-only	False	100755	
+docker/Dockerfile.clang.rhel9	content-different	True	100755	100644
+docker/Dockerfile.eNB.rhel9	content-different	True	100755	100644
+docker/Dockerfile.eNB.rocky	content-different	True	100755	100644
+docker/Dockerfile.eNB.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.eNB.ubuntu22	EdgeRIC-only	False	100755	
+docker/Dockerfile.flexric.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.gNB.aerial.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.gNB.aerial.ubuntu.sanitize-address	Sionna-only	False		100644
+docker/Dockerfile.gNB.aerial.ubuntu22	EdgeRIC-only	False	100755	
+docker/Dockerfile.gNB.aerial.ubuntu22.sanitize-address	EdgeRIC-only	False	100755	
+docker/Dockerfile.gNB.aw2s.rhel9	content-different	True	100755	100644
+docker/Dockerfile.gNB.aw2s.rocky	content-different	True	100755	100644
+docker/Dockerfile.gNB.aw2s.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.gNB.aw2s.ubuntu22	EdgeRIC-only	False	100755	
+docker/Dockerfile.gNB.fhi72.rhel9	content-different	True	100755	100644
+docker/Dockerfile.gNB.fhi72.rocky	Sionna-only	False		100644
+docker/Dockerfile.gNB.fhi72.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.gNB.fhi72.ubuntu22	EdgeRIC-only	False	100755	
+docker/Dockerfile.gNB.rhel9	content-different	True	100755	100644
+docker/Dockerfile.gNB.rocky	content-different	True	100755	100644
+docker/Dockerfile.gNB.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.gNB.ubuntu.cuda	Sionna-only	False		100644
+docker/Dockerfile.gNB.ubuntu22	EdgeRIC-only	False	100755	
+docker/Dockerfile.lteRU.rhel9	content-different	True	100755	100644
+docker/Dockerfile.lteRU.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.lteRU.ubuntu22	EdgeRIC-only	False	100755	
+docker/Dockerfile.lteUE.rhel9	content-different	True	100755	100644
+docker/Dockerfile.lteUE.rocky	content-different	True	100755	100644
+docker/Dockerfile.lteUE.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.lteUE.ubuntu22	EdgeRIC-only	False	100755	
+docker/Dockerfile.nr-cuup.rhel9	content-different	True	100755	100644
+docker/Dockerfile.nr-cuup.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.nr-cuup.ubuntu22	EdgeRIC-only	False	100755	
+docker/Dockerfile.nrUE.rhel9	content-different	True	100755	100644
+docker/Dockerfile.nrUE.rocky	content-different	True	100755	100644
+docker/Dockerfile.nrUE.ubuntu	Sionna-only	False		100644
+docker/Dockerfile.nrUE.ubuntu.cuda	Sionna-only	False		100644
+docker/Dockerfile.nrUE.ubuntu22	EdgeRIC-only	False	100755	
+docker/Dockerfile.phySim.rhel9	content-different	True	100755	100644
+docker/README.md	content-different	True	100755	100644
+docker/debug_core_image.sh	content-different	False	100755	100755
+docker/scripts/check-prach-io.sh	Sionna-only	False		100755
+docker/scripts/gnb-aw2s_entrypoint.sh	content-different	False	100755	100755
+docker/scripts/gnb_entrypoint.sh	content-different	False	100755	100755
+docker/scripts/nr_ue_entrypoint.sh	content-different	False	100755	100755
+executables/create_tasks.c	content-different	True	100755	100644
+executables/create_tasks_mbms.c	content-different	True	100755	100644
+executables/create_tasks_ue.c	content-different	True	100755	100644
+executables/edgeric/CMakeLists.txt	EdgeRIC-only	False	100755	
+executables/edgeric/control_mcs.pb.cc	EdgeRIC-only	False	100755	
+executables/edgeric/control_mcs.pb.h	EdgeRIC-only	False	100755	
+executables/edgeric/control_weights.pb.cc	EdgeRIC-only	False	100755	
+executables/edgeric/control_weights.pb.h	EdgeRIC-only	False	100755	
+executables/edgeric/edgeric.cpp	EdgeRIC-only	False	100755	
+executables/edgeric/edgeric.h	EdgeRIC-only	False	100755	
+executables/edgeric/metrics.pb.cc	EdgeRIC-only	False	100755	
+executables/edgeric/metrics.pb.h	EdgeRIC-only	False	100755	
+executables/edgeric/wrapper.cpp	EdgeRIC-only	False	100755	
+executables/edgeric/wrapper.h	EdgeRIC-only	False	100755	
+executables/lte-enb.c	content-different	True	100755	100644
+executables/lte-ru.c	content-different	True	100755	100644
+executables/lte-softmodem.c	content-different	True	100755	100644
+executables/lte-softmodem.h	content-different	True	100755	100644
+executables/lte-ue.c	content-different	True	100755	100644
+executables/lte-uesoftmodem.c	content-different	True	100755	100644
+executables/main_ru.c	content-different	True	100755	100644
+executables/nr-cuup.c	content-different	True	100755	100644
+executables/nr-gnb.c	content-different	True	100755	100644
+executables/nr-ru.c	content-different	True	100755	100644
+executables/nr-softmodem-common.h	content-different	True	100755	100644
+executables/nr-softmodem.c	content-different	True	100755	100644
+executables/nr-softmodem.h	content-different	True	100755	100644
+executables/nr-ue.c	content-different	True	100755	100644
+executables/nr-uesoftmodem.c	content-different	True	100755	100644
+executables/nr-uesoftmodem.h	content-different	True	100755	100644
+executables/position_interface.c	Sionna-only	False		100644
+executables/position_interface.h	Sionna-only	False		100644
+executables/rt_profiling.h	EdgeRIC-only	False	100755	
+executables/ru_control.c	content-different	True	100755	100644
+executables/softmodem-common.c	content-different	True	100755	100644
+executables/softmodem-common.h	content-different	True	100755	100644
+nfapi/CMakeLists.txt	content-different	True	100755	100644
+nfapi/oai_integration/aerial/CMakeLists.txt	content-different	True	100755	100644
+nfapi/oai_integration/aerial/fapi_nvIPC.c	content-different	True	100755	100644
+nfapi/oai_integration/aerial/fapi_nvIPC.h	content-different	True	100755	100644
+nfapi/oai_integration/aerial/fapi_vnf_p5.c	EdgeRIC-only	False	100755	
+nfapi/oai_integration/aerial/fapi_vnf_p5.h	EdgeRIC-only	False	100755	
+nfapi/oai_integration/aerial/fapi_vnf_p7.c	content-different	True	100755	100644
+nfapi/oai_integration/aerial/fapi_vnf_p7.h	content-different	True	100755	100644
+nfapi/oai_integration/gnb_ind_vars.c	content-different	True	100755	100644
+nfapi/oai_integration/gnb_ind_vars.h	content-different	True	100755	100644
+nfapi/oai_integration/nfapi.c	content-different	True	100755	100644
+nfapi/oai_integration/nfapi_pnf.c	content-different	True	100755	100644
+nfapi/oai_integration/nfapi_pnf.h	content-different	True	100755	100644
+nfapi/oai_integration/nfapi_vnf.c	content-different	True	100755	100644
+nfapi/oai_integration/nfapi_vnf.h	content-different	True	100755	100644
+nfapi/oai_integration/socket/CMakeLists.txt	Sionna-only	False		100644
+nfapi/oai_integration/socket/include/socket_common.h	Sionna-only	False		100644
+nfapi/oai_integration/socket/include/socket_pnf.h	Sionna-only	False		100644
+nfapi/oai_integration/socket/include/socket_vnf.h	Sionna-only	False		100644
+nfapi/oai_integration/socket/socket_common.c	Sionna-only	False		100644
+nfapi/oai_integration/socket/socket_pnf.c	Sionna-only	False		100644
+nfapi/oai_integration/socket/socket_vnf.c	Sionna-only	False		100644
+nfapi/oai_integration/wls_integration/CMakeLists.txt	Sionna-only	False		100644
+nfapi/oai_integration/wls_integration/include/wls_common.h	Sionna-only	False		100644
+nfapi/oai_integration/wls_integration/include/wls_pnf.h	Sionna-only	False		100644
+nfapi/oai_integration/wls_integration/include/wls_vnf.h	Sionna-only	False		100644
+nfapi/oai_integration/wls_integration/wls_common.c	Sionna-only	False		100644
+nfapi/oai_integration/wls_integration/wls_pnf.c	Sionna-only	False		100644
+nfapi/oai_integration/wls_integration/wls_vnf.c	Sionna-only	False		100644
+nfapi/open-nFAPI/CMakeLists.txt	content-different	True	100755	100644
+nfapi/open-nFAPI/common/public_inc/nfapi.h	content-different	True	100755	100644
+nfapi/open-nFAPI/common/src/debug.c	content-different	True	100755	100644
+nfapi/open-nFAPI/common/src/nfapi.c	content-different	True	100755	100644
+nfapi/open-nFAPI/docs/Doxyfile.in	content-different	True	100755	100644
+nfapi/open-nFAPI/fapi/CMakeLists.txt	content-different	True	100755	100644
+nfapi/open-nFAPI/fapi/inc/nr_fapi.h	content-different	True	100755	100644
+nfapi/open-nFAPI/fapi/inc/nr_fapi_p5.h	content-different	True	100755	100644
+nfapi/open-nFAPI/fapi/inc/nr_fapi_p5_utils.h	content-different	True	100755	100644
+nfapi/open-nFAPI/fapi/inc/nr_fapi_p7.h	Sionna-only	False		100644
+nfapi/open-nFAPI/fapi/inc/nr_fapi_p7_utils.h	Sionna-only	False		100644
+nfapi/open-nFAPI/fapi/src/nr_fapi.c	Sionna-only	False		100644
+nfapi/open-nFAPI/fapi/src/nr_fapi_p5.c	content-different	True	100755	100644
+nfapi/open-nFAPI/fapi/src/nr_fapi_p5_utils.c	content-different	True	100755	100644
+nfapi/open-nFAPI/fapi/src/nr_fapi_p7.c	Sionna-only	False		100644
+nfapi/open-nFAPI/fapi/src/nr_fapi_p7_utils.c	Sionna-only	False		100644
+nfapi/open-nFAPI/nfapi/public_inc/fapi_nr_ue_constants.h	content-different	True	100755	100644
+nfapi/open-nFAPI/nfapi/public_inc/fapi_nr_ue_interface.h	content-different	True	100755	100644
+nfapi/open-nFAPI/nfapi/public_inc/nfapi_common_interface.h	Sionna-only	False		100644
+nfapi/open-nFAPI/nfapi/public_inc/nfapi_interface.h	content-different	True	100755	100644
+nfapi/open-nFAPI/nfapi/public_inc/nfapi_nr_interface.h	content-different	True	100755	100644
+nfapi/open-nFAPI/nfapi/public_inc/nfapi_nr_interface_scf.h	content-different	True	100755	100644
+nfapi/open-nFAPI/nfapi/public_inc/nr_nfapi_p7.h	content-different	True	100755	100644
+nfapi/open-nFAPI/nfapi/src/nfapi_p4.c	content-different	True	100755	100644
+nfapi/open-nFAPI/nfapi/src/nfapi_p5.c	content-different	True	100755	100644
+nfapi/open-nFAPI/nfapi/src/nfapi_p7.c	content-different	True	100755	100644
+nfapi/open-nFAPI/pnf/inc/pnf.h	content-different	True	100755	100644
+nfapi/open-nFAPI/pnf/inc/pnf_p7.h	content-different	True	100755	100644
+nfapi/open-nFAPI/pnf/public_inc/nfapi_pnf_interface.h	content-different	True	100755	100644
+nfapi/open-nFAPI/pnf/src/pnf.c	content-different	True	100755	100644
+nfapi/open-nFAPI/pnf/src/pnf_interface.c	content-different	True	100755	100644
+nfapi/open-nFAPI/pnf/src/pnf_p7.c	content-different	True	100755	100644
+nfapi/open-nFAPI/pnf/src/pnf_p7_interface.c	content-different	True	100755	100644
+nfapi/open-nFAPI/pnf_sim/src/main.cpp	content-different	True	100755	100644
+nfapi/open-nFAPI/utils/CMakeLists.txt	Sionna-only	False		100644
+nfapi/open-nFAPI/utils/examples.md	Sionna-only	False		100644
+nfapi/open-nFAPI/utils/nfapi_hex_parser.c	Sionna-only	False		100644
+nfapi/open-nFAPI/vnf/inc/vnf.h	content-different	True	100755	100644
+nfapi/open-nFAPI/vnf/inc/vnf_p7.h	content-different	True	100755	100644
+nfapi/open-nFAPI/vnf/public_inc/nfapi_vnf_interface.h	content-different	True	100755	100644
+nfapi/open-nFAPI/vnf/src/vnf.c	content-different	True	100755	100644
+nfapi/open-nFAPI/vnf/src/vnf_interface.c	content-different	True	100755	100644
+nfapi/open-nFAPI/vnf/src/vnf_p7.c	content-different	True	100755	100644
+nfapi/open-nFAPI/vnf/src/vnf_p7_interface.c	content-different	True	100755	100644
+nfapi/open-nFAPI/vnf/tests/vnf_cunit_main.c	content-different	True	100755	100644
+nfapi/open-nfapi.oai.patch	EdgeRIC-only	False	100755	
+nfapi/tests/nr_fapi_test.h	content-different	True	100755	100644
+nfapi/tests/p5/nr_fapi_config_request_test.c	content-different	True	100755	100644
+nfapi/tests/p5/nr_fapi_config_response_test.c	content-different	True	100755	100644
+nfapi/tests/p5/nr_fapi_error_indication_test.c	content-different	True	100755	100644
+nfapi/tests/p5/nr_fapi_param_request_test.c	content-different	True	100755	100644
+nfapi/tests/p5/nr_fapi_param_response_test.c	content-different	True	100755	100644
+nfapi/tests/p5/nr_fapi_start_request_test.c	content-different	True	100755	100644
+nfapi/tests/p5/nr_fapi_start_response_test.c	content-different	True	100755	100644
+nfapi/tests/p5/nr_fapi_stop_indication_test.c	content-different	True	100755	100644
+nfapi/tests/p5/nr_fapi_stop_request_test.c	content-different	True	100755	100644
+nfapi/tests/p7/CMakeLists.txt	content-different	True	100755	100644
+nfapi/tests/p7/dci_payload_utils.h	Sionna-only	False		100644
+nfapi/tests/p7/nr_fapi_crc_indication_test.c	Sionna-only	False		100644
+nfapi/tests/p7/nr_fapi_dci_inversion_test.c	content-different	True	100755	100644
+nfapi/tests/p7/nr_fapi_dl_tti_request_test.c	Sionna-only	False		100644
+nfapi/tests/p7/nr_fapi_rach_indication_test.c	Sionna-only	False		100644
+nfapi/tests/p7/nr_fapi_rx_data_indication_test.c	Sionna-only	False		100644
+nfapi/tests/p7/nr_fapi_slot_indication_test.c	Sionna-only	False		100644
+nfapi/tests/p7/nr_fapi_srs_indication_test.c	Sionna-only	False		100644
+nfapi/tests/p7/nr_fapi_tx_data_request_test.c	Sionna-only	False		100644
+nfapi/tests/p7/nr_fapi_uci_indication_test.c	Sionna-only	False		100644
+nfapi/tests/p7/nr_fapi_ul_dci_request_test.c	Sionna-only	False		100644
+nfapi/tests/p7/nr_fapi_ul_tti_request_test.c	Sionna-only	False		100644
+openair1/PHY/CMakeLists.txt	content-different	True	100755	100644
+openair1/PHY/CODING/3gpplte_sse.c	content-different	True	100755	100644
+openair1/PHY/CODING/3gpplte_turbo_decoder_avx2_16bit.c	content-different	True	100755	100644
+openair1/PHY/CODING/3gpplte_turbo_decoder_sse.c	content-different	True	100755	100644
+openair1/PHY/CODING/3gpplte_turbo_decoder_sse_16bit.c	content-different	True	100755	100644
+openair1/PHY/CODING/3gpplte_turbo_decoder_sse_8bit.c	content-different	True	100755	100644
+openair1/PHY/CODING/CMakeLists.txt	Sionna-only	False		100644
+openair1/PHY/CODING/DOC/LDPCImplementation.md	content-different	True	100755	100644
+openair1/PHY/CODING/TESTBENCH/ldpctest.c	content-different	True	100755	100644
+openair1/PHY/CODING/TESTBENCH/pdcch_test.c	content-different	True	100755	100644
+openair1/PHY/CODING/TESTBENCH/polartest.c	content-different	True	100755	100644
+openair1/PHY/CODING/TESTBENCH/smallblocktest.c	content-different	True	100755	100644
+openair1/PHY/CODING/ccoding_byte_lte.c	content-different	True	100755	100644
+openair1/PHY/CODING/coding_defs.h	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_coding/CMakeLists.txt	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_aal/CMakeLists.txt	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_aal/README.md	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_aal/nrLDPC_coding_aal.c	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_aal/nrLDPC_coding_aal.h	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_interface.c	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_interface.h	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_interface_load.c	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/CMakeLists.txt	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nrLDPC_coding_segment_decoder.c	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nrLDPC_coding_segment_encoder.c	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nr_rate_matching.c	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_segment/nr_rate_matching.h	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_xdma/CMakeLists.txt	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_xdma/nrLDPC_coding_xdma.c	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_xdma/nrLDPC_coding_xdma_offload.c	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_xdma/nrLDPC_coding_xdma_offload.h	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_coding/nrLDPC_coding_xdma/xdma_diag.h	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder_CL.c	EdgeRIC-only	False	100755	
+openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder_kernels_CL.c	EdgeRIC-only	False	100755	
+openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_decoder_offload.c	EdgeRIC-only	False	100755	
+openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_offload.h	EdgeRIC-only	False	100755	
+openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_tools/generator_cnProc/cnProc_gen_BG1_128.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_tools/nrLDPC_debug.h	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_decoder/nrLDPC_types.h	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_decoder/nrLDPCdecoder_defs.h	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_decoder_LYC/nrLDPC_decoder_LYC.cu	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_defs.h	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_encoder/ldpc384_simd512_byte.c	Sionna-only	False		100644
+openair1/PHY/CODING/nrLDPC_encoder/ldpc_encode_parity_check.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_encoder/ldpc_encoder.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_encoder/ldpc_encoder_optim.c	EdgeRIC-only	False	100755	
+openair1/PHY/CODING/nrLDPC_encoder/ldpc_encoder_optim8seg.c	EdgeRIC-only	False	100755	
+openair1/PHY/CODING/nrLDPC_encoder/ldpc_encoder_optim8segmulti.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_encoder/ldpc_generate_coefficient.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_extern.h	content-different	True	100755	100644
+openair1/PHY/CODING/nrLDPC_load.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_bitwise_operations.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_crc_byte.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_dci_defs.h	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_decoder.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_decoding_tools.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_defs.h	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_encoder.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_init.c	Sionna-only	False		100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_interleaving_pattern.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_kernal_operation.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_matrix_and_array.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_pbch_defs.h	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_procedures.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_pucch_defs.h	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_rate_match.c	EdgeRIC-only	False	100755	
+openair1/PHY/CODING/nrPolar_tools/nr_polar_sequence_pattern.c	content-different	True	100755	100644
+openair1/PHY/CODING/nrPolar_tools/nr_polar_uci_defs.h	content-different	True	100755	100644
+openair1/PHY/CODING/nr_polar_init.c	EdgeRIC-only	False	100755	
+openair1/PHY/CODING/nr_rate_matching.c	EdgeRIC-only	False	100755	
+openair1/PHY/CODING/nr_segmentation.c	content-different	True	100755	100644
+openair1/PHY/CODING/tests/CMakeLists.txt	Sionna-only	False		100644
+openair1/PHY/CODING/viterbi.c	content-different	True	100755	100644
+openair1/PHY/CODING/viterbi_lte.c	content-different	True	100755	100644
+openair1/PHY/INIT/init_top.c	content-different	True	100755	100644
+openair1/PHY/INIT/lte_init_ru.c	content-different	True	100755	100644
+openair1/PHY/INIT/nr_init.c	content-different	True	100755	100644
+openair1/PHY/INIT/nr_init_ru.c	content-different	True	100755	100644
+openair1/PHY/INIT/nr_init_ue.c	content-different	True	100755	100644
+openair1/PHY/INIT/nr_parms.c	content-different	True	100755	100644
+openair1/PHY/INIT/nr_phy_init.h	content-different	True	100755	100644
+openair1/PHY/INIT/phy_init.h	content-different	True	100755	100644
+openair1/PHY/LTE_ESTIMATION/freq_equalization.c	content-different	True	100755	100644
+openair1/PHY/LTE_ESTIMATION/lte_adjust_sync_eNB.c	content-different	True	100755	100644
+openair1/PHY/LTE_ESTIMATION/lte_dl_bf_channel_estimation.c	content-different	True	100755	100644
+openair1/PHY/LTE_ESTIMATION/lte_dl_channel_estimation.c	content-different	True	100755	100644
+openair1/PHY/LTE_ESTIMATION/lte_dl_mbsfn_channel_estimation.c	content-different	True	100755	100644
+openair1/PHY/LTE_ESTIMATION/lte_eNB_measurements.c	content-different	True	100755	100644
+openair1/PHY/LTE_ESTIMATION/lte_estimation.h	content-different	True	100755	100644
+openair1/PHY/LTE_ESTIMATION/lte_sync_time.c	content-different	True	100755	100644
+openair1/PHY/LTE_ESTIMATION/lte_sync_timefreq.c	content-different	True	100755	100644
+openair1/PHY/LTE_ESTIMATION/lte_ue_measurements.c	content-different	True	100755	100644
+openair1/PHY/LTE_ESTIMATION/lte_ul_channel_estimation.c	content-different	True	100755	100644
+openair1/PHY/LTE_TRANSPORT/dci_tools.c	content-different	True	100755	100644
+openair1/PHY/LTE_TRANSPORT/defs_NB_IoT.h	content-different	True	100755	100644
+openair1/PHY/LTE_TRANSPORT/dlsch_coding.c	content-different	True	100755	100644
+openair1/PHY/LTE_TRANSPORT/dlsch_modulation.c	content-different	True	100755	100644
+openair1/PHY/LTE_TRANSPORT/edci.c	content-different	True	100755	100644
+openair1/PHY/LTE_TRANSPORT/prach.c	content-different	True	100755	100644
+openair1/PHY/LTE_TRANSPORT/prach_common.c	content-different	True	100755	100644
+openair1/PHY/LTE_TRANSPORT/prach_extern.h	content-different	True	100755	100644
+openair1/PHY/LTE_TRANSPORT/transport_proto.h	content-different	True	100755	100644
+openair1/PHY/LTE_TRANSPORT/ulsch_decoding.c	content-different	True	100755	100644
+openair1/PHY/LTE_TRANSPORT/ulsch_demodulation.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/dci_ue.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/dlsch_decoding.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/dlsch_demodulation.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/dlsch_llr_computation.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/dlsch_llr_computation_avx2.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/initial_sync.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/pbch_ue.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/pmch_ue.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/prach_ue.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/pucch_ue.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/rar_tools_ue.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/sss_ue.c	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/transport_proto_ue.h	content-different	True	100755	100644
+openair1/PHY/LTE_UE_TRANSPORT/ulsch_modulation.c	content-different	True	100755	100644
+openair1/PHY/MODULATION/CMakeLists.txt	Sionna-only	False		100644
+openair1/PHY/MODULATION/beamforming.c	content-different	True	100755	100644
+openair1/PHY/MODULATION/compute_bf_weights.c	content-different	True	100755	100644
+openair1/PHY/MODULATION/modulation_UE.h	content-different	True	100755	100644
+openair1/PHY/MODULATION/modulation_common.h	content-different	True	100755	100644
+openair1/PHY/MODULATION/modulation_eNB.h	content-different	True	100755	100644
+openair1/PHY/MODULATION/modulation_extern.h	content-different	True	100755	100644
+openair1/PHY/MODULATION/nr_modulation.c	content-different	True	100755	100644
+openair1/PHY/MODULATION/nr_modulation.h	content-different	True	100755	100644
+openair1/PHY/MODULATION/ofdm_mod.c	content-different	True	100755	100644
+openair1/PHY/MODULATION/slot_fep.c	content-different	True	100755	100644
+openair1/PHY/MODULATION/slot_fep_mbsfn.c	content-different	True	100755	100644
+openair1/PHY/MODULATION/slot_fep_nr.c	content-different	True	100755	100644
+openair1/PHY/MODULATION/slot_fep_ul.c	content-different	True	100755	100644
+openair1/PHY/MODULATION/tests/CMakeLists.txt	Sionna-only	False		100644
+openair1/PHY/MODULATION/tests/test_nr_modulation.cpp	Sionna-only	False		100644
+openair1/PHY/MODULATION/ul_7_5_kHz.c	content-different	True	100755	100644
+openair1/PHY/MODULATION/ul_7_5_kHz_ue.c	content-different	True	100755	100644
+openair1/PHY/NR_ESTIMATION/nr_freq_equalization.c	content-different	True	100755	100644
+openair1/PHY/NR_ESTIMATION/nr_measurements_gNB.c	content-different	True	100755	100644
+openair1/PHY/NR_ESTIMATION/nr_ul_channel_estimation.c	content-different	True	100755	100644
+openair1/PHY/NR_ESTIMATION/nr_ul_estimation.h	content-different	True	100755	100644
+openair1/PHY/NR_REFSIG/dmrs_nr.c	content-different	True	100755	100644
+openair1/PHY/NR_REFSIG/dmrs_nr.h	content-different	True	100755	100644
+openair1/PHY/NR_REFSIG/nr_dmrs_rx.c	content-different	True	100755	100644
+openair1/PHY/NR_REFSIG/nr_gen_mod_table.c	content-different	True	100755	100644
+openair1/PHY/NR_REFSIG/nr_mod_table.h	content-different	True	100755	100644
+openair1/PHY/NR_REFSIG/nr_refsig.h	content-different	True	100755	100644
+openair1/PHY/NR_REFSIG/ptrs_nr.c	content-different	True	100755	100644
+openair1/PHY/NR_REFSIG/ptrs_nr.h	content-different	True	100755	100644
+openair1/PHY/NR_REFSIG/scrambling_luts.c	EdgeRIC-only	False	100755	
+openair1/PHY/NR_REFSIG/ul_ref_seq_nr.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_csi_rs.c	EdgeRIC-only	False	100755	
+openair1/PHY/NR_TRANSPORT/nr_dci.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_dci.h	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_dlsch.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_dlsch.h	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_dlsch_coding.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_dlsch_tools.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_pbch.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_prach.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_prach.h	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_prach_common.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_prs.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_scrambling.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_tbs_tools.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_transport_common_proto.h	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_transport_proto.h	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_uci_tools_common.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_ulsch.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_ulsch.h	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_ulsch_decoding.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_ulsch_demodulation.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/nr_ulsch_llr_computation.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/pucch_rx.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/srs_rx.c	content-different	True	100755	100644
+openair1/PHY/NR_TRANSPORT/tests/test_llr.cpp	content-different	True	100755	100644
+openair1/PHY/NR_UE_ESTIMATION/filt16a_32.h	content-different	True	100755	100644
+openair1/PHY/NR_UE_ESTIMATION/nr_adjust_synch_ue.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_ESTIMATION/nr_dl_channel_estimation.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_ESTIMATION/nr_estimation.h	content-different	True	100755	100644
+openair1/PHY/NR_UE_ESTIMATION/nr_ue_measurements.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/csi_rx.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/dci_nr.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/nr_dlsch_decoding.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/nr_dlsch_demodulation.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/nr_dlsch_llr_computation.c	EdgeRIC-only	False	100755	
+openair1/PHY/NR_UE_TRANSPORT/nr_initial_sync.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/nr_initial_sync_sl.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/nr_pbch.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/nr_prach.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/nr_psbch_rx.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/nr_transport_proto_ue.h	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/nr_transport_ue.h	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/nr_ulsch_coding.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/nr_ulsch_ue.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/pss_nr.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/pucch_nr.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/srs_modulation_nr.c	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/srs_modulation_nr.h	content-different	True	100755	100644
+openair1/PHY/NR_UE_TRANSPORT/sss_nr.c	content-different	True	100755	100644
+openair1/PHY/TOOLS/CMakeLists.txt	content-different	True	100755	100644
+openair1/PHY/TOOLS/Makefile	content-different	True	100755	100644
+openair1/PHY/TOOLS/cadd_vv.c	EdgeRIC-only	False	100755	
+openair1/PHY/TOOLS/calibration_test.c	content-different	True	100755	100644
+openair1/PHY/TOOLS/cdot_prod.c	content-different	True	100755	100644
+openair1/PHY/TOOLS/cmult_sv.c	EdgeRIC-only	False	100755	
+openair1/PHY/TOOLS/cmult_vv.c	EdgeRIC-only	False	100755	
+openair1/PHY/TOOLS/dfts_load.c	content-different	True	100755	100644
+openair1/PHY/TOOLS/get_sin_cos.c	Sionna-only	False		100644
+openair1/PHY/TOOLS/imscope/CMakeLists.txt	Sionna-only	False		100644
+openair1/PHY/TOOLS/imscope/imgui.ini	Sionna-only	False		100644
+openair1/PHY/TOOLS/imscope/imscope.cpp	Sionna-only	False		100644
+openair1/PHY/TOOLS/imscope/imscope_common.cpp	Sionna-only	False		100644
+openair1/PHY/TOOLS/imscope/imscope_init.cpp	Sionna-only	False		100644
+openair1/PHY/TOOLS/imscope/imscope_internal.h	Sionna-only	False		100644
+openair1/PHY/TOOLS/imscope/imscope_iq_file_viewer.cpp	Sionna-only	False		100644
+openair1/PHY/TOOLS/imscope/imscope_record.cpp	Sionna-only	False		100644
+openair1/PHY/TOOLS/imscope/imscope_screenshot.png	Sionna-only	False		100644
+openair1/PHY/TOOLS/invSqrt.c	content-different	True	100755	100644
+openair1/PHY/TOOLS/log2_approx.c	content-different	True	100755	100644
+openair1/PHY/TOOLS/lut.c	EdgeRIC-only	False	100755	
+openair1/PHY/TOOLS/nr_phy_scope.c	content-different	True	100755	100644
+openair1/PHY/TOOLS/oai_arith_operations.c	Sionna-only	False		100644
+openair1/PHY/TOOLS/oai_dfts.c	content-different	True	100755	100644
+openair1/PHY/TOOLS/oai_dfts_neon.c	content-different	True	100755	100644
+openair1/PHY/TOOLS/phy_scope_interface.c	content-different	True	100755	100644
+openair1/PHY/TOOLS/phy_scope_interface.h	content-different	True	100755	100644
+openair1/PHY/TOOLS/phy_test_tools.hpp	Sionna-only	False		100644
+openair1/PHY/TOOLS/read_F.c	EdgeRIC-only	False	100755	
+openair1/PHY/TOOLS/readme.md	content-different	True	100755	100644
+openair1/PHY/TOOLS/signal_energy.c	content-different	True	100755	100644
+openair1/PHY/TOOLS/simde_operations.c	EdgeRIC-only	False	100755	
+openair1/PHY/TOOLS/smbv.c	content-different	True	100755	100644
+openair1/PHY/TOOLS/tests/CMakeLists.txt	content-different	True	100755	100644
+openair1/PHY/TOOLS/tests/benchmark_rotate_vector.cpp	Sionna-only	False		100644
+openair1/PHY/TOOLS/tests/test_dft.c	Sionna-only	False		100644
+openair1/PHY/TOOLS/tests/test_log2_approx.cpp	Sionna-only	False		100644
+openair1/PHY/TOOLS/tests/test_oai_arith_operations.cpp	Sionna-only	False		100644
+openair1/PHY/TOOLS/tests/test_signal_energy.cpp	content-different	True	100755	100644
+openair1/PHY/TOOLS/tests/test_sse_intrinsics.cpp	Sionna-only	False		100644
+openair1/PHY/TOOLS/tests/test_vector_op.cpp	Sionna-only	False		100644
+openair1/PHY/TOOLS/tools_defs.h	content-different	True	100755	100644
+openair1/PHY/TOOLS/tools_extern.h	EdgeRIC-only	False	100755	
+openair1/PHY/defs_L1_NB_IoT.h	content-different	True	100755	100644
+openair1/PHY/defs_RU.h	content-different	True	100755	100644
+openair1/PHY/defs_UE.h	content-different	True	100755	100644
+openair1/PHY/defs_common.h	content-different	True	100755	100644
+openair1/PHY/defs_eNB.h	content-different	True	100755	100644
+openair1/PHY/defs_gNB.h	content-different	True	100755	100644
+openair1/PHY/defs_nr_UE.h	content-different	True	100755	100644
+openair1/PHY/defs_nr_common.h	content-different	True	100755	100644
+openair1/PHY/impl_defs_lte_NB_IoT.h	content-different	True	100755	100644
+openair1/PHY/impl_defs_nr.h	content-different	True	100755	100644
+openair1/PHY/impl_defs_top.h	content-different	True	100755	100644
+openair1/PHY/log_tools.c	Sionna-only	False		100644
+openair1/PHY/log_tools.h	Sionna-only	False		100644
+openair1/PHY/nr_phy_common/CMakeLists.txt	content-different	True	100755	100644
+openair1/PHY/nr_phy_common/inc/nr_phy_common.h	content-different	True	100755	100644
+openair1/PHY/nr_phy_common/inc/nr_ue_phy_meas.h	content-different	True	100755	100644
+openair1/PHY/nr_phy_common/src/nr_phy_common.c	content-different	True	100755	100644
+openair1/PHY/nr_phy_common/src/nr_phy_common_csirs.c	Sionna-only	False		100644
+openair1/PHY/phy_extern.h	content-different	True	100755	100644
+openair1/PHY/phy_vars.h	content-different	True	100755	100644
+openair1/PHY/sse_intrin.h	content-different	True	100755	100644
+openair1/SCHED/nfapi_lte_dummy.c	content-different	True	100755	100644
+openair1/SCHED/nfapi_nr_dummy.c	content-different	True	100755	100644
+openair1/SCHED/phy_procedures_lte_eNb.c	content-different	True	100755	100644
+openair1/SCHED/prach_procedures.c	content-different	True	100755	100644
+openair1/SCHED/ru_procedures.c	content-different	True	100755	100644
+openair1/SCHED_NR/fapi_nr_l1.c	content-different	True	100755	100644
+openair1/SCHED_NR/fapi_nr_l1.h	content-different	True	100755	100644
+openair1/SCHED_NR/nr_prach_procedures.c	content-different	True	100755	100644
+openair1/SCHED_NR/nr_ru_procedures.c	content-different	True	100755	100644
+openair1/SCHED_NR/phy_frame_config_nr.c	content-different	True	100755	100644
+openair1/SCHED_NR/phy_frame_config_nr.h	content-different	True	100755	100644
+openair1/SCHED_NR/phy_procedures_nr_gNB.c	content-different	True	100755	100644
+openair1/SCHED_NR/sched_nr.h	content-different	True	100755	100644
+openair1/SCHED_NR_UE/defs.h	content-different	True	100755	100644
+openair1/SCHED_NR_UE/fapi_nr_ue_l1.c	content-different	True	100755	100644
+openair1/SCHED_NR_UE/fapi_nr_ue_l1.h	content-different	True	100755	100644
+openair1/SCHED_NR_UE/harq_nr.c	content-different	True	100755	100644
+openair1/SCHED_NR_UE/harq_nr.h	content-different	True	100755	100644
+openair1/SCHED_NR_UE/phy_frame_config_nr.h	EdgeRIC-only	False	100755	
+openair1/SCHED_NR_UE/phy_frame_config_nr_ue.c	EdgeRIC-only	False	100755	
+openair1/SCHED_NR_UE/phy_procedures_nr_ue.c	content-different	True	100755	100644
+openair1/SCHED_NR_UE/phy_procedures_nr_ue_sl.c	content-different	True	100755	100644
+openair1/SCHED_NR_UE/pucch_uci_ue_nr.c	content-different	True	100755	100644
+openair1/SCHED_NR_UE/pucch_uci_ue_nr.h	content-different	True	100755	100644
+openair1/SCHED_UE/phy_procedures_lte_ue.c	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/common_sim.h	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/dlsim.c	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/dlsim_tm4.c	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/dlsim_tm7.c	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/framegen.c	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/mbmssim.c	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/pbchsim.c	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/pdcchsim.c	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/prachsim.c	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/pucchsim.c	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/scansim.c	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/syncsim.c	content-different	True	100755	100644
+openair1/SIMULATION/LTE_PHY/ulsim.c	content-different	True	100755	100644
+openair1/SIMULATION/NR_PHY/BLER_SIMULATIONS/AWGN/AWGN_results/bler_sigma_fit.csv	Sionna-only	False		100644
+openair1/SIMULATION/NR_PHY/dlschsim.c	content-different	True	100755	100644
+openair1/SIMULATION/NR_PHY/dlsim.c	content-different	True	100755	100644
+openair1/SIMULATION/NR_PHY/nr_dummy_functions.c	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_PHY/nr_unitary_common.c	Sionna-only	False		100644
+openair1/SIMULATION/NR_PHY/nr_unitary_defs.h	content-different	True	100755	100644
+openair1/SIMULATION/NR_PHY/pbchsim.c	content-different	True	100755	100644
+openair1/SIMULATION/NR_PHY/prachsim.c	content-different	True	100755	100644
+openair1/SIMULATION/NR_PHY/psbchsim.c	content-different	True	100755	100644
+openair1/SIMULATION/NR_PHY/pucchsim.c	content-different	True	100755	100644
+openair1/SIMULATION/NR_PHY/ulschsim.c	content-different	True	100755	100644
+openair1/SIMULATION/NR_PHY/ulsim.c	content-different	True	100755	100644
+openair1/SIMULATION/NR_UE_PHY/unit_tests/build/CMakeLists.txt	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/build/reflogs/frame_config_test.txt	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/build/reflogs/harq_test.txt	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/build/reflogs/pbch_test.txt	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/build/reflogs/pss_test.txt	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/build/reflogs/pucch_uci_test.txt	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/build/reflogs/srs_test.txt	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/build/reflogs/sss_test.txt	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/build/run_tests.sh	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/readme.txt	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/src/dummy_functions.c	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/src/frame_config_test.c	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/src/harq_test.c	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/src/input_buffer_test.h	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/src/pbch_test.c	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/src/pss_test.c	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/src/pss_util_test.c	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/src/pss_util_test.h	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/src/pucch_uci_generator_test.c	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/src/pucch_uci_test.c	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/src/srs_test.c	EdgeRIC-only	False	100755	
+openair1/SIMULATION/NR_UE_PHY/unit_tests/src/sss_test.c	EdgeRIC-only	False	100755	
+openair1/SIMULATION/RF/dac.c	content-different	True	100755	100644
+openair1/SIMULATION/TOOLS/DOC/channel_simulation.md	content-different	True	100755	100644
+openair1/SIMULATION/TOOLS/channel_sim.c	content-different	True	100755	100644
+openair1/SIMULATION/TOOLS/multipath_channel.c	content-different	True	100755	100644
+openair1/SIMULATION/TOOLS/multipath_tv_channel.c	content-different	True	100755	100644
+openair1/SIMULATION/TOOLS/phase_noise.c	content-different	True	100755	100644
+openair1/SIMULATION/TOOLS/random_channel.c	content-different	True	100755	100644
+openair1/SIMULATION/TOOLS/rangen_double.c	content-different	True	100755	100644
+openair1/SIMULATION/TOOLS/sim.h	content-different	True	100755	100644
+openair1/SIMULATION/TOOLS/taus.c	content-different	True	100755	100644
+openair2/COMMON/as_message.h	content-different	True	100755	100644
+openair2/COMMON/commonDef.h	content-different	True	100755	100644
+openair2/COMMON/e1ap_messages_def.h	content-different	True	100755	100644
+openair2/COMMON/e1ap_messages_types.h	content-different	True	100755	100644
+openair2/COMMON/f1ap_messages_def.h	content-different	True	100755	100644
+openair2/COMMON/f1ap_messages_types.h	content-different	True	100755	100644
+openair2/COMMON/gtpv1_u_messages_def.h	content-different	True	100755	100644
+openair2/COMMON/gtpv1_u_messages_types.h	content-different	True	100755	100644
+openair2/COMMON/mac_messages_def.h	content-different	True	100755	100644
+openair2/COMMON/mac_messages_types.h	content-different	True	100755	100644
+openair2/COMMON/ngap_messages_def.h	content-different	True	100755	100644
+openair2/COMMON/ngap_messages_types.h	content-different	True	100755	100644
+openair2/COMMON/rrc_messages_def.h	content-different	True	100755	100644
+openair2/COMMON/rrc_messages_types.h	content-different	True	100755	100644
+openair2/COMMON/s1ap_messages_types.h	content-different	True	100755	100644
+openair2/COMMON/sctp_messages_types.h	content-different	True	100755	100644
+openair2/E1AP/CMakeLists.txt	content-different	True	100755	100644
+openair2/E1AP/MESSAGES/CMakeLists.txt	content-different	True	100755	100644
+openair2/E1AP/e1ap.c	content-different	True	100755	100644
+openair2/E1AP/e1ap.h	content-different	True	100755	100644
+openair2/E1AP/e1ap_common.c	content-different	True	100755	100644
+openair2/E1AP/e1ap_common.h	content-different	True	100755	100644
+openair2/E1AP/e1ap_setup.c	content-different	True	100755	100644
+openair2/E1AP/lib/CMakeLists.txt	Sionna-only	False		100644
+openair2/E1AP/lib/e1ap_bearer_context_management.c	Sionna-only	False		100644
+openair2/E1AP/lib/e1ap_bearer_context_management.h	Sionna-only	False		100644
+openair2/E1AP/lib/e1ap_interface_management.c	Sionna-only	False		100644
+openair2/E1AP/lib/e1ap_interface_management.h	Sionna-only	False		100644
+openair2/E1AP/lib/e1ap_lib_common.c	Sionna-only	False		100644
+openair2/E1AP/lib/e1ap_lib_common.h	Sionna-only	False		100644
+openair2/E1AP/lib/e1ap_lib_includes.h	Sionna-only	False		100644
+openair2/E1AP/tests/CMakeLists.txt	Sionna-only	False		100644
+openair2/E1AP/tests/e1ap_lib_test.c	Sionna-only	False		100644
+openair2/E2AP/RAN_FUNCTION/CMakeLists.txt	content-different	True	100755	100644
+openair2/E2AP/RAN_FUNCTION/CUSTOMIZED/ran_func_gtp.c	content-different	True	100755	100644
+openair2/E2AP/RAN_FUNCTION/CUSTOMIZED/ran_func_mac.c	content-different	True	100755	100644
+openair2/E2AP/RAN_FUNCTION/CUSTOMIZED/ran_func_pdcp.c	content-different	True	100755	100644
+openair2/E2AP/RAN_FUNCTION/CUSTOMIZED/ran_func_rlc.c	content-different	True	100755	100644
+openair2/E2AP/RAN_FUNCTION/O-RAN/ran_e2sm_ue_id.c	content-different	True	100755	100644
+openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_kpm.c	content-different	True	100755	100644
+openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc.c	content-different	True	100755	100644
+openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc_extern.h	content-different	True	100755	100644
+openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc_subs.c	content-different	True	100755	100644
+openair2/E2AP/RAN_FUNCTION/O-RAN/ran_func_rc_subs.h	content-different	True	100755	100644
+openair2/E2AP/README.md	content-different	True	100755	100644
+openair2/E2AP/flexric	Sionna-only	False		160000
+openair2/ENB_APP/enb_app.c	content-different	True	100755	100644
+openair2/ENB_APP/enb_config.c	content-different	True	100755	100644
+openair2/ENB_APP/enb_paramdef.h	content-different	True	100755	100644
+openair2/ENB_APP/enb_paramdef_emtc.h	content-different	True	100755	100644
+openair2/F1AP/CMakeLists.txt	content-different	True	100755	100644
+openair2/F1AP/MESSAGES/CMakeLists.txt	content-different	True	100755	100644
+openair2/F1AP/f1ap_common.h	content-different	True	100755	100644
+openair2/F1AP/f1ap_cu_interface_management.c	content-different	True	100755	100644
+openair2/F1AP/f1ap_cu_interface_management.h	content-different	True	100755	100644
+openair2/F1AP/f1ap_cu_rrc_message_transfer.c	content-different	True	100755	100644
+openair2/F1AP/f1ap_cu_task.c	content-different	True	100755	100644
+openair2/F1AP/f1ap_cu_ue_context_management.c	content-different	True	100755	100644
+openair2/F1AP/f1ap_cu_ue_context_management.h	content-different	True	100755	100644
+openair2/F1AP/f1ap_cu_warning_message_transmission.c	EdgeRIC-only	False	100755	
+openair2/F1AP/f1ap_cu_warning_message_transmission.h	EdgeRIC-only	False	100755	
+openair2/F1AP/f1ap_du_interface_management.c	content-different	True	100755	100644
+openair2/F1AP/f1ap_du_interface_management.h	content-different	True	100755	100644
+openair2/F1AP/f1ap_du_rrc_message_transfer.c	content-different	True	100755	100644
+openair2/F1AP/f1ap_du_rrc_message_transfer.h	content-different	True	100755	100644
+openair2/F1AP/f1ap_du_system_information.c	EdgeRIC-only	False	100755	
+openair2/F1AP/f1ap_du_system_information.h	EdgeRIC-only	False	100755	
+openair2/F1AP/f1ap_du_task.c	content-different	True	100755	100644
+openair2/F1AP/f1ap_du_ue_context_management.c	content-different	True	100755	100644
+openair2/F1AP/f1ap_du_ue_context_management.h	content-different	True	100755	100644
+openair2/F1AP/f1ap_du_warning_message_transmission.c	EdgeRIC-only	False	100755	
+openair2/F1AP/f1ap_du_warning_message_transmission.h	EdgeRIC-only	False	100755	
+openair2/F1AP/f1ap_encoder.c	content-different	True	100755	100644
+openair2/F1AP/f1ap_handlers.c	content-different	True	100755	100644
+openair2/F1AP/f1ap_ids.c	content-different	True	100755	100644
+openair2/F1AP/f1ap_ids.h	content-different	True	100755	100644
+openair2/F1AP/f1ap_ids_test.c	content-different	True	100755	100644
+openair2/F1AP/lib/CMakeLists.txt	Sionna-only	False		100644
+openair2/F1AP/lib/f1ap_interface_management.c	Sionna-only	False		100644
+openair2/F1AP/lib/f1ap_interface_management.h	Sionna-only	False		100644
+openair2/F1AP/lib/f1ap_lib_common.c	Sionna-only	False		100644
+openair2/F1AP/lib/f1ap_lib_common.h	Sionna-only	False		100644
+openair2/F1AP/lib/f1ap_lib_includes.h	Sionna-only	False		100644
+openair2/F1AP/lib/f1ap_rrc_message_transfer.c	Sionna-only	False		100644
+openair2/F1AP/lib/f1ap_rrc_message_transfer.h	Sionna-only	False		100644
+openair2/F1AP/lib/f1ap_ue_context.c	Sionna-only	False		100644
+openair2/F1AP/lib/f1ap_ue_context.h	Sionna-only	False		100644
+openair2/F1AP/tests/CMakeLists.txt	Sionna-only	False		100644
+openair2/F1AP/tests/f1ap_lib_test.c	Sionna-only	False		100644
+openair2/GNB_APP/L1_nr_paramdef.h	content-different	True	100755	100644
+openair2/GNB_APP/MACRLC_nr_paramdef.h	content-different	True	100755	100644
+openair2/GNB_APP/RRC_nr_paramsvalues.h	content-different	True	100755	100644
+openair2/GNB_APP/gnb_app.c	content-different	True	100755	100644
+openair2/GNB_APP/gnb_config.c	content-different	True	100755	100644
+openair2/GNB_APP/gnb_config.h	content-different	True	100755	100644
+openair2/GNB_APP/gnb_paramdef.h	content-different	True	100755	100644
+openair2/LAYER2/CMakeLists.txt	content-different	True	100755	100644
+openair2/LAYER2/MAC/dummy_functions.c	Sionna-only	False		100644
+openair2/LAYER2/MAC/eNB_scheduler.c	content-different	True	100755	100644
+openair2/LAYER2/MAC/eNB_scheduler_RA.c	content-different	True	100755	100644
+openair2/LAYER2/MAC/eNB_scheduler_fairRR.c	content-different	True	100755	100644
+openair2/LAYER2/MAC/eNB_scheduler_primitives.c	content-different	True	100755	100644
+openair2/LAYER2/MAC/eNB_scheduler_ulsch.c	content-different	True	100755	100644
+openair2/LAYER2/MAC/mac.h	content-different	True	100755	100644
+openair2/LAYER2/MAC/mac_proto.h	content-different	True	100755	100644
+openair2/LAYER2/MAC/main.c	content-different	True	100755	100644
+openair2/LAYER2/MAC/main_ue.c	content-different	True	100755	100644
+openair2/LAYER2/MAC/pre_processor.c	content-different	True	100755	100644
+openair2/LAYER2/MAC/ue_procedures.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_COMMON/nr_compute_tbs_common.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_COMMON/nr_mac.h	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_COMMON/nr_mac_common.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_COMMON/nr_mac_common.h	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_COMMON/nr_mac_common_tdd.c	Sionna-only	False		100644
+openair2/LAYER2/NR_MAC_COMMON/nr_mac_extern.h	EdgeRIC-only	False	100755	
+openair2/LAYER2/NR_MAC_COMMON/nr_prach_config.h	Sionna-only	False		100644
+openair2/LAYER2/NR_MAC_UE/CMakeLists.txt	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/config_ue.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/config_ue_sl.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/mac_defs.h	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/mac_extern.h	EdgeRIC-only	False	100755	
+openair2/LAYER2/NR_MAC_UE/mac_proto.h	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/mac_tables.c	Sionna-only	False		100644
+openair2/LAYER2/NR_MAC_UE/mac_vars.c	EdgeRIC-only	False	100755	
+openair2/LAYER2/NR_MAC_UE/main_ue_nr.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/nr_ra_procedures.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/nr_ue_dci_configuration.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/nr_ue_power_procedures.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/nr_ue_procedures.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/nr_ue_scheduler.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/nr_ue_scheduler_sl.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/tests/CMakeLists.txt	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_power_procedures.cpp	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_UE/tests/test_nr_ue_ra_procedures.cpp	Sionna-only	False		100644
+openair2/LAYER2/NR_MAC_gNB/backup/gNB_scheduler_dlsch.c	EdgeRIC-only	False	100755	
+openair2/LAYER2/NR_MAC_gNB/backup/gNB_scheduler_ulsch.c	EdgeRIC-only	False	100755	
+openair2/LAYER2/NR_MAC_gNB/config.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/gNB_scheduler.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_RA.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_bch.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_phytest.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_primitives.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_srs.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_uci.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/mac_config.h	Sionna-only	False		100644
+openair2/LAYER2/NR_MAC_gNB/mac_proto.h	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/mac_rrc_dl_handler.h	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/mac_rrc_ul.h	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/mac_rrc_ul_direct.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/mac_rrc_ul_f1ap.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/main.c	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/nr_mac_gNB.h	content-different	True	100755	100644
+openair2/LAYER2/NR_MAC_gNB/nr_radio_config.c	Sionna-only	False		100644
+openair2/LAYER2/NR_MAC_gNB/nr_radio_config.h	Sionna-only	False		100644
+openair2/LAYER2/PDCP_v10.1.0/pdcp.c	content-different	True	100755	100644
+openair2/LAYER2/PDCP_v10.1.0/pdcp_fifo.c	content-different	True	100755	100644
+openair2/LAYER2/RLC/rlc.h	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/CMakeLists.txt	Sionna-only	False		100644
+openair2/LAYER2/nr_pdcp/asn1_utils.c	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/cucp_cuup_handler.c	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/cucp_cuup_handler.h	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_asn1_utils.h	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_configuration.h	Sionna-only	False		100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_entity.c	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_entity.h	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_integrity_nia1.c	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_integrity_nia1.h	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_integrity_nia2.c	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_integrity_nia2.h	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_oai_api.c	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_oai_api.h	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_security_nea1.c	Sionna-only	False		100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_security_nea1.h	Sionna-only	False		100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_security_nea2.c	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_security_nea2.h	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_timer_thread.c	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_timer_thread.h	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/nr_pdcp_ue_manager.h	content-different	True	100755	100644
+openair2/LAYER2/nr_pdcp/tests/CMakeLists.txt	Sionna-only	False		100644
+openair2/LAYER2/nr_pdcp/tests/snow3g_tests.c	Sionna-only	False		100644
+openair2/LAYER2/nr_rlc/CMakeLists.txt	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/asn1_utils.c	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/nr_rlc_asn1_utils.h	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/nr_rlc_configuration.h	Sionna-only	False		100644
+openair2/LAYER2/nr_rlc/nr_rlc_entity.c	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/nr_rlc_entity_am.c	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/nr_rlc_entity_am.h	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/nr_rlc_oai_api.c	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/nr_rlc_oai_api.h	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/nr_rlc_rx_manager.c	Sionna-only	False		100644
+openair2/LAYER2/nr_rlc/nr_rlc_rx_manager.h	Sionna-only	False		100644
+openair2/LAYER2/nr_rlc/nr_rlc_sdu.c	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/nr_rlc_sdu.h	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/nr_rlc_ue_manager.c	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/nr_rlc_ue_manager.h	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/tests/CMakeLists.txt	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/tests/Makefile	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/tests/benchmark_nr_rlc_am_entity.cpp	Sionna-only	False		100644
+openair2/LAYER2/nr_rlc/tests/test.c	content-different	True	100755	100644
+openair2/LAYER2/nr_rlc/tests/test_nr_rlc_am_entity.cpp	Sionna-only	False		100644
+openair2/LAYER2/rlc_v2/rlc_oai_api.c	content-different	True	100755	100644
+openair2/LAYER2/rlc_v2/rlc_ue_manager.c	content-different	True	100755	100644
+openair2/M2AP/MESSAGES/CMakeLists.txt	content-different	True	100755	100644
+openair2/M2AP/m2ap_MCE_interface_management.c	content-different	True	100755	100644
+openair2/M2AP/m2ap_common.c	content-different	True	100755	100644
+openair2/M2AP/m2ap_common.h	content-different	True	100755	100644
+openair2/M2AP/m2ap_decoder.c	content-different	True	100755	100644
+openair2/M2AP/m2ap_encoder.c	content-different	True	100755	100644
+openair2/M2AP/m2ap_timers.c	content-different	True	100755	100644
+openair2/MCE_APP/mce_app.c	content-different	True	100755	100644
+openair2/NR_PHY_INTERFACE/NR_IF_Module.c	content-different	True	100755	100644
+openair2/NR_PHY_INTERFACE/NR_IF_Module.h	content-different	True	100755	100644
+openair2/NR_PHY_INTERFACE/nr_sched_response.c	content-different	True	100755	100644
+openair2/NR_UE_PHY_INTERFACE/NR_IF_Module.c	content-different	True	100755	100644
+openair2/NR_UE_PHY_INTERFACE/NR_IF_Module.h	content-different	True	100755	100644
+openair2/NR_UE_PHY_INTERFACE/NR_Packet_Drop.c	content-different	True	100755	100644
+openair2/NR_UE_PHY_INTERFACE/NR_Packet_Drop.h	content-different	True	100755	100644
+openair2/PHY_INTERFACE/IF_Module.h	content-different	True	100755	100644
+openair2/PHY_INTERFACE/phy_stub_UE.c	content-different	True	100755	100644
+openair2/RRC/L2_INTERFACE/openair_rrc_L2_interface.h	content-different	True	100755	100644
+openair2/RRC/LTE/MESSAGES/CMakeLists.txt	content-different	True	100755	100644
+openair2/RRC/LTE/MESSAGES/asn1_msg.c	content-different	True	100755	100644
+openair2/RRC/LTE/defs_NB_IoT.h	content-different	True	100755	100644
+openair2/RRC/LTE/extern_NB_IoT.h	content-different	True	100755	100644
+openair2/RRC/LTE/rrc_UE.c	content-different	True	100755	100644
+openair2/RRC/LTE/rrc_common.c	content-different	True	100755	100644
+openair2/RRC/LTE/rrc_defs.h	content-different	True	100755	100644
+openair2/RRC/LTE/rrc_eNB.c	content-different	True	100755	100644
+openair2/RRC/LTE/rrc_eNB_GTPV1U.h	content-different	True	100755	100644
+openair2/RRC/LTE/rrc_eNB_S1AP.c	content-different	True	100755	100644
+openair2/RRC/LTE/rrc_extern.h	content-different	True	100755	100644
+openair2/RRC/LTE/rrc_proto.h	content-different	True	100755	100644
+openair2/RRC/LTE/rrc_types.h	content-different	True	100755	100644
+openair2/RRC/LTE/rrc_vars.h	content-different	True	100755	100644
+openair2/RRC/NR/MESSAGES/CMakeLists.txt	content-different	True	100755	100644
+openair2/RRC/NR/MESSAGES/asn1_msg.c	content-different	True	100755	100644
+openair2/RRC/NR/MESSAGES/asn1_msg.h	content-different	True	100755	100644
+openair2/RRC/NR/MESSAGES/tests/CMakeLists.txt	content-different	True	100755	100644
+openair2/RRC/NR/MESSAGES/tests/test_asn1_msg.cpp	content-different	True	100755	100644
+openair2/RRC/NR/cucp_cuup_direct.c	content-different	True	100755	100644
+openair2/RRC/NR/cucp_cuup_e1ap.c	content-different	True	100755	100644
+openair2/RRC/NR/cucp_cuup_if.h	content-different	True	100755	100644
+openair2/RRC/NR/mac_rrc_dl.h	content-different	True	100755	100644
+openair2/RRC/NR/mac_rrc_dl_direct.c	content-different	True	100755	100644
+openair2/RRC/NR/mac_rrc_dl_f1ap.c	content-different	True	100755	100644
+openair2/RRC/NR/nr_rrc_common.c	EdgeRIC-only	False	100755	
+openair2/RRC/NR/nr_rrc_common.h	content-different	True	100755	100644
+openair2/RRC/NR/nr_rrc_config.c	EdgeRIC-only	False	100755	
+openair2/RRC/NR/nr_rrc_config.h	EdgeRIC-only	False	100755	
+openair2/RRC/NR/nr_rrc_defs.h	content-different	True	100755	100644
+openair2/RRC/NR/nr_rrc_extern.h	EdgeRIC-only	False	100755	
+openair2/RRC/NR/nr_rrc_proto.h	content-different	True	100755	100644
+openair2/RRC/NR/rrc_gNB.c	content-different	True	100755	100644
+openair2/RRC/NR/rrc_gNB_GTPV1U.c	EdgeRIC-only	False	100755	
+openair2/RRC/NR/rrc_gNB_GTPV1U.h	EdgeRIC-only	False	100755	
+openair2/RRC/NR/rrc_gNB_NGAP.c	content-different	True	100755	100644
+openair2/RRC/NR/rrc_gNB_NGAP.h	content-different	True	100755	100644
+openair2/RRC/NR/rrc_gNB_UE_context.c	content-different	True	100755	100644
+openair2/RRC/NR/rrc_gNB_UE_context.h	content-different	True	100755	100644
+openair2/RRC/NR/rrc_gNB_cuup.c	content-different	True	100755	100644
+openair2/RRC/NR/rrc_gNB_du.c	content-different	True	100755	100644
+openair2/RRC/NR/rrc_gNB_du.h	content-different	True	100755	100644
+openair2/RRC/NR/rrc_gNB_internode.c	EdgeRIC-only	False	100755	
+openair2/RRC/NR/rrc_gNB_mobility.c	Sionna-only	False		100644
+openair2/RRC/NR/rrc_gNB_mobility.h	Sionna-only	False		100644
+openair2/RRC/NR/rrc_gNB_nsa.c	content-different	True	100755	100644
+openair2/RRC/NR/rrc_gNB_radio_bearers.c	content-different	True	100755	100644
+openair2/RRC/NR/rrc_gNB_radio_bearers.h	content-different	True	100755	100644
+openair2/RRC/NR/rrc_gNB_reconfig.c	EdgeRIC-only	False	100755	
+openair2/RRC/NR_UE/L2_interface_ue.c	content-different	True	100755	100644
+openair2/RRC/NR_UE/L2_interface_ue.h	content-different	True	100755	100644
+openair2/RRC/NR_UE/main_ue.c	content-different	True	100755	100644
+openair2/RRC/NR_UE/rrc_UE.c	content-different	True	100755	100644
+openair2/RRC/NR_UE/rrc_defs.h	content-different	True	100755	100644
+openair2/RRC/NR_UE/rrc_proto.h	content-different	True	100755	100644
+openair2/RRC/NR_UE/rrc_sl_preconfig.c	content-different	True	100755	100644
+openair2/RRC/NR_UE/rrc_timers_and_constants.c	content-different	True	100755	100644
+openair2/SDAP/nr_sdap/nr_sdap.c	content-different	True	100755	100644
+openair2/SDAP/nr_sdap/nr_sdap.h	content-different	True	100755	100644
+openair2/SDAP/nr_sdap/nr_sdap_entity.c	content-different	True	100755	100644
+openair2/SDAP/nr_sdap/nr_sdap_entity.h	content-different	True	100755	100644
+openair2/UTIL/OMG/omg.c	content-different	True	100755	100644
+openair2/UTIL/OPT/probe.c	content-different	True	100755	100644
+openair2/X2AP/MESSAGES/CMakeLists.txt	content-different	True	100755	100644
+openair2/X2AP/x2ap_common.c	content-different	True	100755	100644
+openair2/X2AP/x2ap_common.h	content-different	True	100755	100644
+openair2/X2AP/x2ap_eNB.c	content-different	True	100755	100644
+openair2/X2AP/x2ap_eNB.h	content-different	True	100755	100644
+openair2/X2AP/x2ap_eNB_decoder.c	content-different	True	100755	100644
+openair2/X2AP/x2ap_eNB_encoder.c	content-different	True	100755	100644
+openair2/X2AP/x2ap_eNB_management_procedures.c	content-different	True	100755	100644
+openair2/X2AP/x2ap_timers.c	content-different	True	100755	100644
+openair2/XNAP/MESSAGES/CMakeLists.txt	content-different	True	100755	100644
+openair3/CMakeLists.txt	content-different	True	100755	100644
+openair3/LPP/MESSAGES/CMakeLists.txt	content-different	True	100755	100644
+openair3/M3AP/MESSAGES/CMakeLists.txt	content-different	True	100755	100644
+openair3/M3AP/m3ap_common.c	content-different	True	100755	100644
+openair3/M3AP/m3ap_common.h	content-different	True	100755	100644
+openair3/M3AP/m3ap_decoder.c	content-different	True	100755	100644
+openair3/M3AP/m3ap_encoder.c	content-different	True	100755	100644
+openair3/M3AP/m3ap_timers.c	content-different	True	100755	100644
+openair3/MME_APP/mme_app.c	content-different	True	100755	100644
+openair3/NAS/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/COMMON/API/NETWORK/as_message.c	content-different	True	100755	100644
+openair3/NAS/COMMON/API/NETWORK/nas_message.c	content-different	True	100755	100644
+openair3/NAS/COMMON/API/NETWORK/nas_message.h	content-different	True	100755	100644
+openair3/NAS/COMMON/API/NETWORK/network_api.c	content-different	True	100755	100644
+openair3/NAS/COMMON/API/NETWORK/network_api.h	content-different	True	100755	100644
+openair3/NAS/COMMON/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/COMMON/EMM/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/COMMON/EMM/MSG/AttachRequest.c	content-different	True	100755	100644
+openair3/NAS/COMMON/EMM/MSG/AuthenticationRequest.c	content-different	True	100755	100644
+openair3/NAS/COMMON/EMM/MSG/DetachRequest.c	content-different	True	100755	100644
+openair3/NAS/COMMON/EMM/MSG/ExtendedServiceRequest.c	content-different	True	100755	100644
+openair3/NAS/COMMON/EMM/MSG/FGSAuthenticationResponse.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/FGSAuthenticationResponse.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/FGSDeregistrationRequestUEOriginating.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/FGSDeregistrationRequestUEOriginating.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/FGSIdentityResponse.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/FGSIdentityResponse.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/FGSNASSecurityModeComplete.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/FGSNASSecurityModeComplete.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/FGSUplinkNasTransport.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/FGSUplinkNasTransport.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/RegistrationAccept.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/RegistrationAccept.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/RegistrationComplete.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/RegistrationComplete.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/RegistrationRequest.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/RegistrationRequest.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/EMM/MSG/SecurityModeCommand.c	content-different	True	100755	100644
+openair3/NAS/COMMON/EMM/MSG/TrackingAreaUpdateRequest.c	content-different	True	100755	100644
+openair3/NAS/COMMON/EMM/MSG/emm_msg.c	content-different	True	100755	100644
+openair3/NAS/COMMON/ESM/MSG/PduSessionEstablishRequest.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/ESM/MSG/PduSessionEstablishRequest.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/ESM/MSG/PduSessionEstablishmentAccept.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/ESM/MSG/PduSessionEstablishmentAccept.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/ESM/MSG/esm_msg.c	content-different	True	100755	100644
+openair3/NAS/COMMON/IES/AuthenticationResponseParameter.c	content-different	True	100755	100644
+openair3/NAS/COMMON/IES/AuthenticationResponseParameter.h	content-different	True	100755	100644
+openair3/NAS/COMMON/IES/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/COMMON/IES/ExtendedProtocolDiscriminator.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/ExtendedProtocolDiscriminator.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/FGCNasMessageContainer.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/FGCNasMessageContainer.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/FGMMCapability.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/FGMMCapability.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/FGSDeregistrationType.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/FGSMobileIdentity.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/FGSMobileIdentity.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/FGSRegistrationResult.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/FGSRegistrationResult.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/FGSRegistrationType.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/FGSRegistrationType.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/NasKeySetIdentifier.c	content-different	True	100755	100644
+openair3/NAS/COMMON/IES/NasKeySetIdentifier.h	content-different	True	100755	100644
+openair3/NAS/COMMON/IES/NrUESecurityCapability.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/NrUESecurityCapability.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/SORTransparentContainer.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/SORTransparentContainer.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/SpareHalfOctet.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/IES/SpareHalfOctet.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/NR_NAS_defs.h	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/UTIL/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/COMMON/UTIL/OctetString.c	content-different	True	100755	100644
+openair3/NAS/COMMON/UTIL/OctetString.h	content-different	True	100755	100644
+openair3/NAS/COMMON/UTIL/TLVDecoder.c	content-different	True	100755	100644
+openair3/NAS/COMMON/UTIL/TLVDecoder.h	content-different	True	100755	100644
+openair3/NAS/COMMON/UTIL/TLVEncoder.c	EdgeRIC-only	False	100755	
+openair3/NAS/COMMON/UTIL/TLVEncoder.h	content-different	True	100755	100644
+openair3/NAS/COMMON/UTIL/nas_log.h	content-different	True	100755	100644
+openair3/NAS/COMMON/UTIL/nas_timer.c	content-different	True	100755	100644
+openair3/NAS/COMMON/UTIL/nas_timer.h	content-different	True	100755	100644
+openair3/NAS/COMMON/nr_common.c	EdgeRIC-only	False	100755	
+openair3/NAS/NR_UE/5GS/5GMM/IES/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/FGCNasMessageContainer.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/FGCNasMessageContainer.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/FGMMCapability.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/FGMMCapability.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/FGSDeregistrationType.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/FGSMobileIdentity.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/FGSMobileIdentity.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/FGSRegistrationType.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/FGSRegistrationType.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/NrUESecurityCapability.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/NrUESecurityCapability.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/SORTransparentContainer.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/IES/SORTransparentContainer.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/FGSAuthenticationResponse.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/FGSAuthenticationResponse.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/FGSDeregistrationRequestUEOriginating.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/FGSDeregistrationRequestUEOriginating.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/FGSIdentityResponse.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/FGSIdentityResponse.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/FGSNASSecurityModeComplete.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/FGSNASSecurityModeComplete.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/FGSNASSecurityModeReject.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/FGSNASSecurityModeReject.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/FGSUplinkNasTransport.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/FGSUplinkNasTransport.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/RegistrationAccept.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/RegistrationAccept.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/RegistrationComplete.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/RegistrationComplete.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/RegistrationRequest.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/RegistrationRequest.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_authentication_failure.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_authentication_failure.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_authentication_reject.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_authentication_reject.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_authentication_request.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_identity_request.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_identity_request.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_lib.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_lib.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_service_accept.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_service_accept.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_service_reject.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgmm_service_reject.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgs_service_request.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GMM/MSG/fgs_service_request.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GSM/MSG/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GSM/MSG/PduSessionEstablishRequest.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GSM/MSG/PduSessionEstablishRequest.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GSM/MSG/PduSessionEstablishmentAccept.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/5GSM/MSG/PduSessionEstablishmentAccept.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/NR_NAS_defs.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/fgs_nas_lib.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/fgs_nas_utils.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/tests/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/NR_UE/5GS/tests/nas_lib_test.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/NR_UE/nr_nas_msg.c	Sionna-only	False		100644
+openair3/NAS/NR_UE/nr_nas_msg.h	Sionna-only	False		100644
+openair3/NAS/NR_UE/nr_nas_msg_sim.c	EdgeRIC-only	False	100755	
+openair3/NAS/NR_UE/nr_nas_msg_sim.h	EdgeRIC-only	False	100755	
+openair3/NAS/NR_UE/ue_process_nas.c	EdgeRIC-only	False	100755	
+openair3/NAS/TEST/AS_SIMULATOR/as_process.c	content-different	True	100755	100644
+openair3/NAS/TEST/NETWORK/network_simulator.c	content-different	True	100755	100644
+openair3/NAS/TOOLS/CMakeLists.txt	Sionna-only	False		100755
+openair3/NAS/TOOLS/conf2uedata.c	content-different	True	100755	100644
+openair3/NAS/TOOLS/conf_usim.c	content-different	True	100755	100644
+openair3/NAS/TOOLS/nvram.c	content-different	True	100755	100644
+openair3/NAS/TOOLS/usim.c	content-different	True	100755	100644
+openair3/NAS/UE/API/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/UE/API/USER/tst/at_parser.out	Sionna-only	False		100644
+openair3/NAS/UE/API/USIM/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/UE/API/USIM/aka_functions.c	content-different	True	100755	100644
+openair3/NAS/UE/API/USIM/usim_api.h	content-different	True	100755	100644
+openair3/NAS/UE/CMakeLists.txt	Sionna-only	False		100644
+openair3/NAS/UE/EMM/Authentication.c	content-different	True	100755	100644
+openair3/NAS/UE/EMM/SAP/EmmDeregisteredNormalService.c	content-different	True	100755	100644
+openair3/NAS/UE/EMM/SAP/emm_as.c	content-different	True	100755	100644
+openair3/NAS/UE/EMM/SAP/emm_asDef.h	content-different	True	100755	100644
+openair3/NAS/UE/EMM/emmData.h	content-different	True	100755	100644
+openair3/NAS/UE/EMM/emm_main.c	content-different	True	100755	100644
+openair3/NAS/UE/ESM/esm_ebr_context.c	content-different	True	100755	100644
+openair3/NAS/UE/UEprocess.c	content-different	True	100755	100644
+openair3/NAS/UE/nas_itti_messaging.c	content-different	True	100755	100644
+openair3/NAS/UE/nas_itti_messaging.h	content-different	True	100755	100644
+openair3/NAS/UE/nas_network.c	content-different	True	100755	100644
+openair3/NAS/UE/nas_proc.c	content-different	True	100755	100644
+openair3/NAS/UE/nas_proc.h	content-different	True	100755	100644
+openair3/NAS/UE/nas_ue_task.c	content-different	True	100755	100644
+openair3/NAS/gNB/network_process_nas.c	EdgeRIC-only	False	100755	
+openair3/NGAP/MESSAGES/CMakeLists.txt	content-different	True	100755	100644
+openair3/NGAP/ngap_common.c	content-different	True	100755	100644
+openair3/NGAP/ngap_common.h	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB.c	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB.h	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_context_management_procedures.c	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_context_management_procedures.h	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_decoder.c	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_decoder.h	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_encoder.c	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_encoder.h	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_handlers.c	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_handlers.h	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_itti_messaging.c	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_itti_messaging.h	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_management_procedures.c	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_management_procedures.h	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_nas_procedures.c	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_nas_procedures.h	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_nnsf.c	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_nnsf.h	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_overload.c	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_overload.h	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_trace.c	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_trace.h	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_ue_context.c	content-different	True	100755	100644
+openair3/NGAP/ngap_gNB_ue_context.h	content-different	True	100755	100644
+openair3/NGAP/ngap_msg_includes.h	Sionna-only	False		100644
+openair3/NRPPA/MESSAGES/CMakeLists.txt	content-different	True	100755	100644
+openair3/S1AP/MESSAGES/CMakeLists.txt	content-different	True	100755	100644
+openair3/S1AP/s1ap_common.c	EdgeRIC-only	False	100755	
+openair3/S1AP/s1ap_common.h	content-different	True	100755	100644
+openair3/S1AP/s1ap_eNB.c	content-different	True	100755	100644
+openair3/S1AP/s1ap_eNB.h	content-different	True	100755	100644
+openair3/S1AP/s1ap_eNB_encoder.c	content-different	True	100755	100644
+openair3/S1AP/s1ap_eNB_management_procedures.c	content-different	True	100755	100644
+openair3/SCTP/sctp_common.c	content-different	True	100755	100644
+openair3/SCTP/sctp_default_values.h	content-different	True	100755	100644
+openair3/SCTP/sctp_eNB_itti_messaging.c	content-different	True	100755	100644
+openair3/SCTP/sctp_eNB_itti_messaging.h	content-different	True	100755	100644
+openair3/SCTP/sctp_eNB_task.c	content-different	True	100755	100644
+openair3/SECU/key_nas_deriver.c	content-different	True	100755	100644
+openair3/SECU/key_nas_deriver.h	content-different	True	100755	100644
+openair3/SECU/nas_stream_eea1.c	content-different	True	100755	100644
+openair3/SECU/nas_stream_eea1.h	content-different	True	100755	100644
+openair3/SECU/nas_stream_eia1.c	content-different	True	100755	100644
+openair3/SECU/snow3g.c	content-different	True	100755	100644
+openair3/SECU/snow3g.h	content-different	True	100755	100644
+openair3/TEST/test5Gnas.c	EdgeRIC-only	False	100755	
+openair3/TEST/test_s1ap.c	content-different	True	100755	100644
+openair3/UICC/CMakeLists.txt	Sionna-only	False		100644
+openair3/UTILS/conversions.h	content-different	True	100755	100644
+openair3/ocp-gtpu/gtp_itf.cpp	content-different	True	100755	100644
+openair3/ocp-gtpu/gtp_itf.h	content-different	True	100755	100644
+openair3/ocp-gtpu/gtpu_extensions.c	Sionna-only	False		100644
+openair3/ocp-gtpu/gtpu_extensions.h	Sionna-only	False		100644
+openshift/README.md	content-different	True	100755	100644
+openshift/oai-clang-bc.yaml	content-different	True	100755	100644
+openshift/oai-enb-bc.yaml	content-different	True	100755	100644
+openshift/oai-gnb-aw2s-bc.yaml	content-different	True	100755	100644
+openshift/oai-gnb-bc.yaml	content-different	True	100755	100644
+openshift/oai-gnb-fhi72-bc.yaml	content-different	True	100755	100644
+openshift/oai-lte-ue-bc.yaml	content-different	True	100755	100644
+openshift/oai-nr-cuup-bc.yaml	content-different	True	100755	100644
+openshift/oai-nr-ue-bc.yaml	content-different	True	100755	100644
+openshift/oai-physim-bc.yaml	content-different	True	100755	100644
+openshift/ran-base-bc.yaml	content-different	True	100755	100644
+openshift/ran-build-bc.yaml	content-different	True	100755	100644
+openshift/ran-build-fhi72-bc.yaml	content-different	True	100755	100644
+radio/CMakeLists.txt	content-different	True	100755	100644
+radio/COMMON/common_lib.c	content-different	True	100755	100644
+radio/COMMON/common_lib.h	content-different	True	100755	100644
+radio/COMMON/record_player.h	content-different	True	100755	100644
+radio/ETHERNET/benetel/4g/benetel.c	content-different	True	100755	100644
+radio/ETHERNET/benetel/5g/benetel.c	content-different	True	100755	100644
+radio/ETHERNET/eth_udp.c	content-different	True	100755	100644
+radio/ETHERNET/ethernet_lib.c	content-different	True	100755	100644
+radio/ETHERNET/ethernet_lib.h	content-different	True	100755	100644
+radio/USRP/README.md	content-different	True	100755	100644
+radio/USRP/usrp_lib.cpp	content-different	True	100755	100644
+radio/emulator/CMakeLists.txt	Sionna-only	False		100644
+radio/emulator/README.md	Sionna-only	False		100644
+radio/emulator/rf_emulator.c	Sionna-only	False		100644
+radio/fhi_72/CMakeLists.txt	content-different	True	100755	100644
+radio/fhi_72/README.md	Sionna-only	False		100644
+radio/fhi_72/armral_bfp_compression.c	Sionna-only	False		100644
+radio/fhi_72/armral_bfp_compression.h	Sionna-only	False		100644
+radio/fhi_72/mplane/CMakeLists.txt	Sionna-only	False		100644
+radio/fhi_72/mplane/config-mplane.c	Sionna-only	False		100644
+radio/fhi_72/mplane/config-mplane.h	Sionna-only	False		100644
+radio/fhi_72/mplane/connect-mplane.c	Sionna-only	False		100644
+radio/fhi_72/mplane/connect-mplane.h	Sionna-only	False		100644
+radio/fhi_72/mplane/get-mplane.c	Sionna-only	False		100644
+radio/fhi_72/mplane/get-mplane.h	Sionna-only	False		100644
+radio/fhi_72/mplane/init-mplane.c	Sionna-only	False		100644
+radio/fhi_72/mplane/init-mplane.h	Sionna-only	False		100644
+radio/fhi_72/mplane/rpc-send-recv.c	Sionna-only	False		100644
+radio/fhi_72/mplane/rpc-send-recv.h	Sionna-only	False		100644
+radio/fhi_72/mplane/ru-mplane-api.c	Sionna-only	False		100644
+radio/fhi_72/mplane/ru-mplane-api.h	Sionna-only	False		100644
+radio/fhi_72/mplane/subscribe-mplane.c	Sionna-only	False		100644
+radio/fhi_72/mplane/subscribe-mplane.h	Sionna-only	False		100644
+radio/fhi_72/mplane/xml/get-xml.c	Sionna-only	False		100644
+radio/fhi_72/mplane/xml/get-xml.h	Sionna-only	False		100644
+radio/fhi_72/mplane/yang/create-yang-config.c	Sionna-only	False		100644
+radio/fhi_72/mplane/yang/create-yang-config.h	Sionna-only	False		100644
+radio/fhi_72/mplane/yang/get-yang.c	Sionna-only	False		100644
+radio/fhi_72/mplane/yang/get-yang.h	Sionna-only	False		100644
+radio/fhi_72/mplane/yang/models/iana-hardware.yang	Sionna-only	False		100755
+radio/fhi_72/mplane/yang/models/iana-if-type.yang	Sionna-only	False		100644
+radio/fhi_72/mplane/yang/models/ietf-hardware.yang	Sionna-only	False		100755
+radio/fhi_72/mplane/yang/models/ietf-interfaces.yang	Sionna-only	False		100644
+radio/fhi_72/mplane/yang/models/ietf-ip.yang	Sionna-only	False		100644
+radio/fhi_72/mplane/yang/models/o-ran-compression-factors.yang	Sionna-only	False		100644
+radio/fhi_72/mplane/yang/models/o-ran-interfaces.yang	Sionna-only	False		100644
+radio/fhi_72/mplane/yang/models/o-ran-module-cap.yang	Sionna-only	False		100644
+radio/fhi_72/mplane/yang/models/o-ran-processing-element.yang	Sionna-only	False		100644
+radio/fhi_72/mplane/yang/models/o-ran-uplane-conf.yang	Sionna-only	False		100644
+radio/fhi_72/oaioran.c	content-different	True	100755	100644
+radio/fhi_72/oaioran.h	content-different	True	100755	100644
+radio/fhi_72/oran-config.c	content-different	True	100755	100644
+radio/fhi_72/oran-config.h	content-different	True	100755	100644
+radio/fhi_72/oran-init.c	content-different	True	100755	100644
+radio/fhi_72/oran-init.h	content-different	True	100755	100644
+radio/fhi_72/oran-params.h	content-different	True	100755	100644
+radio/fhi_72/oran_isolate.c	content-different	True	100755	100644
+radio/fhi_72/oran_isolate.h	content-different	True	100755	100644
+radio/rfsimulator/README.md	content-different	True	100755	100644
+radio/rfsimulator/apply_channelmod.c	content-different	True	100755	100644
+radio/rfsimulator/rfsimulator.h	content-different	True	100755	100644
+radio/rfsimulator/simulator.c	content-different	True	100755	100644
+radio/rfsimulator/stored_node.c	content-different	True	100755	100644
+radio/vrtsim/CMakeLists.txt	Sionna-only	False		100644
+radio/vrtsim/README.md	Sionna-only	False		100644
+radio/vrtsim/noise_device.c	Sionna-only	False		100644
+radio/vrtsim/noise_device.h	Sionna-only	False		100644
+radio/vrtsim/taps_client.cpp	Sionna-only	False		100644
+radio/vrtsim/taps_client.h	Sionna-only	False		100644
+radio/vrtsim/vrtsim.c	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/benetel-5g.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/cu.lte.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/du.lte.band7.10MHz.if4p5.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band257.tm1.32PRB.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band257.tm1.32PRB.usrpx300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band257.tm1.66PRB.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band261.tm1.32PRB.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band66.tm1.106PRB.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band66.tm1.106PRB.usrpx300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band66.tm1.24PRB.usrpx300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band66.tm1.25PRB.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band66.tm1.25PRB.usrpx300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.106PRB.30kHz,usrpb2x0.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.106PRB.slave.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.slave.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.tm1.106PRB.PTRS.usrpx300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.tm1.106PRB.usrpb210.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.tm1.106PRB.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.tm1.106PRB.usrpx300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.tm1.217PRB.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.tm1.217PRB.usrpx300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.tm1.24PRB.usrpb210.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.tm1.24PRB.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.tm1.24PRB.usrpx300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/gnb.band78.tm1.273PRB.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/oaiL1.nfapi.usrpb210.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/rcc.band78.tm1.106PRB.nfapi.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/testing_eNB_band13.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/testing_enb.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/testing_gnb.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/testing_gnb_24PRB.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/testing_gnb_n310.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-LTE-EPC/CONF/testing_gnb_nsa_n310.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-NR-5GC/CONF/cu_gnb.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/du_gnb.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gNB_SA_40_2x2.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-cu.sa.f1.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-du.sa.band66.25prb.rfsim.pci0.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-du.sa.band66.25prb.rfsim.pci1.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-du.sa.band77.273prb.fhi72.4x4-benetel650.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-du.sa.band77.273prb.fhi72.8x8-benetel650_650-mplane.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-du.sa.band77.273prb.fhi72.8x8-benetel650_650.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-du.sa.band78.106prb.rfsim.pci0.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-du.sa.band78.106prb.rfsim.pci1.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-pnf.band78.rfsim.2x2.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-pnf.band78.rfsim.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-vnf.sa.band78.106prb.nfapi.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-vnf.sa.band78.273prb.aerial.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-vnf.sa.band78.273prb.nfapi.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb-vnf.sa.cbrs.aerial.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.band78.sa.fr1.106PRB.2x2.usrpn310.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.band78.sa.fr1.162PRB.2x2.usrpn310.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.band78.tm1.106PRB.usrpn300.gtp-itti.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band1.u0.52PRB.usrpb210.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band254.ntn.mu1.24prb.rfsim.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band255.ntn.mu0.25prb.rfsim.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band256.ntn.mu0.25prb.rfsim.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band257.u3.32prb.usrpx410.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band41.fr1.106PRB.usrpb210.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band41.fr1.52PRB.usrpb210.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band66.fr1.106PRB.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band66.fr1.106PRB.usrpx300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band66.fr1.24PRB.usrpx300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band66.fr1.25PRB.usrpx300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band66.u0.25prb.rfsim.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band77.106prb.fhi72.4x4-vvdn.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band77.162prb.usrpn310.4x4.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band77.273prb.fhi72.2x2-vvdn.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band77.273prb.fhi72.4x4-vvdn.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band77.fr1.273PRB.2x2.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band77.fr1.273PRB.usrpx300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.106PRB.usrpb210.RA_2-Step.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.273prb.fhi72.4x2-benetel550.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.273prb.fhi72.4x4-benetel550-mplane.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.273prb.fhi72.4x4-benetel550.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.273prb.fhi72.4x4-benetel650.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.273prb.fhi72.4x4-foxconn.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.273prb.fhi72.4x4-liteon.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.273prb.fhi72.4x4-metanoia.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.2x2.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.2pattern.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.4layer.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.redcap.yaml	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.sabox.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.yaml	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.162PRB.2x2.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.162PRB.2x2.usrpn300_amari.conf	EdgeRIC-only	False	100644	
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.189PRB.rfsim.conf	Sionna-only	False		100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.217PRB.2x2.usrpn300.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.24PRB.usrpb210.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb0.prs.band261.fr2.64PRB.usrpx310.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb0.prs.band78.fr1.106PRB.usrpx310.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb1.prs.band261.fr2.64PRB.usrpx310.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb1.prs.band78.fr1.106PRB.usrpx310.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/pnf.sa.band78.rfsim.conf	EdgeRIC-only	False	100755	
+targets/PROJECTS/GENERIC-NR-5GC/CONF/ue.conf	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/uecap_ports1.xml	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/uecap_ports2.xml	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/uecap_ports4.xml	content-different	True	100755	100644
+targets/PROJECTS/GENERIC-NR-5GC/CONF/vnf.sa.band78.106prb.rfsim.conf	EdgeRIC-only	False	100755	
+tests/CMakeLists.txt	Sionna-only	False		100644
+tests/nr-cuup/CMakeLists.txt	Sionna-only	False		100644
+tests/nr-cuup/README.md	Sionna-only	False		100644
+tests/nr-cuup/load-test.conf	Sionna-only	False		100644
+tests/nr-cuup/nr-cuup-load-test.c	Sionna-only	False		100644
+tools/docker-dev-env/Dockerfile	Sionna-only	False		100644
+tools/docker-dev-env/README.md	Sionna-only	False		100644
+tools/docker-dev-env/bootstrap.sh	Sionna-only	False		100755
+tools/docker-dev-env/docker-compose.yml	Sionna-only	False		100644
+tools/formatting/README.md	Sionna-only	False		100644
+tools/formatting/detect_clang_format_errors.sh	Sionna-only	False		100755
+tools/formatting/docker-compose.yaml	Sionna-only	False		100644
+tools/iwyu/README.md	Sionna-only	False		100644
+tools/iwyu/docker-compose.yaml	Sionna-only	False		100644
+tools/plots/README.md	Sionna-only	False		100644
+tools/plots/ber_compare.svg	Sionna-only	False		100644
+tools/plots/dl_graph.py	Sionna-only	False		100644
+tools/plots/example.png	Sionna-only	False		100644
+tools/plots/requirements.txt	Sionna-only	False		100644
+tools/plots/ul_bler_vs_snr_graph.py	Sionna-only	False		100755
+tools/scripts/multi-ue.sh	Sionna-only	False		100755

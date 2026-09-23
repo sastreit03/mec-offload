@@ -1,0 +1,164 @@
+#/*
+# * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+# * contributor license agreements.  See the NOTICE file distributed with
+# * this work for additional information regarding copyright ownership.
+# * The OpenAirInterface Software Alliance licenses this file to You under
+# * the OAI Public License, Version 1.1  (the "License"); you may not use this file
+# * except in compliance with the License.
+# * You may obtain a copy of the License at
+# *
+# *      http://www.openairinterface.org/?page_id=698
+# *
+# * Unless required by applicable law or agreed to in writing, software
+# * distributed under the License is distributed on an "AS IS" BASIS,
+# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# * See the License for the specific language governing permissions and
+# * limitations under the License.
+# *-------------------------------------------------------------------------------
+# * For more information about the OpenAirInterface (OAI) Software Alliance:
+# *      contact@openairinterface.org
+# */
+#---------------------------------------------------------------------
+#
+# Dockerfile for the Open-Air-Interface BUILD service
+#   Valid for Ubuntu24.04
+#
+#---------------------------------------------------------------------
+
+ARG BASE_IMAGE=nvcr.io/nvidia/cuda:13.0.1-devel-ubuntu24.04
+ARG DOCKER_CUSTOM_IMAGE_TAG=latest
+ARG DOCKER_CUSTOM_BASE_IMAGE_TAG=${DOCKER_CUSTOM_IMAGE_TAG}
+ARG NVIDIA_DRIVER_CAPABILITIES=all
+
+FROM ran-base-cuda:${DOCKER_CUSTOM_BASE_IMAGE_TAG} AS gnb-base
+FROM ran-build-cuda:${DOCKER_CUSTOM_IMAGE_TAG} AS gnb-build
+
+
+#start from scratch for target executable
+FROM $BASE_IMAGE AS oai-gnb-cuda
+ARG BUILD_OPTION
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Paris
+ARG BOOST_VERSION="1.83.0"
+
+RUN apt-get update && \
+    apt-get upgrade --yes && \
+    apt-get install --yes \
+        software-properties-common \
+        procps \
+        libsctp1 \
+        libboost-chrono$BOOST_VERSION \
+        libboost-date-time$BOOST_VERSION \
+        libboost-filesystem$BOOST_VERSION \
+        libboost-regex$BOOST_VERSION \
+        libboost-serialization$BOOST_VERSION \
+        libboost-thread$BOOST_VERSION \
+        libboost-system$BOOST_VERSION \
+        libboost-program-options$BOOST_VERSION \
+        tzdata \
+        libblas3 \
+        libconfig9 \
+        libforms2 \
+        openssl \
+        net-tools \
+        iperf \
+        iperf3 \
+        iproute2 \
+        iputils-ping \
+        gdb \
+        gdbserver \
+        python3 \
+        python3-six \
+        python3-requests \
+        tensorrt \
+        libusb-1.0-0 \
+        libyaml-cpp-dev \
+        libzmq3-dev \
+        libcjson-dev && \
+# if the --sanitize option was used to build, additional packages are required
+    /bin/bash -c 'if [[ "$BUILD_OPTION" = "--sanitize" ]]; then DEBIAN_FRONTEND=noninteractive apt-get install --yes \
+        libasan8 \
+        libubsan1 \
+        liblapacke; fi' && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/oai-gnb/bin
+COPY --from=gnb-build \
+    /oai-ran/cmake_targets/ran_build/build/nr-softmodem ./
+COPY ./docker/scripts/gnb_entrypoint.sh ./entrypoint.sh
+COPY ./docker/scripts/check-prach-io.sh ./check-prach-io.sh
+
+COPY --from=gnb-build \
+    /oai-ran/cmake_targets/ran_build/build/liboai_eth_transpro.so \
+    /oai-ran/cmake_targets/ran_build/build/librfsimulator.so \
+    /oai-ran/cmake_targets/ran_build/build/liboai_usrpdevif.so \
+    /oai-ran/cmake_targets/ran_build/build/libcoding.so \
+    /oai-ran/cmake_targets/ran_build/build/libreceiver*.so \
+    /oai-ran/cmake_targets/ran_build/build/libparams_libconfig.so \
+    /oai-ran/cmake_targets/ran_build/build/libdfts.so \
+    /oai-ran/cmake_targets/ran_build/build/libldpc*.so \
+    /oai-ran/cmake_targets/ran_build/build/libtelnetsrv.so \
+    /oai-ran/cmake_targets/ran_build/build/libtelnetsrv_ci.so \
+    /oai-ran/cmake_targets/ran_build/build/libparams_yaml.so \
+    /oai-ran/cmake_targets/ran_build/build/libtelnetsrv_bearer.so \
+    /oai-ran/cmake_targets/ran_build/build/libtelnetsrv_5Gue.so \
+    /oai-ran/cmake_targets/ran_build/build/libtelnetsrv_rrc.so \
+    /oai-ran/cmake_targets/ran_build/build/libtelnetsrv_o1.so \
+    /oai-ran/cmake_targets/ran_build/build/libvrtsim.so \
+    /oai-ran/cmake_targets/ran_build/build/libnrscope.so \
+    /oai-ran/cmake_targets/ran_build/build/libuescope.so \
+    /oai-ran/cmake_targets/ran_build/build/libdemapper*.so \
+    /oai-ran/cmake_targets/ran_build/build/libreceiver*.so \
+    /oai-ran/cmake_targets/ran_build/build/libchn_emu.so \
+    /oai-ran/cmake_targets/ran_build/build/libcir_file.so \
+    /oai-ran/cmake_targets/ran_build/build/libcir_zmq.so \
+    /usr/local/lib/
+
+# to drop in incremental build results:
+#COPY ./override/lib/* /usr/local/lib/
+
+# Now we are copying from builder-image the UHD files.
+COPY --from=gnb-base /usr/local/bin/uhd_find_devices /usr/local/bin
+COPY --from=gnb-base /usr/local/lib/libuhd.so.4.8.0 /usr/local/lib
+COPY --from=gnb-base /usr/local/lib/uhd/utils/uhd_images_downloader.py /opt/oai-gnb/bin
+COPY --from=gnb-base /usr/local/share/uhd/images /usr/local/share/uhd/images
+
+## Copy E2 SM models
+COPY --from=gnb-build /usr/local/lib/flexric /usr/local/lib/flexric
+
+# update the USRP firmware images as needed
+RUN python3 /opt/oai-gnb/bin/uhd_images_downloader.py
+
+RUN /bin/bash -c "ln -s /usr/local/lib/liboai_usrpdevif.so /usr/local/lib/liboai_device.so" && \
+    ldconfig && \
+    echo "---- ldd on nr-softmodem ----" && \
+    ldd /opt/oai-gnb/bin/nr-softmodem && \
+    echo "---- ldd on shared libraries ----" && \
+    ldd /usr/local/lib/liboai_eth_transpro.so \
+        /usr/local/lib/librfsimulator.so \
+        /usr/local/lib/liboai_usrpdevif.so \
+        /usr/local/lib/libcoding.so \
+        /usr/local/lib/libparams_libconfig.so \
+        /usr/local/lib/libdfts.so \
+        /usr/local/lib/libldpc*.so \
+        /usr/local/lib/libtelnetsrv.so \
+        /usr/local/lib/libtelnetsrv_ci.so \
+        /usr/local/lib/libnrscope.so \
+        /usr/local/lib/libuescope.so \
+        /usr/local/lib/libuhd.so.4.8.0 \
+        /usr/local/lib/libchn_emu.so \
+        /usr/local/lib/libcir_file.so \
+        /usr/local/lib/libcir_zmq.so
+
+WORKDIR /opt/oai-gnb
+#EXPOSE 2152/udp  # S1U, GTP/UDP
+#EXPOSE 22100/tcp # ?
+#EXPOSE 36412/udp # S1C, SCTP/UDP
+#EXPOSE 36422/udp # X2C, SCTP/UDP
+#EXPOSE 50000/udp # IF5 / ORI (control)
+#EXPOSE 50001/udp # IF5 / ECPRI (data)
+
+COPY --from=gnb-base /tini /tini
+ENTRYPOINT ["/tini", "-v", "--", "/opt/oai-gnb/bin/entrypoint.sh"]
+CMD ["/opt/oai-gnb/bin/nr-softmodem"]

@@ -1,0 +1,64 @@
+{
+  "counts": {
+    "identical": 2273,
+    "content-different": 1144,
+    "EdgeRIC-only": 365,
+    "Sionna-only": 533
+  },
+  "mode_differences": 3346,
+  "mode_only": 2221,
+  "upstream_same": 3759,
+  "edgeric_entries": 3782,
+  "baseline_entries": 3771,
+  "core": [
+    {
+      "path": "conf/config.yaml",
+      "bytes": 6322,
+      "upstream_blob": "2a7002afe6510fbe9f8198ddadc0c7b9362ed7d8",
+      "edgeric_blob": "2a7002afe6510fbe9f8198ddadc0c7b9362ed7d8",
+      "result": "identical"
+    },
+    {
+      "path": "conf/sip.conf",
+      "bytes": 87,
+      "upstream_blob": "8a3f9f6b92f7d5a4e71c38a1f5823cdb47c64ec8",
+      "edgeric_blob": "8a3f9f6b92f7d5a4e71c38a1f5823cdb47c64ec8",
+      "result": "identical"
+    },
+    {
+      "path": "conf/users.conf",
+      "bytes": 375,
+      "upstream_blob": "e029274846ec2f6026e7ee210a56ce05471689fd",
+      "edgeric_blob": "e029274846ec2f6026e7ee210a56ce05471689fd",
+      "result": "identical"
+    },
+    {
+      "path": "data/queries.active",
+      "bytes": 20001,
+      "upstream_blob": "",
+      "edgeric_blob": "8bfef0eabd49630443efda04a88fc8fb2b6b67bd",
+      "result": "extra"
+    },
+    {
+      "path": "database/oai_db.sql",
+      "bytes": 15638,
+      "upstream_blob": "a6eb5c54f25c018c01930eb0b62e4ebb12ef676f",
+      "edgeric_blob": "a6eb5c54f25c018c01930eb0b62e4ebb12ef676f",
+      "result": "identical"
+    },
+    {
+      "path": "docker-compose.yaml",
+      "bytes": 5134,
+      "upstream_blob": "0baf032fbb0d3b18c0b4ee9e7958e05ee5020dfe",
+      "edgeric_blob": "0baf032fbb0d3b18c0b4ee9e7958e05ee5020dfe",
+      "result": "identical"
+    },
+    {
+      "path": "healthscripts/mysql-healthcheck.sh",
+      "bytes": 1276,
+      "upstream_blob": "6fa1728f2a27ea8db3c67438bd3511544ba59414",
+      "edgeric_blob": "6fa1728f2a27ea8db3c67438bd3511544ba59414",
+      "result": "identical"
+    }
+  ]
+}

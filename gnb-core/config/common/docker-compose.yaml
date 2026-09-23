@@ -96,7 +96,7 @@ services:
             timeout: 5s
             retries: 5
     oai-gnb:
-        image: ${GNB_IMAGE:-oai-gnb-cuda}:${GNB_TAG:-latest}
+        image: ${GNB_IMAGE:-oai-gnb-cuda}:${GNB_TAG:-edgeric-v1}
         container_name: oai-gnb
         user: ${USER_ID:-0}:${GROUP_ID:-0}
         runtime: nvidia
@@ -207,3 +207,13 @@ networks:
                 - subnet: 192.168.73.0/24
         driver_opts:
             com.docker.network.bridge.name: "e2"
+    # New network to connect MEC and EdgeRIC
+    edge_net:
+        driver: ipvlan
+        name: aether-edge-net
+        ipam:
+            config:
+                - subnet: 192.168.74.128/26
+        driver_opts:
+            ipvlan_mode: l2
+            parent: "${EDGE_NET_PARENT:-enp1s0f1np1}"

@@ -1,0 +1,74 @@
+--- OAI-2024.w34/CMakeLists.txt
++++ EdgeRIC/CMakeLists.txt
+@@ -30,6 +30,11 @@
+ set (OPENAIR_DIR     ${CMAKE_SOURCE_DIR})
+ 
+ include("cmake_targets/macros.cmake")
++#############################################################################################ALI EDIT###########################################################################
++set(CMAKE_CXX_STANDARD 17)
++set(CMAKE_CXX_STANDARD_REQUIRED ON)
++
++#####
+ 
+ ##############################
+ ### CCache: reduce compilation time
+@@ -1359,7 +1364,7 @@
+   ${NR_GNB_MAC_DIR}/gNB_scheduler_RA.c
+   ${NR_GNB_MAC_DIR}/mac_rrc_dl_handler.c
+   ${NR_GNB_MAC_DIR}/mac_rrc_ul_direct.c
+-  ${NR_GNB_MAC_DIR}/mac_rrc_ul_f1ap.c
++  ${NR_GNB_MAC_DIR}/mac_rrc_ul_f1ap.c  
+  )
+ 
+ 
+@@ -2026,19 +2031,29 @@
+   ${PHY_INTERFACE_DIR}/queue_t.c
+   ${OPENAIR1_DIR}/PHY/TOOLS/phy_scope_interface.c
+   )
+-
+-target_link_libraries(nr-softmodem PRIVATE
++  ################################################################################## Ali Edit######################################################################################
++   
++  target_link_libraries(nr-softmodem PRIVATE
+   -Wl,--start-group
+-  UTIL HASHTABLE SCTP_CLIENT SCHED_LIB SCHED_RU_LIB SCHED_NR_LIB PHY_NR PHY PHY_COMMON PHY_NR_COMMON PHY_RU GTPV1U SECURITY
++  UTIL HASHTABLE SCTP_CLIENT SCHED_LIB SCHED_RU_LIB SCHED_NR_LIB PHY_NR PHY PHY_COMMON PHY_NR_COMMON PHY_RU GTPV1U SECURITY 
+   ITTI ${NAS_UE_LIB} lte_rrc nr_rrc
+   ngap s1ap L2_LTE_NR L2_NR MAC_NR_COMMON NFAPI_LIB NFAPI_VNF_LIB NFAPI_PNF_LIB NFAPI_USER_LIB SIMU
+   x2ap f1ap m2ap m3ap e1ap shlib_loader
+-  -Wl,--end-group z dl)
++  -Wl,--end-group z dl) 
++  
++################################################################################## Ali Edit########################################################################################
++# target_link_libraries(nr-softmodem zmq)
++###################################### end
+ 
+ target_link_libraries(nr-softmodem PRIVATE pthread m CONFIG_LIB rt sctp)
+ target_link_libraries(nr-softmodem PRIVATE ${T_LIB})
+ target_link_libraries(nr-softmodem PRIVATE asn1_nr_rrc_hdrs asn1_lte_rrc_hdrs)
+ target_link_libraries(nr-softmodem PRIVATE asn1_nr_rrc_hdrs asn1_lte_rrc_hdrs)
++
++#target_include_directories(nr-softmodem PUBLIC executables/edgeric)
++#target_link_directories(nr-softmodem PUBLIC executables/edgeric)
++target_link_libraries(nr-softmodem PRIVATE edgericc) 
++
+ add_boolean_option(OAI_AERIAL OFF "Activate OAI's AERIAL driver" OFF)
+ if (OAI_AERIAL)
+   target_compile_definitions(nr-softmodem PUBLIC ENABLE_AERIAL)
+@@ -2077,7 +2092,10 @@
+   target_link_libraries(nr-cuup PRIVATE e2_agent e2_agent_arg e2_ran_func_cuup)
+   target_compile_definitions(nr-cuup PRIVATE ${E2AP_VERSION} ${KPM_VERSION} E2_AGENT)
+ endif()
+-                     
++
++
++add_subdirectory(${OPENAIR_DIR}/executables/edgeric)
++
+ # nr-uesoftmodem is  UE implementation
+ #######################################
+ 
+@@ -2376,3 +2394,4 @@
+ add_subdirectory(openair2)
+ add_subdirectory(openair3)
+ add_subdirectory(radio)
++

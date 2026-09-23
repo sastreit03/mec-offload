@@ -432,11 +432,24 @@ TRTContext& trt_receiver_init_context(int make_stream) {
         return context;
 
     printf("Initializing TRT context (TID %d)\n", (int) gettid());
+#if NV_TENSORRT_MAJOR >= 10
+    context.trt = engine->createExecutionContext(
+        nvinfer1::ExecutionContextAllocationStrategy::kSTATIC);
+#else
     context.trt = engine->createExecutionContextWithoutDeviceMemory();
+#endif
+
+    if (context.trt == nullptr) {
+        std::fprintf(stderr, "Failed to create TensorRT receiver context\n");
+        std::abort();
+    }
+
+#if NV_TENSORRT_MAJOR < 10
     size_t preallocSize = engine->getDeviceMemorySize();
-    void* preallocMem;
-    printf("Prealloc result %d for size %llu Kb\n", (int) cudaMalloc(&preallocMem, preallocSize), (unsigned long long) preallocSize / 1024);
+    void* preallocMem = nullptr;
+    CHECK_CUDA(cudaMalloc(&preallocMem, preallocSize));
     context.trt->setDeviceMemory(preallocMem);
+#endif
 
     if (make_stream) {
         int highPriority = 0;

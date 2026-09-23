@@ -1,0 +1,584 @@
+--- OAI-2024.w34/CMakeLists.txt
++++ EdgeRIC/CMakeLists.txt
+@@ -30,6 +30,11 @@
+ set (OPENAIR_DIR     ${CMAKE_SOURCE_DIR})
+ 
+ include("cmake_targets/macros.cmake")
++#############################################################################################ALI EDIT###########################################################################
++set(CMAKE_CXX_STANDARD 17)
++set(CMAKE_CXX_STANDARD_REQUIRED ON)
++
++#####
+ 
+ ##############################
+ ### CCache: reduce compilation time
+@@ -1359,7 +1364,7 @@
+   ${NR_GNB_MAC_DIR}/gNB_scheduler_RA.c
+   ${NR_GNB_MAC_DIR}/mac_rrc_dl_handler.c
+   ${NR_GNB_MAC_DIR}/mac_rrc_ul_direct.c
+-  ${NR_GNB_MAC_DIR}/mac_rrc_ul_f1ap.c
++  ${NR_GNB_MAC_DIR}/mac_rrc_ul_f1ap.c  
+  )
+ 
+ 
+@@ -2026,19 +2031,29 @@
+   ${PHY_INTERFACE_DIR}/queue_t.c
+   ${OPENAIR1_DIR}/PHY/TOOLS/phy_scope_interface.c
+   )
+-
+-target_link_libraries(nr-softmodem PRIVATE
++  ################################################################################## Ali Edit######################################################################################
++   
++  target_link_libraries(nr-softmodem PRIVATE
+   -Wl,--start-group
+-  UTIL HASHTABLE SCTP_CLIENT SCHED_LIB SCHED_RU_LIB SCHED_NR_LIB PHY_NR PHY PHY_COMMON PHY_NR_COMMON PHY_RU GTPV1U SECURITY
++  UTIL HASHTABLE SCTP_CLIENT SCHED_LIB SCHED_RU_LIB SCHED_NR_LIB PHY_NR PHY PHY_COMMON PHY_NR_COMMON PHY_RU GTPV1U SECURITY 
+   ITTI ${NAS_UE_LIB} lte_rrc nr_rrc
+   ngap s1ap L2_LTE_NR L2_NR MAC_NR_COMMON NFAPI_LIB NFAPI_VNF_LIB NFAPI_PNF_LIB NFAPI_USER_LIB SIMU
+   x2ap f1ap m2ap m3ap e1ap shlib_loader
+-  -Wl,--end-group z dl)
++  -Wl,--end-group z dl) 
++  
++################################################################################## Ali Edit########################################################################################
++# target_link_libraries(nr-softmodem zmq)
++###################################### end
+ 
+ target_link_libraries(nr-softmodem PRIVATE pthread m CONFIG_LIB rt sctp)
+ target_link_libraries(nr-softmodem PRIVATE ${T_LIB})
+ target_link_libraries(nr-softmodem PRIVATE asn1_nr_rrc_hdrs asn1_lte_rrc_hdrs)
+ target_link_libraries(nr-softmodem PRIVATE asn1_nr_rrc_hdrs asn1_lte_rrc_hdrs)
++
++#target_include_directories(nr-softmodem PUBLIC executables/edgeric)
++#target_link_directories(nr-softmodem PUBLIC executables/edgeric)
++target_link_libraries(nr-softmodem PRIVATE edgericc) 
++
+ add_boolean_option(OAI_AERIAL OFF "Activate OAI's AERIAL driver" OFF)
+ if (OAI_AERIAL)
+   target_compile_definitions(nr-softmodem PUBLIC ENABLE_AERIAL)
+@@ -2077,7 +2092,10 @@
+   target_link_libraries(nr-cuup PRIVATE e2_agent e2_agent_arg e2_ran_func_cuup)
+   target_compile_definitions(nr-cuup PRIVATE ${E2AP_VERSION} ${KPM_VERSION} E2_AGENT)
+ endif()
+-                     
++
++
++add_subdirectory(${OPENAIR_DIR}/executables/edgeric)
++
+ # nr-uesoftmodem is  UE implementation
+ #######################################
+ 
+@@ -2376,3 +2394,4 @@
+ add_subdirectory(openair2)
+ add_subdirectory(openair3)
+ add_subdirectory(radio)
++
+--- OAI-2024.w34/executables/nr-softmodem.c
++++ EdgeRIC/executables/nr-softmodem.c
+@@ -80,6 +80,7 @@
+ #include "gnb_config.h"
+ #include "openair2/E1AP/e1ap_common.h"
+ #include "LAYER2/NR_MAC_gNB/nr_mac_gNB.h"
++#include "./edgeric/wrapper.h"
+ #ifdef ENABLE_AERIAL
+ #include "nfapi/oai_integration/aerial/fapi_nvIPC.h"
+ #endif
+@@ -87,7 +88,8 @@
+ #include "openair2/E2AP/flexric/src/agent/e2_agent_api.h"
+ #include "openair2/E2AP/RAN_FUNCTION/init_ran_func.h"
+ #endif
+-
++EdgeRIC* agent;
++int tti_counter=0;
+ pthread_cond_t nfapi_sync_cond;
+ pthread_mutex_t nfapi_sync_mutex;
+ int nfapi_sync_var=-1; //!< protected by mutex \ref nfapi_sync_mutex
+@@ -591,6 +593,11 @@
+ void init_eNB_afterRU(void);
+ configmodule_interface_t *uniqCfg = NULL;
+ int main( int argc, char **argv ) {
++
++  agent = ric_create();
++  ric_init(agent);
++
++
+   int ru_id, CC_id = 0;
+   start_background_system();
+ 
+@@ -803,7 +810,7 @@
+     if (RC.ru[ru_id]->ifdevice.trx_end_func)
+       RC.ru[ru_id]->ifdevice.trx_end_func(&RC.ru[ru_id]->ifdevice);
+   }
+-
++  ric_destroy(agent);
+   free(pckg);
+   logClean();
+   printf("Bye.\n");
+--- OAI-2024.w34/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
++++ EdgeRIC/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
+@@ -43,6 +43,7 @@
+ /*Softmodem params*/
+ #include "executables/softmodem-common.h"
+ #include "../../../nfapi/oai_integration/vendor_ext.h"
++#include "./../../../executables/edgeric/wrapper.h"
+ 
+ ////////////////////////////////////////////////////////
+ /////* DLSCH MAC PDU generation (6.1.2 TS 38.321) */////
+@@ -355,6 +356,11 @@
+ 
+       sched_ctrl->dl_pdus_total += sched_ctrl->rlc_status[lcid].pdus_in_buffer;
+       sched_ctrl->num_total_bytes += sched_ctrl->rlc_status[lcid].bytes_in_buffer;
++      ////////////////////////////////////////////////////////////////////////////////////////////////
++    
++      ric_set_dl_buffer(agent, rnti, sched_ctrl->rlc_status[lcid].bytes_in_buffer);
++      
++      ////////////////////////////////////////////////////////////////////////////////////////////////
+       LOG_D(MAC,
+             "[gNB %d][%4d.%2d] %s%d->DLSCH, RLC status for UE %d: %d bytes in buffer, total DL buffer size = %d bytes, %d total PDU bytes, %s TA command\n",
+             module_id,
+@@ -624,7 +630,9 @@
+   int remainUEs = max_num_ue;
+   int curUE = 0;
+   int CC_id = 0;
+-
++  /////////////////////////////////////////////////////////////////////////////////////////////////////////
++  ric_get_mcs_from_er(agent);
++  /////////////////////////////////////////////////////////////////////////////////////////////////////////
+   /* Loop UE_info->list to check retransmission */
+   UE_iterator(UE_list, UE) {
+     if (UE->Msg4_ACKed != true)
+@@ -645,6 +653,11 @@
+     const uint32_t b = UE->mac_stats.dl.current_bytes;
+     UE->dl_thr_ue = (1 - a) * UE->dl_thr_ue + a * b;
+ 
++    //////////////////////////////parameter：tbs(tx_bytes)//////////////////////////////
++    ric_set_tx_bytes(agent, UE -> rnti, UE -> dl_thr_ue);
++    ric_set_snr(agent, UE -> rnti, sched_ctrl->pusch_snrx10 / 10);
++    ric_set_cqi(agent, UE -> rnti, sched_ctrl->CSI_report.cri_ri_li_pmi_cqi_report.wb_cqi_1tb);
++    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+     if (remainUEs == 0)
+       continue;
+ 
+@@ -674,7 +687,7 @@
+               slot);
+         continue;
+       }
+-
++     
+       /* Check DL buffer and skip this UE if no bytes and no TA necessary */
+       if (sched_ctrl->num_total_bytes == 0 && frame != (sched_ctrl->ta_frame + 100) % 1024)
+         continue;
+@@ -686,7 +699,9 @@
+       if (bo->harq_round_max == 1)
+         sched_pdsch->mcs = max_mcs;
+       else
+-        sched_pdsch->mcs = get_mcs_from_bler(bo, stats, &sched_ctrl->dl_bler_stats, max_mcs, frame);
++      /////////////////////////////////////////////////////////////////////////////////////////////////////////
++        sched_pdsch->mcs = get_mcs_from_bler_new(UE->rnti,bo, stats, &sched_ctrl->dl_bler_stats, max_mcs, frame);
++        //sched_pdsch->mcs = get_mcs_from_bler(bo, stats, &sched_ctrl->dl_bler_stats, max_mcs, frame);
+       sched_pdsch->nrOfLayers = get_dl_nrOfLayers(sched_ctrl, current_BWP->dci_format);
+       sched_pdsch->pm_index =
+           get_pm_index(mac, UE, current_BWP->dci_format, sched_pdsch->nrOfLayers, mac->radio_config.pdsch_AntennaPorts.XP);
+@@ -700,6 +715,12 @@
+                                     0 /* N_PRB_oh, 0 for initialBWP */,
+                                     0 /* tb_scaling */,
+                                     sched_pdsch->nrOfLayers) >> 3;
++
++      //////////////////////////////parameter：tbs(dl_tbs)//////////////////////////////
++
++      ric_set_dl_tbs(agent, UE -> rnti, tbs*1.0000001);
++      
++      ///////////////////////////////////////////////////////////////////////////////////////////////
+       float coeff_ue = (float) tbs / UE->dl_thr_ue;
+       LOG_D(NR_MAC, "[UE %04x][%4d.%2d] b %d, thr_ue %f, tbs %d, coeff_ue %f\n",
+             UE->rnti,
+@@ -715,11 +736,20 @@
+       curUE++;
+     }
+   }
+-
++  
+   qsort(UE_sched, sizeofArray(UE_sched), sizeof(UEsched_t), comparator);
+   UEsched_t *iterator = UE_sched;
+ 
+   const int min_rbSize = 5;
++  ////////////////////////////////////////////////////////////////////////////////////////////////////
++  tti_counter=tti_counter+1;
++  ric_setTTI(agent, tti_counter);
++  ric_send_to_er(agent);
++  int rb_total_num=0;
++  int first_time_flag=0;
++  ric_get_weights_from_er(agent);
++  ////////////////////////////////////////////////////////////////////////////////////////////////////
++  
+ 
+   /* Loop UE_sched to find max coeff and allocate transmission */
+   while (remainUEs> 0 && n_rb_sched >= min_rbSize && iterator->UE != NULL) {
+@@ -817,6 +847,13 @@
+     while (rbStart + max_rbSize <= rbStop && (rballoc_mask[rbStart + max_rbSize] & slbitmap) == slbitmap)
+       max_rbSize++;
+ 
++    ////////////////////////////////////////////////////////////////////////////////////////
++    if(first_time_flag == 0){
++      rb_total_num = max_rbSize;
++      first_time_flag += 1;
++    }
++    /////////////////////////////////////////////////////////////////////////////////////////////////////
++
+     sched_pdsch->dmrs_parms = get_dl_dmrs_params(scc,
+                                                  dl_bwp,
+                                                  tda_info,
+@@ -832,7 +869,8 @@
+     // PDUs, we replace with 3 * numPDUs
+     const int oh = 3 * 4 + 2 * (frame == (sched_ctrl->ta_frame + 100) % 1024);
+     //const int oh = 3 * sched_ctrl->dl_pdus_total + 2 * (frame == (sched_ctrl->ta_frame + 100) % 1024);
+-    nr_find_nb_rb(sched_pdsch->Qm,
++    nr_find_nb_rb_new(rnti,  /////////////// add
++                  sched_pdsch->Qm,
+                   sched_pdsch->R,
+                   1, // no transform precoding for DL
+                   sched_pdsch->nrOfLayers,
+@@ -841,8 +879,24 @@
+                   sched_ctrl->num_total_bytes + oh,
+                   min_rbSize,
+                   max_rbSize,
++                  rb_total_num, /////////////////add
+                   &TBS,
+                   &rbSize);
++    
++    //printf("TBS for %d: %d\n", rnti, TBS);
++    //printf("rbSIZE for %d: %d\n", rnti, rbSize);
++
++    // nr_find_nb_rb(sched_pdsch->Qm,
++    //               sched_pdsch->R,
++    //               1, // no transform precoding for DL
++    //               sched_pdsch->nrOfLayers,
++    //               tda_info->nrOfSymbols,
++    //               sched_pdsch->dmrs_parms.N_PRB_DMRS * sched_pdsch->dmrs_parms.N_DMRS_SLOT,
++    //               sched_ctrl->num_total_bytes + oh,
++    //               min_rbSize,
++    //               max_rbSize,
++    //               &TBS,
++    //               &rbSize);
+     sched_pdsch->rbSize = rbSize;
+     sched_pdsch->rbStart = rbStart;
+     sched_pdsch->tb_size = TBS;
+--- OAI-2024.w34/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_primitives.c
++++ EdgeRIC/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_primitives.c
+@@ -49,6 +49,7 @@
+ #include "F1AP_CauseRadioNetwork.h"
+ 
+ #include "T.h"
++#include <float.h>
+ 
+ #include "uper_encoder.h"
+ #include "uper_decoder.h"
+@@ -60,6 +61,7 @@
+ #include "nfapi/oai_integration/vendor_ext.h"
+ 
+ #include "common/utils/alg/find.h"
++#include "./../../../executables/edgeric/wrapper.h"
+ 
+ //#define DEBUG_DCI
+ 
+@@ -678,6 +680,96 @@
+   return *tbs >= bytes && *nb_rb <= nb_rb_max;
+ }
+ 
++bool nr_find_nb_rb_new(const rnti_t rnti,
++                   uint16_t Qm,
++                   uint16_t R,
++                   long transform_precoding,
++                   uint8_t nrOfLayers,
++                   uint16_t nb_symb_sch,
++                   uint16_t nb_dmrs_prb,
++                   uint32_t bytes,
++                   uint16_t nb_rb_min,
++                   uint16_t nb_rb_max,
++                   int rb_total_num,
++                   uint32_t *tbs,
++                   uint16_t *nb_rb)
++{
++
++  //////////////////////////////////////////////////////////////////////////////////////////////////
++
++  
++  float opt_weights_recvd = ric_get_weights(agent, rnti);
++  float weights_to_log;
++  //printf("weight in prim %f rnti:%d\n",opt_weights_recvd,rnti);
++  if(opt_weights_recvd != FLT_MAX)
++    weights_to_log = opt_weights_recvd;
++  else
++    weights_to_log = -3.0f;
++
++  float weights_recvd;
++  if(weights_to_log>=0){
++    weights_recvd = opt_weights_recvd;
++    nb_rb_max = weights_recvd * rb_total_num; 
++  }
++  
++  ////////////////////////////////////////////////////////////////////////////////////////////////////
++  // for transform precoding only RB = 2^a_2 * 3^a_3 * 5^a_5 is allowed with a non-negative
++  while(transform_precoding == NR_PUSCH_Config__transformPrecoder_enabled &&
++        !multiple_2_3_5(nb_rb_max))
++    nb_rb_max--;
++
++  /* is the maximum (not even) enough? */
++  *nb_rb = nb_rb_max;
++  
++  *tbs = nr_compute_tbs(Qm, R, *nb_rb, nb_symb_sch, nb_dmrs_prb, 0, 0, nrOfLayers) >> 3;
++  /* check whether it does not fit, or whether it exactly fits. Some algorithms
++   * might depend on the return value! */
++  if (bytes > *tbs)
++    return true;
++  if (bytes == *tbs)
++    return true;
++
++  /* is the minimum enough? */
++  *nb_rb = nb_rb_min;
++  
++  *tbs = nr_compute_tbs(Qm, R, *nb_rb, nb_symb_sch, nb_dmrs_prb, 0, 0, nrOfLayers) >> 3;
++  if (bytes <= *tbs)
++    return true;
++
++  /* perform binary search to allocate all bytes within a TBS up to nb_rb_max
++   * RBs */
++  int hi = nb_rb_max;
++  int lo = nb_rb_min;
++
++  for (int p = (hi + lo) / 2; lo + 1 < hi; p = (hi + lo) / 2) {
++    // for transform precoding only RB = 2^a_2 * 3^a_3 * 5^a_5 is allowed with a non-negative
++    while(transform_precoding == NR_PUSCH_Config__transformPrecoder_enabled &&
++          !multiple_2_3_5(p))
++      p++;
++
++    // If by increasing p for transform precoding we already hit the high, break to avoid infinite loop
++    if (p == hi)
++      break;
++
++    const uint32_t TBS = nr_compute_tbs(Qm, R, p, nb_symb_sch, nb_dmrs_prb, 0, 0, nrOfLayers) >> 3;
++    if (bytes == TBS) {
++      hi = p;
++      break;
++    } else if (bytes < TBS) {
++      hi = p;
++    } else {
++      lo = p;
++    }
++  }
++  
++  //*nb_rb = hi;
++  *tbs = nr_compute_tbs(Qm, R, *nb_rb, nb_symb_sch, nb_dmrs_prb, 0, 0, nrOfLayers) >> 3;
++  /* return whether we could allocate all bytes and stay below nb_rb_max */
++  return *tbs >= bytes && *nb_rb <= nb_rb_max;
++  
++}
++////////////////////////////////////////////////////////////////////////////////////////////////////
++
+ const NR_DMRS_UplinkConfig_t *get_DMRS_UplinkConfig(const NR_PUSCH_Config_t *pusch_Config, const NR_tda_info_t *tda_info)
+ {
+   if (pusch_Config == NULL)
+@@ -775,6 +867,57 @@
+         frame, old_mcs, new_mcs, num_dl_sched, num_dl_retx, bler_window, bler_stats->bler);
+   return new_mcs;
+ }
++//////////////////////////////////////////////////////////////////////////////////////////////////////////////
++int get_mcs_from_bler_new(int rnti,         /////////////////////// add
++                      const NR_bler_options_t *bler_options,
++                      const NR_mac_dir_stats_t *stats,
++                      NR_bler_stats_t *bler_stats,
++                      int max_mcs,
++                      frame_t frame)
++{
++  /* first call: everything is zero. Initialize to sensible default */
++  if (bler_stats->last_frame == 0 && bler_stats->mcs == 0) {
++    bler_stats->last_frame = frame;
++    bler_stats->mcs = 9;
++    bler_stats->bler = (bler_options->lower + bler_options->upper) / 2.0f;
++  }
++  int diff = frame - bler_stats->last_frame;
++  if (diff < 0) // wrap around
++    diff += 1024;
++
++  max_mcs = min(max_mcs, bler_options->max_mcs);
++  const uint8_t old_mcs = min(bler_stats->mcs, max_mcs);
++  if (diff < BLER_UPDATE_FRAME)
++    return old_mcs; // no update
++
++  // last update is longer than x frames ago
++  const int num_dl_sched = (int)(stats->rounds[0] - bler_stats->rounds[0]);
++  const int num_dl_retx = (int)(stats->rounds[1] - bler_stats->rounds[1]);
++  const float bler_window = num_dl_sched > 0 ? (float) num_dl_retx / num_dl_sched : bler_stats->bler;
++  bler_stats->bler = BLER_FILTER * bler_stats->bler + (1 - BLER_FILTER) * bler_window;
++
++  int new_mcs = old_mcs;
++  if (bler_stats->bler < bler_options->lower && old_mcs < max_mcs && num_dl_sched > 3)
++    new_mcs += 1;
++  else if ((bler_stats->bler > bler_options->upper && old_mcs > 6) // above threshold
++      || (num_dl_sched <= 3 && old_mcs > 9))                                // no activity
++    new_mcs -= 1;
++  // else we are within threshold boundaries
++//////////////////////////////////////////////////////////////////////////////////////
++  uint8_t opt_mcs_recvd = ric_get_mcs(agent, rnti);
++  //printf("opt mcs from prim %d\n", opt_mcs_recvd);
++  if(opt_mcs_recvd != 255)
++    new_mcs = opt_mcs_recvd;
++///////////////////////////////////////////////////////////////////////////////////////
++  bler_stats->last_frame = frame;
++  bler_stats->mcs = new_mcs;
++  memcpy(bler_stats->rounds, stats->rounds, sizeof(stats->rounds));
++  LOG_D(MAC, "frame %4d MCS %d -> %d (num_dl_sched %d, num_dl_retx %d, BLER wnd %.3f avg %.6f)\n",
++        frame, old_mcs, new_mcs, num_dl_sched, num_dl_retx, bler_window, bler_stats->bler);
++  return new_mcs;
++}
++
++/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ 
+ void config_uldci(const NR_UE_ServingCell_Info_t *sc_info,
+                   const nfapi_nr_pusch_pdu_t *pusch_pdu,
+--- OAI-2024.w34/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c
++++ EdgeRIC/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c
+@@ -37,6 +37,7 @@
+ #include "LAYER2/NR_MAC_COMMON/nr_mac_extern.h"
+ #include "LAYER2/nr_rlc/nr_rlc_oai_api.h"
+ #include "LAYER2/RLC/rlc.h"
++#include "./../../../executables/edgeric/wrapper.h"
+ 
+ //#define SRS_IND_DEBUG
+ 
+@@ -735,7 +736,6 @@
+         UE_scheduling_control->ta_update = timing_advance;
+       UE_scheduling_control->raw_rssi = rssi;
+       UE_scheduling_control->pusch_snrx10 = ul_cqi * 5 - 640 - (txpower_calc * 10);
+-
+       if (UE_scheduling_control->tpc0 > 1)
+         LOG_D(NR_MAC,
+               "[UE %04x] %d.%d. PUSCH TPC %d and TA %d pusch_snrx10 %d rssi %d phrx_tx_power %d PHR (1PRB) %d mcs %d, nb_rb %d\n",
+@@ -1806,6 +1806,11 @@
+     const float a = 0.01f;
+     const uint32_t b = stats->current_bytes;
+     UE->ul_thr_ue = (1 - a) * UE->ul_thr_ue + a * b;
++    ////////////////////////////////////////////////////
++   
++    ric_set_rx_bytes(agent, UE -> rnti, UE->ul_thr_ue);
++   
++    /////////////////////////////////////////////////////
+ 
+     if(remainUEs == 0)
+       continue;
+@@ -1963,6 +1968,9 @@
+     /* Create UE_sched for UEs eligibale for new data transmission*/
+     /* Calculate coefficient*/
+     const uint32_t tbs = ul_pf_tbs[current_BWP->mcs_table][sched_pusch->mcs];
++    /////////////////////////////////////////////////////
++    //ric_set_dl_tbs(agent, UE -> rnti, tbs);
++    /////////////////////////////////////////////////////
+     float coeff_ue = (float) tbs / UE->ul_thr_ue;
+     LOG_D(NR_MAC, "[UE %04x][%4d.%2d] b %d, ul_thr_ue %f, tbs %d, coeff_ue %f\n",
+           UE->rnti,
+@@ -1976,6 +1984,8 @@
+     UE_sched[curUE].UE=UE;
+     curUE++;
+   }
++
++  
+ 
+   qsort(UE_sched, sizeofArray(UE_sched), sizeof(UEsched_t), comparator);
+   UEsched_t *iterator=UE_sched;
+@@ -2331,6 +2341,9 @@
+       cur_harq->sched_pusch.time_domain_allocation = sched_pusch->time_domain_allocation;
+       cur_harq->sched_pusch.nrOfLayers = sched_pusch->nrOfLayers;
+       sched_ctrl->sched_ul_bytes += sched_pusch->tb_size;
++      //////////////////////////////////////////////
++      ric_set_ul_buffer(agent, UE->rnti, sched_ctrl->sched_ul_bytes);
++      //////////////////////////////////////////////
+       UE->mac_stats.ul.total_rbs += sched_pusch->rbSize;
+ 
+     } else {
+--- OAI-2024.w34/openair2/LAYER2/NR_MAC_gNB/mac_proto.h
++++ EdgeRIC/openair2/LAYER2/NR_MAC_gNB/mac_proto.h
+@@ -416,13 +416,34 @@
+                    uint16_t nb_rb_max,
+                    uint32_t *tbs,
+                    uint16_t *nb_rb);
++/////////////////////////////////////////////////////////////////////////////////////////////////////
++bool nr_find_nb_rb_new(const rnti_t rnti, //////////////// add 
++                   uint16_t Qm,
++                   uint16_t R,
++                   long transform_precoding,
++                   uint8_t nrOfLayers,
++                   uint16_t nb_symb_sch,
++                   uint16_t nb_dmrs_prb,
++                   uint32_t bytes,
++                   uint16_t nb_rb_min,
++                   uint16_t nb_rb_max,
++                   int rb_total_num,   ////////////////////// add 
++                   uint32_t *tbs,
++                   uint16_t *nb_rb);
+ 
+ int get_mcs_from_bler(const NR_bler_options_t *bler_options,
+                       const NR_mac_dir_stats_t *stats,
+                       NR_bler_stats_t *bler_stats,
+                       int max_mcs,
+                       frame_t frame);
+-
++///////////////////////////////////////////////////////////////////////////////////
++int get_mcs_from_bler_new(int rnti,         /////////////////////// add
++                      const NR_bler_options_t *bler_options,
++                      const NR_mac_dir_stats_t *stats,
++                      NR_bler_stats_t *bler_stats,
++                      int max_mcs,
++                      frame_t frame);
++///////////////////////////////////////////////////////////////////////////////////
+ int ul_buffer_index(int frame, int slot, int scs, int size);
+ void UL_tti_req_ahead_initialization(gNB_MAC_INST *gNB, int n, int CCid, frame_t frameP, int slotP);
+ 
+--- OAI-2024.w34/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf
++++ EdgeRIC/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.106PRB.usrpb210.conf
+@@ -12,7 +12,7 @@
+     // Tracking area code, 0x0000 and 0xfffe are reserved values
+     tracking_area_code  =  1;
+     plmn_list = ({ mcc = 001; mnc = 01; mnc_length = 2; snssaiList = ({ sst = 1; }) });
+-
++    min_rxtxtime=5
+     nr_cellid = 12345678L;
+ 
+     ////////// Physical parameters:
+@@ -254,3 +254,26 @@
+   #sm_dir = "/path/where/the/SMs/are/located/"
+   sm_dir = "/usr/local/lib/flexric/"
+ };
++
++channelmod = {   
++  max_chan=10;   
++  modellist="modellist_rfsimu_1";   
++modellist_rfsimu_1 = (     
++  {       model_name                       = "rfsimu_channel_enB0"
++         	type                             = "AWGN";
++          ploss_dB                         = 0;
++          noise_power_dB                   = -50;         
++          forgetfact                       = 0;          
++          offset                           = 0;              
++          ds_tdl                           = 0;          
++          },     
++  {       model_name                       = "rfsimu_channel_ue0"
++         	type                             = "AWGN";
++        	ploss_dB                         = 0;         
++          noise_power_dB                   = -50;         
++          forgetfact                       = 0;          
++          offset                           = 0;              
++          ds_tdl                           = 0;          
++  }      
++);
++}
+\ No newline at end of file
+--- OAI-2024.w34/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.162PRB.2x2.usrpn300.conf
++++ EdgeRIC/targets/PROJECTS/GENERIC-NR-5GC/CONF/gnb.sa.band78.fr1.162PRB.2x2.usrpn300.conf
+@@ -214,7 +214,7 @@
+   ##beamforming 1x2 matrix: 1 layer x 2 antennas
+   bf_weights = [0x00007fff, 0x0000];
+   #clock_src = "internal";
+-  sdr_addrs = "mgmt_addr=192.168.10.2,addr=192.168.10.2,clock_source=internal,time_source=internal"
++  sdr_addrs = "mgmt_addr=192.168.10.2,addr=192.168.11.2,clock_source=internal,time_source=internal"
+ }
+ );
+ 
