@@ -1,0 +1,18 @@
+name: mec
+
+services:
+  edgeric:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.edgeric
+    image: edgeric:latest
+    container_name: edgeric
+    restart: unless-stopped
+    network_mode: "container:oai-gnb"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

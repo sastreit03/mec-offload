@@ -15,7 +15,7 @@ services:
       traffic_net:
         ipv4_address: 192.168.72.136
       edge_net:
-        ipv4_address: 192.168.74.130
+        ipv4_address: 192.168.74.141
     ports:
       - "8765:8765/tcp"
     read_only: true

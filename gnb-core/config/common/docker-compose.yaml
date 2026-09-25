@@ -118,6 +118,10 @@ services:
                 ipv4_address: 192.168.71.140
             e2_net:
                 ipv4_address: 192.168.73.140
+            # Add gNB to edge_net because RT-RIC will share network namespace
+            # with gNB, and RT-RIC will be on edge_net
+            edge_net:
+                ipv4_address: 192.168.74.140
         ports:
             - 5556:5555
         devices:
