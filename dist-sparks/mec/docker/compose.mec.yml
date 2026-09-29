@@ -14,8 +14,8 @@ services:
     networks:
       traffic_net:
         ipv4_address: 192.168.72.136
-      edge_net:
-        ipv4_address: 192.168.74.141
+      #edge_net:
+      #  ipv4_address: 192.168.74.141
     ports:
       - "8765:8765/tcp"
     read_only: true
@@ -55,6 +55,6 @@ networks:
   traffic_net:
     external: true
     name: oai-traffic-net
-  edge_net:
-    external: true
-    name: aether-edge-net
+  #edge_net:
+  #  external: true
+  #  name: aether-edge-net
