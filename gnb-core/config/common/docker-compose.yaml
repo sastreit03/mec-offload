@@ -194,7 +194,7 @@ networks:
         driver_opts:
             #com.docker.network.bridge.name: "oai-public"
             ipvlan_mode: l2 # added for ipvlan
-            parent: "${PUBLIC_NET_PARENT:-enp1s0f1np1}" # added for ipvlan
+            parent: "${PUBLIC_NET_PARENT:-enp1s0f1np1.71}" # added for ipvlan
     traffic_net:
         driver: bridge
         name: oai-traffic-net
@@ -220,4 +220,4 @@ networks:
                 - subnet: 192.168.74.128/26
         driver_opts:
             ipvlan_mode: l2
-            parent: "${EDGE_NET_PARENT:-enp1s0f1np1}"
+            parent: "${EDGE_NET_PARENT:-enp1s0f1np1.74}"

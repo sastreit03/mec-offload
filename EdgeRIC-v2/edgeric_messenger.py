@@ -65,11 +65,15 @@ class EdgericMessenger:
 
         return self.ran_tti, self.ue_dict
 
-    def send_scheduling_weight(self, tti_count, weights, flag_print):
+    def send_scheduling_weight(self, tti_count, weights, flag_print, 
+                               ul_weights=None):
         # Create an instance of the SchedulingWeights message
         msg = control_weights_pb2.SchedulingWeights()
         msg.ran_index = tti_count  # Example index based on TTI count
         msg.weights.extend(weights)
+
+        if ul_weights is not None:
+            msg.ul_weights.extend(ul_weights)
 
         # Serialize the message to a string
         serialized_msg = msg.SerializeToString()

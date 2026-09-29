@@ -5,6 +5,8 @@
 # Start with the following command: 
 #   cd $HOME/mec-offload-ad/EdgeRIC-v2/docker
 #   docker compose -f compose.edgeric.yaml up -d --build
+# Stop docker container with this command:
+#   docker rm -f edgeric
 
 FROM ubuntu:24.04
 

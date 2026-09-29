@@ -2,7 +2,8 @@ syntax = "proto3";
 
 message SchedulingWeights {
     uint32 ran_index = 1;
-    repeated float weights = 2;
+    repeated float weights = 2;     // [RNTI, DL weight, ...]
+    repeated float ul_weights = 3;  // [RNTI, UL weight, ...]
 }
 
 

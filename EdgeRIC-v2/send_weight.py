@@ -11,11 +11,15 @@ class SendWeight:
         while True:
             tti_count, ue_dict = self.messenger.get_metrics(True)                # get metrics
             # if tti_count is not None:
-            weight_array = self.generate_weight_array(ue_dict)                   # compute policy
-            self.messenger.send_scheduling_weight(tti_count, weight_array, True) # send policy
+            dl_weights, ul_weights = self.generate_weight_array(ue_dict)                   # compute policy
+            self.messenger.send_scheduling_weight(tti_count, 
+                dl_weights, 
+                True,
+                ul_weights=ul_weights) # send policy
     
     def generate_weight_array(self, ue_dict):
-        weight_array = []
+        dl_weights = []
+        ul_weights = []
         #weight_array = [
         #31282, 0.7,  # RNTI 1001 with weight 0.5
         #60481, 0.3,  # RNTI 1002 with weight 0.3  # RNTI 1003 with weight 0.2
@@ -23,10 +27,12 @@ class SendWeight:
         iii=0.05
         iii=0.5
         for rnti in ue_dict.keys():
-            weight_value = iii
-            weight_array.extend([rnti, weight_value])
-            iii=iii
-        return weight_array
+            #weight_value = iii
+            dl_weights.extend([rnti, 1.0])
+            ul_weights.extend([rnti, 1.0])
+            #weight_array.extend([rnti, weight_value])
+            #iii=iii
+        return dl_weights, ul_weights
 
 
 if __name__ == "__main__":

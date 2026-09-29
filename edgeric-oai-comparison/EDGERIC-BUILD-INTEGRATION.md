@@ -1,19 +1,19 @@
 # EdgeRIC integration into SRK OAI
 
-This records the build integration, main-program initialization, and downlink
-scheduler port from EdgeRIC's OAI 2024.w34-based tree into SRK's OAI
-2025.w34-based tree.
+This records the build integration, main-program initialization, and scheduler
+port from EdgeRIC's OAI 2024.w34-based tree into SRK's OAI 2025.w34-based tree,
+including the subsequent extension for independent DL and UL scheduling weights.
 
-The user reported successful base, build, and gNB image builds after the
-CMake, dependency, C++ API, and TensorRT changes. Those successful builds
-preceded the subsequent `nr-softmodem.c` and downlink scheduler edits.
-The two scheduler helper definitions and their declarations are now present.
-The uplink telemetry additions are now present; executable-linkage checks
-and full build/runtime validation remain outstanding.
-The later changes have not been build- or runtime-validated.
+The user reported successful Docker builds for the original integration.
+For the UL-control extension, the changed scheduler/adapter sources compiled
+and `nr-softmodem` linked in a temporary `ran-build-cuda:edgeric-v1` container.
+Allocation boundary checks and Python publisher checks also passed. These
+checks did not replace the Docker images or establish live gNB actuation,
+OTA performance, or a 0.5 ms deadline. See section 11 for the extension and
+its validation scope (updated 2026-09-29).
 
 All file paths are relative to `~/mec-offload-ad/` unless linked absolutely.
-Line numbers below refer to the working-tree files at the time of this merge;
+Line numbers below refer to the working-tree files when each section was updated;
 they will shift with later edits. Each link opens the beginning of the block.
 
 ## Preparation
@@ -79,9 +79,9 @@ Current change locations:
 
 | Change | Working-tree location |
 | --- | --- |
-| Unused-helper annotation | [line 19](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:19) |
-| Weight subscriber options | [lines 77–80](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:77) |
-| MCS subscriber options | [lines 86–91](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:86) |
+| Unused-helper annotation | [line 21](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:21) |
+| Weight subscriber options | [lines 80–83](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:80) |
+| MCS subscriber options | [lines 89–94](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:89) |
 
 
 Replaced the active legacy socket-option calls with cppzmq's typed API:
@@ -107,7 +107,8 @@ Also annotated the currently unused helper:
 ```
 
 This avoids an unused-function warning becoming a build error. Socket
-endpoints and the message-processing logic were retained.
+endpoints and the message-processing logic were retained in that initial step;
+section 11 records the later weight-parser changes.
 
 ## 3. CUDA base Dockerfile: development dependencies
 
@@ -323,9 +324,9 @@ Current change locations:
 | Throughput/SNR/CQI reports | [lines 649–651](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c:649) |
 | External MCS helper call | [line 698](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c:698) |
 | PF TBS report | [line 712](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c:712) |
-| Counter, metrics, per-beam budgets, weight polling | [lines 734–744](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c:734) |
-| Capture first span per beam | [lines 813–816](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c:813) |
-| Weighted RB helper call | [lines 880–892](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c:880) |
+| Counter, metrics, per-beam budgets (weight polling moved to section 11) | [lines 734–743](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c:734) |
+| Capture first span per beam | [lines 812–815](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c:812) |
+| Weighted RB helper call | [lines 879–891](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c:879) |
 
 
 - Include the C wrapper through `executables/edgeric/wrapper.h`.
@@ -339,8 +340,9 @@ Current change locations:
   `harq_round_max == 1` branch.
 - Report the PF single-RB TBS estimate using EdgeRIC's `tbs * 1.0000001`
   expression.
-- Increment the TTI counter, send metrics, and poll for weights before
-  allocating new transmissions, in EdgeRIC's order.
+- Increment the TTI counter and send metrics before allocating new
+  transmissions. The original weight receive at this point was subsequently
+  moved to the common scheduler for shared DL/UL control (section 11).
 - Call `nr_find_nb_rb_new(rnti, ..., rb_total_num[beam.idx], ...)` for new
   transmission allocation.
 
@@ -355,7 +357,7 @@ Preserved the newer connected-UE list, RLC calls, timers, PF sorting,
 retransmission path, beam selection, BWP offsets, occupancy-map convention,
 and PDSCH/DCI construction.
 
-### Required next steps before rebuilding
+### Build and runtime status
 
 The two helper definitions and matching header declarations are now present
 (see section 9). Check executable linkage: scheduler references to `agent`,
@@ -364,9 +366,10 @@ this MAC code, beyond the existing `nr-softmodem` link. Rebuild and validate
 controller-present/controller-absent
 scheduling, retransmissions, and resource accounting.
 
-The downlink edit was reviewed against EdgeRIC and passed `git diff --check`
-at the time it was made. No Docker build or runtime validation of the new
-scheduler integration has been performed.
+The downlink edit was reviewed against EdgeRIC and passed `git diff --check`.
+The later UL extension was compiled and linked into `nr-softmodem` in a
+temporary build container (section 11). Runtime scheduling validation remains
+outstanding.
 
 ### Improvements deferred at the user's request
 
@@ -408,8 +411,9 @@ implementation, ignoring comments and whitespace; improvements remain deferred.
 without including their defining header. This fixes the include-order error
 found during review. These additions account for all EdgeRIC changes to
 `gNB_scheduler_primitives.c`; no other changes to that file are needed for
-the faithful port. Source review is complete, but full compilation/linking
-and runtime behavior remain unverified.
+the faithful port. The later validation linked `nr-softmodem` with these
+helpers; runtime behavior and linkage of other executables remain separate
+checks.
 
 ## 10. Uplink scheduler: EdgeRIC telemetry
 
@@ -419,15 +423,206 @@ EdgeRIC additions are present at the equivalent 2025.w34 locations.
 | Change | Current working-tree location |
 | --- | --- |
 | Include the EdgeRIC C wrapper | [Line 39](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c:39) |
-| Report `UE->ul_thr_ue` immediately after updating it in `pf_ul`, before clearing current statistics | [Line 1978](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c:1978) |
-| Report `sched_ctrl->sched_ul_bytes` after incrementing it, inside the initial-transmission branch of `post_process_ulsch` | [Line 2437](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c:2437) |
+| Report `UE->ul_thr_ue` immediately after updating it in `pf_ul`, before clearing current statistics | [Line 1994](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c:1994) |
+| Report `sched_ctrl->sched_ul_bytes` after incrementing it, inside the initial-transmission branch of `post_process_ulsch` | [Line 2476](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c:2476) |
 
 This preserves EdgeRIC's metric meanings: `rx_bytes` receives the smoothed
 throughput variable, and `ul_buffer` receives scheduled-byte accounting,
 not estimated UE queue occupancy. Uplink MCS selection and resource
-allocation retain the existing OAI helpers; EdgeRIC adds telemetry only in
-this file. The newer beam, timing, and HARQ code remains intact. The scoped
-`git diff --check` passed; no build or runtime test was performed.
+allocation retained the existing OAI helpers in the initial telemetry-only
+port. Section 11 records the subsequent UL PRB caps and retransmission
+budget correction. The telemetry meanings above have not changed.
+
+## 11. Independent UL scheduling control
+
+### Combined DL/UL policy message
+
+Extended [control_weights.proto:3](/home/sstreit/mec-offload-ad/EdgeRIC-v2/protobufs/control_weights.proto:3)
+without changing the existing field numbers:
+
+```protobuf
+message SchedulingWeights {
+    uint32 ran_index = 1;
+    repeated float weights = 2;     // [RNTI, DL weight, ...]
+    repeated float ul_weights = 3;  // [RNTI, UL weight, ...]
+}
+```
+
+Both directions travel in one message over the existing weight connection
+on port 5556, using the same echoed `ran_index`. No additional socket,
+container, package, or MCS-control message was needed. Regenerated the C++
+`control_weights.pb.h`/`.pb.cc` in `executables/edgeric/` and Python
+`EdgeRIC-v2/control_weights_pb2.py` with host `protoc` 3.21.12:
+
+```bash
+cd ~/mec-offload-ad
+protoc \
+  --proto_path=EdgeRIC-v2/protobufs \
+  --cpp_out=gnb-core/ext/openairinterface5g/executables/edgeric \
+  --python_out=EdgeRIC-v2 \
+  EdgeRIC-v2/protobufs/control_weights.proto
+```
+
+CMake compiles the generated C++ files; it does not regenerate them.
+The Python serialization round trip passed with protobuf 3.20.1. The bundled
+`edgeric/` virtual environment was incomplete and referenced another machine;
+a fresh `.venv-proto` environment was used for host verification. The Docker
+runtime remains Python 3.11.
+
+### Adapter, wrapper, and logging
+
+| Change | Working-tree location |
+| --- | --- |
+| UL map and optional getter declarations | [edgeric.h:22](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.h:22), [getter:65](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.h:65) |
+| UL map definition and getter implementation | [edgeric.cpp:52](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:52), [getter:212](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:212) |
+| Log DL and UL weights, displaying absent entries as `missing` | [edgeric.cpp:247](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:247) |
+| Shared parsing/normalization helper immediately before the receiver | [edgeric.cpp:338](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:338) |
+| Receive and validate both arrays before replacing either stored map | [edgeric.cpp:372](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/edgeric.cpp:372) |
+| Expose the UL getter to C | [wrapper.h:32](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/wrapper.h:32), [wrapper.cpp:196](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/wrapper.cpp:196) |
+| DL null-adapter return changed from zero to `FLT_MAX` | [wrapper.cpp:182](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/executables/edgeric/wrapper.cpp:182) |
+
+The parser checks complete pairs, finite integral RNTIs in the uint16 range
+excluding zero, duplicate RNTIs, finite nonnegative weights, and a positive
+total for each nonempty direction. Each direction is normalized independently
+using a double-precision total. Fresh maps replace previous maps only after
+both fields pass validation, removing entries omitted from a new policy.
+Empty arrays are valid; nonempty all-zero arrays are rejected.
+
+| Receive/getter condition | Behavior |
+| --- | --- |
+| Valid combined message | Replace both maps with independently normalized weights. |
+| Valid message omits a direction | Clear that direction's map. |
+| Nonblocking receive finds no message | Clear both maps; do not reuse previous weights. |
+| Message fails protobuf parsing or weight validation | Retain both previous maps and the accepted policy index, as requested. |
+| Getter has no entry for the UE, or its adapter pointer is null | Return `FLT_MAX`, meaning no EdgeRIC weight cap. |
+| Getter finds an explicit zero | Return zero, distinct from a missing policy. |
+
+`r` is the local gNB adapter object, not the external Python process.
+A stopped/disconnected controller does not make `r` null. ZeroMQ consumes
+messages when received; protobuf only decodes the returned bytes. An empty
+receive result therefore clears the maps without destroying the adapter.
+Both wrapper getters now return `FLT_MAX` for a null adapter. The initially
+added UL `r->obj == NULL` check was removed to match the existing lifecycle
+assumption that a successfully created wrapper owns its object.
+
+### One receive before UL and DL scheduling
+
+Added the wrapper include at [gNB_scheduler.c:56](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler.c:56)
+and `ric_get_weights_from_er(agent)` at [line 251](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler.c:251),
+immediately before UL scheduling, followed by DL scheduling. Removed the
+old receive from `pf_dl`; its metrics publication remains at
+[gNB_scheduler_dlsch.c:736](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c:736).
+The header's `extern EdgeRIC *agent` refers to the single definition in
+`nr-softmodem.c`; no additional global definition was added.
+
+Both schedulers use the same snapshot during a common scheduler invocation.
+Multiple `pf_ul()` calls for future UL slots reuse that snapshot. The next
+receive either replaces it, clears it when empty, or preserves it on invalid
+input. This follows the chosen no-message fallback; it is not hold-until-used.
+A message can be consumed during a TDD invocation with no applicable grant.
+
+The receive precedes the current DL metrics publication, so a response to
+that report is consumed in a later invocation. This is consistent with the
+paper's Figure 5 pipeline, but the OAI implementation does not enforce an
+exact one-slot age or validate freshness. `ran_index` still echoes a counter
+advanced by `pf_dl`, not an absolute NR slot index.
+
+### UL PRB allocation caps
+
+All locations below are in `openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c`
+under the OAI submodule.
+
+| Change | Working-tree location |
+| --- | --- |
+| Include `<float.h>` for the missing-policy sentinel | [line 40](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c:40) |
+| Fix retransmission accounting to decrement `*n_rb_sched`, not the pointer | [line 1901](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c:1901) |
+| Check transform-precoding PRB counts (factors 2, 3, 5 only) | [line 1934](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c:1934) |
+| Save fixed per-beam budgets after retransmissions | [line 2108](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c:2108) |
+| Apply UL weights to known-data grants and check the minimum grant | [line 2179](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c:2179) |
+| Pass the valid minimum into power adjustment; round its limit down for transform precoding | [line 2235](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c:2235) |
+| Use the original `nr_find_nb_rb()` with the capped range | [line 2248](/home/sstreit/mec-offload-ad/gnb-core/ext/openairinterface5g/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c:2248) |
+
+For each UE with a policy and known buffered data:
+
+```text
+quota = floor(normalized UL weight × saved beam budget)
+PRB cap = min(quota, contiguous free span, remaining beam budget)
+```
+
+The fixed denominator avoids reducing later UEs' quotas simply because
+previous UEs were visited first. Budgets are local to each target UL slot
+handled by `pf_ul()`; UL grants use the existing `k2` scheduling lookahead.
+The corrected retransmission counter is necessary for the saved budget to
+exclude already allocated retransmission PRBs.
+
+Zero or below-minimum quotas skip new known-data grants through the existing
+cleanup path. SR/inactivity grants are exempt, allowing buffer-status
+reporting. Missing policies use the original UL allocation path. Power
+adjustment can reduce the capped allocation further; valid minimum/maximum
+PRB counts are preserved for transform precoding. A sizing-helper `false`
+return because the whole buffer did not fit does not discard a usable
+partial grant.
+
+PF ordering, retransmission grant selection, and the original UL MCS and
+TBS helpers are retained. No new scheduler primitive or `mac_proto.h`
+declaration was needed. Caps are maxima, not guaranteed PRB or throughput
+shares; unused quota is not redistributed. The older DL weighted-helper
+issues in section 8 remain separate and were not copied into the UL path.
+
+### Python policy producer
+
+- [edgeric_messenger.py:68](/home/sstreit/mec-offload-ad/EdgeRIC-v2/edgeric_messenger.py:68):
+  added optional `ul_weights=None` after the existing arguments and populated
+  `msg.ul_weights` when supplied. The method sends one combined message;
+  existing DL-only callers remain compatible.
+- [send_weight.py:10](/home/sstreit/mec-offload-ad/EdgeRIC-v2/send_weight.py:10):
+  receive metrics, generate both arrays, and publish them together using the
+  same received `tti_count`.
+- [send_weight.py:20](/home/sstreit/mec-offload-ad/EdgeRIC-v2/send_weight.py:20):
+  `generate_weight_array()` now returns `(dl_weights, ul_weights)`, currently
+  assigning `1.0` to every reported RNTI in both directions. The gNB normalizes
+  these to equal shares. The leftover `iii` assignments are unused.
+
+Different policies can provide different weights for the same RNTI in each
+direction. Do not send DL-only and UL-only messages separately: each accepted
+message replaces both maps, and conflation can discard queued messages.
+Only the basic producer was extended; other muApps/models need their own UL
+policy logic if used. Existing metrics still enumerate UEs through CQI entries;
+UL-only telemetry coverage and a true pending-buffer metric remain future work.
+
+### Validation and deployment status
+
+- Protobuf generation and serialization round trip passed.
+- Temporary adapter tests passed independent normalization, map replacement,
+  invalid-message retention, no-message clearing, and missing/zero handling.
+- Temporary tests of the allocation blocks and wrapper passed fixed quotas,
+  remaining/contiguous limits, zero/missing weights, SR/inactivity exemption,
+  transform/power bounds, and retransmission accounting.
+- Changed scheduler/adapter sources compiled with the build image's compiler
+  flags, and `nr-softmodem` linked in a temporary container. The linker emitted
+  an executable-stack warning from `conf_file.c.o`. Other executable targets
+  were not validated by this check.
+- The current Python producer passed a mock-socket test in a temporary EdgeRIC
+  container with network disabled: equal policies, independent DL/UL values,
+  DL-only messages, empty UE lists, echoed index, and one send per policy.
+  This verifies serialized output, not ZeroMQ delivery or gNB actuation.
+- The latest wrapper/adapter syntax checks and scoped whitespace checks passed.
+
+No validation container replaced an existing image. Deploy the source changes
+by rebuilding **build → gNB** using the sequence below, and rebuilding/recreating
+EdgeRIC after the updated gNB container is running:
+
+```bash
+cd ~/mec-offload-ad/EdgeRIC-v2/docker
+docker compose -f compose.edgeric.yaml up -d --build edgeric
+```
+
+The existing Compose file shares `container:oai-gnb` networking. The EdgeRIC
+Dockerfile copies the source and starts `send_weight.py`; no Dockerfile change
+was required for the new fields. End-to-end delivery, granted PRBs, throughput,
+and slot-deadline performance still require live testing. Start with two
+backlogged UL UEs, hold DL weights fixed, reverse their UL weights, and inspect
+actual grants by RNTI and target UL frame/slot.
 
 ## Docker rebuild sequence
 
@@ -494,12 +689,15 @@ base tag. After changing base dependencies, rebuild **base → build → gNB**.
   image when generating plans for the new runtime.
 - Neural receiver smoke tests, numerical behavior, CUDA-graph execution,
   and live gNB performance remain separate runtime checks.
-- Scheduler hooks now reference EdgeRIC from shared MAC code. Check linkage
-  for other executables as part of validating the scheduler port; the earlier
-  successful image builds did not include these hooks.
-- The uplink telemetry and helper/header additions are complete at the
-  source level; build/link and runtime validation remain outstanding.
+- Scheduler hooks reference EdgeRIC from shared MAC code. `nr-softmodem`
+  linkage passed in the temporary build check; check other executable targets
+  separately when rebuilding the complete image.
+- UL telemetry, control, and the basic Python producer are implemented.
+  Network delivery, runtime scheduling, resource accounting under live load,
+  and the 0.5 ms timing objective remain to be measured. Current `ul_buffer`
+  is scheduled-byte accounting, not pending UE demand.
 
 When saving this work, commit the OAI edits inside its submodule and push
 that commit first. Then commit the updated submodule pointer, the neural
-receiver edit, and this document in the parent repository.
+receiver edit, the EdgeRIC-v2 schema/generated Python/publisher changes, and
+this document in the parent repository.
