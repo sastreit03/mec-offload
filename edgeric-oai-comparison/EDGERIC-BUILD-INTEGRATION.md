@@ -4,6 +4,11 @@ This records the build integration, main-program initialization, and scheduler
 port from EdgeRIC's OAI 2024.w34-based tree into SRK's OAI 2025.w34-based tree,
 including the subsequent extension for independent DL and UL scheduling weights.
 
+**UL scheduling changes:** [Section 11: Independent UL scheduling control](#11-independent-ul-scheduling-control)
+records the protobuf/generated bindings, adapter and fallback behavior, shared
+scheduler receive, UL PRB caps, Python publisher, source line references, and
+validation/rebuild steps.
+
 The user reported successful Docker builds for the original integration.
 For the UL-control extension, the changed scheduler/adapter sources compiled
 and `nr-softmodem` linked in a temporary `ran-build-cuda:edgeric-v1` container.

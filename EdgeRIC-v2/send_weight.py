@@ -23,13 +23,27 @@ class SendWeight:
         #weight_array = [
         #31282, 0.7,  # RNTI 1001 with weight 0.5
         #60481, 0.3,  # RNTI 1002 with weight 0.3  # RNTI 1003 with weight 0.2
-        # ]   
-        iii=0.05
-        iii=0.5
-        for rnti in ue_dict.keys():
+        # ]
+
+        # Grab these RNTIs from the edgeric logs, change this file, and then rebuild the
+        # docker container   
+        ue1_rnti = 28874
+        ue2_rnti = 36277
+
+        dl_weights = [
+            ue1_rnti, 0.2,
+            ue2_rnti, 0.8,
+            ]
+
+        ul_weights = [
+            ue1_rnti, 0.7,
+            ue2_rnti, 0.3,
+        ]
+
+        #for rnti in ue_dict.keys():
             #weight_value = iii
-            dl_weights.extend([rnti, 1.0])
-            ul_weights.extend([rnti, 1.0])
+            #dl_weights.extend([rnti, 0.8])
+            #ul_weights.extend([rnti, 0.2])
             #weight_array.extend([rnti, weight_value])
             #iii=iii
         return dl_weights, ul_weights
