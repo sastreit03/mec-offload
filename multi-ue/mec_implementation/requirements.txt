@@ -1,0 +1,5 @@
+pydantic>=2.10,<3
+PyYAML>=6,<7
+numpy>=1.26,<3
+Pillow>=10,<13
+websockets>=15,<17

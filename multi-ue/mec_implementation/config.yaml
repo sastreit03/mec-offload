@@ -1,0 +1,53 @@
+# Executable schema for this implementation. These CPU demo deployment values
+# are examples; edit them for Spark. No model/task counts are hard-coded in code.
+catalog_path: tasks.yaml
+network:
+  bind_host: 0.0.0.0
+  advertise_host: 127.0.0.1  # Use 192.168.72.136 for your MEC container when reachable.
+  control_port: 8765
+  control_path: /ws/ue
+  media_bind_host: 0.0.0.0
+  media_port_first: 5000
+  media_port_last: 5100
+pool:
+  max_workers: 2
+  max_concurrent_preparations: 1
+  memory_budget_gib: null  # If set, each CUDA config requires an estimate.
+  initial_replicas: {}     # e.g. {mock-jpeg: 1}; prewarming is asynchronous.
+  idle_retention_s: 300
+  shutdown_grace_s: 5
+  require_mps: false       # Set true for CUDA experiments; validates client PID attachment.
+queues:
+  max_pending_frames: 8
+  max_waiting_tasks: 5
+  decoded_buffer_budget_mib: 128
+  frame_policy: mec.frames:FIFO
+timeouts:
+  worker_wait_s: 10
+  preparation_s: 15
+  execution_ready_s: 25
+  first_media_s: 5
+  final_frame_arrival_grace_s: 0.5
+  drain_s: 5
+  disconnect_grace_s: 5
+  decision_s: 1
+media:
+  jitter_latency_ms: 20
+  socket_receive_bytes: 2097152
+  max_frame_bytes: 8388608
+  max_assembly_bytes: 16777216
+  max_partial_frames: 32
+  assembly_timeout_s: 0.25
+  appsrc_max_buffers: 256
+  mtu: 1200
+ric:
+  decision_url: null
+  identity_url: null
+  telemetry_target: null  # e.g. 192.168.71.141:50051
+  reporting_period_s: 1
+  period_origin_unix_ns: 0
+  reconnect_s: 2
+logs_dir: runs
+snapshot_interval_s: 5
+recent_jobs: 256
+tick_s: 0.02

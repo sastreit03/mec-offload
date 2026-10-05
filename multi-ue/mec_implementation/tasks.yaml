@@ -1,0 +1,23 @@
+version: "1"
+configurations:
+  - config_id: mock-jpeg
+    task_type: frame_statistics
+    adapter: mec.adapters:MockAdapter
+    model: mock
+    device: cpu
+    codec: jpeg
+    width: 320
+    height: 240
+    fps: 15
+    options: {infer_delay_s: 0.01}
+  - config_id: mock-h264
+    task_type: frame_statistics_h264
+    adapter: mec.adapters:MockAdapter
+    model: mock
+    device: cpu
+    codec: h264
+    width: 320
+    height: 240
+    fps: 15
+    bitrate_kbps: 1000
+    options: {infer_delay_s: 0.01}

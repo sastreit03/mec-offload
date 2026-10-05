@@ -1,0 +1,30 @@
+# Copy to tasks.yaml and adjust model paths/shapes after profiling your Spark.
+# Two simultaneous requests can select the same entry: the pool makes two replicas.
+version: "1"
+configurations:
+  - config_id: yolo11n-detect
+    task_type: object_detection
+    adapter: mec.adapters:YOLOAdapter
+    model: /models/yolo11n.pt
+    device: cuda:0
+    codec: h264
+    width: 640
+    height: 480
+    fps: 30
+    bitrate_kbps: 2000
+    warmup_iterations: 3
+    estimated_gpu_gib: 1.0  # Illustrative reservation; replace with measured peak.
+    options: {mode: predict, confidence: 0.25}
+  - config_id: yolo11n-track
+    task_type: object_tracking
+    adapter: mec.adapters:YOLOAdapter
+    model: /models/yolo11n.pt
+    device: cuda:0
+    codec: h264
+    width: 640
+    height: 480
+    fps: 30
+    bitrate_kbps: 2000
+    warmup_iterations: 3
+    estimated_gpu_gib: 1.0
+    options: {mode: track, confidence: 0.25}

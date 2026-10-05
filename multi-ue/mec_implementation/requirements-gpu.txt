@@ -1,0 +1,5 @@
+# Keep the CUDA-compatible torch already installed in your NVIDIA container/Conda.
+# Do not install another torch wheel blindly over the working CUDA environment.
+ultralytics>=8.3,<9
+lap>=0.5
+grpcio>=1.60,<2
