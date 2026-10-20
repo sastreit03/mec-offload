@@ -1,0 +1,102 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'">
+<title>Pixel UE · RTP camera</title><style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#0c1321;color:#e2e8f0}*{box-sizing:border-box}body{margin:0;padding:14px}h1{font-size:20px;margin:0}h2{font-size:16px;margin:0 0 10px}.head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}.badge{font-size:12px;border:1px solid #334155;padding:5px 9px;border-radius:18px;color:#94a3b8}.badge.on{color:#5eead4;border-color:#0f766e}.card{background:#141e30;border:1px solid #29364c;border-radius:10px;padding:13px;margin-bottom:12px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}label{display:block;font-size:12px;color:#a8b7cf}input,textarea,button{font:inherit;width:100%;margin-top:5px;border-radius:6px;border:1px solid #3b4a62;padding:9px;background:#0c1321;color:#e2e8f0}button{cursor:pointer;background:#164e63;border-color:#155e75;font-weight:600;min-height:44px}button.secondary{background:#1e293b}button:disabled{opacity:.4;cursor:default}.actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.actions button{flex:1;min-width:80px}.hint{font-size:12px;color:#94a3b8;margin:8px 0 0}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}.metrics strong{display:block;font-size:19px;color:#67e8f9}.metrics span{font-size:11px;color:#94a3b8}#decoded{width:100%;max-height:260px;object-fit:contain;background:#080e18;border-radius:7px}#decoded[hidden]{display:none}.toggle{display:flex;align-items:center;gap:7px;margin-bottom:8px}.toggle input{width:auto;margin:0}#answer{white-space:pre-wrap;line-height:1.5}#log{font-size:12px;white-space:pre-wrap;color:#fbbf24;min-height:20px}.empty{padding:20px;text-align:center;color:#94a3b8;border:1px dashed #3b4a62;border-radius:7px}pre{font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere}details{margin-top:10px}summary{font-size:12px;cursor:pointer;color:#94a3b8}small{color:#94a3b8}.resultLine{border-top:1px solid #29364c;margin-top:10px;padding-top:9px;font-size:12px;white-space:pre-wrap}
+</style></head><body>
+<header class="head"><h1>Pixel UE <span style="color:#67e8f9">/ RTP camera</span></h1><span id="connection" class="badge">Disconnected</span></header>
+<div id="log" role="status" aria-live="polite"></div>
+<section class="card"><h2>OAI cellular connection</h2><div class="grid">
+<label>MEC IPv4<input id="host" value="192.168.72.136" inputmode="decimal"></label>
+<label>Control TCP port<input id="controlPort" type="number" min="1" max="65535" value="8765"></label>
+<label>WebSocket path<input id="controlPath" value="/ws/ue"></label></div>
+<div class="actions"><button id="connect">Connect</button><button id="disconnect" class="secondary" disabled>Disconnect</button></div>
+<details><summary>Cellular interface / route information</summary><pre id="route">No cellular network selected</pre></details></section>
+<section class="card"><h2>Video configuration</h2><div class="grid">
+<label>Sampled FPS · 1–30<input id="fps" type="number" min="1" max="30" step="1" value="5"></label>
+<label>Width · even<input id="width" type="number" min="160" max="3840" step="2" value="640"></label>
+<label>Height · even<input id="height" type="number" min="120" max="2160" step="2" value="360"></label>
+<label>Target bitrate · kbps<input id="bitrate" type="number" min="50" max="20000" step="1" value="400"></label>
+<label>GOP target · frames<input id="gop" type="number" min="1" max="300" step="1" value="10"></label>
+<label>RTP UDP port<input id="rtpPort" type="number" min="1" max="65535" value="5000"></label>
+<label>Crop left · even<input id="cropLeft" type="number" min="0" step="2" value="0"></label>
+<label>Crop right · even<input id="cropRight" type="number" min="0" step="2" value="0"></label>
+<label>Crop top · even<input id="cropTop" type="number" min="0" step="2" value="0"></label>
+<label>Crop bottom · even<input id="cropBottom" type="number" min="0" step="2" value="0"></label>
+<label>RTP MTU · bytes<input id="mtu" type="number" min="576" max="1400" value="1200"></label>
+</div><div class="actions"><button id="apply" disabled>Apply & restart</button><button id="restart" disabled>Restart video</button><button id="stop" class="secondary" disabled>Stop</button><button id="start" disabled>Start</button></div>
+<p id="capture" class="hint">Rear camera → raw frame sampling → crop/resize → H.264 → RTP. The left pane decodes that H.264 locally.</p>
+<p class="hint">Crop values are capture-image pixels. GOP is an encoder target; verify the observed IDR gap for experiments.</p></section>
+<div class="metrics"><div><strong id="sendRate">—</strong><span>UE RTP sent · kbps</span></div><div><strong id="sendFps">—</strong><span>UE encoded · FPS</span></div><div><strong id="decodeFps">—</strong><span>MEC decoded · FPS</span></div></div>
+<section class="card"><h2>Decoded at the MEC</h2><label class="toggle"><input id="showPreview" type="checkbox" checked>Return decoded preview · up to 2 FPS</label>
+<div id="previewEmpty" class="empty">Waiting for decoded frames</div><img id="decoded" hidden alt="Actual camera frame decoded by the MEC">
+<p class="hint">Uses the existing /preview.mjpg endpoint. Disable the preview to remove its downlink traffic.</p>
+<p id="model" class="hint">VLM: waiting for status</p>
+<details><summary>Sender / MEC diagnostics</summary><pre id="sender">No sender statistics</pre><pre id="mec">No MEC status</pre></details>
+<details><summary>RAN telemetry reported by the MEC</summary><pre id="ran">Waiting for telemetry</pre></details></section>
+<section class="card"><h2>MEC question</h2><label>Question / semantic task<textarea id="question" maxlength="2000" rows="3" placeholder="Did someone remove an object from the box?"></textarea></label>
+<div class="actions"><button id="ask" disabled>Submit question</button><button id="askAgain" disabled>Ask again</button></div>
+<p class="hint">Your server returns one answer per question ID. Ask again submits the same text with a new ID.</p>
+<p id="questionStatus" class="hint">No active question</p><div id="answer" aria-live="polite">No result yet</div><small id="resultMeta"></small>
+<details><summary>Complete returned result</summary><pre id="rawResult">No result</pre></details><div id="history"></div></section>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),native=typeof Pixel!=='undefined';
+let connected=false,networkReady=false,streaming=false,starting=false,current=null,questionId=Date.now(),activeQuestionId=null;
+let lastResultKey=null,lastSequence=null,lastSequenceChange=0,previewFresh=false;
+function note(s){$('log').textContent=s;}
+function controls(){ $('connect').disabled=networkReady||!native;$('disconnect').disabled=!networkReady;
+  $('start').disabled=!networkReady||streaming||starting;$('apply').disabled=!networkReady||starting;
+  $('restart').disabled=!networkReady||!streaming||starting;$('stop').disabled=!streaming&&!starting;
+  $('ask').disabled=$('askAgain').disabled=!networkReady;
+  for(const id of ['host','controlPort','controlPath'])$(id).disabled=networkReady; }
+function settings(){
+  for(const id of ['fps','width','height','bitrate','gop','rtpPort','mtu','cropLeft','cropRight','cropTop','cropBottom'])if(!$(id).reportValidity())throw Error('Check '+id);
+  const s={fps:Number($('fps').value),width:Number($('width').value),height:Number($('height').value),bitrate_kbps:Number($('bitrate').value),gop_frames:Number($('gop').value),
+    video_port:Number($('rtpPort').value),rtp_mtu:Number($('mtu').value),crop_left:Number($('cropLeft').value),crop_right:Number($('cropRight').value),crop_top:Number($('cropTop').value),crop_bottom:Number($('cropBottom').value)};
+  if(Object.values(s).some(v=>!Number.isInteger(v)))throw Error('Use integer settings');
+  if([s.width,s.height,s.crop_left,s.crop_right,s.crop_top,s.crop_bottom].some(v=>v%2))throw Error('Dimensions and crop margins must be even');return s;
+}
+function start(s){try{s=s||settings();starting=true;controls();Pixel.start(JSON.stringify(s));note('Starting media…');}catch(e){starting=false;controls();note(e.message);}}
+$('connect').onclick=()=>{if(!$('controlPort').reportValidity())return;Pixel.connect(JSON.stringify({host:$('host').value.trim(),control_port:Number($('controlPort').value),control_path:$('controlPath').value.trim()}));};
+$('disconnect').onclick=()=>Pixel.disconnect();$('start').onclick=()=>start();$('stop').onclick=()=>Pixel.stop();
+$('apply').onclick=()=>start();$('restart').onclick=()=>start(current);
+$('showPreview').onchange=()=>{Pixel.decodedPreview($('showPreview').checked);if(!$('showPreview').checked){$('decoded').hidden=true;$('previewEmpty').hidden=false;$('previewEmpty').textContent='MEC preview disabled';}};
+function ask(){const text=$('question').value.trim();if(!text||text.length>2000){note('Enter a question of 1–2000 characters');return;}activeQuestionId=++questionId;lastResultKey=null;
+  $('answer').textContent='Waiting for MEC result…';$('resultMeta').textContent='';$('rawResult').textContent='No result for this question';
+  Pixel.send(JSON.stringify({type:'question',question_id:activeQuestionId,text,sent_unix_ns:Date.now()*1e6}));$('questionStatus').textContent='Submitted question '+activeQuestionId;}
+$('ask').onclick=ask;$('askAgain').onclick=ask;
+function result(m){if(activeQuestionId!==null&&m.question_id!==activeQuestionId)return;const key=JSON.stringify([m.question_id,m.sent_unix_ns,m.answer,m.error]);if(key===lastResultKey)return;lastResultKey=key;
+  if($('answer').textContent!=='No result yet'&&$('answer').textContent!=='Waiting for MEC result…'){
+    const line=document.createElement('div');line.className='resultLine';line.textContent=$('answer').textContent;$('history').prepend(line);while($('history').children.length>5)$('history').lastChild.remove();}
+  $('answer').textContent=(m.answer||m.error||'Empty response')+(m.details?'\n'+m.details:'')+(m.error?'\nError: '+m.error:'');
+  $('resultMeta').textContent='Question '+m.question_id+' · '+Number(m.inference_ms||0).toFixed(1)+' ms inference · '+m.frame_count+' frames · event '+(m.event_detected??'—')+' · confidence '+(m.confidence??'—');
+  $('rawResult').textContent=JSON.stringify(m,null,2);$('questionStatus').textContent='Received answer for question '+m.question_id;
+}
+function renderStatus(payload){const s=payload.state||{},r=s.receiver||{},v=s.vlm||{},c=s.control||{},now=performance.now();
+  if(lastSequence!==r.preview_sequence){lastSequence=r.preview_sequence;lastSequenceChange=now;}
+  previewFresh=!!r.running&&Number(r.preview_sequence)>0&&now-lastSequenceChange<3000;
+  $('decodeFps').textContent=previewFresh?Number(r.decoded_fps||0).toFixed(1):'0.0';
+  $('model').textContent='VLM: '+(v.status||'unknown')+' · '+(v.model_id||'')+' · '+(v.inference_running?'inference running':'idle')+(v.error?' · '+v.error:'');
+  $('mec').textContent=JSON.stringify(s,null,2);$('ran').textContent=JSON.stringify(payload.ran_telemetry||{},null,2);
+  if(!previewFresh||!$('showPreview').checked){$('decoded').hidden=true;$('previewEmpty').hidden=false;$('previewEmpty').textContent=$('showPreview').checked?'Waiting for new decoded frames':'MEC preview disabled';}
+  if(c.latest_result)result(c.latest_result);if(r.error)note('MEC receiver: '+r.error);if(v.last_inference_error)note('MEC inference: '+v.last_inference_error);
+}
+window.onNative=raw=>{let m;try{m=JSON.parse(raw);}catch{return;}switch(m.type){
+  case 'connecting':note(m.detail);break;
+  case 'network':networkReady=true;$('route').textContent=m.detail;note('Cellular network selected; opening control…');break;
+  case 'connected':connected=networkReady=true;$('connection').textContent='Control connected';$('connection').classList.add('on');note('Ready');break;
+  case 'control_reconnecting':connected=false;$('connection').textContent='Control reconnecting';$('connection').classList.remove('on');note(m.detail);break;
+  case 'disconnected':connected=networkReady=false;streaming=starting=false;previewFresh=false;current=null;lastSequence=null;$('connection').textContent='Disconnected';$('connection').classList.remove('on');$('decoded').hidden=true;break;
+  case 'native_error':starting=false;note(m.detail);break;
+  case 'preview_error':note('MEC HTTP preview/status: '+m.detail);break;
+  case 'stream_started':streaming=true;starting=false;current=m.video;$('capture').textContent='Capture '+m.video.capture_width+'×'+m.video.capture_height+' · '+m.video.encoder+' · output '+m.video.width+'×'+m.video.height+' at '+m.video.fps+' FPS';note('Sending H.264/RTP');break;
+  case 'stream_stopped':streaming=starting=false;current=null;break;
+  case 'sender_stats':$('sendRate').textContent=Number(m.rtp_kbps).toFixed(0);$('sendFps').textContent=Number(m.encoded_fps).toFixed(1);$('sender').textContent=JSON.stringify(m,null,2);break;
+  case 'decoded_frame':if($('showPreview').checked&&previewFresh){$('decoded').src='data:image/jpeg;base64,'+m.jpeg;$('decoded').hidden=false;$('previewEmpty').hidden=true;}break;
+  case 'mec_status':renderStatus(m.status);break;
+  case 'question_ack':if(m.question_id===activeQuestionId)$('questionStatus').textContent='Question '+m.question_id+' accepted';break;
+  case 'question_queued':note(m.detail);break;
+  case 'vlm_result':result(m);break;
+  case 'error':note(m.detail||m.error);break;
+}controls();};controls();if(!native)note('Install the Pixel Android app to use this bundled web dashboard.');
+</script></body></html>

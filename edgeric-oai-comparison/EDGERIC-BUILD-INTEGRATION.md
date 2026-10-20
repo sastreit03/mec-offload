@@ -4,6 +4,10 @@ This records the build integration, main-program initialization, and scheduler
 port from EdgeRIC's OAI 2024.w34-based tree into SRK's OAI 2025.w34-based tree,
 including the subsequent extension for independent DL and UL scheduling weights.
 
+**October 16, 2026 repair update:** [Section 12](#12-bounded-scheduler-repairs-october-16-2026)
+supersedes the historical deferred-defect and telemetry descriptions below.
+The current producer uses hardcoded unequal weights; it was preserved.
+
 **UL scheduling changes:** [Section 11: Independent UL scheduling control](#11-independent-ul-scheduling-control)
 records the protobuf/generated bindings, adapter and fallback behavior, shared
 scheduler receive, UL PRB caps, Python publisher, source line references, and
@@ -376,9 +380,10 @@ The later UL extension was compiled and linked into `nr-softmodem` in a
 temporary build container (section 11). Runtime scheduling validation remains
 outstanding.
 
-### Improvements deferred at the user's request
+### Historical improvements deferred during the original port
 
-These are observations for later review, not changes made in this step.
+These were observations during the original port. Section 12 records the
+subsequent bounded allocation, MCS, and T01–T03 repairs; other topics remain deferred.
 
 | Area | Current EdgeRIC behavior | Possible later improvement |
 | --- | --- | --- |
@@ -394,15 +399,15 @@ These are observations for later review, not changes made in this step.
 | MCS timing | Original helper applies overrides only on BLER-update opportunities; the no-retransmission branch bypasses it. | Decide explicitly whether external MCS should apply every scheduling opportunity. |
 | Policy availability | Existing receive functions poll nonblocking and clear stored policy when no message arrives. | Define policy lifetime and fallback behavior; do not assume a response to the just-sent report is already available. |
 
-The helper issues above remain in the EdgeRIC helpers now copied into the
-SRK working tree, as requested. Keeping the port close to
-EdgeRIC does not establish the correctness of those existing behaviors.
+The original port retained these helper issues. Section 12 repairs the bounded
+allocation and defensive MCS issues without changing policy lifetime or cadence.
 
 ## 9. Scheduler primitives and helper declarations
 
 Added EdgeRIC's two complete helper definitions while retaining the original
 2025.w34 helpers for existing callers. Both new bodies match EdgeRIC's
-implementation, ignoring comments and whitespace; improvements remain deferred.
+implementation, ignoring comments and whitespace, at the time of the original port.
+Section 12 now replaces the defective weighted search and adds defensive checks.
 
 | File / change | Current working-tree location |
 | --- | --- |
@@ -572,7 +577,7 @@ PF ordering, retransmission grant selection, and the original UL MCS and
 TBS helpers are retained. No new scheduler primitive or `mac_proto.h`
 declaration was needed. Caps are maxima, not guaranteed PRB or throughput
 shares; unused quota is not redistributed. The older DL weighted-helper
-issues in section 8 remain separate and were not copied into the UL path.
+issues were not copied into the UL path and are repaired in section 12.
 
 ### Python policy producer
 
@@ -585,8 +590,9 @@ issues in section 8 remain separate and were not copied into the UL path.
   same received `tti_count`.
 - [send_weight.py:20](/home/sstreit/mec-offload-ad/EdgeRIC-v2/send_weight.py:20):
   `generate_weight_array()` now returns `(dl_weights, ul_weights)`, currently
-  assigning `1.0` to every reported RNTI in both directions. The gNB normalizes
-  these to equal shares. The leftover `iii` assignments are unused.
+  using hardcoded RNTIs `28874` and `36277`: DL weights `0.2`/`0.8`,
+  UL weights `0.7`/`0.3` in the October 16 working tree. The earlier equal-weight
+  description was stale. The live producer was not edited by the repair.
 
 Different policies can provide different weights for the same RNTI in each
 direction. Do not send DL-only and UL-only messages separately: each accepted
@@ -628,6 +634,152 @@ was required for the new fields. End-to-end delivery, granted PRBs, throughput,
 and slot-deadline performance still require live testing. Start with two
 backlogged UL UEs, hold DL weights fixed, reverse their UL weights, and inspect
 actual grants by RNTI and target UL frame/slot.
+
+
+## 12. Bounded scheduler repairs (October 16, 2026)
+
+Baseline: parent `9af0fada856c9885e839254dd6f8c94eb0cdc230`; OAI branch
+`srk-edgeric`, commit `4353e3b2fc3b36884f336e606c79d3ecc6267328` (clean before
+this work). The modified OAI 2025.w34/SRK schedulers and independent UL-weight
+extension were retained. Local upstream tag `2025.w34` resolves to
+`9f91c28fdb106354f37b969ed4c848405b7643d4`; comparison confirms several occupancy
+bugs and the original UL pointer-decrement bug were inherited from upstream.
+The extension's already-correct `*n_rb_sched` decrement was preserved.
+No applicable project/ancestor AGENTS.md was found. Existing unrelated parent
+changes were left untouched. The attached repair brief was treated as the
+technical specification requested by the user; its deployment/commit examples
+were not authorization to execute those operations.
+
+### Verified findings and implementation
+
+| Item | Actual finding and repair |
+| --- | --- |
+| P01 | DL weighted helper could expand the physical maximum. DL now caps by first-span quota, current free span and remaining beam PRBs before CCE/PUCCH commitment. Missing policy removes only the weight cap. Zero/below-minimum rejects and releases a newly allocated beam. |
+| P02 | Custom search omitted its final RB assignment and misreported over-capacity success. DL uses `nr_find_nb_rb`; the public weighted helper remains a bounded compatibility wrapper with its existing signature. |
+| P03 | Shared sizing now zeros outputs and rejects invalid ranges. New-data checks reject zero/invalid grants but retain positive partial grants. Retransmissions still require an exact original TBS. DL sizes before PUCCH reservation. |
+| P04 | DL retransmission map loop mixed position and count. Shared marking uses BWP start + relative grant start + offset and final TDA symbols. A local DL candidate avoids modifying HARQ history when CCE/PUCCH allocation fails. |
+| P05 | Both new-data loops under-marked nonzero BWPs. All grants now use the same explicit coordinate convention; exhausted-map span searches start with zero availability. |
+| P06 | UL retransmission marking fixed, with the extension's correct budget decrement retained. |
+| P07 | Reused-TDA UL retransmission checked only the starting RB. It now searches complete contiguous spans, continuing after fragmentation, using the old TDA's required symbols. |
+| P08 | Physical limits now apply to missing-policy new data and both retransmission branches. Budgets count allocated PRBs per beam/invocation (UL per target slot), not PRB-symbols. Changed-TDA sizing is capped before exact-TBS selection. |
+| P09 | Shared factor checker rejects nonpositive counts; sizing rounds both endpoints without crossing bounds. UL minimum and post-power transform rounding now also protect missing-policy and SR/inactivity paths. |
+| P10 | Null adapter returns `INT_MAX`; the helper keeps an integer and accepts only 0 through the effective table/configuration maximum. BLER cadence and no-retransmission branch are unchanged. An additional verified pre-getter narrowing defect required validating wire MCS before uint8 storage. |
+| P11 | `scheduler_allocation.h` provides cheap nonfatal precommit checks for positive RB/TBS, BWP bounds and remaining budget. `NR_SCHEDULER_ALLOCATION_DEBUG` additionally scans symbol occupancy; normal builds do not add those scans or logging. Existing span searches enforce occupancy in normal operation. |
+
+Due DL timing advance retains its existing scheduling/data-piggyback opportunity
+without an external weight cap; physical caps still apply. UL SR/inactivity
+likewise remains exempt from weights. With transform precoding, an unsupported
+configured minimum is raised to the next valid count only if resources permit.
+Otherwise the grant is rejected with beam cleanup. Power adjustment may further
+reduce a known-data grant. No quota redistribution was added.
+
+CCE lookup is read-only: `get_cce_index` searches, while
+`fill_pdcch_vrb_map` commits. All added rejection paths precede commitment; DL
+sizing/validation also precedes `nr_acknack_scheduling`. UL rejection releases
+both scheduling and DCI beam allocations. Existing PUCCH failure handling was
+inspected; no new post-PUCCH rollback path was introduced. Full multi-beam and
+PUCCH ownership behavior still needs live validation.
+
+MCS decoding now rejects odd-length arrays before indexing, skips invalid RNTIs,
+and removes a recognized UE's proposal for nonfinite, fractional, negative or
+above-28 MCS values, so normal link adaptation is used. The scheduler then
+validates the narrower active table/configuration maximum. Odd arrays and
+protobuf parse failures retain the previous map; no-message still clears it.
+Valid-message MCS merge behavior is retained. Weight parser/receive lifetime,
+combined protobuf fields, independent normalization and shared receive timing
+were not changed.
+
+### Separate T01–T03 telemetry group
+
+T01 reports the completed per-UE aggregate of schedulable logical channels once,
+including zero. Suspended channels and interrupted DTCH remain excluded using
+the existing scheduler rules. This is schedulable DL demand, not all queued RLC
+data. T02 reports fractional **UL PUSCH SNR** with `/ 10.0f`. T03 removes the tiny
+multiplier and labels `dl_tbs` as a hypothetical single-RB PF estimate, not a
+scheduled/delivered transport block. No protobuf/schema or timing redesign.
+UL buffer and smoothed-throughput metric meanings remain unchanged.
+
+Reviewable sequential patch exports are in `edgeric-oai-comparison/repairs/`:
+allocation/consistency, defensive handling, then telemetry. They describe changes
+already present in the working tree; **do not apply them again there**. No commits
+or staging were performed. Apply the complete series only to the recorded clean
+OAI baseline when reproducing elsewhere.
+
+### Reproducible checks and results
+
+From the parent project root:
+
+```bash
+python3 edgeric-oai-comparison/tests/test_scheduler_repairs.py
+python3 edgeric-oai-comparison/tests/test_adapter.py
+python3 edgeric-oai-comparison/tests/test_telemetry.py
+docker run --rm --network none \
+  -v "$PWD/gnb-core/ext/openairinterface5g:/work:ro" \
+  -v "$PWD/edgeric-oai-comparison/tests:/checks:ro" \
+  --entrypoint python3 ran-build-cuda:edgeric-v1 /checks/check_build.py \
+  > /tmp/oai-repair-build.log 2>&1
+git -C gnb-core/ext/openairinterface5g diff --check
+```
+
+All focused tests passed with UBSan. Scheduler tests compile production function
+text and the actual OAI TBS implementation, not a rewritten sizing model. They
+exercise 52,488 range/size cases per mode, normal and occupancy-debug builds,
+missing/zero/unequal caps, partial/exact/intermediate TBS, transform bounds,
+nonzero BWP/grant offsets, symbol-specific maps, fragmented reused-TDA UL
+retransmissions, both DL/UL TDA branches, target-slot wraparound, budgets, and
+CCE/PUCCH failures. Extracted new-data cap blocks test TA/SR exemptions and beam
+cleanup. Post-power rounding is tested with simulated power-limited outputs;
+the actual RF power model and the complete PF scheduler are not exercised.
+
+Adapter tests execute production receiver/parser/getter code with fake transport
+and protobuf objects: independent normalization, replacement, invalid retention,
+no-message clearing, null/missing/zero getters, MCS bounds/narrowing, and cadence
+(the latter in scheduler tests). They do not certify protobuf wire delivery or
+ZeroMQ timing. Telemetry tests execute the production buffer function and metric
+expressions for multiple channels, suspension, interruption, empty/drained
+buffers, fractional/negative SNR and the unscaled PF estimate.
+
+Build image identity: `ran-build-cuda:edgeric-v1`,
+`sha256:4a2238e8eebf6bcc2095266e7aa381405d3d801d74a62721ec5fd7c8cbbcdc0f`.
+
+The disposable container compiled current scheduler/common-hook, main-program,
+adapter and generated-message sources using the saved SRK/CUDA Ninja compiler
+commands (including `-Werror`), rebuilt the affected archives and linked
+`nr-softmodem`. `ldd` found no unresolved libraries. The saved link commands for
+`nr-uesoftmodem` and `lte-softmodem` also passed. These were incremental checks
+against the image's existing dependency objects, not fresh CMake configuration,
+a full image rebuild or full source compilation of those other executables.
+The existing `conf_file.c.o` executable-stack linker warning remains unresolved.
+Exact compile/archive/link commands are emitted by `check_build.py` into the log.
+No deployed image was rebuilt/replaced, no service restarted, no commit/push.
+
+The shared sizing helper's other local caller is BCH/SIB sizing. Its requirement
+for full-buffer success remains intact; helper range/TBS tests cover that return
+contract. No end-to-end SIB scheduling test was run. No other production caller
+of the weighted compatibility helper remains in this tree.
+
+### Remaining limitations and live checks
+
+This is a bounded repair, not a complete scheduler audit. First-span DL budgets,
+per-beam policy normalization, PF order, fixed RLC overhead, average aggregation
+level, DMRS/MIMO selection and absent maxMIMO_Layers behavior were not redesigned.
+Changed-TDA retransmissions still consider the original first contiguous span;
+they can reject even if a later span might fit. Policy age/expiry, TTI identity,
+UL-only telemetry coverage, scheduled-versus-pending UL buffer semantics, and
+smoothed throughput units remain separate work. No Whittle/RL integration began.
+
+Live validation still required:
+
+1. Record deployed source/image identity after a separately authorized build and deployment.
+2. With two backlogged UL UEs, hold DL weights fixed and reverse UL weights;
+   inspect actual PRBs/TBS by RNTI and target UL frame/slot, including k2.
+3. Test DL separately; test controller absent/present, missing and explicit zero
+   weights, TA/SR/inactivity opportunities and below-minimum quotas.
+4. Induce HARQ retransmissions with reused/changed TDAs, fragmentation, nonzero
+   BWPs, multiple beams, transform precoding and power-limited UEs. Check maps,
+   nonnegative budgets, PUCCH/CCE cleanup, stability and resource collisions.
+5. Measure throughput and scheduling latency/deadlines. Neither successful builds
+   nor isolated tests establish OTA correctness or a 0.5-ms deadline guarantee.
 
 ## Docker rebuild sequence
 
@@ -706,3 +858,51 @@ When saving this work, commit the OAI edits inside its submodule and push
 that commit first. Then commit the updated submodule pointer, the neural
 receiver edit, the EdgeRIC-v2 schema/generated Python/publisher changes, and
 this document in the parent repository.
+
+
+## 13. Optional buffered scheduler trace (October 19, 2026)
+
+Added opt-in policy and allocation CSV tracing on repaired OAI baseline
+`0769d8df7817bba5cc40916b4002cc716709aead`. See
+[SCHEDULER-TRACE.md](SCHEDULER-TRACE.md) for activation, field definitions,
+loss counters, source locations and validation commands.
+
+Set `OAI_SCHED_TRACE_FILE` in the gNB environment on a future launch. A fixed
+8,192-record queue uses single-attempt producer access; a background SCHED_OTHER
+writer handles formatting and file I/O. Queue contention/overflow is counted,
+not waited on. Tracing is off when the variable is unset or empty.
+
+Records cover accepted policy sequence/receive time/normalized weights,
+weight presence and exemptions, examined span/reference/remaining/quota/caps,
+committed PRBs/TBS/MCS/symbols and future UL frame/slot. Rejected candidates are
+separate from committed grants. No weight-lifetime, scheduler decision, protobuf,
+producer-policy or telemetry-schema changes were made. Existing unrelated
+working-tree edits, including the producer, were preserved.
+
+Production-source regressions passed with logging off/on; queue/loss/file-error
+and recorded-policy tests passed. Instrumented gNB compile/link, existing UE/LTE
+link checks, and a fresh isolated EdgeRIC CMake build/link passed in a disposable
+network-disabled container. The existing executable-stack linker warning remains.
+The build log is `/tmp/oai-trace-build.log`. Live logging overhead and sustained
+capture/drop rates remain unmeasured. No deployment, restart, commit or push.
+
+
+### Receive availability counters (trace v2)
+
+Added cumulative completed/message/empty combined-policy receive counts to the
+existing approximately one-second `kind=4` CSV status rows. Counter differences
+measure empty receives per second and as a percentage of receive attempts,
+independently of allocation activity and trace queue drops. Received invalid
+messages count as messages; separate MCS receives are excluded. The current
+clear-on-empty behavior is unchanged. See [SCHEDULER-TRACE.md](SCHEDULER-TRACE.md)
+for formulas, startup filtering and timing limitations. Existing v1 files cannot
+be backfilled. Requires rebuilding the gNB build/runtime images and recreating
+the gNB on a planned run; no EdgeRIC or Compose changes.
+
+Validation: adapter and trace tests passed with UBSan, including exact receive
+counts, invalid-message classification, disabled tracing, full-queue independence
+and concurrent increments. Production scheduler regressions passed with tracing
+off/on. Disposable-container gNB compile/link, UE/LTE link checks and fresh
+EdgeRIC CMake build/link passed. Existing `conf_file.c.o` executable-stack warning
+remains. Build log: `/tmp/oai-receive-counters-build.log`. Live v2 capture and
+runtime overhead remain unmeasured; no deployment, restart, commit or push.

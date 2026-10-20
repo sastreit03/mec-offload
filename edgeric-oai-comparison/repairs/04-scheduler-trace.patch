@@ -1,0 +1,741 @@
+--- a/executables/edgeric/CMakeLists.txt
++++ b/executables/edgeric/CMakeLists.txt
+@@ -1,6 +1,7 @@
+ find_package(Protobuf REQUIRED)
+-add_library(edgericc edgeric.cpp edgeric.h wrapper.cpp wrapper.h control_mcs.pb.cc control_weights.pb.cc metrics.pb.cc control_mcs.pb.h control_weights.pb.h metrics.pb.h)
++find_package(Threads REQUIRED)
++add_library(edgericc scheduler_trace.cpp scheduler_trace.h edgeric.cpp edgeric.h wrapper.cpp wrapper.h control_mcs.pb.cc control_weights.pb.cc metrics.pb.cc control_mcs.pb.h control_weights.pb.h metrics.pb.h)
+ 
+ target_include_directories(edgericc PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${PROTOBUF_INCLUDE_DIRS})
+ 
+-target_link_libraries(edgericc PUBLIC ${ZMQ_LIBRARIES} ${Protobuf_LIBRARIES} zmq)
++target_link_libraries(edgericc PUBLIC Threads::Threads ${ZMQ_LIBRARIES} ${Protobuf_LIBRARIES} zmq)
+--- a/executables/edgeric/edgeric.cpp
++++ b/executables/edgeric/edgeric.cpp
+@@ -1,4 +1,5 @@
+ #include "edgeric.h"
++#include "scheduler_trace.h"
+ #include <zmq.hpp>
+ #include <string.h>
+ #include <stdio.h>
+@@ -377,6 +378,7 @@
+     zmq::message_t recv_message_er;
+     zmq::recv_result_t size = subscriber_weights.recv(recv_message_er, zmq::recv_flags::dontwait);
+ 
++    const uint64_t received_ns = size && ric_trace_enabled() ? ric_trace_now_ns() : 0;
+     if (size) {
+         SchedulingWeights weights_msg;
+         if (weights_msg.ParseFromArray(recv_message_er.data(), recv_message_er.size())) {
+@@ -393,6 +395,11 @@
+             weights_recved.swap(dl_weights);
+             ul_weights_recved.swap(ul_weights);
+             er_ran_index_weights = weights_msg.ran_index();
++            if (ric_trace_enabled()) {
++                ric_trace_policy(er_ran_index_weights, received_ns, weights_recved.size(), ul_weights_recved.size());
++                for (const auto &entry : weights_recved) ric_trace_weight(0, entry.first, entry.second);
++                for (const auto &entry : ul_weights_recved) ric_trace_weight(1, entry.first, entry.second);
++            }
+         } else {
+             std::cerr << "Failed to parse SchedulingWeights message." << std::endl;
+         }
+@@ -400,6 +407,7 @@
+         /* Preserve the existing no-message fallback for both directions. */
+         weights_recved.clear();
+         ul_weights_recved.clear();
++        ric_trace_clear();
+     }
+ }
+ 
+--- a/executables/edgeric/wrapper.cpp
++++ b/executables/edgeric/wrapper.cpp
+@@ -1,5 +1,6 @@
+ #include "edgeric.h"
+ #include "wrapper.h"
++#include "scheduler_trace.h"
+ #include <limits.h>  // For INT_MAX
+ #include <float.h>   // For FLT_MAX
+ 
+@@ -24,6 +25,7 @@
+ {
+     if(r == NULL)
+         return;
++    ric_trace_stop();
+     delete static_cast<edgeric *>(r->obj);
+     free(r);
+ }
+@@ -59,6 +61,7 @@
+ 
+ 	obj = static_cast<edgeric *>(r->obj);
+ 	obj->init();
++    ric_trace_start();
+ }
+ 
+ void ric_set_cqi(EdgeRIC *r, uint16_t rnti, float cqi)
+--- /dev/null
++++ b/executables/edgeric/scheduler_trace.cpp
+@@ -0,0 +1,212 @@
++#include "scheduler_trace.h"
++#include <array>
++#include <atomic>
++#include <chrono>
++#include <cmath>
++#include <cstdio>
++#include <cstdlib>
++#include <thread>
++#include <time.h>
++#include <unistd.h>
++#include <pthread.h>
++
++namespace {
++constexpr size_t capacity = 8192;
++std::array<ric_trace_record, capacity> records;
++std::atomic_flag gate = ATOMIC_FLAG_INIT;
++std::atomic<bool> enabled{false}, stopping{false};
++std::atomic<uint64_t> queued{0}, dropped{0}, io_errors{0};
++static_assert(std::atomic<uint64_t>::is_always_lock_free, "trace counters must not lock");
++size_t head = 0, tail = 0, used = 0;
++std::thread writer;
++FILE *output = nullptr;
++/* Like the existing global EdgeRIC maps, policy context is scheduler-owned.
++ * Snapshot changes and getters execute on the same common scheduler thread. */
++std::atomic<uint64_t> next_policy{0};
++thread_local uint64_t policy_seq = 0, receive_ns = 0;
++thread_local uint32_t ran_index = 0;
++
++void enqueue(const ric_trace_record &r)
++{
++  if (!enabled.load(std::memory_order_relaxed)) return;
++  // One attempt only. The scheduler never spins or waits for the writer.
++  if (gate.test_and_set(std::memory_order_acquire)) {
++    dropped.fetch_add(1, std::memory_order_relaxed);
++    return;
++  }
++  if (used == capacity) {
++    dropped.fetch_add(1, std::memory_order_relaxed);
++  } else {
++    records[tail] = r;
++    tail = (tail + 1) % capacity;
++    ++used;
++    queued.fetch_add(1, std::memory_order_relaxed);
++  }
++  gate.clear(std::memory_order_release);
++}
++
++bool dequeue(ric_trace_record &r)
++{
++  if (gate.test_and_set(std::memory_order_acquire)) return false;
++  const bool found = used != 0;
++  if (found) {
++    r = records[head];
++    head = (head + 1) % capacity;
++    --used;
++  }
++  gate.clear(std::memory_order_release);
++  return found;
++}
++
++void write_record(const ric_trace_record &r)
++{
++  if (std::fprintf(output,
++      "%d,%llu,%llu,%llu,%u,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%.9g,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%llu,%llu,%llu\n",
++      r.kind, (unsigned long long)r.time_ns, (unsigned long long)r.policy_seq,
++      (unsigned long long)r.receive_ns, r.ran_index, r.direction, r.rnti,
++      r.frame, r.slot, r.target_frame, r.target_slot, r.beam, r.stage, r.exemption,
++      r.retransmission, r.weight_present, r.weight, r.reference, r.free_span,
++      r.remaining, r.quota, r.cap, r.sizing_cap, r.rb_start, r.prbs, r.tbs, r.mcs,
++      r.bwp_start, r.start_symbol, r.symbols, r.dl_entries, r.ul_entries,
++      (unsigned long long)queued.load(std::memory_order_relaxed),
++      (unsigned long long)dropped.load(std::memory_order_relaxed),
++      (unsigned long long)io_errors.load(std::memory_order_relaxed)) < 0)
++    io_errors.fetch_add(1, std::memory_order_relaxed);
++}
++
++void run_writer()
++{
++  // Never inherit a realtime scheduling policy from the creating thread.
++  sched_param param{};
++  if (pthread_setschedparam(pthread_self(), SCHED_OTHER, &param) != 0) {
++    io_errors.fetch_add(1, std::memory_order_relaxed);
++    enabled.store(false, std::memory_order_relaxed);
++    return;
++  }
++  auto last = std::chrono::steady_clock::now();
++  while (!stopping.load(std::memory_order_acquire)) {
++    ric_trace_record r;
++    // Bound a batch so counter/flush records cannot starve under sustained load.
++    for (size_t n = 0; n < capacity && dequeue(r); ++n) write_record(r);
++    const auto now = std::chrono::steady_clock::now();
++    if (now - last >= std::chrono::seconds(1)) {
++      ric_trace_record status{};
++      status.kind = 4;
++      status.time_ns = ric_trace_now_ns();
++      write_record(status);
++      if (std::fflush(output) != 0) io_errors.fetch_add(1, std::memory_order_relaxed);
++      last = now;
++    }
++    std::this_thread::sleep_for(std::chrono::milliseconds(10));
++  }
++  // Final shutdown happens after the scheduler has stopped producing records.
++  ric_trace_record r;
++  while (dequeue(r)) write_record(r);
++  r = {};
++  r.kind = 4;
++  r.time_ns = ric_trace_now_ns();
++  write_record(r);
++  if (std::fflush(output) != 0) io_errors.fetch_add(1, std::memory_order_relaxed);
++}
++}
++
++extern "C" bool ric_trace_enabled(void) { return enabled.load(std::memory_order_relaxed); }
++extern "C" uint64_t ric_trace_now_ns(void)
++{
++  timespec ts{};
++  clock_gettime(CLOCK_MONOTONIC, &ts);
++  return uint64_t(ts.tv_sec) * 1000000000ULL + ts.tv_nsec;
++}
++extern "C" void ric_trace_start(void)
++{
++  const char *path = std::getenv("OAI_SCHED_TRACE_FILE");
++  if (!path || !*path || writer.joinable()) return;
++  output = std::fopen(path, "a");
++  if (!output) { io_errors.fetch_add(1, std::memory_order_relaxed); return; }
++  records.fill({}); // Fault in queue pages during initialization, not on a scheduler grant.
++  std::setvbuf(output, nullptr, _IOFBF, 256 * 1024);
++  timespec wall{};
++  clock_gettime(CLOCK_REALTIME, &wall);
++  std::fprintf(output, "# OAI scheduler trace v1; pid=%ld; monotonic_ns=%llu; realtime_ns=%llu\n",
++               long(getpid()), (unsigned long long)ric_trace_now_ns(),
++               (unsigned long long)(uint64_t(wall.tv_sec) * 1000000000ULL + wall.tv_nsec));
++  std::fprintf(output, "kind,time_ns,policy_seq,receive_ns,ran_index,direction,rnti,frame,slot,target_frame,target_slot,beam,stage,exemption,retransmission,weight_present,weight,reference,free_span,remaining,quota,cap,sizing_cap,rb_start,prbs,tbs,mcs,bwp_start,start_symbol,symbols,dl_entries,ul_entries,queued,dropped,io_errors\n");
++  stopping.store(false, std::memory_order_relaxed);
++  try {
++    enabled.store(true, std::memory_order_release);
++    writer = std::thread(run_writer);
++  } catch (...) {
++    enabled.store(false, std::memory_order_release);
++    io_errors.fetch_add(1, std::memory_order_relaxed);
++    std::fclose(output);
++    output = nullptr;
++  }
++}
++extern "C" void ric_trace_stop(void)
++{
++  enabled.store(false, std::memory_order_release);
++  stopping.store(true, std::memory_order_release);
++  if (writer.joinable()) writer.join();
++  if (output) {
++    if (std::fclose(output) != 0) io_errors.fetch_add(1, std::memory_order_relaxed);
++    output = nullptr;
++  }
++}
++extern "C" ric_trace_record ric_trace_begin(int direction, int rnti, int frame, int slot,
++    int tf, int ts, int retx, int exemption, float weight)
++{
++  ric_trace_record r{};
++  if (!ric_trace_enabled()) return r;
++  r.active = 1;
++  r.kind = 3;
++  r.time_ns = ric_trace_now_ns();
++  r.policy_seq = policy_seq;
++  r.receive_ns = receive_ns;
++  r.ran_index = ran_index;
++  r.direction = direction; r.rnti = rnti; r.frame = frame; r.slot = slot;
++  r.target_frame = tf; r.target_slot = ts;
++  r.retransmission = retx; r.exemption = exemption;
++  r.weight_present = weight != FLT_MAX;
++  r.weight = r.weight_present ? weight : -1;
++  r.beam = r.reference = r.free_span = r.remaining = r.quota = r.cap = r.sizing_cap = -1;
++  r.rb_start = r.mcs = r.bwp_start = r.start_symbol = r.symbols = -1;
++  return r;
++}
++extern "C" void ric_trace_finish(ric_trace_record *r)
++{
++  if (!r->active) return;
++  if (r->exemption == RIC_TRACE_NO_EXEMPTION && r->weight_present && r->reference >= 0
++      && std::isfinite(r->weight) && r->weight >= 0 && r->weight <= 1)
++    r->quota = int(r->weight * r->reference);
++  enqueue(*r);
++}
++extern "C" void ric_trace_policy(uint32_t index, uint64_t received, int dl, int ul)
++{
++  if (!ric_trace_enabled()) return;
++  policy_seq = next_policy.fetch_add(1, std::memory_order_relaxed) + 1; receive_ns = received; ran_index = index;
++  auto r = ric_trace_begin(-1, 0, -1, -1, -1, -1, 0, 0, FLT_MAX);
++  r.kind = 1; r.dl_entries = dl; r.ul_entries = ul;
++  enqueue(r);
++}
++extern "C" void ric_trace_weight(int direction, uint16_t rnti, float weight)
++{
++  auto r = ric_trace_begin(direction, rnti, -1, -1, -1, -1, 0, 0, weight);
++  if (!r.active) return;
++  r.kind = 2;
++  enqueue(r);
++}
++extern "C" void ric_trace_clear(void)
++{
++  // Zero identifies the no-message-cleared snapshot, not the last accepted policy.
++  policy_seq = receive_ns = 0; ran_index = 0;
++}
++extern "C" void ric_trace_counters(uint64_t *q, uint64_t *d, uint64_t *e)
++{
++  *q = queued.load(std::memory_order_relaxed);
++  *d = dropped.load(std::memory_order_relaxed);
++  *e = io_errors.load(std::memory_order_relaxed);
++}
++
++namespace {
++struct TraceShutdown { ~TraceShutdown() { ric_trace_stop(); } } trace_shutdown;
++}
+--- /dev/null
++++ b/executables/edgeric/scheduler_trace.h
+@@ -0,0 +1,56 @@
++/* Optional bounded scheduler tracing. No scheduling state is changed by this API. */
++#ifndef EDGERIC_SCHEDULER_TRACE_H
++#define EDGERIC_SCHEDULER_TRACE_H
++#include <stdint.h>
++#include <stdbool.h>
++#include <float.h>
++#ifdef __cplusplus
++extern "C" {
++#endif
++/* Stage identifies the operation at which a rejected candidate stopped. */
++enum { RIC_TRACE_CANDIDATE, RIC_TRACE_BEAM, RIC_TRACE_BUDGET, RIC_TRACE_TDA,
++       RIC_TRACE_SPAN, RIC_TRACE_CAP, RIC_TRACE_SIZING, RIC_TRACE_CCE,
++       RIC_TRACE_PUCCH, RIC_TRACE_COMMITTED };
++enum { RIC_TRACE_NO_EXEMPTION, RIC_TRACE_HARQ, RIC_TRACE_TA, RIC_TRACE_SR_INACTIVE };
++typedef struct {
++  uint64_t time_ns, policy_seq, receive_ns;
++  uint32_t ran_index;
++  int kind, active, direction, rnti, frame, slot, target_frame, target_slot;
++  int beam, stage, exemption, retransmission, weight_present;
++  float weight;
++  int reference, free_span, remaining, quota, cap, sizing_cap;
++  int rb_start, prbs, tbs, mcs, bwp_start, start_symbol, symbols;
++  int dl_entries, ul_entries;
++} ric_trace_record;
++/* Call at initialization/final shutdown only, outside scheduler threads. */
++void ric_trace_start(void);
++void ric_trace_stop(void);
++bool ric_trace_enabled(void);
++uint64_t ric_trace_now_ns(void);
++void ric_trace_policy(uint32_t ran_index, uint64_t receive_ns, int dl_entries, int ul_entries);
++void ric_trace_weight(int direction, uint16_t rnti, float weight);
++void ric_trace_clear(void);
++ric_trace_record ric_trace_begin(int direction, int rnti, int frame, int slot,
++                                int target_frame, int target_slot, int retransmission,
++                                int exemption, float weight);
++void ric_trace_finish(ric_trace_record *record);
++/* Counter snapshot is lock-free, including after shutdown. */
++void ric_trace_counters(uint64_t *queued, uint64_t *dropped, uint64_t *io_errors);
++#ifdef __cplusplus
++}
++#endif
++/* GCC/Clang cleanup emits exactly once on normal return/continue from a scope.
++ * Weight lookup is observational and is skipped entirely when tracing is off. */
++#define RIC_TRACE_SCOPE(name, direction, rnti, frame, slot, tf, ts, retx, exemption, weight) \
++  ric_trace_record name __attribute__((cleanup(ric_trace_finish))) = \
++      ric_trace_begin(direction, rnti, frame, slot, tf, ts, retx, exemption, \
++                      ric_trace_enabled() ? (weight) : FLT_MAX)
++/* Beam rejection before entering the retransmission helper. */
++#define RIC_TRACE_RETX_BEAM_FAILURE(when, direction, rnti, frame, slot, tf, ts, weight) do { \
++  if (ric_trace_enabled() && (when)) { \
++    RIC_TRACE_SCOPE(early_trace, direction, rnti, frame, slot, tf, ts, 1, RIC_TRACE_HARQ, weight); \
++    early_trace.stage = RIC_TRACE_BEAM; \
++  } \
++} while (0)
++#define RIC_TRACE_SET(record, field, value) do { if ((record).active) (record).field = (value); } while (0)
++#endif
+--- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
++++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
+@@ -44,6 +44,7 @@
+ #include "../../../nfapi/oai_integration/vendor_ext.h"
+ #include "executables/edgeric/wrapper.h"
+ #include "scheduler_allocation.h"
++#include "executables/edgeric/scheduler_trace.h"
+ 
+ ////////////////////////////////////////////////////////
+ /////* DLSCH MAC PDU generation (6.1.2 TS 38.321) */////
+@@ -439,10 +440,17 @@
+   gNB_MAC_INST *nr_mac = RC.nrmac[module_id];
+   const NR_ServingCellConfigCommon_t *scc = nr_mac->common_channels->ServingCellConfigCommon;
+   NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
++  RIC_TRACE_SCOPE(trace, 0, UE->rnti, frame, slot, frame, slot, 1, RIC_TRACE_HARQ,
++                  ric_get_weights(agent, UE->rnti));
++  RIC_TRACE_SET(trace, remaining, *n_rb_sched);
++  RIC_TRACE_SET(trace, stage, RIC_TRACE_TDA);
++  RIC_TRACE_SET(trace, beam, beam_idx);
++
+   NR_UE_DL_BWP_t *dl_bwp = &UE->current_DL_BWP;
+   NR_UE_UL_BWP_t *ul_bwp = &UE->current_UL_BWP;
+   NR_sched_pdsch_t candidate = sched_ctrl->harq_processes[current_harq_pid].sched_pdsch;
+   NR_sched_pdsch_t *retInfo = &candidate; // do not mutate HARQ history on rejection
++  RIC_TRACE_SET(trace, mcs, retInfo->mcs);
+   NR_sched_pdsch_t *curInfo = &sched_ctrl->sched_pdsch;
+ 
+   // If the RI changed between current rtx and a previous transmission
+@@ -480,6 +488,9 @@
+   int rbStart = bwp_info.bwpStart;
+   int rbStop = bwp_info.bwpStart + bwp_info.bwpSize - 1;
+   int rbSize = 0;
++  RIC_TRACE_SET(trace, bwp_start, bwp_info.bwpStart);
++  RIC_TRACE_SET(trace, stage, RIC_TRACE_BUDGET);
++
+ 
+   if (*n_rb_sched <= 0 || retInfo->rbSize <= 0 || retInfo->tb_size == 0)
+     return false;
+@@ -487,6 +498,7 @@
+   if (reuse_old_tda && layers == retInfo->nrOfLayers) {
+     if (retInfo->rbSize > *n_rb_sched)
+       return false;
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_SPAN);
+     /* Check that there are enough resources for retransmission */
+     while (rbSize < retInfo->rbSize) {
+       rbStart += rbSize; /* last iteration rbSize was not enough, skip it */
+@@ -516,6 +528,10 @@
+     while (rbStart + rbSize <= rbStop && !(rballoc_mask[rbStart + rbSize] & slbitmap))
+       rbSize++;
+ 
++    RIC_TRACE_SET(trace, free_span, rbSize);
++    RIC_TRACE_SET(trace, cap, min(rbSize, *n_rb_sched));
++    RIC_TRACE_SET(trace, sizing_cap, min(rbSize, *n_rb_sched));
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_SIZING);
+     uint32_t new_tbs;
+     uint16_t new_rbSize;
+     bool success = nr_find_nb_rb(retInfo->Qm,
+@@ -551,11 +567,16 @@
+     retInfo->tda_info = temp_tda;
+   }
+ 
++  RIC_TRACE_SET(trace, free_span, rbSize);
++  RIC_TRACE_SET(trace, cap, min(rbSize, *n_rb_sched));
++  RIC_TRACE_SET(trace, sizing_cap, min(rbSize, *n_rb_sched));
++  RIC_TRACE_SET(trace, stage, RIC_TRACE_SIZING);
+   if (!nr_grant_valid(rballoc_mask, bwp_info.bwpStart, bwp_info.bwpSize,
+                       rbStart - bwp_info.bwpStart, retInfo->rbSize, *n_rb_sched, retInfo->tb_size,
+                       SL_to_bitmap(retInfo->tda_info.startSymbolIndex, retInfo->tda_info.nrOfSymbols)))
+     return false;
+ 
++  RIC_TRACE_SET(trace, stage, RIC_TRACE_CCE);
+   /* Find a free CCE */
+   int CCEIndex = get_cce_index(nr_mac,
+                                CC_id,
+@@ -577,6 +598,7 @@
+   /* Find PUCCH occasion: if it fails, undo CCE allocation (undoing PUCCH
+    * allocation after CCE alloc fail would be more complex) */
+ 
++  RIC_TRACE_SET(trace, stage, RIC_TRACE_PUCCH);
+   int alloc = -1;
+   if (!get_FeedbackDisabled(UE->sc_info.downlinkHARQ_FeedbackDisabled_r17, current_harq_pid)) {
+     int r_pucch = nr_get_pucch_resource(sched_ctrl->coreset, ul_bwp->pucch_Config, CCEIndex);
+@@ -600,6 +622,13 @@
+   nr_mark_grant(rballoc_mask, bwp_info.bwpStart, sched_ctrl->sched_pdsch.rbStart, sched_ctrl->sched_pdsch.rbSize,
+                 SL_to_bitmap(retInfo->tda_info.startSymbolIndex, retInfo->tda_info.nrOfSymbols));
+ 
++  RIC_TRACE_SET(trace, stage, RIC_TRACE_COMMITTED);
++  RIC_TRACE_SET(trace, rb_start, sched_ctrl->sched_pdsch.rbStart);
++  RIC_TRACE_SET(trace, prbs, sched_ctrl->sched_pdsch.rbSize);
++  RIC_TRACE_SET(trace, tbs, sched_ctrl->sched_pdsch.tb_size);
++  RIC_TRACE_SET(trace, mcs, sched_ctrl->sched_pdsch.mcs);
++  RIC_TRACE_SET(trace, start_symbol, retInfo->tda_info.startSymbolIndex);
++  RIC_TRACE_SET(trace, symbols, retInfo->tda_info.nrOfSymbols);
+   return true;
+ }
+ 
+@@ -678,6 +707,8 @@
+       if (sch_ret)
+         sch_ret = allocate_dl_retransmission(module_id, frame, slot, &n_rb_sched[beam.idx], UE, beam.idx, sched_pdsch->dl_harq_pid);
+       if (!sch_ret) {
++        RIC_TRACE_RETX_BEAM_FAILURE(beam.idx < 0, 0, UE->rnti, frame, slot, frame, slot,
++                                    ric_get_weights(agent, UE->rnti));
+         LOG_D(NR_MAC, "[UE %04x][%4d.%2d] DL retransmission could not be allocated\n", UE->rnti, frame, slot);
+         reset_beam_status(&mac->beam_info, frame, slot, UE->UE_beam_index, slots_per_frame, beam.new_beam);
+         continue;
+@@ -762,6 +793,11 @@
+ 
+     NR_UE_sched_ctrl_t *sched_ctrl = &iterator->UE->UE_sched_ctrl;
+     const uint16_t rnti = iterator->UE->rnti;
++    RIC_TRACE_SCOPE(trace, 0, rnti, frame, slot, frame, slot, 0,
++                    frame == (sched_ctrl->ta_frame + 100) % 1024 ? RIC_TRACE_TA : RIC_TRACE_NO_EXEMPTION,
++                    ric_get_weights(agent, rnti));
++    RIC_TRACE_SET(trace, mcs, sched_ctrl->sched_pdsch.mcs);
++
+ 
+     NR_UE_DL_BWP_t *dl_bwp = &iterator->UE->current_DL_BWP;
+     NR_UE_UL_BWP_t *ul_bwp = &iterator->UE->current_UL_BWP;
+@@ -775,6 +811,7 @@
+       continue;
+     }
+ 
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_BEAM);
+     NR_beam_alloc_t beam = beam_allocation_procedure(&mac->beam_info, frame, slot, iterator->UE->UE_beam_index, slots_per_frame);
+ 
+     if (beam.idx < 0) {
+@@ -782,12 +819,16 @@
+       iterator++;
+       continue;
+     }
++    RIC_TRACE_SET(trace, beam, beam.idx);
++    RIC_TRACE_SET(trace, remaining, n_rb_sched[beam.idx]);
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_BUDGET);
+     if (remainUEs[beam.idx] == 0 || n_rb_sched[beam.idx] < min_rbSize) {
+       reset_beam_status(&mac->beam_info, frame, slot, iterator->UE->UE_beam_index, slots_per_frame, beam.new_beam);
+       iterator++;
+       continue;
+     }
+ 
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_TDA);
+     NR_sched_pdsch_t *sched_pdsch = &sched_ctrl->sched_pdsch;
+     sched_pdsch->dl_harq_pid = sched_ctrl->available_dl_harq.head;
+ 
+@@ -829,12 +870,18 @@
+       first_time_flag[beam.idx] = 1;
+     }
+ 
++    RIC_TRACE_SET(trace, reference, rb_total_num[beam.idx]);
++    RIC_TRACE_SET(trace, free_span, max_rbSize);
++    RIC_TRACE_SET(trace, bwp_start, bwp_start);
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_CAP);
+     max_rbSize = min(max_rbSize, n_rb_sched[beam.idx]);
+     /* A due timing-advance command must retain a scheduling opportunity.
+      * Its existing data-piggyback behavior is preserved. */
+     if (frame != (sched_ctrl->ta_frame + 100) % 1024)
+       max_rbSize = nr_weight_cap(ric_get_weights(agent, rnti), rb_total_num[beam.idx], max_rbSize);
+ 
++    RIC_TRACE_SET(trace, cap, max_rbSize);
++    RIC_TRACE_SET(trace, sizing_cap, max_rbSize);
+     if (max_rbSize < min_rbSize) {
+       LOG_D(NR_MAC,
+             "(%d.%d) Cannot schedule RNTI %04x, rbStart %d, rbSize %d, rbStop %d\n",
+@@ -849,6 +896,7 @@
+       continue;
+     }
+ 
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_SIZING);
+     sched_pdsch->dmrs_parms = get_dl_dmrs_params(scc, dl_bwp, tda_info, sched_pdsch->nrOfLayers);
+     sched_pdsch->Qm = nr_get_Qm_dl(sched_pdsch->mcs, dl_bwp->mcsTableIdx);
+     sched_pdsch->R = nr_get_code_rate_dl(sched_pdsch->mcs, dl_bwp->mcsTableIdx);
+@@ -878,6 +926,7 @@
+       continue;
+     }
+ 
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_CCE);
+     int CCEIndex = get_cce_index(mac,
+                                  CC_id,
+                                  slot,
+@@ -900,6 +949,7 @@
+     /* Find PUCCH occasion: if it fails, undo CCE allocation (undoing PUCCH
+     * allocation after CCE alloc fail would be more complex) */
+ 
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_PUCCH);
+     int alloc = -1;
+     if (!get_FeedbackDisabled(iterator->UE->sc_info.downlinkHARQ_FeedbackDisabled_r17, sched_pdsch->dl_harq_pid)) {
+       int r_pucch = nr_get_pucch_resource(sched_ctrl->coreset, ul_bwp->pucch_Config, CCEIndex);
+@@ -924,6 +974,13 @@
+ 
+     nr_mark_grant(rballoc_mask, bwp_start, sched_pdsch->rbStart, sched_pdsch->rbSize, slbitmap);
+ 
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_COMMITTED);
++    RIC_TRACE_SET(trace, rb_start, sched_pdsch->rbStart);
++    RIC_TRACE_SET(trace, prbs, sched_pdsch->rbSize);
++    RIC_TRACE_SET(trace, tbs, sched_pdsch->tb_size);
++    RIC_TRACE_SET(trace, mcs, sched_pdsch->mcs);
++    RIC_TRACE_SET(trace, start_symbol, tda_info->startSymbolIndex);
++    RIC_TRACE_SET(trace, symbols, tda_info->nrOfSymbols);
+     remainUEs[beam.idx]--;
+     iterator++;
+   }
+--- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c
++++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_ulsch.c
+@@ -38,6 +38,7 @@
+ /* Next line added for EdgeRIC */
+ #include "executables/edgeric/wrapper.h"
+ #include "scheduler_allocation.h"
++#include "executables/edgeric/scheduler_trace.h"
+ #include <float.h>
+ 
+ //#define SRS_IND_DEBUG
+@@ -1785,6 +1786,11 @@
+   int frame = pp_pusch->frame;
+   int slot = pp_pusch->slot;
+   NR_UE_sched_ctrl_t *sched_ctrl = &UE->UE_sched_ctrl;
++  RIC_TRACE_SCOPE(trace, 1, UE->rnti, frame, slot, frame, slot, 1, RIC_TRACE_HARQ,
++                  ric_get_ul_weights(agent, UE->rnti));
++  RIC_TRACE_SET(trace, remaining, *n_rb_sched);
++  RIC_TRACE_SET(trace, stage, RIC_TRACE_TDA);
++
+   /* Get previous PUSCH field info */
+   const NR_sched_pusch_t *retInfo = &sched_ctrl->ul_harq_processes[harq_pid].sched_pusch;
+   NR_sched_pusch_t new_sched = *retInfo; // potential new allocation
+@@ -1803,12 +1809,21 @@
+   new_sched.slot = (slot + tda_info->k2 + get_NTN_Koffset(scc)) % slots_frame;
+   new_sched.bwp_info = bwp_info;
+   DevAssert(new_sched.ul_harq_pid == harq_pid);
++  RIC_TRACE_SET(trace, target_frame, new_sched.frame);
++  RIC_TRACE_SET(trace, target_slot, new_sched.slot);
++  RIC_TRACE_SET(trace, bwp_start, bwpStart);
++  RIC_TRACE_SET(trace, mcs, new_sched.mcs);
++  RIC_TRACE_SET(trace, stage, RIC_TRACE_SPAN);
++
+ 
+   bool reuse_old_tda = (retInfo->tda_info.startSymbolIndex == tda_info->startSymbolIndex) && (retInfo->tda_info.nrOfSymbols <= tda_info->nrOfSymbols);
+   if (reuse_old_tda && nrOfLayers == retInfo->nrOfLayers) {
+     /* Check the resource is enough for retransmission */
+     const uint16_t slbitmap = SL_to_bitmap(retInfo->tda_info.startSymbolIndex, retInfo->tda_info.nrOfSymbols);
+     rbStart = nr_free_span_start(rballoc_mask, bwpStart, bwpSize, retInfo->rbSize, slbitmap);
++    RIC_TRACE_SET(trace, free_span, rbStart < 0 ? 0 : retInfo->rbSize);
++    RIC_TRACE_SET(trace, cap, rbStart < 0 ? 0 : min(retInfo->rbSize, *n_rb_sched));
++    RIC_TRACE_SET(trace, sizing_cap, trace.cap);
+     if (rbStart < 0 || retInfo->rbSize > *n_rb_sched) {
+       LOG_D(NR_MAC, "[UE %04x][%4d.%2d] could not allocate UL retransmission: no resources (rbStart %d, retInfo->rbSize %d, bwpSize %d) \n",
+             UE->rnti,
+@@ -1831,6 +1846,10 @@
+     int rbSize = 0;
+     while (rbStart + rbSize < bwpSize && !(rballoc_mask[rbStart + bwpStart + rbSize] & slbitmap))
+       rbSize++;
++    RIC_TRACE_SET(trace, free_span, rbSize);
++    RIC_TRACE_SET(trace, cap, max(0, min(rbSize, *n_rb_sched)));
++    RIC_TRACE_SET(trace, sizing_cap, trace.cap);
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_SIZING);
+     uint32_t new_tbs;
+     uint16_t new_rbSize;
+     bool success = nr_find_nb_rb(retInfo->Qm,
+@@ -1864,11 +1883,13 @@
+     new_sched.dmrs_info = dmrs_info;
+   }
+ 
++  RIC_TRACE_SET(trace, stage, RIC_TRACE_SIZING);
+   if (!nr_grant_valid(rballoc_mask, bwpStart, bwpSize, new_sched.rbStart,
+                       new_sched.rbSize, *n_rb_sched, new_sched.tb_size,
+                       SL_to_bitmap(new_sched.tda_info.startSymbolIndex, new_sched.tda_info.nrOfSymbols)))
+     return false;
+ 
++  RIC_TRACE_SET(trace, stage, RIC_TRACE_CCE);
+   /* Find a free CCE */
+   int CCEIndex = get_cce_index(nrmac,
+                                CC_id,
+@@ -1906,6 +1927,13 @@
+   *n_rb_sched -= new_sched.rbSize;
+   nr_mark_grant(rballoc_mask, bwpStart, new_sched.rbStart, new_sched.rbSize,
+                 SL_to_bitmap(new_sched.tda_info.startSymbolIndex, new_sched.tda_info.nrOfSymbols));
++  RIC_TRACE_SET(trace, stage, RIC_TRACE_COMMITTED);
++  RIC_TRACE_SET(trace, rb_start, new_sched.rbStart);
++  RIC_TRACE_SET(trace, prbs, new_sched.rbSize);
++  RIC_TRACE_SET(trace, tbs, new_sched.tb_size);
++  RIC_TRACE_SET(trace, mcs, new_sched.mcs);
++  RIC_TRACE_SET(trace, start_symbol, new_sched.tda_info.startSymbolIndex);
++  RIC_TRACE_SET(trace, symbols, new_sched.tda_info.nrOfSymbols);
+   return true;
+ }
+ 
+@@ -2009,12 +2037,16 @@
+ 
+     NR_beam_alloc_t dci_beam = beam_allocation_procedure(&nrmac->beam_info, frame, slot, UE->UE_beam_index, slots_per_frame);
+     if (dci_beam.idx < 0) {
++      RIC_TRACE_RETX_BEAM_FAILURE(sched_ctrl->retrans_ul_harq.head >= 0, 1, UE->rnti,
++                                  frame, slot, sched_frame, sched_slot, ric_get_ul_weights(agent, UE->rnti));
+       LOG_D(NR_MAC, "[UE %04x][%4d.%2d] Beam could not be allocated\n", UE->rnti, frame, slot);
+       continue;
+     }
+ 
+     NR_beam_alloc_t beam = beam_allocation_procedure(&nrmac->beam_info, sched_frame, sched_slot, UE->UE_beam_index, slots_per_frame);
+     if (beam.idx < 0) {
++      RIC_TRACE_RETX_BEAM_FAILURE(sched_ctrl->retrans_ul_harq.head >= 0, 1, UE->rnti,
++                                  frame, slot, sched_frame, sched_slot, ric_get_ul_weights(agent, UE->rnti));
+       LOG_D(NR_MAC, "[UE %04x][%4d.%2d] Beam could not be allocated\n", UE->rnti, frame, slot);
+       reset_beam_status(&nrmac->beam_info, frame, slot, UE->UE_beam_index, slots_per_frame, dci_beam.new_beam);
+       continue;
+@@ -2122,6 +2154,12 @@
+   while (iterator->UE != NULL) {
+     NR_UE_UL_BWP_t *current_BWP = &iterator->UE->current_UL_BWP;
+     NR_UE_sched_ctrl_t *sched_ctrl = &iterator->UE->UE_sched_ctrl;
++    RIC_TRACE_SCOPE(trace, 1, iterator->UE->rnti, frame, slot, sched_frame, sched_slot, 0,
++                    iterator->sched_inactive ? RIC_TRACE_SR_INACTIVE : RIC_TRACE_NO_EXEMPTION,
++                    ric_get_ul_weights(agent, iterator->UE->rnti));
++    RIC_TRACE_SET(trace, mcs, iterator->selected_mcs);
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_BEAM);
++
+ 
+     NR_beam_alloc_t beam = beam_allocation_procedure(&nrmac->beam_info, sched_frame, sched_slot, iterator->UE->UE_beam_index, slots_per_frame);
+     if (beam.idx < 0) {
+@@ -2130,12 +2168,17 @@
+       continue;
+     }
+ 
++    RIC_TRACE_SET(trace, beam, beam.idx);
++    RIC_TRACE_SET(trace, reference, ul_rb_budget[beam.idx]);
++    RIC_TRACE_SET(trace, remaining, n_rb_sched[beam.idx]);
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_BUDGET);
+     if (remainUEs[beam.idx] == 0 || n_rb_sched[beam.idx] < min_rb) {
+       reset_beam_status(&nrmac->beam_info, sched_frame, sched_slot, iterator->UE->UE_beam_index, slots_per_frame, beam.new_beam);
+       iterator++;
+       continue;
+     }
+ 
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_BEAM);
+     NR_beam_alloc_t dci_beam = beam_allocation_procedure(&nrmac->beam_info, frame, slot, iterator->UE->UE_beam_index, slots_per_frame);
+     if (dci_beam.idx < 0) {
+       LOG_D(NR_MAC, "[UE %04x][%4d.%2d] Beam could not be allocated\n", iterator->UE->rnti, frame, slot);
+@@ -2144,6 +2187,7 @@
+       continue;
+     }
+ 
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_CCE);
+     int CCEIndex = get_cce_index(nrmac,
+                                  CC_id, slot, iterator->UE->rnti,
+                                  &sched_ctrl->aggregation_level,
+@@ -2181,12 +2225,16 @@
+     while (rbStart + available_rb < bi.bwpSize && !(rballoc_mask[rbStart + bi.bwpStart + available_rb] & slbitmap) && available_rb < max_rbSize)
+       available_rb++;
+ 
++    RIC_TRACE_SET(trace, free_span, available_rb);
++    RIC_TRACE_SET(trace, bwp_start, bi.bwpStart);
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_CAP);
+     /* Cap known-data grants; preserve SR/inactivity grants and missing-policy fallback. */
+     const float ul_weight = ric_get_ul_weights(agent, iterator->UE->rnti);
+     const bool weighted_grant = !iterator->sched_inactive && ul_weight != FLT_MAX;
+     uint16_t min_grant_rb = min_rb;
+     if (weighted_grant)
+       available_rb = nr_weight_cap(ul_weight, ul_rb_budget[beam.idx], available_rb);
++    RIC_TRACE_SET(trace, cap, available_rb);
+     if (current_BWP->transform_precoding == NR_PUSCH_Config__transformPrecoder_enabled) {
+       while (min_grant_rb <= available_rb && !ul_weighted_prb_count_valid(min_grant_rb))
+         min_grant_rb++;
+@@ -2194,6 +2242,7 @@
+     if (iterator->sched_inactive && available_rb >= min_grant_rb)
+       available_rb = min_grant_rb;
+ 
++    RIC_TRACE_SET(trace, sizing_cap, available_rb);
+     if (rbStart + min_grant_rb > bi.bwpSize || available_rb < min_grant_rb) {
+       reset_beam_status(&nrmac->beam_info, frame, slot, iterator->UE->UE_beam_index, slots_per_frame, dci_beam.new_beam);
+       reset_beam_status(&nrmac->beam_info, sched_frame, sched_slot, iterator->UE->UE_beam_index, slots_per_frame, beam.new_beam);
+@@ -2215,6 +2264,7 @@
+             available_rb,
+             bi.bwpSize);
+ 
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_SIZING);
+     int nrOfLayers = get_ul_nrOfLayers(sched_ctrl, current_BWP->dci_format);
+     NR_sched_pusch_t sched = {
+       .frame = sched_frame,
+@@ -2245,6 +2295,8 @@
+         available_rb--;
+     }
+ 
++    RIC_TRACE_SET(trace, sizing_cap, available_rb);
++    RIC_TRACE_SET(trace, mcs, sched.mcs);
+     if (sched.mcs < sched_ctrl->ul_bler_stats.mcs)
+       sched_ctrl->ul_bler_stats.mcs = sched.mcs; /* force estimated MCS down */
+ 
+@@ -2322,6 +2374,13 @@
+     nr_mark_grant(rballoc_mask, bi.bwpStart, sched.rbStart, sched.rbSize, slbitmap);
+ 
+     /* reduce max_num_ue once we are sure UE can be allocated, i.e., has CCE */
++    RIC_TRACE_SET(trace, stage, RIC_TRACE_COMMITTED);
++    RIC_TRACE_SET(trace, rb_start, sched.rbStart);
++    RIC_TRACE_SET(trace, prbs, sched.rbSize);
++    RIC_TRACE_SET(trace, tbs, sched.tb_size);
++    RIC_TRACE_SET(trace, mcs, sched.mcs);
++    RIC_TRACE_SET(trace, start_symbol, sched.tda_info.startSymbolIndex);
++    RIC_TRACE_SET(trace, symbols, sched.tda_info.nrOfSymbols);
+     remainUEs[beam.idx]--;
+     iterator++;
+     scheduled_something = true;

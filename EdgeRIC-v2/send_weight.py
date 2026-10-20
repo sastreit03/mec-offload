@@ -27,17 +27,17 @@ class SendWeight:
 
         # Grab these RNTIs from the edgeric logs, change this file, and then rebuild the
         # docker container   
-        ue1_rnti = 28874
-        ue2_rnti = 36277
+        ue1_rnti = 11046
+        ue2_rnti = 35467
 
         dl_weights = [
-            ue1_rnti, 0.2,
-            ue2_rnti, 0.8,
+            ue1_rnti, 0.5,
+            ue2_rnti, 0.5,
             ]
 
         ul_weights = [
-            ue1_rnti, 0.7,
-            ue2_rnti, 0.3,
+            ue1_rnti, 0.5,
+            ue2_rnti, 0.5,
         ]
 
         #for rnti in ue_dict.keys():

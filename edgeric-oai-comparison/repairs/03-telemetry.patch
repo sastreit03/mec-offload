@@ -1,0 +1,39 @@
+--- a/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
++++ b/openair2/LAYER2/NR_MAC_gNB/gNB_scheduler_dlsch.c
+@@ -349,7 +349,6 @@
+ 
+       sched_ctrl->dl_pdus_total += sched_ctrl->rlc_status[lcid].pdus_in_buffer;
+       sched_ctrl->num_total_bytes += sched_ctrl->rlc_status[lcid].bytes_in_buffer;
+-      ric_set_dl_buffer(agent, rnti, sched_ctrl->rlc_status[lcid].bytes_in_buffer);
+       LOG_D(MAC,
+             "[gNB %d][%4d.%2d] %s%d->DLSCH, RLC status for UE %d: %d bytes in buffer, total DL buffer size = %d bytes, %d total PDU bytes, %s TA command\n",
+             module_id,
+@@ -363,6 +362,8 @@
+             sched_ctrl->dl_pdus_total,
+             sched_ctrl->ta_apply ? "send":"do not send");
+     }
++    // Completed active-channel aggregate, including zero when drained/suspended.
++    ric_set_dl_buffer(agent, UE->rnti, sched_ctrl->num_total_bytes);
+   }
+ }
+ 
+@@ -659,7 +660,8 @@
+     UE->dl_thr_ue = (1 - a) * UE->dl_thr_ue + a * b;
+ 
+     ric_set_tx_bytes(agent, UE->rnti, UE->dl_thr_ue);
+-    ric_set_snr(agent, UE->rnti, sched_ctrl->pusch_snrx10 / 10);
++    // UL PUSCH SNR in dB (exported here with the DL metrics).
++    ric_set_snr(agent, UE->rnti, sched_ctrl->pusch_snrx10 / 10.0f);
+     ric_set_cqi(agent, UE->rnti, sched_ctrl->CSI_report.cri_ri_li_pmi_cqi_report.wb_cqi_1tb);
+ 
+     int total_rem_ues = 0;
+@@ -721,7 +723,8 @@
+                                     0 /* N_PRB_oh, 0 for initialBWP */,
+                                     0 /* tb_scaling */,
+                                     sched_pdsch->nrOfLayers) >> 3;
+-      ric_set_dl_tbs(agent, UE->rnti, tbs * 1.0000001);
++      // Hypothetical single-RB PF estimate, not an actual scheduled transport block.
++      ric_set_dl_tbs(agent, UE->rnti, tbs);
+       float coeff_ue = (float) tbs / UE->dl_thr_ue;
+       LOG_D(NR_MAC, "[UE %04x][%4d.%2d] b %d, thr_ue %f, tbs %d, coeff_ue %f\n",
+             UE->rnti,

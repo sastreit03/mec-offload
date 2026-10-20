@@ -98,6 +98,24 @@ services:
     oai-gnb:
         image: ${GNB_IMAGE:-oai-gnb-cuda}:${GNB_TAG:-edgeric-v1}
         container_name: oai-gnb
+        # A fresh host-visible capture directory for every container start.
+        entrypoint:
+            - /tini
+            - -v
+            - --
+            - /bin/bash
+            - -ec
+            - |
+                umask 022
+                # Local launch time; wait for the next free second on a collision.
+                while :; do
+                    run_dir="/edgeric-validation/$$(TZ=America/New_York date +%Y%m%d_%H%M%S)"
+                    if mkdir -m 0755 "$$run_dir"; then break; fi
+                    [ -d "$$run_dir" ] || exit 1
+                    sleep 1
+                done
+                export OAI_SCHED_TRACE_FILE="$$run_dir/scheduler.csv"
+                exec /opt/oai-gnb/bin/entrypoint.sh /opt/oai-gnb/bin/nr-softmodem
         user: ${USER_ID:-0}:${GROUP_ID:-0}
         runtime: nvidia
         cap_drop:
@@ -131,6 +149,7 @@ services:
             - /tmp/nvidia-log:/tmp/nvidia-log
             - ${GNB_CONFIG:-../common/gnb.sa.usrpb200.24prbs.conf}:/opt/oai-gnb/etc/gnb.conf
             - ../../plugins:/opt/oai-gnb/plugins # mount all plugins for weights, logs, data capture, etc.
+            - ../../../edgeric-validation:/edgeric-validation
         ipc: host
         healthcheck:
             test: /bin/bash -c "pgrep -f softmodem"
