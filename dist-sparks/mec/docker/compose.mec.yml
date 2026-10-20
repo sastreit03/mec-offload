@@ -14,8 +14,13 @@ services:
     networks:
       traffic_net:
         ipv4_address: 192.168.72.136
-      #edge_net:
-      #  ipv4_address: 192.168.74.141
+        interface_name: eth0
+      edge_net:
+        ipv4_address: 192.168.74.141
+        interface_name: eth1
+      public_net:
+        ipv4_address: 192.168.71.142
+        interface_name: eth2
     ports:
       - "8765:8765/tcp"
     read_only: true
@@ -55,6 +60,15 @@ networks:
   traffic_net:
     external: true
     name: oai-traffic-net
-  #edge_net:
-  #  external: true
-  #  name: aether-edge-net
+  public_net:
+    external: true
+    name: oai-public-net
+  edge_net:
+        driver: ipvlan
+        name: aether-edge-net
+        ipam:
+            config:
+                - subnet: 192.168.74.128/26
+        driver_opts:
+            ipvlan_mode: l2
+            parent: "${EDGE_NET_PARENT:-enp1s0f1np1.74}"
