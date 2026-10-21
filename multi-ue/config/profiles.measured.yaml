@@ -1,0 +1,10 @@
+compatibility: measured-testbed-v1
+synthetic: false
+network:
+  mean_s: null
+  P0_s2: null
+  R_s2: null
+  q_s2_per_s: null
+  V_frame_s2: null
+  radio_bps_per_unit: null
+candidates: {}

@@ -1,0 +1,23 @@
+{
+  "python": "3.12.14",
+  "machine": "x86_64",
+  "packages": {
+    "fastapi": "0.156.2",
+    "uvicorn": "0.38.0",
+    "pydantic": "2.12.5",
+    "PyYAML": "6.0.3",
+    "grpcio": "1.84.0",
+    "grpcio-tools": "1.84.0",
+    "protobuf": "7.36.2",
+    "pyzmq": "27.1.0",
+    "numpy": "2.3.5",
+    "websockets": "16.0",
+    "pytest": "9.1.1",
+    "httpx": "0.28.1"
+  },
+  "gpu": "unavailable; no GPU check run",
+  "docker": "unavailable; no image build run",
+  "android_api": 35,
+  "java": "17.0.20",
+  "apk": "unverified: Gradle distribution network failure"
+}

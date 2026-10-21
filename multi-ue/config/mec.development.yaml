@@ -1,0 +1,19 @@
+run_id: local-development
+mode: development
+catalog: tasks.yaml
+profiles: profiles.synthetic.yaml
+backend: mock
+advertised_ip: 192.168.72.136
+edgeric_target: 127.0.0.1:50052
+runs_dir: runs
+weights_dir: weights
+warmup_count: 1
+radio_budget: 100000.0
+compute_budget_s_per_s: 2.0
+global_queue_initial_s: 0.001
+profile_compatibility: synthetic-dev-v1
+ran_telemetry:
+  aggregation_window_ms: 100
+  report_interval_ms: 100
+  stale_ms: 300
+  prolonged_outage_s: 5

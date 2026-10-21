@@ -1,0 +1,8 @@
+# OPTIONAL explicit SRK compose supplement; not docker-compose.override.yaml.
+# Use together with the actual SRK file and its actual service key.
+services:
+  oai-gnb:
+    environment:
+      OAI_SCHED_TRACE_FILE: /mec-trace/scheduler.csv
+    volumes:
+      - ${RAN_TRACE_DIR:-/tmp/mec-scheduler-trace}:/mec-trace

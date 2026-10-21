@@ -1,0 +1,223 @@
+/home/sstreit/mec-offload-ad/EdgeRIC-v2
+├── control_mcs_pb2.py
+├── control_weights_pb2.py
+├── core
+│   ├── a2c.py
+│   ├── agent_original.py
+│   ├── agent.py
+│   ├── common.py
+│   ├── ppo.py
+│   ├── __pycache__
+│   │   ├── agent.cpython-38.pyc
+│   │   ├── agent_original.cpython-36.pyc
+│   │   ├── agent_original.cpython-38.pyc
+│   │   ├── common.cpython-36.pyc
+│   │   ├── common.cpython-38.pyc
+│   │   ├── ppo.cpython-36.pyc
+│   │   └── ppo.cpython-38.pyc
+│   └── trpo.py
+├── debug
+│   └── operatingpoint.py
+├── docker
+│   ├── compose.edgeric.yaml
+│   ├── Dockerfile.edgeric
+│   ├── requirements-base.txt
+│   └── requirements-muapp.txt
+├── edgeric
+│   ├── bin
+│   │   ├── activate
+│   │   ├── activate.csh
+│   │   ├── activate.fish
+│   │   ├── Activate.ps1
+│   │   ├── f2py
+│   │   ├── numpy-config
+│   │   ├── pip
+│   │   ├── pip3
+│   │   └── pip3.12
+│   └── pyvenv.cfg
+├── edgeric_messenger222.py
+├── edgeric_messenger.py
+├── .gitignore
+├── images
+│   ├── blah.md
+│   └── training_rl.png
+├── metrics_pb2.py
+├── models
+│   ├── mlp_critic.py
+│   ├── mlp_discriminator.py
+│   ├── mlp_policy_disc.py
+│   ├── mlp_policy.py
+│   └── __pycache__
+│       ├── mlp_critic.cpython-36.pyc
+│       ├── mlp_critic.cpython-38.pyc
+│       ├── mlp_policy.cpython-36.pyc
+│       ├── mlp_policy.cpython-38.pyc
+│       ├── mlp_policy_disc.cpython-36.pyc
+│       └── mlp_policy_disc.cpython-38.pyc
+├── muApp1
+│   ├── muApp1_run_DL_scheduling.py
+│   ├── rllog.txt
+│   └── rl_model
+│       ├── fully_trained_model
+│       │   └── model_demo.pt
+│       ├── half_trained_model
+│       │   └── model_demo.pt
+│       ├── initial_model
+│       │   └── model_demo.pt
+│       ├── model_best.pt
+│       ├── model_demo.pt
+│       └── ._model.pt
+├── muApp2
+│   ├── conf
+│   │   ├── edge_ric.yaml
+│   │   ├── example.yaml
+│   │   ├── simpler_streaming.yaml
+│   │   └── single_agent.yaml
+│   └── muApp2_train_RL_DL_scheduling.py
+├── muApp3
+│   ├── docker
+│   │   ├── grafana
+│   │   │   └── docker-compose.yml
+│   │   └── prometheus
+│   │       ├── docker-compose.yml
+│   │       └── prometheus
+│   │           └── prometheus.yml
+│   ├── muApp3_monitor_grafana.py
+│   ├── muApp3_monitor.py
+│   ├── muApp3_monitor_terminal.py
+│   ├── __pycache__
+│   │   ├── control_actions_pb2.cpython-38.pyc
+│   │   ├── edgeric_messenger.cpython-38.pyc
+│   │   └── metrics_pb2.cpython-38.pyc
+│   └── README.md
+├── protobufs
+│   ├── control_mcs.proto
+│   ├── control_weights.proto
+│   └── metrics.proto
+├── __pycache__
+│   ├── control_mcs_pb2.cpython-312.pyc
+│   ├── control_mcs_pb2.cpython-38.pyc
+│   ├── control_weights_pb2.cpython-312.pyc
+│   ├── control_weights_pb2.cpython-38.pyc
+│   ├── edgeric_messenger.cpython-312.pyc
+│   ├── edgeric_messenger.cpython-38.pyc
+│   ├── metrics_pb2.cpython-312.pyc
+│   ├── metrics_pb2.cpython-38.pyc
+│   └── send_weight.cpython-312.pyc
+├── README.md
+├── send_mcs.py
+├── send_weight.py
+├── send_weightv2.py
+├── stream_rl
+│   ├── 4ue_data.csv
+│   ├── 4ue_rw_on_robot_throughput.csv
+│   ├── callbacks.py
+│   ├── cardrone_4ue_data.csv
+│   ├── carrrobot_4ue_eval.csv
+│   ├── datasets
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── __init__.cpython-36.pyc
+│   │   │   ├── __init__.cpython-38.pyc
+│   │   │   ├── vimeo90k_video.cpython-36.pyc
+│   │   │   └── vimeo90k_video.cpython-38.pyc
+│   │   └── vimeo90k_video.py
+│   ├── drone_data.csv
+│   ├── drone_on_rw_nodelay.csv
+│   ├── envs
+│   │   ├── cqi_traces
+│   │   │   ├── data.csv
+│   │   │   ├── data_random.csv
+│   │   │   ├── data_realistic_3_4.csv
+│   │   │   ├── data_triangle.csv
+│   │   │   ├── drone.csv
+│   │   │   ├── realistic.csv
+│   │   │   ├── realistic.txt
+│   │   │   └── trace_generator.py
+│   │   ├── edge_ric.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   │   ├── edge_ric.cpython-36.pyc
+│   │   │   ├── edge_ric.cpython-38.pyc
+│   │   │   ├── __init__.cpython-36.pyc
+│   │   │   ├── __init__.cpython-38.pyc
+│   │   │   ├── single_agent_env.cpython-36.pyc
+│   │   │   ├── single_agent_env.cpython-38.pyc
+│   │   │   ├── streaming_env.cpython-36.pyc
+│   │   │   └── streaming_env.cpython-38.pyc
+│   │   ├── simpler_streaming_env.py
+│   │   ├── single_agent_env.py
+│   │   └── streaming_env.py
+│   ├── eval_rw_on_drone_backlog.csv
+│   ├── evaluation_curve_genz2.pdf
+│   ├── evaluation_curve_genz3.pdf
+│   ├── evaluation_curve_genz.pdf
+│   ├── extract_reward.py
+│   ├── __init__.py
+│   ├── logfile.log
+│   ├── plotlyplots.py
+│   ├── plots.py
+│   ├── policy_net
+│   │   ├── conv_policy.py
+│   │   ├── __init__.py
+│   │   └── __pycache__
+│   │       ├── conv_policy.cpython-36.pyc
+│   │       ├── conv_policy.cpython-38.pyc
+│   │       ├── __init__.cpython-36.pyc
+│   │       └── __init__.cpython-38.pyc
+│   ├── __pycache__
+│   │   ├── callbacks.cpython-36.pyc
+│   │   ├── callbacks.cpython-38.pyc
+│   │   ├── __init__.cpython-36.pyc
+│   │   ├── __init__.cpython-38.pyc
+│   │   ├── plots.cpython-36.pyc
+│   │   ├── plots.cpython-38.pyc
+│   │   ├── rewards.cpython-36.pyc
+│   │   └── rewards.cpython-38.pyc
+│   ├── registry
+│   │   ├── __init__.py
+│   │   └── __pycache__
+│   │       ├── __init__.cpython-36.pyc
+│   │       └── __init__.cpython-38.pyc
+│   ├── rewards.csv
+│   ├── rewards.py
+│   └── streamingtraindata.csv
+├── utils
+│   ├── __init__.py
+│   ├── math.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-36.pyc
+│   │   ├── __init__.cpython-38.pyc
+│   │   ├── math.cpython-36.pyc
+│   │   ├── math.cpython-38.pyc
+│   │   ├── replay_memory.cpython-36.pyc
+│   │   ├── replay_memory.cpython-38.pyc
+│   │   ├── tools.cpython-36.pyc
+│   │   ├── tools.cpython-38.pyc
+│   │   ├── torch.cpython-36.pyc
+│   │   ├── torch.cpython-38.pyc
+│   │   ├── zfilter.cpython-36.pyc
+│   │   └── zfilter.cpython-38.pyc
+│   ├── replay_memory.py
+│   ├── tools.py
+│   ├── torch.py
+│   └── zfilter.py
+└── .venv-proto
+    ├── bin
+    │   ├── activate
+    │   ├── activate.csh
+    │   ├── activate.fish
+    │   ├── Activate.ps1
+    │   ├── f2py
+    │   ├── pip
+    │   ├── pip3
+    │   ├── pip3.12
+    │   ├── python -> python3.12
+    │   ├── python3 -> python3.12
+    │   └── python3.12 -> /usr/bin/python3.12
+    ├── include
+    │   └── python3.12
+    ├── lib64 -> lib
+    └── pyvenv.cfg
+
+43 directories, 178 files

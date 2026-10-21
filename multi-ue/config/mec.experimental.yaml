@@ -1,0 +1,19 @@
+run_id: CHANGE-ME
+mode: experimental
+catalog: tasks.yaml
+profiles: profiles.measured.yaml
+backend: torchscript
+advertised_ip: 192.168.72.136
+edgeric_target: 192.168.71.140:50052
+runs_dir: runs
+weights_dir: weights
+warmup_count: null
+radio_budget: null
+compute_budget_s_per_s: null
+global_queue_initial_s: null
+profile_compatibility: measured-testbed-v1
+ran_telemetry:
+  aggregation_window_ms: 100
+  report_interval_ms: 100
+  stale_ms: 300
+  prolonged_outage_s: 5

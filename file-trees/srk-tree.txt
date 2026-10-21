@@ -1,0 +1,371 @@
+/home/sstreit/mec-offload-ad/gnb-core
+├── build-edgeric-base.log
+├── build-edgeric-build.log
+├── build-edgeric-gnb.log
+├── build.log
+├── CODE_OF_CONDUCT.md
+├── config
+│   ├── b200
+│   │   └── .env
+│   ├── common
+│   │   ├── docker-compose.override.yaml
+│   │   ├── docker-compose.yaml
+│   │   ├── flexric.conf
+│   │   ├── gnb.sa.band78.106prbs.conf
+│   │   ├── gnb.sa.band78.24prbs.conf
+│   │   ├── gnb.sa.band78.51prbs.conf
+│   │   ├── mini_nonrf_config.yaml
+│   │   ├── mysql-healthcheck.sh
+│   │   ├── nrue.uicc.conf
+│   │   ├── oai_db.sql
+│   │   └── sys_config.yaml
+│   ├── rfsim
+│   │   └── .env
+│   ├── testing
+│   │   └── .env
+│   └── x410
+│       └── .env
+├── CONTRIBUTING.md
+├── doc
+│   ├── build_docs.sh
+│   ├── make.bat
+│   ├── Makefile
+│   └── source
+│       ├── conf.py
+│       ├── figs
+│       │   ├── 5g_stack.png
+│       │   ├── chemu_overview.png
+│       │   ├── cuda_emulator.svg
+│       │   ├── gtc_demo_overview.png
+│       │   ├── inline_vs_lookaside.png
+│       │   ├── oai_flow_dl.png
+│       │   ├── oai_flow_ul.png
+│       │   ├── ofdm_symbols.png
+│       │   ├── sionna_overview.png
+│       │   ├── system_overview.png
+│       │   ├── system_setup_diagram.png
+│       │   ├── tutorial_capture_overview.png
+│       │   ├── tutorial_la_overview.png
+│       │   ├── tutorial_la_results.jpg
+│       │   ├── tutorial_ldpc_basics.png
+│       │   ├── tutorial_ldpc_kernel.png
+│       │   ├── tutorial_ldpc_overview.png
+│       │   ├── tutorial_nn_demapper_basic.png
+│       │   ├── tutorial_nn_demapper_overview.png
+│       │   ├── tutorial_nrx_overview.png
+│       │   └── tutorial_overview.png
+│       ├── index.rst
+│       ├── quickstart.rst
+│       ├── scripts
+│       │   ├── build-cn5g-images.rst
+│       │   ├── build-custom-kernel.rst
+│       │   ├── build-oai-images.rst
+│       │   ├── configure-system.rst
+│       │   ├── generate-configs.rst
+│       │   ├── get-config-changes.rst
+│       │   ├── get-oai-changed-files.rst
+│       │   ├── get-oai-cn5g-changed-files.rst
+│       │   ├── get-oai-cn5g-commit-versions.rst
+│       │   ├── get-oai-commit-versions.rst
+│       │   ├── install-custom-kernel.rst
+│       │   ├── install-usrp.rst
+│       │   ├── quickstart-cn5g.rst
+│       │   ├── quickstart-oai.rst
+│       │   ├── start-system.rst
+│       │   └── stop-system.rst
+│       ├── setup
+│       │   ├── 5g_config.rst
+│       │   ├── bom.rst
+│       │   ├── jetson_orin.rst
+│       │   ├── jetson_thor.rst
+│       │   ├── kernel.rst
+│       │   ├── OAI.rst
+│       │   ├── perf.rst
+│       │   ├── perf_test.rst
+│       │   ├── quectel.rst
+│       │   ├── rfsimulator.rst
+│       │   ├── sim.rst
+│       │   ├── sionna.rst
+│       │   ├── spark.rst
+│       │   └── UHD.rst
+│       ├── setup.rst
+│       ├── _static
+│       │   ├── arxiv_logo.png
+│       │   ├── colab_logo.svg
+│       │   ├── css
+│       │   │   └── wltk.css
+│       │   └── mathcon
+│       ├── tutorials
+│       │   ├── channel_emulation -> ../../../plugins/channel_emulation/doc
+│       │   ├── data_acquisition -> ../../../plugins/data_acquisition/doc
+│       │   ├── debugging.rst
+│       │   ├── ldpc_cuda -> ../../../plugins/ldpc_cuda/doc
+│       │   ├── neural_demapper -> ../../../plugins/neural_demapper/doc
+│       │   ├── neural_receiver -> ../../../plugins/neural_receiver/doc
+│       │   ├── ric_xapps -> ../../../plugins/ric_xapps/doc
+│       │   ├── run_tutorials.rst
+│       │   └── ue_emulator.rst
+│       └── tutorials.rst
+├── .github
+│   └── workflows
+│       ├── test-plugins.yml
+│       └── test-tutorials.yml
+├── .gitignore
+├── .gitmodules
+├── l4t
+│   └── kernel
+│       ├── config.options
+│       └── defconfig
+├── LICENSE
+├── Makefile
+├── mcs_tests
+├── patches
+│   ├── config
+│   │   ├── config.b200.patch
+│   │   ├── config.common.patch
+│   │   ├── config-excludes.txt
+│   │   ├── config-list.txt
+│   │   ├── config-mappings.txt
+│   │   ├── config.rfsim.patch
+│   │   └── config.testing.patch
+│   ├── openairinterface5g.patch
+│   └── tutorials.patch
+├── plugins
+│   ├── channel_emulation
+│   │   ├── CMakeLists.txt
+│   │   ├── common
+│   │   │   ├── channel_emulator.c
+│   │   │   └── channel_emulator.h
+│   │   ├── cuda_emulator
+│   │   │   ├── src
+│   │   │   │   ├── chn_emu.c
+│   │   │   │   ├── chn_emu_cuda.cu
+│   │   │   │   ├── chn_emu_cuda.h
+│   │   │   │   ├── chn_emu_defs.h
+│   │   │   │   ├── chn_emu_extern.h
+│   │   │   │   ├── chn_emu.h
+│   │   │   │   ├── chn_emu_load.c
+│   │   │   │   └── CMakeLists.txt
+│   │   │   └── tests
+│   │   │       ├── CMakeLists.txt
+│   │   │       └── unit
+│   │   │           ├── conftest.py
+│   │   │           └── test_channel_emulator.py
+│   │   ├── data
+│   │   │   └── pass_through_cir
+│   │   │       ├── cirs.bin
+│   │   │       ├── config.json
+│   │   │       └── create_pass_through_cir.py
+│   │   ├── doc
+│   │   │   └── channel_emulation.rst
+│   │   ├── file_loader
+│   │   │   ├── src
+│   │   │   │   ├── cir_file.c
+│   │   │   │   ├── cir_file_defs.h
+│   │   │   │   ├── cir_file_extern.h
+│   │   │   │   ├── cir_file.h
+│   │   │   │   ├── cir_file_load.c
+│   │   │   │   └── CMakeLists.txt
+│   │   │   └── tests
+│   │   │       ├── CMakeLists.txt
+│   │   │       └── unit
+│   │   │           ├── conftest.py
+│   │   │           └── test_cir_file.py
+│   │   ├── tests
+│   │   │   └── integration
+│   │   │       └── run_integration.sh
+│   │   ├── tutorial.yaml
+│   │   └── zmq_loader
+│   │       ├── scripts
+│   │       │   └── test_cir_zmq_live.py
+│   │       ├── src
+│   │       │   ├── cir_zmq.c
+│   │       │   ├── cir_zmq_defs.h
+│   │       │   ├── cir_zmq_extern.h
+│   │       │   ├── cir_zmq.h
+│   │       │   ├── cir_zmq_load.c
+│   │       │   └── CMakeLists.txt
+│   │       └── tests
+│   │           ├── CMakeLists.txt
+│   │           └── unit
+│   │               ├── conftest.py
+│   │               └── test_cir_zmq.py
+│   ├── CMakeLists.txt
+│   ├── common
+│   │   ├── build_all_plugins.sh
+│   │   └── src
+│   │       ├── plugins.c
+│   │       └── plugins.h
+│   ├── data_acquisition
+│   │   ├── CMakeLists.txt
+│   │   ├── doc
+│   │   │   └── index.rst
+│   │   ├── src
+│   │   │   ├── nr_demapper_capture.c
+│   │   │   ├── nr_demapper_capture.h
+│   │   │   ├── nr_demapper_defs.h -> ../../neural_demapper/src/nr_demapper_defs.h
+│   │   │   ├── nr_demapper_extern.h -> ../../neural_demapper/src/nr_demapper_extern.h
+│   │   │   ├── nr_demapper_load.c -> ../../neural_demapper/src/nr_demapper_load.c
+│   │   │   ├── nr_demapper_orig.c
+│   │   │   └── nr_demapper_orig.h
+│   │   ├── tests
+│   │   │   └── integration
+│   │   │       └── run_integration.sh
+│   │   └── tutorial.yaml
+│   ├── ldpc_cuda
+│   │   ├── CMakeLists.txt
+│   │   ├── doc
+│   │   │   ├── index.rst
+│   │   │   ├── LDPC_background.ipynb
+│   │   │   ├── ldpc_cuda.rst
+│   │   │   ├── ldpc_decoder.cu -> ../src/runtime/ldpc_decoder.cu
+│   │   │   └── numpy_decoder.py -> ../src/python/numpy_decoder.py
+│   │   ├── src
+│   │   │   ├── nr_ldpc_cuda.c
+│   │   │   ├── python
+│   │   │   │   ├── numpy_decoder.ipynb
+│   │   │   │   ├── numpy_decoder.py
+│   │   │   │   └── test_decoder_bler.ipynb
+│   │   │   └── runtime
+│   │   │       ├── CMakeLists.txt
+│   │   │       ├── ldpc_decoder.cu
+│   │   │       ├── ldpc_tables_bg1.h
+│   │   │       └── ldpc_tables_bg2.h
+│   │   ├── tests
+│   │   │   ├── integration
+│   │   │   │   └── run_integration.sh
+│   │   │   └── unit
+│   │   │       ├── conftest.py
+│   │   │       ├── .gitkeep
+│   │   │       └── test_decoder.py
+│   │   └── tutorial.yaml
+│   ├── neural_demapper
+│   │   ├── CMakeLists.txt
+│   │   ├── config
+│   │   │   ├── demapper_trt.config
+│   │   │   ├── env.changes
+│   │   │   └── README.md
+│   │   ├── doc
+│   │   │   ├── accelerated_inference.rst
+│   │   │   ├── index.rst
+│   │   │   └── Neural_demapper.ipynb
+│   │   ├── Modelcard_demapper.md
+│   │   ├── models
+│   │   │   ├── .keepdir
+│   │   │   └── neural_demapper_qam16_2.onnx
+│   │   ├── scripts
+│   │   │   └── build-trt-plans.sh
+│   │   ├── src
+│   │   │   ├── nr_demapper_defs.h
+│   │   │   ├── nr_demapper_extern.h
+│   │   │   ├── nr_demapper_load.c
+│   │   │   ├── nr_demapper_trt.c
+│   │   │   ├── nr_demapper_trt.h
+│   │   │   └── runtime
+│   │   │       ├── CMakeLists.txt
+│   │   │       ├── data_processing.cu
+│   │   │       ├── data_processing.h
+│   │   │       └── trt_demapper.cpp
+│   │   ├── tests
+│   │   │   ├── integration
+│   │   │   │   └── run_integration.sh
+│   │   │   └── unit
+│   │   │       ├── conftest.py
+│   │   │       ├── .gitkeep
+│   │   │       ├── test_data_processing.py
+│   │   │       └── test_demappers.py
+│   │   └── tutorial.yaml
+│   ├── neural_receiver
+│   │   ├── CMakeLists.txt
+│   │   ├── doc
+│   │   │   └── index.rst
+│   │   ├── models
+│   │   │   ├── .keepdir
+│   │   │   └── nrx_oai.onnx
+│   │   ├── scripts
+│   │   │   └── build-trt-plans.sh
+│   │   ├── src
+│   │   │   ├── CMakeLists.txt
+│   │   │   ├── nr_receiver_capture.c
+│   │   │   ├── nr_receiver_defs.h
+│   │   │   ├── nr_receiver_extern.h
+│   │   │   ├── nr_receiver_load.c
+│   │   │   ├── nr_receiver_trt.c
+│   │   │   └── runtime
+│   │   │       ├── CMakeLists.txt
+│   │   │       ├── data_processing.cu
+│   │   │       ├── data_processing.h
+│   │   │       └── trt_receiver.cpp
+│   │   ├── tests
+│   │   │   ├── integration
+│   │   │   │   └── run_integration.sh
+│   │   │   ├── test_nrx.ipynb
+│   │   │   └── unit
+│   │   │       ├── conftest.py
+│   │   │       ├── .gitkeep
+│   │   │       ├── test_data_processing.py
+│   │   │       └── test_receiver.py
+│   │   └── tutorial.yaml
+│   ├── ric_xapps
+│   │   ├── doc
+│   │   │   └── index.rst
+│   │   ├── src
+│   │   │   ├── monitor_mcs.py
+│   │   │   ├── zmq_stats_client.py
+│   │   │   └── zmq_stats_server.py
+│   │   ├── tests
+│   │   │   └── integration
+│   │   │       └── run_integration.sh
+│   │   └── tutorial.yaml
+│   └── testing
+│       ├── configs
+│       │   └── pytest.common.ini
+│       ├── framework
+│       │   ├── __init__.py
+│       │   ├── manifest_loader.py
+│       │   └── test_runner.py
+│       └── run_all_tests.sh
+├── README.md
+├── requirements_doc.txt
+├── requirements_orin.txt
+├── requirements_thor.txt
+├── requirements.txt
+├── scripts
+│   ├── activate_tutorial.py
+│   ├── build-cn5g-images.sh
+│   ├── build-custom-kernel.sh
+│   ├── build-oai-images.sh
+│   ├── configure-system.agx-orin.sh
+│   ├── configure-system.agx-thor.sh
+│   ├── configure-system.dgx-spark.sh
+│   ├── configure-system.orin-nano.sh
+│   ├── configure-system.sh
+│   ├── detect_host.sh
+│   ├── generate-configs.sh
+│   ├── get-config-changes.sh
+│   ├── get-oai-changed-files.sh
+│   ├── get-oai-cn5g-changed-files.sh
+│   ├── get-oai-cn5g-commit-versions.sh
+│   ├── get-oai-commit-versions.sh
+│   ├── install-custom-kernel.sh
+│   ├── install-usrp.sh
+│   ├── license-checks.inc
+│   ├── patch-oai-cn5g.sh
+│   ├── patch-oai.sh
+│   ├── quickstart-cn5g.sh
+│   ├── quickstart-oai.sh
+│   ├── show_build_errors.sh
+│   ├── start_channel_emulation_demo.sh
+│   ├── start_mps.sh
+│   ├── start_system_core.sh
+│   ├── start_system_ran.sh
+│   ├── start_system.sh
+│   ├── stop_mps.sh
+│   ├── stop_system.sh
+│   ├── throughput_test_mcs.sh
+│   └── throughput_test.sh
+├── SECURITY.md
+├── throughput_tests
+└── VERSION
+
+93 directories, 276 files

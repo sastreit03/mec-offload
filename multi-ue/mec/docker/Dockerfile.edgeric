@@ -1,0 +1,9 @@
+FROM python:3.12-slim
+WORKDIR /work/multi-ue
+COPY multi-ue/requirements.txt requirements.txt
+RUN python -m pip install -r requirements.txt
+COPY multi-ue/contracts contracts
+COPY multi-ue/config config
+COPY EdgeRIC-v2/muApp_mec /work/EdgeRIC-v2/muApp_mec
+ENV PYTHONPATH=/work/multi-ue/contracts/python:/work/EdgeRIC-v2
+CMD ["python", "-m", "muApp_mec", "--config", "config/edgeric.shadow.yaml"]

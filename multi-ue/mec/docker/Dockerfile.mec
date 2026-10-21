@@ -1,0 +1,14 @@
+ARG BASE_IMAGE=nvcr.io/nvidia/pytorch:25.12-py3
+FROM ${BASE_IMAGE}
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends python3-gi python3-gst-1.0 gir1.2-gstreamer-1.0 gir1.2-gst-plugins-base-1.0 gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav && apt-get clean
+WORKDIR /work/multi-ue
+COPY requirements.txt requirements.txt
+COPY mec/requirements-gpu.txt mec/requirements-gpu.txt
+RUN python -m pip install -r requirements.txt -r mec/requirements-gpu.txt
+COPY contracts contracts
+COPY mec/src mec/src
+COPY config config
+ENV PYTHONPATH=/work/multi-ue/contracts/python:/work/multi-ue/mec/src:/usr/lib/python3/dist-packages
+ENV CUDA_MPS_PIPE_DIRECTORY=/tmp/nvidia-mps CUDA_MPS_LOG_DIRECTORY=/tmp/nvidia-log
+CMD ["python", "-m", "mec_server.app", "--config", "config/mec.experimental.yaml"]

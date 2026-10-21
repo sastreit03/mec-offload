@@ -1,0 +1,85 @@
+/home/sstreit/mec-offload-ad/dist-sparks/
+├── install-logs
+├── Makefile
+├── mec
+│   ├── docker
+│   │   ├── compose.mec.yml
+│   │   ├── Dockerfile.mec
+│   │   └── Dockerfile.mec.dockerignore
+│   ├── README.md
+│   └── src
+│       ├── app.py
+│       ├── check_environment.py
+│       ├── config.yaml
+│       ├── control.py
+│       ├── dashboard.py
+│       ├── install_system_deps.sh
+│       ├── models
+│       ├── models.py
+│       ├── ran_telemetry.py
+│       ├── receiver.py
+│       ├── requirements.txt
+│       ├── requirements-vlm.txt
+│       ├── scheduler.py
+│       └── vlm.py
+├── patches
+│   ├── add-upf-mec-route.patch
+│   ├── docker-compose.yaml.patch
+│   ├── mec-upf.patch
+│   ├── patch_files.md
+│   ├── ue_env_files.patch
+│   └── ue_publish_port.patch
+├── README.md
+├── scripts
+│   ├── build_mec_image.sh
+│   ├── build_ric_image.sh
+│   ├── build_ue_image.sh
+│   ├── check_ue_connection.sh
+│   ├── compose_mec_image.sh
+│   ├── download_model.sh
+│   ├── get_cuda_stream_priorities.sh
+│   ├── install_compose_patch.sh
+│   ├── install_ue_patches.sh
+│   ├── start_client.sh
+│   ├── start_mec.sh
+│   ├── start_xapp.sh
+│   ├── stop_client.sh
+│   ├── stop_mec.sh
+│   ├── stop_xapp.sh
+│   ├── verify_gpu.sh
+│   ├── verify_mec.sh
+│   ├── verify_srk_gnb.sh
+│   ├── verify_srk_mec.sh
+│   └── verify_srk_ue.sh
+├── ue
+│   ├── app.py
+│   ├── config.yaml
+│   ├── control.py
+│   ├── dashboard.py
+│   ├── Dockerfile
+│   ├── install_deps.sh
+│   ├── models.py
+│   ├── network.py
+│   ├── __pycache__
+│   │   ├── app.cpython-312.pyc
+│   │   ├── control.cpython-312.pyc
+│   │   ├── models.cpython-312.pyc
+│   │   ├── network.cpython-312.pyc
+│   │   └── streamer.cpython-312.pyc
+│   ├── README.md
+│   ├── requirements.txt
+│   ├── streamer.py
+│   └── video
+│       └── demo.mp4
+└── xapp
+    ├── docker
+    │   ├── compose.xapp.yml
+    │   ├── Dockerfile.flexric
+    │   └── .env
+    └── src
+        ├── ran_telemetry_parameters.docx
+        ├── ran_telemetry_xapp_get_fields.py
+        ├── ran_telemetry_xapp_get_metrics.py
+        └── ran_telemetry_xapp.py
+
+14 directories, 69 files

@@ -1,0 +1,10 @@
+fastapi==0.156.2
+uvicorn==0.38.0
+pydantic==2.12.5
+PyYAML==6.0.3
+grpcio==1.84.0
+grpcio-tools==1.84.0
+protobuf==7.36.2
+pyzmq==27.1.0
+numpy>=1.26,<3
+websockets==16.0

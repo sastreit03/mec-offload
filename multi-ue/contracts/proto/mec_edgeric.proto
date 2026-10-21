@@ -1,0 +1,9 @@
+syntax = "proto3";
+package mec.awareness.v1;
+// json_utf8 is validated by schemas and the receiving component; protobuf wire
+// framing is kept independent of the existing OAI weight and telemetry schemas.
+message Envelope { uint32 schema_version = 1; bytes json_utf8 = 2; }
+service Awareness {
+  rpc Exchange(Envelope) returns (Envelope);
+  rpc Reports(Envelope) returns (stream Envelope);
+}

@@ -1,0 +1,15 @@
+decisions_or_acceptance,component,implementation_status,checks_completed,unverified_or_deferred
+"M01–M15,M78–M79",UE/control/contracts,implemented,"local gRPC/WebSocket lifecycle, idempotency and fencing",camera/live reconnection and sustained load
+"M16–M25,D01–D41,D51–D60",MEC workers/priority,implemented,"three spawned MOCK workers, priority thresholds, history/joint validator","12 real resident copies,9 streams,MPS,FP16,CUDA concurrency,task quality"
+"M26–M34,D42–D54",timing/statistics/logging,implemented,history/filter tests and replay store,"real clock uncertainty,stage timing,recording overhead,full residence"
+"M35–M38,M59–M66",UE/media/results,implemented,"RTP fragments/reorder/duplicates,missing IDs,durable replay,Java API compile",camera/file MediaCodec/GStreamer/softUE/OTA and actual result receipts
+"M39–M42,D55–D62",catalog/profiles,implemented gates,synthetic/experimental separation and missing-profile rejection,"accuracy-qualified candidates,normalized network noise,radio/compute budgets"
+"M43–M58,M67–M70,D63–D68",GoP/availability,implemented baseline,joint search/validator tested; metadata/config reconciliation source inspected,"phase transitions,missed commands,suspension/resumption and stale-telemetry faults under load"
+M71–M77,experimental comparison,records prepared,no improvement claim,all measured application quality/SLO/coexistence results
+"R01–R10,R24–R29",integration/authority,implemented baseline,gRPC/schema and identity boundary tests,Docker namespace/reachability/clock and mixed-path load
+"R11–R23,R53",telemetry/capacity,partial; source gate open,"counter source inspection,trace parser/window tests",fresh100-ms source and full TBS context; no verified capacity table
+"R30–R46,AC01–AC05",frame-demand ledger,implemented,"replay cases,overlap,expiry,corrections,partial feedback,recovery",association accuracy and radio service accounting live
+"R47–R50,R57 timing",slot targeting,deferred by user,existing ran_index path preserved,strict slot-k/k+1 targets and latency-tail acceptance not implemented
+"R51–R58,HC01–HC05",radio heuristic,implemented guarded/shadow default,"score arithmetic,reconciliation,non-MEC omission",live scheduling/deprivation and comparative results
+HC06–HC09,OAI actuation acceptance,unverified live,legacy protobuf wire/source reference only,"fallback with disconnect,PF coexistence,min-grant skips,feasible grants,R53 context"
+"R59–R67,MC01–MC06,D69–D82",RL application inference,deferred,GoP/Priority protocols and shared validation only,remote inference isolation/correlation/fallback tests and later RL design

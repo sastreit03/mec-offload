@@ -1,0 +1,166 @@
+/home/sstreit/mec-offload-ad/
+├── .agents
+├── .codex
+├── core-mec
+│   ├── .github
+│   ├── .gitignore
+│   └── .gitmodules
+├── demo1
+│   ├── documentation
+│   ├── mec-server
+│   ├── README.md
+│   ├── scripts
+│   └── ue-client
+├── demo1-1
+│   ├── deployment_steps.txt
+│   ├── documentation
+│   ├── inference-results
+│   ├── install-logs
+│   ├── Makefile
+│   ├── mec-server
+│   ├── patches
+│   ├── pcap-files
+│   ├── README.md
+│   ├── scripts
+│   └── ue-client
+├── dist-sparks
+│   ├── install-logs
+│   ├── Makefile
+│   ├── mec
+│   ├── patches
+│   ├── README.md
+│   ├── scripts
+│   ├── ue
+│   └── xapp
+├── docs
+│   ├── cots_handset_setup.md
+│   ├── mec_architecture-1-1.docx
+│   ├── MEC_Decision_Maker_Architecture(2).docx
+│   └── OAI_EdgeRIC_Architecture.docx
+├── edgeric-oai-comparison
+│   ├── baseline.json
+│   ├── cmake-2024w34-to-edgeric.diff
+│   ├── cmake-edgeric-to-srk.diff
+│   ├── compare.py
+│   ├── core-upstream-verification.tsv
+│   ├── EDGERIC-BUILD-INTEGRATION.md
+│   ├── edgeric-host-syntax-check.txt
+│   ├── edgeric-modified-files.diff
+│   ├── EDGERIC-PYTHON-DEPENDENCIES.md
+│   ├── edgeric-vs-upstream-files.tsv
+│   ├── OAI-SCHEDULER-REPAIR-CHANGES.md
+│   ├── ran-all-files.tsv
+│   ├── ran-content-differences.tsv
+│   ├── repairs
+│   ├── REPORT.md
+│   ├── SCHEDULER-TRACE.md
+│   ├── sionna-local-changes.diff
+│   ├── sionna-to-edgeric.diff
+│   ├── summary.json
+│   ├── tests
+│   └── upstream-2024w34-to-2025w34.stat
+├── EdgeRIC-v2
+│   ├── control_mcs_pb2.py
+│   ├── control_weights_pb2.py
+│   ├── core
+│   ├── debug
+│   ├── docker
+│   ├── edgeric
+│   ├── edgeric_messenger222.py
+│   ├── edgeric_messenger.py
+│   ├── .gitignore
+│   ├── images
+│   ├── metrics_pb2.py
+│   ├── models
+│   ├── muApp1
+│   ├── muApp2
+│   ├── muApp3
+│   ├── protobufs
+│   ├── __pycache__
+│   ├── README.md
+│   ├── send_mcs.py
+│   ├── send_weight.py
+│   ├── send_weightv2.py
+│   ├── stream_rl
+│   ├── utils
+│   └── .venv-proto
+├── edgeric-validation
+│   ├── 20261019_092153
+│   └── 20261019_094116_equal_weights
+├── file-trees
+│   ├── dist-sparks-tree.txt
+│   ├── edgeric-tree.txt
+│   ├── mec-offload-tree.txt
+│   ├── oai-tree.txt
+│   └── srk-tree.txt
+├── .gitignore
+├── .gitmodules
+├── gnb-core
+│   ├── build-edgeric-base.log
+│   ├── build-edgeric-build.log
+│   ├── build-edgeric-gnb.log
+│   ├── build.log
+│   ├── CODE_OF_CONDUCT.md
+│   ├── config
+│   ├── CONTRIBUTING.md
+│   ├── doc
+│   ├── .github
+│   ├── .gitignore
+│   ├── .gitmodules
+│   ├── l4t
+│   ├── LICENSE
+│   ├── Makefile
+│   ├── mcs_tests
+│   ├── patches
+│   ├── plugins
+│   ├── README.md
+│   ├── requirements_doc.txt
+│   ├── requirements_orin.txt
+│   ├── requirements_thor.txt
+│   ├── requirements.txt
+│   ├── scripts
+│   ├── SECURITY.md
+│   ├── throughput_tests
+│   └── VERSION
+├── handset_carrier_config.txt
+├── multi-ue
+├── pixel-demo
+│   ├── pixel-rtp-mec.zip
+│   └── pixel-rtp-ue
+├── README.md
+├── srk-file-backups
+│   ├── EdgeRIC-v2
+│   ├── gnb-core
+│   └── ue
+├── ue
+│   ├── CODE_OF_CONDUCT.md
+│   ├── config
+│   ├── CONTRIBUTING.md
+│   ├── doc
+│   ├── .github
+│   ├── .gitignore
+│   ├── .gitmodules
+│   ├── l4t
+│   ├── LICENSE
+│   ├── Makefile
+│   ├── patches
+│   ├── plugins
+│   ├── README.md
+│   ├── requirements_doc.txt
+│   ├── requirements_orin.txt
+│   ├── requirements_thor.txt
+│   ├── requirements.txt
+│   ├── scripts
+│   ├── SECURITY.md
+│   └── VERSION
+└── vlm-demo
+    ├── install-logs
+    ├── Makefile
+    ├── mec
+    ├── patches
+    ├── README.md
+    ├── scripts
+    ├── TECHNICAL_HANDOFF.docx
+    └── ue
+
+80 directories, 84 files

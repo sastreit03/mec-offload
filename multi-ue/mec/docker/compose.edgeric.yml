@@ -1,0 +1,12 @@
+# Start AFTER the unchanged SRK RAN stack. Exactly one weights publisher is allowed.
+name: multi-ue-edgeric
+services:
+  edgeric-mec:
+    image: multi-ue-edgeric:baseline
+    container_name: edgeric-mec
+    network_mode: container:${GNB_CONTAINER:-oai-gnb}
+    restart: "no"
+    volumes:
+      - ../../config:/work/multi-ue/config:ro
+      - ../../runs:/work/multi-ue/runs
+      - ${RAN_TRACE_DIR:-../../../edgeric-validation}:/trace:ro
