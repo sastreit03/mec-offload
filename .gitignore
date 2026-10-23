@@ -5,3 +5,30 @@
 /dist-sparks/install-logs/
 /dist-sparks/mec/src/models/
 /edgeric-validation/
+
+# Aetheredge local model sources and exported artifacts
+/multi-ue/checkpoints/
+/multi-ue/weights/
+/checkpoints/
+/weights/
+
+# Downloaded datasets, videos, and archives
+/multi-ue/datasets/
+/datasets/
+
+# Runtime output can be large and may contain per-frame data
+#/multi-ue/runs/
+
+# Python-generated files
+/multi-ue/**/__pycache__/
+/multi-ue/**/*.py[cod]
+/multi-ue/.pytest_cache/
+/multi-ue/.venv/
+
+# Android-generated and machine-specific files
+/multi-ue/ue/android/.gradle/
+/multi-ue/ue/android/**/build/
+/multi-ue/ue/android/local.properties
+
+# Local logs
+/multi-ue/**/*.log

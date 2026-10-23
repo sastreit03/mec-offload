@@ -1,0 +1,53 @@
+{
+  "detection": {
+    "type": "ready",
+    "application": "detection",
+    "pid": 199,
+    "models": [
+      "yolo26n",
+      "yolo26s",
+      "yolo26m",
+      "yolo26l"
+    ],
+    "streams": [
+      -5,
+      -3,
+      0
+    ],
+    "backend": "torchscript"
+  },
+  "tracking": {
+    "type": "ready",
+    "application": "tracking",
+    "pid": 198,
+    "models": [
+      "yolo26n",
+      "yolo26s",
+      "yolo26m",
+      "yolo26l"
+    ],
+    "streams": [
+      -5,
+      -3,
+      0
+    ],
+    "backend": "torchscript"
+  },
+  "segmentation": {
+    "type": "ready",
+    "application": "segmentation",
+    "pid": 200,
+    "models": [
+      "segformer-b0",
+      "segformer-b1",
+      "segformer-b2",
+      "segformer-b3"
+    ],
+    "streams": [
+      -5,
+      -3,
+      0
+    ],
+    "backend": "torchscript"
+  }
+}
