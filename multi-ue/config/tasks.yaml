@@ -1,5 +1,4 @@
 version: mec-catalog-v1
-# Each ID names a bitrate/model combination; quality and timing evidence live in profiles.
 configurations:
 - id: detection-yolo26n-500k
   application: detection

@@ -31,7 +31,7 @@ def main():
     records = []
     for app in ["detection", "tracking", "segmentation"]:
         names = (
-            ["yolo26n", "yolo26s", "yolo26m", "yolo26l"]
+            ["yolo26n", "yolo26s", "yolo26m", "yolo26l", "yolo26x"]
             if app != "segmentation"
             else [f"segformer-b{i}" for i in range(4)]
         )
