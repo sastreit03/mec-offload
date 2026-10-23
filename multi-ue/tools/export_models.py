@@ -27,6 +27,7 @@ def main():
         def forward(self, x):
             return self.model(pixel_values=x).logits
 
+    # Export separate application artifacts even when detection and tracking share a family.
     records = []
     for app in ["detection", "tracking", "segmentation"]:
         names = (
@@ -83,6 +84,7 @@ def main():
                     raise RuntimeError(
                         f"{name}: expected end-to-end xyxy/score/class output, got {out.shape}; incompatible export must not run"
                     )
+            # Record artifact hashes so deployed checkpoints can be traced to this export.
             records.append(
                 dict(
                     application=app,

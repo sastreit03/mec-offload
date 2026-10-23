@@ -6,6 +6,7 @@ def weights(
 ):
     if b_min <= 0 or delta_s <= 0:
         raise ValueError("positive utility floors required")
+    # Score the oldest outstanding frame; overdue urgency is bounded by delta_s.
     scores = {}
     detail = {}
     for uid, s in snapshots.items():
@@ -37,6 +38,7 @@ def weights(
             score=score,
             frame_id=f["frame_id"],
         )
+    # Normalize only usable MEC scores; omitted UEs receive no utility weight here.
     total = sum(scores.values())
     if not isfinite(total) or total <= 0:
         return {}, detail

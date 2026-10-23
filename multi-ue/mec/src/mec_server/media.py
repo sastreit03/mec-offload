@@ -70,6 +70,7 @@ class Receiver:
         )
         self.bus = self.pipeline.get_bus()
 
+    # Inspect the wire descriptor before jitter buffering, depayloading, and decoding.
     def _packet(self, pad, info):
         buf = info.get_buffer()
         raw = buf.extract_dup(0, buf.get_size())
@@ -118,6 +119,7 @@ class Receiver:
             return self.Gst.PadProbeReturn.DROP
         return self.Gst.PadProbeReturn.OK
 
+    # Carry descriptor identity into decoded output using the jitterbuffer's PTS.
     def _jitter(self, pad, info):
         if info.type & self.Gst.PadProbeType.EVENT_DOWNSTREAM:
             event = info.get_event()
@@ -138,6 +140,7 @@ class Receiver:
                 pass
         return self.Gst.PadProbeReturn.OK
 
+    # Copy decoded storage before returning the sample to GStreamer.
     def _sample(self, sink):
         sample = sink.emit("pull-sample")
         if sample is None:

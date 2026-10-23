@@ -7,6 +7,14 @@ advertised_ip: 192.168.72.136
 edgeric_target: 192.168.71.140:50052
 runs_dir: runs
 weights_dir: weights
+# Ablation controls; list lengths select the enabled applications and stream count.
+fps: 30
+gop_frames: 30
+applications: [detection, tracking, segmentation]
+priority_streams: [-5, -3, 0]
+keyframe_interleaving:
+  enabled: true
+# Null values intentionally block startup until target-testbed profiling supplies them.
 warmup_count: null
 radio_budget: null
 compute_budget_s_per_s: null

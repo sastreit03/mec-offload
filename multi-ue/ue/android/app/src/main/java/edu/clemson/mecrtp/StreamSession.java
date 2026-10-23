@@ -21,10 +21,12 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
   private Network network;
   private JSONObject current;
   private final List<JSONObject> pending = new ArrayList<>();
+  // Encoder PTS links raw-frame identity to its eventual compressed access unit.
   private final Map<Long, long[]> input = new HashMap<>();
   private final Map<Long, long[]> sent = new LinkedHashMap<>();
   private long frame, gop, gopFrame, last = -1, nextRelease, pauseAt;
   private boolean force;
+  private long controlVersion, pauseVersion;
 
   public StreamSession(JSONObject response, ClockMap clock, Events events, java.io.File data)
       throws Exception {
@@ -35,6 +37,7 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
     host = response.getJSONObject("endpoint").getString("host");
     port = response.getJSONObject("endpoint").getInt("port");
     current = response.getJSONObject("config");
+    controlVersion = current.optLong("control_version", 0);
     nextRelease = current.getLong("boundary_unix_ns");
   }
 
@@ -50,7 +53,9 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
     return current;
   }
 
+  // Retain future commands for the media path; arrival alone does not apply them.
   public synchronized void command(JSONObject c) throws Exception {
+    if (c.optLong("control_version", 0) <= controlVersion) return;
     if (c.getInt("config_version") <= current.getInt("config_version")) return;
     for (JSONObject p : pending)
       if (p.getInt("config_version") == c.getInt("config_version")) return;
@@ -61,6 +66,12 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
               .put("command_id", c.getString("command_id"))
               .put("reason", "late_command"));
       return;
+    }
+    controlVersion = c.getLong("control_version");
+    // A reordered resume carries the preceding stop even if its status arrived late.
+    if (!c.isNull("stop_unix_ns") && c.getLong("suspension_version") > pauseVersion) {
+      pauseAt = c.getLong("stop_unix_ns");
+      pauseVersion = c.getLong("suspension_version");
     }
     pending.add(c);
     pending.sort(Comparator.comparingLong(x -> x.optLong("boundary_unix_ns")));
@@ -86,9 +97,15 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
       gop++;
       gopFrame = 0;
       force = true;
-      pauseAt = 0;
+      if (c.optLong("control_version", 0) > pauseVersion) pauseAt = 0;
     }
-    if (pauseAt != 0 && now >= pauseAt) return false;
+    if (pauseAt != 0 && now >= pauseAt) {
+      // Preserve source-frame time while paused so the resumed frame ID exposes
+      // the gap that ByteTrack must age through.
+      frame++;
+      nextRelease += 1_000_000_000L / current.getInt("fps");
+      return false;
+    }
     input.put(pts, new long[] {capture, frame, gop, gopFrame, force ? 1 : 0});
     nextRelease += 1_000_000_000L / current.getInt("fps");
     return true;
@@ -98,11 +115,17 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
     return force || gopFrame == 0;
   }
 
-  public synchronized void suspend(long boundary) {
-    pauseAt = boundary;
+  public synchronized void suspend(JSONObject command) throws Exception {
+    long version = command.getLong("control_version");
+    if (version <= controlVersion) return;
+    controlVersion = version;
+    pauseVersion = version;
+    pauseAt = command.getLong("effective_unix_ns");
+    events.event("suspension", command);
   }
 
   @Override
+  // Validate the requested IDR before labeling and transmitting the encoded frame.
   public synchronized byte[] begin(long pts, long size, boolean idr) throws java.io.IOException {
     try {
       long[] in = input.remove(pts);
@@ -153,6 +176,7 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
     socket.send(new DatagramPacket(packet, packet.length));
   }
 
+  // SLO evidence ends at complete UE receipt, using the same clock as transmission.
   public synchronized void receipt(JSONObject m, long received) throws Exception {
     String id = m.getString("result_id");
     long fid = m.getLong("frame_id");
@@ -175,6 +199,7 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
                     && m.getString("outcome").equals("completed")));
   }
 
+  // Missing-result timers run independently of MEC success or failure notifications.
   public synchronized void deadlines() throws Exception {
     long now = System.nanoTime();
     java.util.Iterator<Map.Entry<Long, long[]>> iterator = sent.entrySet().iterator();

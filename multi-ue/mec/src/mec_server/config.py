@@ -6,10 +6,13 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
 
 
+Application = Literal["detection", "tracking", "segmentation"]
+
+
 class Candidate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: str
-    application: Literal["detection", "tracking", "segmentation"]
+    application: Application
     model: str
     artifact: str
     input_hw: tuple[int, int]
@@ -21,14 +24,20 @@ class Candidate(BaseModel):
     backend: Literal["torchscript"] = "torchscript"
 
 
+# Reject unknown catalog fields rather than silently accepting misspelled settings.
 class TaskCatalog(BaseModel):
     model_config = ConfigDict(extra="forbid")
     version: str
     codec: Literal["H264"] = "H264"
     source_hw: tuple[int, int] = (720, 1280)
-    fps: int = 30
-    gop_frames: int = 30
+    fps: int = Field(default=30, gt=0)
+    gop_frames: int = Field(default=30, gt=0)
     configurations: list[Candidate]
+
+
+class KeyframeInterleaving(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = True
 
 
 class Settings(BaseModel):
@@ -60,6 +69,15 @@ class Settings(BaseModel):
     tracker_buffer: int = 8
     tracker_retention_s: float = 1.0
     tracker_margin_s: float = 0.01
+    applications: tuple[Application, ...] = (
+        "detection",
+        "tracking",
+        "segmentation",
+    )
+    priority_streams: tuple[int, ...] = (-5, -3, 0)
+    keyframe_interleaving: KeyframeInterleaving = Field(
+        default_factory=KeyframeInterleaving
+    )
     edgeric_target: str = "192.168.71.140:50052"
     awareness_timeout_s: float = 0.25
     gop_lead_s: float = 1.0
@@ -84,6 +102,7 @@ class Settings(BaseModel):
         )
     )
 
+    # Experimental runs require explicit calibration and cannot use mock execution.
     def check(self):
         if self.mode not in ("experimental", "development"):
             raise ValueError("mode")
@@ -102,10 +121,16 @@ class Settings(BaseModel):
         ):
             if getattr(self, key) is None:
                 raise ValueError(f"required profiled setting: {key}")
-        if self.fps != 30 or self.gop_frames != 30:
-            raise ValueError(
-                "initial coordinated experiment requires 30 FPS / 30-frame GoP; extend catalog/profile before changing"
-            )
+        if self.fps <= 0 or self.gop_frames <= 0:
+            raise ValueError("positive FPS and GoP frame length required")
+        if not self.applications or len(set(self.applications)) != len(
+            self.applications
+        ):
+            raise ValueError("applications must be nonempty and unique")
+        if not 1 <= len(self.priority_streams) <= 3:
+            raise ValueError("one to three priority streams supported by the heuristic")
+        if tuple(sorted(set(self.priority_streams))) != self.priority_streams:
+            raise ValueError("priority streams must be unique and ordered high-to-low")
         if self.warmup_count < 1:
             raise ValueError("positive profiled warmup count required")
         if (
@@ -140,8 +165,10 @@ def load(path):
     ids = [x["id"] for x in c["configurations"]]
     if len(set(ids)) != len(ids):
         raise ValueError("duplicate catalog configuration")
-    if c["source_hw"] != [720, 1280] or c["fps"] != 30 or c["gop_frames"] != 30:
-        raise ValueError("initial profiled workload is 1280x720, 30 FPS, 30-frame GoP")
+    if c["source_hw"] != [720, 1280]:
+        raise ValueError("initial profiled workload requires 1280x720 source video")
+    if c["fps"] != s.fps or c["gop_frames"] != s.gop_frames:
+        raise ValueError("catalog FPS/GoP must match MEC settings")
     for key in (
         "mean_s",
         "P0_s2",
@@ -164,6 +191,7 @@ def load(path):
     return s, c, profiles
 
 
+# Only candidates with quality evidence and complete timing initialization survive.
 def qualified(catalog, profiles):
     result = {}
     for c in catalog["configurations"]:

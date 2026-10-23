@@ -34,6 +34,7 @@ public final class MainActivity extends Activity {
   private StreamSession session;
   private AvcSource media;
   private String uid, connection, run;
+  private int inputWidth = 1280, inputHeight = 720, inputFps = 30;
   private String cellularIp = "";
   private JSONObject startRequest;
   private volatile boolean enabled;
@@ -151,12 +152,14 @@ public final class MainActivity extends Activity {
     ui.post(() -> status.setText(s));
   }
 
+  // Persist lifecycle sequence numbers so retries/reconnects do not reuse command IDs.
   private synchronized long seq() {
     clientSeq++;
     prefs.edit().putLong("seq", clientSeq).commit();
     return clientSeq;
   }
 
+  // Queue experiment evidence off the media and UI paths.
   private void event(String type, JSONObject value) {
     try {
       JSONObject record =
@@ -358,6 +361,13 @@ public final class MainActivity extends Activity {
         run = m.getString("run_id");
         uid = m.getString("ue_id");
         connection = m.getString("connection_id");
+        // Use the MEC's validated input profile for configurable FPS experiments.
+        JSONObject inputProfile = m.optJSONObject("input_profile");
+        if (inputProfile != null) {
+          inputWidth = inputProfile.getInt("width");
+          inputHeight = inputProfile.getInt("height");
+          inputFps = inputProfile.getInt("fps");
+        }
         prefs
             .edit()
             .putString("token:" + prefs.getString("host", ""), m.getString("resume_token"))
@@ -393,29 +403,45 @@ public final class MainActivity extends Activity {
                     .put("can_drop_frames", false)
                     .put(
                         "input",
-                        new JSONObject().put("width", 1280).put("height", 720).put("fps", 30));
+                        new JSONObject()
+                            .put("width", inputWidth)
+                            .put("height", inputHeight)
+                            .put("fps", inputFps));
           send(startRequest);
         }
         break;
       case "video_response":
         if (m.getBoolean("accepted") && session == null) {
+          event(
+              "admission_decision",
+              new JSONObject()
+                  .put("video_id", m.getString("video_id"))
+                  .put("accepted", true)
+                  .put("reason", JSONObject.NULL));
           session = new StreamSession(m, clock, this::event, getExternalFilesDir(null));
           session.network(network);
           media = new AvcSource(this, session, this::event);
           media.start(file);
           show("Streaming " + session.video());
         } else if (!m.getBoolean("accepted")) {
+          event(
+              "admission_decision",
+              new JSONObject()
+                  .put("video_id", m.optString("video_id"))
+                  .put("accepted", false)
+                  .put("reason", m.optString("reason")));
           show("Admission: " + m.optString("reason"));
           startRequest = null;
         }
         break;
+      // Route plans only to their video; retired sessions remain available for late receipts.
       case "gop_config":
         if (session != null && session.video().equals(m.getString("video_id"))) session.command(m);
         break;
       case "video_status":
         if (session != null && session.video().equals(m.getString("video_id"))) {
           if (m.getString("status").equals("SUSPENDED"))
-            session.suspend(m.getLong("effective_unix_ns"));
+            session.suspend(m);
           else if (java.util.Arrays.asList("COMPLETED", "FAILED", "EXPIRED", "CANCELLED")
               .contains(m.getString("status"))) {
             show(m.toString());
@@ -434,6 +460,7 @@ public final class MainActivity extends Activity {
           }
         }
         break;
+      // Stable result IDs deduplicate reconnect replay before recording a receipt.
       case "frame_result":
         String id = m.getString("result_id");
         try (android.database.Cursor cursor =
@@ -455,6 +482,7 @@ public final class MainActivity extends Activity {
                   .put("result_id", id)
                   .put("receipt_mono_ns", receipt)
                   .put("outcome", m.getString("outcome"))
+                  .put("reason", m.isNull("reason") ? JSONObject.NULL : m.getString("reason"))
                   .put("latency_ns", JSONObject.NULL)
                   .put("slo_success", false));
         show("Frame " + m.getLong("frame_id") + " · " + m.getString("outcome"));

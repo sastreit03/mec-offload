@@ -22,7 +22,7 @@ The MEC owns admission, joint GoP selection, frame priority, execution and resul
 
 Read `docs/validation.md` before experimental use. CPU tests exercise real local gRPC, WebSocket control and three spawned **mock** workers. They establish software behavior, not OTA, CUDA concurrency, camera performance or experimental quality.
 
-Experimental startup deliberately rejects missing measured timing, quality, residence, network and budget settings. `profiles.synthetic.yaml` is development evidence only. No pretrained weights or datasets are included. The initial experiment is the documented 1280×720/30-FPS/30-frame-GoP workload; alternative resolutions/FPS require compatible catalog, phase-grid and profile work. Both clients select camera versus dataset at runtime.
+Experimental startup deliberately rejects missing measured timing, quality, residence, network and budget settings. `profiles.synthetic.yaml` is development evidence only. No pretrained weights or datasets are included. The default experiment is the documented 1280×720/30-FPS/30-frame-GoP workload. `fps`, `gop_frames`, `applications`, `priority_streams`, and `keyframe_interleaving.enabled` are validated YAML controls; changing FPS or GoP length also requires matching catalog and profile evidence. The priority-stream list contains one to three ordered CUDA levels, and its length selects the stream count. Both clients select camera versus dataset at runtime and request the MEC-advertised input profile.
 
 A material source limitation remains: the supplied scheduler trace flushes approximately once per second. It provides grant evidence, but does not establish fresh 100-ms counter coverage. Current metrics contain smoothed scheduling throughput, not confirmed application delivery. Exact R53 capacity context and fresh telemetry must pass the live/source gate before enabling experimental heuristic weights. The code does not pretend those measurements are available. See `docs/telemetry.md`.
 
@@ -48,9 +48,9 @@ The development MEC uses synthetic profiles and mock receivers: it intentionally
 
 ## Prepare the RAN Spark
 
-Keep using the supplied SRK gNB/core launch workflow and repaired OAI image. Its main compose entrypoint already writes `edgeric-validation/<launch-time>/scheduler.csv`; no override file is needed. The new trace reader follows the newest matching file and invalidates associations on source generation changes.
+Keep using the supplied SRK gNB/core launch workflow and rebuild its repaired OAI image with the Aetheredge scheduler changes. Capacity context and cumulative new-data/retransmission grant counters now travel from OAI to EdgeRIC on localhost ZMQ; the scheduler CSV is optional offline diagnostics and is not consumed by the muApp.
 
-Stop any old muApp or container publishing weights on localhost:5556 before starting this muApp. Exactly one publisher may own that port. Do not replace the gNB image or its scheduler. Verify the actual host trace directory using your resolved SRK compose configuration; set `RAN_TRACE_DIR` if it differs from the example sibling `edgeric-validation` directory.
+Stop any old muApp or container publishing weights on localhost:5556 before starting this muApp. Exactly one publisher may own that port. The EdgeRIC container shares the gNB network namespace so it can subscribe to localhost:5555 without a trace-volume mount.
 
 ```bash
 cd multi-ue

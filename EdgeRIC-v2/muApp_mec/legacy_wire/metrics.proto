@@ -9,11 +9,51 @@ message UeMetrics {
     uint32 dl_buffer = 6;
     uint32 ul_buffer = 7;
     float dl_tbs = 8;
+
+    // Aetheredge: OAI-derived UL capacity plus temporary validation context.
+    uint32 capacity_source_frame = 9;
+    uint32 capacity_source_slot = 10;
+    uint32 capacity_target_frame = 11;
+    uint32 capacity_target_slot = 12;
+    bool capacity_valid = 13;
+    float capacity_bytes_per_prb = 14;
+    uint32 reference_prbs = 15;
+    uint32 reference_tbs_bits = 16;
+    uint32 ul_mcs = 17;
+    uint32 ul_mcs_table = 18;
+    uint32 ul_qm = 19;
+    uint32 ul_code_rate_x10240 = 20;
+    uint32 ul_layers = 21;
+    uint32 ul_start_symbol = 22;
+    uint32 ul_symbols = 23;
+    uint32 ul_dmrs_re_per_prb = 24;
+    uint32 ul_rb_overhead = 25;
+    uint32 ul_tb_scaling = 26;
+    bool ul_transform_precoding = 27;
+
+    // Aetheredge: Cumulative counters survive conflated ZMQ slot reports.
+    uint64 new_data_tbs_bytes_total = 28;
+    uint64 new_data_prbs_total = 29;
+    uint64 retransmission_tbs_bytes_total = 30;
+    uint64 retransmission_prbs_total = 31;
+
+    // Aetheredge: Latest committed grant validates capacity without affecting policy.
+    bool latest_grant_valid = 32;
+    bool latest_grant_retransmission = 33;
+    uint32 latest_grant_prbs = 34;
+    uint32 latest_grant_tbs_bytes = 35;
+    uint32 latest_grant_mcs = 36;
+    uint32 latest_grant_harq_round = 37;
+    uint32 latest_grant_target_frame = 38;
+    uint32 latest_grant_target_slot = 39;
 }
 
 message Metrics {
     uint32 tti_cnt = 1;
     repeated UeMetrics ue_metrics = 2;
+    // Aetheredge: Fence cumulative counters across gNB restarts and lost samples.
+    uint64 source_generation = 3;
+    uint64 report_sequence = 4;
 }
 
 

@@ -1,4 +1,4 @@
-"""One publisher; unchanged combined DL/UL wire format and echoed ran_index."""
+"""Aetheredge ZMQ adapter for combined OAI state and UL weight messages."""
 
 import zmq
 from .legacy_wire import metrics_pb2, control_weights_pb2
@@ -13,7 +13,11 @@ class OAIAdapter:
         self.sub.connect("tcp://127.0.0.1:5555")
         self.pub = self.context.socket(zmq.PUB)
         self.pub.bind("tcp://127.0.0.1:5556")
+        # Aetheredge: Runtime reads these fences without changing the legacy tuple API.
+        self.source_generation = None
+        self.report_sequence = None
 
+    # Conflation supplies the newest sample, not a complete sequence of slot counters.
     def receive(self):
         try:
             raw = self.sub.recv(zmq.NOBLOCK)
@@ -21,6 +25,9 @@ class OAIAdapter:
             return None
         msg = metrics_pb2.Metrics()
         msg.ParseFromString(raw)
+        # Aetheredge: Preserve source identity around cumulative grant counters.
+        self.source_generation = msg.source_generation
+        self.report_sequence = msg.report_sequence
         return msg.tti_cnt, {
             u.rnti: {
                 f: getattr(u, f)
@@ -32,6 +39,39 @@ class OAIAdapter:
                     "snr",
                     "cqi",
                     "dl_tbs",
+                    # Aetheredge: Derived capacity and temporary validation context.
+                    "capacity_source_frame",
+                    "capacity_source_slot",
+                    "capacity_target_frame",
+                    "capacity_target_slot",
+                    "capacity_valid",
+                    "capacity_bytes_per_prb",
+                    "reference_prbs",
+                    "reference_tbs_bits",
+                    "ul_mcs",
+                    "ul_mcs_table",
+                    "ul_qm",
+                    "ul_code_rate_x10240",
+                    "ul_layers",
+                    "ul_start_symbol",
+                    "ul_symbols",
+                    "ul_dmrs_re_per_prb",
+                    "ul_rb_overhead",
+                    "ul_tb_scaling",
+                    "ul_transform_precoding",
+                    # Aetheredge: Only new-data deltas will debit estimated demand.
+                    "new_data_tbs_bytes_total",
+                    "new_data_prbs_total",
+                    "retransmission_tbs_bytes_total",
+                    "retransmission_prbs_total",
+                    "latest_grant_valid",
+                    "latest_grant_retransmission",
+                    "latest_grant_prbs",
+                    "latest_grant_tbs_bytes",
+                    "latest_grant_mcs",
+                    "latest_grant_harq_round",
+                    "latest_grant_target_frame",
+                    "latest_grant_target_slot",
                 )
             }
             for u in msg.ue_metrics

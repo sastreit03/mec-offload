@@ -3,6 +3,7 @@ package edu.clemson.mecrtp;
 public final class ClockMap {
   private long offset, uncertainty = Long.MAX_VALUE, updated;
 
+  // t0/t3 use the UE monotonic clock; t1/t2 use MEC synchronized wall time.
   public synchronized void observe(long t0, long t1, long t2, long t3) {
     long u = Math.max(0, ((t3 - t0) - (t2 - t1)) / 2);
     if (u < uncertainty || System.nanoTime() - updated > 30_000_000_000L) {
@@ -20,6 +21,7 @@ public final class ClockMap {
     return mono + offset;
   }
 
+  // Wall-clock fallback supports pacing; valid() separately gates descriptor timestamps.
   public synchronized long now() {
     return valid() ? unix(System.nanoTime()) : System.currentTimeMillis() * 1_000_000L;
   }

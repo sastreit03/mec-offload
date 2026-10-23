@@ -13,6 +13,7 @@ def main():
         cfg = yaml.safe_load(f)
     if cfg["mode"] not in ("shadow", "heuristic"):
         raise ValueError("unsupported policy mode; RL deferred")
+    # One adapter owns the local weight publisher for either shadow or heuristic mode.
     asyncio.run(Runtime(cfg, OAIAdapter()).run())
 
 

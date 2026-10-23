@@ -39,6 +39,7 @@ class Recorder:
     def snapshot(self, value):
         self.put("run.json", value)
 
+    # Only this background thread writes snapshots and append-only experiment logs.
     def _writer(self):
         while True:
             item = self.queue.get()
@@ -112,6 +113,7 @@ class ReplayStore:
                 "SELECT COALESCE(MAX(rowid),0) FROM results WHERE ue=?", (ue,)
             ).fetchone()[0]
 
+    # A fixed rowid cutoff keeps reconnect replay finite while live results arrive.
     def ordered_page(self, ue, cutoff, offset, limit):
         import sqlite3
 

@@ -8,11 +8,12 @@ from dataclasses import asdict
 from .association import Associations
 from .demand import Ledger
 from .heuristic import weights
-from .telemetry import TraceReader, Window
+from .telemetry import Window
 from mec_contracts.rpc import add_service
 from mec_contracts.wire import integer
 
 
+# Own radio association and demand locally; MEC retains application execution authority.
 class Runtime:
     def __init__(self, config, adapter=None):
         self.cfg = config
@@ -21,13 +22,19 @@ class Runtime:
         self.source = str(uuid.uuid4())
         self.associations = Associations(config["association"])
         self.sessions = {}
+        self.retired_sessions = {}
+        self.sync_revision = -1
         self.metrics = {}
-        self.trace = TraceReader(config["trace_file"])
+        # Aetheredge: RAN capacity and grant accounting now arrive over ZMQ.
+        self.radio_generation = None
+        self.radio_sequence = None
+        self.radio_counters = {}
+        self.capacity_samples = {}
+        self.radio_coverage_valid = False
         self.latest_report = None
         self.sequence = 0
         self.capacity = {}
         self.latest_metric = 0.0
-        self.last_trace_generation = 0
         self.root = Path(config["runs_dir"]) / self.source
         self.root.mkdir(parents=True, exist_ok=True)
         self.log_queue = asyncio.Queue(maxsize=16384)
@@ -43,15 +50,7 @@ class Runtime:
         self.window = None
         self.window_ns = window_ms * 1_000_000
         self.probe_commands = []
-        self.capacity_table = {}
-        if config.get("capacity_table"):
-            import csv
-
-            with open(config["capacity_table"]) as f:
-                for r in csv.DictReader(f):
-                    self.capacity_table[(int(r["mcs"]), int(r["symbols"]))] = float(
-                        r["bytes_per_prb"]
-                    )
+        # Aetheredge: Capacity tables and realized-ratio proxies are replaced by OAI TBS output.
 
     def event(self, kind, **data):
         try:
@@ -85,6 +84,7 @@ class Runtime:
         temp.write_text(json.dumps(data, indent=2))
         temp.replace(self.root / "associations.json")
 
+    # Validate run/media identity before applying MEC awareness messages.
     async def exchange(self, m):
         if m.get("schema_version") != 1:
             raise ValueError("schema mismatch")
@@ -93,9 +93,16 @@ class Runtime:
         if kind == "sync":
             if self.run_id != run:
                 self.sessions.clear()
+                self.retired_sessions.clear()
                 self.associations = Associations(self.cfg["association"])
                 self.run_id = run
-            # Reapply complete current state; session identities prevent cross-session increments.
+                self.sync_revision = -1
+            revision = m.get("awareness_revision")
+            if revision is not None:
+                revision = integer(revision)
+                if revision <= self.sync_revision:
+                    return {"source_generation": self.source, "status": "stale"}
+            # A full sync is authoritative for current sessions and actual radio demand.
             for a in m.get("associations", []):
                 self.associations.register(
                     a["ue_id"],
@@ -104,12 +111,29 @@ class Runtime:
                     a.get("connection_generation"),
                     a.get("association_revision", 0),
                 )
+            current = {s["video_id"] for s in m.get("sessions", [])}
+            for vid in set(self.sessions) - current:
+                del self.sessions[vid]
             for s in m.get("sessions", []):
-                self._session(s)
+                self._session(s, authoritative=True)
+            if revision is not None:
+                self.sync_revision = revision
+                # The snapshot fence now rejects every message these tombstones covered.
+                self.retired_sessions = {
+                    vid: value
+                    for vid, value in self.retired_sessions.items()
+                    if value[2] > revision
+                }
             self.event("synchronized", sessions=len(self.sessions))
             return {"source_generation": self.source, "status": "synced"}
         if run != self.run_id:
             raise ValueError("sync required for run")
+        revision = m.get("awareness_revision")
+        if revision is not None:
+            revision = integer(revision)
+            # Messages created before the latest snapshot are already represented by it.
+            if revision <= self.sync_revision:
+                return {"status": "stale", "source_generation": self.source}
         if kind == "association":
             self.associations.register(
                 m["ue_id"],
@@ -124,6 +148,8 @@ class Runtime:
         elif kind == "session":
             self._session(m)
         elif kind in ("descriptor", "progress", "reception_loss"):
+            if m["video_id"] in self.retired_sessions:
+                return {"status": "retired", "source_generation": self.source}
             s = self.sessions.get(m["video_id"])
             if (
                 not s
@@ -145,12 +171,9 @@ class Runtime:
                     m["config_version"],
                 )
                 if m.get("applied_expectation"):
-                    e = m["applied_expectation"]
-                    if (s.get("expectation") or {}).get("config_version") != e[
-                        "config_version"
-                    ]:
-                        s["next_prediction"] = e.get("first_frame_id", fid)
-                    s["expectation"] = e
+                    self._apply_expectation(
+                        s, m["applied_expectation"], fid, m["tx_unix_ns"]
+                    )
             elif kind == "progress":
                 ledger.progress(
                     fid,
@@ -158,6 +181,7 @@ class Runtime:
                     integer(m["progress_seq"]),
                     m.get("complete", False),
                 )
+                self._retire_session(m["video_id"], revision)
             else:
                 self.event(
                     "reception_loss",
@@ -178,8 +202,14 @@ class Runtime:
             raise ValueError("unknown awareness message")
         return {"status": "ok", "source_generation": self.source}
 
-    def _session(self, m):
+    # Merge a session; snapshots additionally retire actual demand they no longer list.
+    def _session(self, m, authoritative=False):
         vid = m["video_id"]
+        retired = self.retired_sessions.get(vid)
+        if retired:
+            if retired[:2] != (m["ue_id"], m["media_epoch"]):
+                raise ValueError("conflicting retired session identity")
+            return
         s = self.sessions.get(vid)
         if s and (s["media_epoch"] != m["media_epoch"] or s["ue_id"] != m["ue_id"]):
             raise ValueError("conflicting session identity")
@@ -191,13 +221,62 @@ class Runtime:
                 media_epoch=m["media_epoch"],
                 ledger=Ledger(),
                 next_prediction=0,
+                input_closed=False,
             )
             self.sessions[vid] = s
+        control = m.get("transmission_control")
+        if control:
+            version = integer(control["control_version"], 1)
+            integer(control["effective_unix_ns"])
+            stop = control.get("stop_unix_ns")
+            if stop is not None:
+                integer(stop)
+            if control["status"] not in ("ACTIVE", "SUSPENDED"):
+                raise ValueError("invalid transmission status")
+            if control["status"] == "SUSPENDED" and stop != control["effective_unix_ns"]:
+                raise ValueError("suspension boundary mismatch")
+            old = s.get("transmission_control")
+            if old and version == old["control_version"] and control != old:
+                raise ValueError("conflicting transmission control version")
+            if not old or version > old["control_version"]:
+                s["transmission_control"] = dict(control)
+                if stop is not None:
+                    # Retract only unserved predictions, never actual/outstanding traffic.
+                    ledger = s["ledger"]
+                    for fid, frame in list(ledger.frames.items()):
+                        if (
+                            frame.start_ns >= stop
+                            and not frame.actual
+                            and not frame.confirmed
+                            and not frame.estimated
+                            and not frame.scheduled
+                        ):
+                            del ledger.frames[fid]
+                            s["next_prediction"] = min(s["next_prediction"], fid)
         e = m.get("expectation")
-        if e and (e.get("applied") or not s.get("expectation")):
-            s["expectation"] = e
-        s["input_closed"] = m.get("input_closed", False)
-        for f in m.get("outstanding", []):
+        if e:
+            if e.get("applied"):
+                self._apply_expectation(s, e)
+            else:
+                self._pending_expectation(s, e)
+        if m.get("pending_expectation"):
+            self._pending_expectation(s, m["pending_expectation"])
+        if "input_closed" in m:
+            s["input_closed"] = bool(m["input_closed"])
+            if s["input_closed"]:
+                # Unserved predictions are not radio evidence after input closure.
+                for fid, frame in list(s["ledger"].frames.items()):
+                    if (
+                        not frame.actual
+                        and not frame.confirmed
+                        and not frame.estimated
+                        and not frame.scheduled
+                    ):
+                        del s["ledger"].frames[fid]
+        outstanding = m.get("outstanding", [])
+        current = set()
+        for f in outstanding:
+            current.add(f["frame_id"])
             s["ledger"].descriptor(
                 f["frame_id"],
                 f["tx_unix_ns"],
@@ -212,6 +291,169 @@ class Runtime:
                 f.get("progress_seq", 0),
                 f.get("complete", False),
             )
+        if authoritative:
+            for fid, frame in list(s["ledger"].frames.items()):
+                if frame.actual and fid not in current:
+                    s["ledger"].retire(fid)
+        self._retire_session(vid, m.get("awareness_revision"))
+
+    @staticmethod
+    def _expectation_key(e):
+        return (e.get("plan_version", 0), e.get("config_version", 0))
+
+    @staticmethod
+    def _drop_untouched_predictions(s, expectation, start_fid=None):
+        if not expectation:
+            return
+        config = expectation["config_version"]
+        for fid, frame in list(s["ledger"].frames.items()):
+            if (
+                frame.config == config
+                and (start_fid is None or fid >= start_fid)
+                and not frame.actual
+                and not frame.confirmed
+                and not frame.estimated
+                and not frame.scheduled
+            ):
+                del s["ledger"].frames[fid]
+
+    # Retain only the newest future plan and retract superseded unserved estimates.
+    def _pending_expectation(self, s, e):
+        applied = s.get("applied_expectation")
+        old = s.get("pending_expectation")
+        key = self._expectation_key(e)
+        if applied and key <= self._expectation_key(applied):
+            return
+        if old and key <= self._expectation_key(old):
+            return
+        self._drop_untouched_predictions(s, old)
+        if old:
+            s["next_prediction"] = min(
+                s["next_prediction"], old.get("first_frame_id", 0)
+            )
+        if applied:
+            boundary = e.get("first_frame_id", 0)
+            self._drop_untouched_predictions(s, applied, boundary)
+            s["next_prediction"] = min(s["next_prediction"], boundary)
+        s["pending_expectation"] = dict(e)
+
+    # Actual ordered evidence promotes a plan; late older frames retain their own config only.
+    def _apply_expectation(self, s, e, fid=None, tx_ns=None):
+        e = dict(e, applied=True)
+        applied = s.get("applied_expectation")
+        pending = s.get("pending_expectation")
+        key = self._expectation_key(e)
+        if applied and key < self._expectation_key(applied):
+            return
+        if pending and key < self._expectation_key(pending):
+            boundary_fid = pending.get("first_frame_id", 0)
+            boundary_ns = pending["first_tx_unix_ns"]
+            # Old metadata sent before the boundary is merely delayed, not a missed switch.
+            if fid is None or fid < boundary_fid or tx_ns is None or tx_ns < boundary_ns:
+                return
+            self._drop_untouched_predictions(s, pending)
+            s.pop("pending_expectation", None)
+            s["next_prediction"] = min(s["next_prediction"], boundary_fid)
+            return
+        if applied and key == self._expectation_key(applied):
+            return
+        s["applied_expectation"] = e
+        s["next_prediction"] = max(
+            s["next_prediction"], e.get("first_frame_id", fid or 0)
+        )
+        if pending and key >= self._expectation_key(pending):
+            s.pop("pending_expectation", None)
+
+    def _retire_session(self, vid, revision=None):
+        s = self.sessions.get(vid)
+        if not s or not s.get("input_closed") or s["ledger"].frames:
+            return
+        # Keep only identity and a revision fence; the full demand ledger is reusable capacity.
+        revision = self.sync_revision if revision is None else revision
+        self.retired_sessions[vid] = (s["ue_id"], s["media_epoch"], revision)
+        del self.sessions[vid]
+        self.event("session_retired", video_id=vid)
+
+    # Aetheredge: Debit provisional service once across all frames sharing one RNTI.
+    def _apply_new_data_service(self, rnti, tbs_bytes, now):
+        fraction = self.cfg.get("payload_fraction")
+        if fraction is None or tbs_bytes <= 0:
+            return
+        matching = []
+        for s in self.sessions.values():
+            binding = self.associations.valid(s["ue_id"], now)
+            if binding and binding.rnti == rnti:
+                matching.extend(s["ledger"].frames.values())
+        if not matching:
+            return
+        ordered = sorted(matching, key=lambda f: (f.start_ns, f.frame_id))
+        left = tbs_bytes * fraction
+        for frame in ordered:
+            used = min(left, frame.remaining)
+            frame.estimated += used
+            left -= used
+            if left <= 0:
+                break
+        ordered[0].scheduled += tbs_bytes
+
+    # Aetheredge: Convert one conflated ZMQ snapshot into capacity and counter deltas.
+    def _consume_ran_sample(self, now):
+        generation = getattr(self.adapter, "source_generation", None)
+        sequence = getattr(self.adapter, "report_sequence", None)
+        if generation is not None and generation != self.radio_generation:
+            self.radio_generation = generation
+            self.radio_sequence = None
+            self.radio_counters.clear()
+            self.capacity_samples.clear()
+            self.capacity.clear()
+            self.radio_coverage_valid = False
+            for uid in list(self.associations.bindings):
+                self.associations.invalidate(uid, "ran_source_generation")
+            self.event("radio_source_generation", generation=generation)
+        if sequence is not None:
+            if self.radio_sequence is not None and sequence <= self.radio_sequence:
+                return
+            self.radio_sequence = sequence
+
+        counters_valid = True
+        for rnti, metric in self.metrics.items():
+            # Aetheredge: Repeated latest-value capacity does not refresh its measurement age.
+            capacity_key = (
+                generation,
+                metric.get("capacity_source_frame"),
+                metric.get("capacity_source_slot"),
+                metric.get("capacity_target_frame"),
+                metric.get("capacity_target_slot"),
+            )
+            capacity = metric.get("capacity_bytes_per_prb", 0)
+            if (
+                metric.get("capacity_valid")
+                and capacity > 0
+                and self.capacity_samples.get(rnti) != capacity_key
+            ):
+                self.capacity_samples[rnti] = capacity_key
+                self.capacity[rnti] = (capacity, now)
+
+            # Aetheredge: Baseline the first cumulative sample; debit only later new data.
+            current = (
+                metric.get("new_data_prbs_total", 0),
+                metric.get("new_data_tbs_bytes_total", 0),
+                metric.get("retransmission_prbs_total", 0),
+                metric.get("retransmission_tbs_bytes_total", 0),
+            )
+            previous = self.radio_counters.get(rnti)
+            self.radio_counters[rnti] = current
+            if previous is None:
+                continue
+            delta = tuple(value - old for value, old in zip(current, previous))
+            if any(value < 0 for value in delta):
+                counters_valid = False
+                continue
+            if any(delta):
+                self.window.add_counters(rnti, delta[0], delta[1], delta[2], delta[3])
+                # Aetheredge: Retransmission deltas are telemetry only in this initial model.
+                self._apply_new_data_service(rnti, delta[1], now)
+        self.radio_coverage_valid = counters_valid
 
     async def reports(self, m):
         previous = -1
@@ -225,41 +467,67 @@ class Runtime:
                 yield value
             await asyncio.sleep(0.01)
 
+    # Generate provisional demand from the applied schedule or its advertised successor.
     def predict(self, now_ns):
         for s in self.sessions.values():
-            e = s.get("expectation")
-            if not e or s.get("input_closed") or not e.get("applied"):
+            if s.get("input_closed"):
                 continue
-            start = e["first_tx_unix_ns"]
-            fps = e["fps"]
-            base = e.get("first_frame_id", 0)
-            last = base + int((now_ns - start) * fps / 1e9)
-            if last < 0:
-                continue
-            # Bounded catch-up; excessive gaps invalidate summaries rather than cancelling UL traffic.
-            if last - s["next_prediction"] > 120:
-                s["ledger"].valid = False
-                continue
-            while s["next_prediction"] <= last:
-                fid = s["next_prediction"]
-                s["next_prediction"] += 1
-                kind = "I" if (fid - base) % e["gop_frames"] == 0 else "P"
-                size = e["size_profile"].get(kind)
-                if not size:
+            applied = s.get("applied_expectation")
+            pending = s.get("pending_expectation")
+            plans = []
+            if applied:
+                horizon = (
+                    min(now_ns, pending["first_tx_unix_ns"] - 1)
+                    if pending
+                    else now_ns
+                )
+                plans.append((applied, horizon))
+            if pending:
+                plans.append((pending, now_ns))
+            for e, horizon in plans:
+                start = e["first_tx_unix_ns"]
+                fps = e["fps"]
+                base = e.get("first_frame_id", 0)
+                if e is pending:
+                    s["next_prediction"] = max(s["next_prediction"], base)
+                control = s.get("transmission_control") or {}
+                stop = control.get("stop_unix_ns")
+                resumed = (
+                    control.get("status") == "ACTIVE"
+                    and e.get("control_version", 0)
+                    > control.get("suspension_version", 0)
+                    and start >= (stop or 0)
+                )
+                if stop is not None and not resumed:
+                    horizon = min(horizon, stop - 1)
+                if horizon < start:
                     continue
-                tx = start + int((fid - base) * 1e9 / fps)
-                try:
-                    s["ledger"].descriptor(
-                        fid,
-                        tx,
-                        tx + e["network_budget_ns"],
-                        int(size),
-                        False,
-                        e["config_version"],
-                    )
-                except ValueError as ex:
-                    self.event("demand_rejected", reason=str(ex))
+                last = base + (horizon - start) * fps // 1_000_000_000
+                # Bound catch-up rather than cancelling uncertain radio demand.
+                if last - s["next_prediction"] > 120:
+                    s["ledger"].valid = False
+                    continue
+                while s["next_prediction"] <= last:
+                    fid = s["next_prediction"]
+                    s["next_prediction"] += 1
+                    kind = "I" if (fid - base) % e["gop_frames"] == 0 else "P"
+                    size = e["size_profile"].get(kind)
+                    if not size:
+                        continue
+                    tx = start + int((fid - base) * 1e9 / fps)
+                    try:
+                        s["ledger"].descriptor(
+                            fid,
+                            tx,
+                            tx + e["network_budget_ns"],
+                            int(size),
+                            False,
+                            e["config_version"],
+                        )
+                    except ValueError as ex:
+                        self.event("demand_rejected", reason=str(ex))
 
+    # Use current local state for radio actions; never await a MEC decision in this loop.
     async def run(self):
         import grpc
 
@@ -275,6 +543,9 @@ class Runtime:
             while True:
                 now = time.monotonic()
                 unix = time.time_ns()
+                if self.window is None:
+                    start = unix // self.window_ns * self.window_ns
+                    self.window = Window(start, start + self.window_ns, "oai_zmq_cumulative_v1")
                 if self.adapter:
                     try:
                         sample = self.adapter.receive()
@@ -285,15 +556,8 @@ class Runtime:
                         self.last_index, self.metrics = sample
                         self.latest_metric = now
                         self.associations.sample(now, self.metrics)
-                records = self.trace.poll()
-                if self.trace.generation != self.last_trace_generation:
-                    self.last_trace_generation = self.trace.generation
-                    for uid in list(self.associations.bindings):
-                        self.associations.invalidate(uid, "trace_source_generation")
-                    self.capacity.clear()
-                    self.event(
-                        "radio_source_generation", generation=self.last_trace_generation
-                    )
+                        # Aetheredge: Consume capacity and grants from the same nonblocking sample.
+                        self._consume_ran_sample(now)
                 self.associations.tick(
                     now, set(self.metrics) if now - self.latest_metric < 0.3 else set()
                 )
@@ -302,68 +566,13 @@ class Runtime:
                     self.probe_commands.append(command)
                     self.event("probe_command", command=command)
                 self.predict(unix)
-                if self.window is None:
-                    start = unix // self.window_ns * self.window_ns
-                    self.window = Window(start, start + self.window_ns)
-                for r in records:
-                    mapped = (
-                        r["time_ns"] + self.trace.mapping
-                        if self.trace.mapping is not None
-                        else unix
-                    )
-                    # Attribute to measurement windows, never silently to receive time.
-                    while mapped >= self.window.end_ns:
-                        self.publish(now)
-                        self.window = Window(
-                            self.window.end_ns, self.window.end_ns + self.window_ns
-                        )
-                    if mapped < self.window.start_ns:
-                        self.event("late_trace", measurement_unix_ns=mapped)
-                    else:
-                        self.window.add(r)
-                    if (
-                        r["kind"] == 3
-                        and r["direction"] == 1
-                        and r["stage"] == 9
-                        and r["prbs"] > 0
-                    ):
-                        # Reference table generated with actual OAI TBS is preferred. Ratio is an opt-in proxy.
-                        cap = self.capacity_table.get((r["mcs"], r["symbols"]))
-                        proxy = cap is None
-                        if cap is None and self.cfg.get("allow_capacity_proxy"):
-                            cap = r["tbs"] / r["prbs"]
-                        if cap:
-                            self.capacity[r["rnti"]] = (
-                                cap,
-                                now - max(0, (unix - mapped) / 1e9),
-                                proxy,
-                            )
-                        if (
-                            not r["retransmission"]
-                            and self.cfg.get("payload_fraction") is not None
-                        ):
-                            matching = []
-                            for s in self.sessions.values():
-                                b = self.associations.valid(s["ue_id"], now)
-                                if b and b.rnti == r["rnti"]:
-                                    matching.extend(s["ledger"].frames.values())
-                            left = r["tbs"] * self.cfg["payload_fraction"]
-                            for f in sorted(
-                                matching, key=lambda x: (x.start_ns, x.frame_id)
-                            ):
-                                used = min(left, f.remaining)
-                                f.estimated += used
-                                left -= used
-                                if left <= 0:
-                                    break
-                            if matching:
-                                min(
-                                    matching, key=lambda x: (x.start_ns, x.frame_id)
-                                ).scheduled += r["tbs"]
+                # Aetheredge: CSV grant polling was removed; ZMQ counters are authoritative.
                 while unix >= self.window.end_ns:
                     self.publish(now)
                     self.window = Window(
-                        self.window.end_ns, self.window.end_ns + self.window_ns
+                        self.window.end_ns,
+                        self.window.end_ns + self.window_ns,
+                        "oai_zmq_cumulative_v1",
                     )
                 snapshots = {}
                 for s in self.sessions.values():
@@ -433,6 +642,7 @@ class Runtime:
             if self.adapter:
                 self.adapter.close()
 
+    # Translate local RNTIs into UE-keyed reports before crossing the MEC boundary.
     def publish(self, now):
         record = self.window.record()
         allocated = record.pop("allocated_by_rnti")
@@ -441,6 +651,8 @@ class Runtime:
             b = self.associations.valid(uid, now)
             r = allocated.get(b.rnti, {}) if b else {}
             capacity = self.capacity.get(b.rnti) if b else None
+            # Aetheredge: Use the newest grant telemetry even when capacity is unchanged.
+            validation = self.metrics.get(b.rnti, {}) if b else {}
             rate = r.get("tbs_bytes", 0) / (self.window_ns / 1e9)
             fraction = self.cfg.get("payload_fraction")
             per[uid] = dict(
@@ -456,14 +668,39 @@ class Runtime:
                 throughput_valid=bool(
                     b
                     and fraction is not None
-                    and self.trace.coverage_valid
+                    and self.radio_coverage_valid
                     and self.window.events
                 ),
                 capacity_bytes_per_prb=capacity[0] if capacity else None,
-                capacity_kind="realized_ratio_proxy"
-                if capacity and capacity[2]
-                else "OAI_reference_table",
+                capacity_kind="OAI_reference_tbs",
                 capacity_age_s=now - capacity[1] if capacity else None,
+                # Aetheredge: Temporary context supports independent capacity validation.
+                capacity_validation={
+                    key: validation.get(key)
+                    for key in (
+                        "reference_prbs",
+                        "reference_tbs_bits",
+                        "ul_mcs",
+                        "ul_mcs_table",
+                        "ul_qm",
+                        "ul_code_rate_x10240",
+                        "ul_layers",
+                        "ul_start_symbol",
+                        "ul_symbols",
+                        "ul_dmrs_re_per_prb",
+                        "ul_rb_overhead",
+                        "ul_tb_scaling",
+                        "ul_transform_precoding",
+                        "latest_grant_valid",
+                        "latest_grant_retransmission",
+                        "latest_grant_prbs",
+                        "latest_grant_tbs_bytes",
+                        "latest_grant_mcs",
+                        "latest_grant_harq_round",
+                        "latest_grant_target_frame",
+                        "latest_grant_target_slot",
+                    )
+                },
             )
         self.sequence += 1
         self.latest_report = dict(
@@ -472,10 +709,10 @@ class Runtime:
             run_id=self.run_id,
             sequence=self.sequence,
             source_generation=self.source,
-            radio_generation=self.trace.generation,
+            radio_generation=self.radio_generation,
             **record,
             ues=per,
-            trace_coverage_valid=self.trace.coverage_valid,
+            trace_coverage_valid=self.radio_coverage_valid,
             metric_age_s=now - self.latest_metric,
         )
         self.event("radio_report", report=self.latest_report)

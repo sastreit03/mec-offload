@@ -10,12 +10,14 @@ from pathlib import Path
 from .media import Streamer
 
 
+# Map UE monotonic time to MEC wall time; keep SLO durations on the UE clock.
 class Clock:
     def __init__(self):
         self.offset = None
         self.uncertainty = None
         self.updated = 0
 
+    # Prefer lower-uncertainty four-timestamp samples, refreshing old mappings.
     def observe(self, t0, t1, t2, t3):
         uncertainty = max(0, ((t3 - t0) - (t2 - t1)) // 2)
         if (
@@ -62,6 +64,7 @@ class Client:
         self.events = asyncio.Queue(maxsize=4096)
         self.loop = None
         self.slo_ns = 150_000_000
+        self.input_profile = dict(width=1280, height=720, fps=30, gop_frames=30)
         self.expiry_tasks = set()
         self.finishing = False
         self.receipts_db = sqlite3.connect(self.root / "receipts.sqlite3")
@@ -133,6 +136,7 @@ class Client:
         if self.ws:
             await self.ws.send(json.dumps(value, separators=(",", ":")))
 
+    # The media thread posts frame evidence back to the asyncio control loop.
     def media_event(self, kind, value):
         self.loop.call_soon_threadsafe(
             lambda: asyncio.create_task(self.on_media(kind, value))
@@ -162,6 +166,7 @@ class Client:
                 )
             )
 
+    # Record deadline failure independently of result arrival, then reconcile missing data.
     async def expiry(self, key, tx):
         await asyncio.sleep(max(0, (tx + self.slo_ns - time.monotonic_ns()) / 1e9))
         value = self.transmitted.get(key)
@@ -207,6 +212,7 @@ class Client:
         await asyncio.to_thread(run)
         self.record("association_probe", probe_id=m["probe_id"])
 
+    # Refresh clock/address evidence; an interface address change forces reconnect.
     async def synchronize(self):
         for _ in range(4):
             await self.send(dict(type="time_sync", client_mono_ns=time.monotonic_ns()))
@@ -236,6 +242,7 @@ class Client:
             await asyncio.sleep(1)
             await self.send(dict(type="time_sync", client_mono_ns=time.monotonic_ns()))
 
+    # Reconnect with the saved identity while the media session can continue separately.
     async def run(self):
         import websockets
 
@@ -285,6 +292,10 @@ class Client:
                                     self.uid = m["ue_id"]
                                     self.run_id = m["run_id"]
                                     self.connection = m["connection_id"]
+                                    # Request the validated media profile advertised by this MEC.
+                                    self.input_profile = m.get(
+                                        "input_profile", self.input_profile
+                                    )
                                     self.state["resume_token"] = m["resume_token"]
                                     self.save_state()
                                     sync = asyncio.create_task(self.synchronize())
@@ -311,11 +322,17 @@ class Client:
                                             slo_ms=150,
                                             can_drop=False,
                                             can_drop_frames=False,
-                                            input=dict(width=1280, height=720, fps=30),
+                                            input=dict(self.input_profile),
                                         )
                                     await self.send(self.start_request)
                                 elif kind == "video_response":
                                     if m["accepted"] and self.streamer is None:
+                                        self.record(
+                                            "admission_decision",
+                                            video_id=m["video_id"],
+                                            accepted=True,
+                                            reason=None,
+                                        )
                                         self.slo_ns = round(m["slo_ms"] * 1e6)
                                         self.streamer = Streamer(
                                             m,
@@ -327,7 +344,10 @@ class Client:
                                         self.streamer.start()
                                     elif not m["accepted"]:
                                         self.record(
-                                            "admission_denied", reason=m.get("reason")
+                                            "admission_decision",
+                                            video_id=m.get("video_id"),
+                                            accepted=False,
+                                            reason=m.get("reason"),
                                         )
                                         self.start_request = None
                                         await asyncio.sleep(0.5)
@@ -338,9 +358,12 @@ class Client:
                                     == self.streamer.response["video_id"]
                                 ):
                                     self.streamer.command(m)
-                                elif kind == "video_status" and self.streamer:
+                                elif (
+                                    kind == "video_status" and self.streamer
+                                    and m["video_id"] == self.streamer.response["video_id"]
+                                ):
                                     if m["status"] == "SUSPENDED":
-                                        self.streamer.pause_at = m["effective_unix_ns"]
+                                        self.streamer.suspend(m)
                                     elif m["status"] == "EXPIRED":
                                         self.streamer.stop()
                                         self.streamer = None
@@ -378,6 +401,7 @@ class Client:
                                         frame_id=m["frame_id"],
                                         result_id=m["result_id"],
                                         outcome=m["outcome"],
+                                        reason=m.get("reason"),
                                         latency_ns=latency,
                                         receipt_mono_ns=time.monotonic_ns(),
                                         slo_success=bool(

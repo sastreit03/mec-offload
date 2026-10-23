@@ -19,6 +19,10 @@ public final class FrameDescriptor {
       long captureUnix,
       long txUnix,
       int flags) {
+    // Configuration boundaries use IDR frames; non-IDR I and B frames are unsupported.
+    if (type != 1 && type != 3)
+      throw new IllegalArgumentException("frame type must be IDR(1) or P(3)");
+    // ByteBuffer defaults to big endian; keep offsets identical to Python DESCRIPTOR.
     return ByteBuffer.allocate(96)
         .put((byte) 1)
         .put((byte) flags)

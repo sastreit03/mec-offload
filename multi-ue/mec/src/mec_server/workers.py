@@ -1,4 +1,4 @@
-"""Three persistent application processes, four immutable model copies each, nine streams."""
+"""Configured application processes with immutable models and priority streams."""
 
 import concurrent.futures
 import ctypes
@@ -10,7 +10,8 @@ import threading
 import time
 from pathlib import Path
 
-PRIORITIES = (-5, -3, 0)
+DEFAULT_APPLICATIONS = ("tracking", "detection", "segmentation")
+DEFAULT_PRIORITIES = (-5, -3, 0)
 
 
 def rle(mask):
@@ -24,7 +25,7 @@ def rle(mask):
 
 
 class TorchAdapter:
-    def __init__(self, model_specs, weights_dir):
+    def __init__(self, model_specs, weights_dir, priorities):
         import torch
 
         self.torch = torch
@@ -45,11 +46,11 @@ class TorchAdapter:
             != 0
         ):
             raise RuntimeError("priority query failed")
-        if not greatest.value <= -5 <= -3 <= 0 <= least.value:
+        if any(p < greatest.value or p > least.value for p in priorities):
             raise RuntimeError(
-                f"incompatible CUDA priorities {greatest.value}..{least.value}"
+                f"configured priorities outside CUDA range {greatest.value}..{least.value}"
             )
-        self.streams = {p: torch.cuda.Stream(priority=p) for p in PRIORITIES}
+        self.streams = {p: torch.cuda.Stream(priority=p) for p in priorities}
         for name, spec in model_specs.items():
             path = Path(weights_dir) / spec["artifact"]
             model = torch.jit.freeze(
@@ -61,6 +62,7 @@ class TorchAdapter:
                 )
             self.models[name] = model
 
+    # Each job owns its tensors while sharing the application's frozen model weights.
     def infer(self, job):
         import numpy as np
         import torch.nn.functional as F
@@ -171,11 +173,12 @@ class TorchAdapter:
         return payload, times
 
 
+# CUDA initialization happens in the spawned child, never in the control process.
 def worker_main(application, specs, config, incoming, outgoing):
     os.environ["CUDA_MPS_CLIENT_PRIORITY"] = "0"
     try:
         adapter = (
-            TorchAdapter(specs, config["weights_dir"])
+            TorchAdapter(specs, config["weights_dir"], config["priority_streams"])
             if config["backend"] == "torchscript"
             else None
         )
@@ -183,7 +186,7 @@ def worker_main(application, specs, config, incoming, outgoing):
             import numpy as np
 
             for model, spec in specs.items():
-                for p in PRIORITIES:
+                for p in config["priority_streams"]:
                     for _ in range(config["warmup_count"]):
                         adapter.infer(
                             dict(
@@ -200,7 +203,7 @@ def worker_main(application, specs, config, incoming, outgoing):
                 application=application,
                 pid=os.getpid(),
                 models=list(specs),
-                streams=list(PRIORITIES),
+                streams=list(config["priority_streams"]),
                 backend=config["backend"],
             )
         )
@@ -209,7 +212,9 @@ def worker_main(application, specs, config, incoming, outgoing):
             dict(type="startup_failed", application=application, error=repr(ex))
         )
         return
-    pool = concurrent.futures.ThreadPoolExecutor(max_workers=3)
+    pool = concurrent.futures.ThreadPoolExecutor(
+        max_workers=len(config["priority_streams"])
+    )
 
     def execute(job):
         try:
@@ -250,6 +255,7 @@ def worker_main(application, specs, config, incoming, outgoing):
                 )
             )
         except Exception as ex:
+            finished = time.monotonic_ns()
             outgoing.put(
                 dict(
                     type="failed",
@@ -257,6 +263,8 @@ def worker_main(application, specs, config, incoming, outgoing):
                     priority=job["priority"],
                     application=application,
                     error=repr(ex),
+                    worker_start_ns=started,
+                    worker_finish_ns=finished,
                 )
             )
 
@@ -276,7 +284,10 @@ class Workers:
         self.processes = {}
         self.ready = {}
         self.busy = set()
-        for app in ("tracking", "detection", "segmentation"):
+        applications = tuple(config.get("applications", DEFAULT_APPLICATIONS))
+        priorities = tuple(config.get("priority_streams", DEFAULT_PRIORITIES))
+        config = dict(config, applications=applications, priority_streams=priorities)
+        for app in applications:
             specs = {
                 x["model"]: x
                 for x in catalog["configurations"]
@@ -284,7 +295,7 @@ class Workers:
             }
             if len(specs) != 4:
                 raise ValueError(f"{app} requires four resident model variants")
-            q = ctx.Queue(maxsize=3)
+            q = ctx.Queue(maxsize=len(priorities))
             self.inputs[app] = q
             self.processes[app] = ctx.Process(
                 target=worker_main,
@@ -311,6 +322,7 @@ class Workers:
     def available(self, app, p):
         return app in self.ready and (app, p) not in self.busy
 
+    # Reserve one outstanding job per stream until its completion is polled.
     def submit(self, app, p, job):
         if not self.available(app, p):
             return False

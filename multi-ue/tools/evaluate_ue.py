@@ -2,6 +2,7 @@
 """Reconcile all transmitted frames with first complete-result receipt evidence."""
 
 import argparse
+from collections import Counter
 import json
 from pathlib import Path
 import numpy as np
@@ -9,13 +10,16 @@ import numpy as np
 
 def evaluate(path):
     frames = {}
-    attempts = 0
+    admissions = []
     suspensions = 0
     for line in Path(path).read_text().splitlines():
         m = json.loads(line)
         kind = m["type"]
-        if kind == "admission_denied":
-            attempts += 1
+        if kind == "admission_decision":
+            admissions.append(bool(m["accepted"]))
+        elif kind == "admission_denied":
+            # Retain compatibility with logs produced before unified decisions.
+            admissions.append(False)
         if kind == "suspension":
             suspensions += 1
         if "video_id" not in m or "frame_id" not in m:
@@ -28,6 +32,7 @@ def evaluate(path):
             f["receipt"] = m
         elif kind == "deadline_miss":
             f["expired"] = True
+    # Include frames never observed by MEC in the compliance denominator.
     tx = [f for f in frames.values() if "transmitted" in f]
     receipts = [f["receipt"] for f in tx if "receipt" in f]
     for f in tx:
@@ -39,6 +44,15 @@ def evaluate(path):
             )
     successes = sum(bool(f.get("receipt", {}).get("slo_success")) for f in tx)
     lat = [m["latency_ns"] / 1e6 for m in receipts if m.get("latency_ns") is not None]
+    failures = Counter()
+    for f in tx:
+        receipt = f.get("receipt")
+        if receipt and receipt.get("outcome") != "completed":
+            failures[receipt.get("reason") or receipt["outcome"]] += 1
+        elif not receipt:
+            failures["missing_result"] += 1
+        elif f.get("expired"):
+            failures["ue_deadline_miss"] += 1
     return dict(
         transmitted_frames=len(tx),
         received_results=len(receipts),
@@ -50,8 +64,12 @@ def evaluate(path):
         }
         if lat
         else {},
-        denied_attempt_events=attempts,
+        admission_attempts=len(admissions),
+        admitted_sessions=sum(admissions),
+        denied_attempt_events=len(admissions) - sum(admissions),
+        admission_rate=sum(admissions) / len(admissions) if admissions else None,
         suspension_events=suspensions,
+        failures_by_reason=dict(sorted(failures.items())),
         denominator="all transmitted frames",
         finalization="collect through last deadline + 5 seconds; later arrivals are amendments",
     )

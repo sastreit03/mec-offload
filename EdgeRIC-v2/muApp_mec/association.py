@@ -39,6 +39,7 @@ class Associations:
         self.pending = []
         self.last_result = {}
 
+    # Connection generations and address revisions fence delayed identity updates.
     def register(
         self, uid, connection, ip, connection_generation=None, association_revision=0
     ):
@@ -138,6 +139,7 @@ class Associations:
             ):
                 self.pending.append(uid)
 
+    # Serialize traffic signatures so simultaneous probes do not compete for a match.
     def next_probe(self, now):
         if self.probe or not self.pending:
             return None
@@ -169,6 +171,7 @@ class Associations:
             generation=b.generation,
         )
 
+    # Throughput samples identify a traffic pattern; they are not unique-byte evidence.
     def sample(self, now, metrics):
         p = self.probe
         if not p:
@@ -189,3 +192,5 @@ class Associations:
     def valid(self, uid, now):
         b = self.bindings.get(uid)
         return b if b and b.rnti is not None and b.valid_until > now else None
+Area	Pasted requirement	Current implementation
+OAI modification sequence	Inspect and propose OAI/protobuf extensions, but do not modify the

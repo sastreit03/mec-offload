@@ -6,6 +6,7 @@ from dataclasses import replace
 from mec_contracts.rtp import Descriptor, packetize, split_annexb, canonical_au
 
 
+# Feed raw frames through a low-latency H.264 encoder with explicit keyframe requests.
 class Encoder:
     def __init__(self, width, height, fps, bitrate):
         import gi
@@ -58,6 +59,7 @@ class Encoder:
         self.pipeline.set_state(self.Gst.State.NULL)
 
 
+# A dedicated thread owns capture, encoding, pacing, and UDP transmission.
 class Streamer:
     def __init__(self, response, source, source_ip, clock, event):
         self.response = response
@@ -69,7 +71,9 @@ class Streamer:
         self.pending = []
         self.lock = threading.Lock()
         self.stopped = threading.Event()
+        self.control_version = self.current.get("control_version", 0)
         self.pause_at = None
+        self.pause_version = 0
         self.frame_id = 0
         self.gop_id = 0
         self.gop_frame = 0
@@ -78,8 +82,11 @@ class Streamer:
             target=self.run, name="mec-rtp-sender", daemon=True
         )
 
+    # Queue future commands under the lock shared with the media thread.
     def command(self, c):
         with self.lock:
+            if c.get("control_version", 0) <= self.control_version:
+                return
             if c["config_version"] <= self.current["config_version"]:
                 return
             if any(x["config_version"] == c["config_version"] for x in self.pending):
@@ -90,8 +97,34 @@ class Streamer:
                     dict(command_id=c["command_id"], reason="late_command"),
                 )
                 return
+            self.control_version = c["control_version"]
+            # A resume arriving before its suspension still carries the stop interval.
+            if (
+                c.get("stop_unix_ns") is not None
+                and c["suspension_version"] > self.pause_version
+            ):
+                self.pause_at = c["stop_unix_ns"]
+                self.pause_version = c["suspension_version"]
             self.pending.append(c)
             self.pending.sort(key=lambda x: x["boundary_unix_ns"])
+
+    def suspend(self, command):
+        with self.lock:
+            version = command["control_version"]
+            if version <= self.control_version:
+                return
+            self.control_version = version
+            self.pause_at = command["effective_unix_ns"]
+            self.pause_version = version
+            self.event(
+                "suspension",
+                dict(
+                    video_id=self.response["video_id"],
+                    control_version=version,
+                    effective_unix_ns=self.pause_at,
+                    command_id=command["command_id"],
+                ),
+            )
 
     def start(self):
         self.thread.start()
@@ -129,12 +162,14 @@ class Streamer:
                 if delay > 0 and self.stopped.wait(delay):
                     break
                 with self.lock:
+                    # A stalled capture can leave the planned release behind real time.
+                    now = self.clock.unix_ns() if self.pending else release
                     while (
-                        self.pending and self.pending[0]["boundary_unix_ns"] <= release
+                        self.pending and self.pending[0]["boundary_unix_ns"] <= now
                     ):
                         nxt = self.pending.pop(0)
                         # A bounded short transition GoP reaches the explicitly commanded phase.
-                        if release - nxt["boundary_unix_ns"] > round(1e9 / cfg["fps"]):
+                        if now - nxt["boundary_unix_ns"] > round(1e9 / cfg["fps"]):
                             self.event(
                                 "plan_unapplied",
                                 dict(
@@ -148,9 +183,14 @@ class Streamer:
                         self.gop_frame = 0
                         self.gop_id += 1
                         force = True
-                        self.pause_at = None
+                        if nxt.get("control_version", 0) > self.pause_version:
+                            self.pause_at = None
                 if self.pause_at and release >= self.pause_at:
-                    self.stopped.wait(0.01)
+                    # Consume the source frame and its ID so resumed metadata exposes
+                    # the video-time gap that ByteTrack must age through.
+                    if not cap.grab():
+                        break
+                    self.frame_id += 1
                     release += round(1e9 / cfg["fps"])
                     continue
                 if sock.getsockname()[0] != self.source_ip:
@@ -182,6 +222,7 @@ class Streamer:
                     )
                 force = False
                 tx = time.monotonic_ns()
+                # Timestamp validity flags distinguish mapped wall times from unavailable values.
                 valid = self.clock.valid()
                 d = Descriptor(
                     self.response["video_id"],

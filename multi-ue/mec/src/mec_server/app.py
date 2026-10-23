@@ -11,6 +11,7 @@ from .engine import Engine
 from mec_contracts.wire import envelope, loads, dumps
 
 
+# Probe traffic supports radio association and is excluded from frame accounting.
 class ProbeReceiver(asyncio.DatagramProtocol):
     def __init__(self, engine):
         self.engine = engine
@@ -100,6 +101,7 @@ def create_app(engine):
         async function refresh(){try{const r=await fetch('/api/status');document.getElementById('state').textContent=JSON.stringify(await r.json(),null,2)}catch(e){document.getElementById('state').textContent='Connection unavailable'}}setInterval(refresh,1000);refresh();</script></html>""")
 
     @app.websocket("/ws/ue")
+    # Each connection has its own outgoing queue and generation fence.
     async def control(ws: WebSocket):
         await ws.accept()
         out = asyncio.PriorityQueue(maxsize=128)
@@ -124,6 +126,7 @@ def create_app(engine):
         generation = u.generation
         await ws.send_text(dumps(hello))
 
+        # One coroutine serializes socket writes; lifecycle control outranks frame results.
         async def sender():
             while True:
                 _, _, m = await out.get()

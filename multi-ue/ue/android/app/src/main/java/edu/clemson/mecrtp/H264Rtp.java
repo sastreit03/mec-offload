@@ -77,6 +77,7 @@ public final class H264Rtp {
     List<byte[]> nals = split(encoded);
     boolean idr = nals.stream().anyMatch(n -> (n[0] & 31) == 5);
     configure(encoded);
+    // Repeat cached SPS/PPS with IDRs so a receiver can start decoding at a keyframe.
     if (idr) {
       List<byte[]> all = new ArrayList<>(parameters);
       for (byte[] n : nals) if ((n[0] & 31) != 7 && (n[0] & 31) != 8) all.add(n);
@@ -84,6 +85,7 @@ public final class H264Rtp {
     }
     long size = 0;
     for (byte[] n : nals) size += n.length + 4;
+    // Canonical size includes four-byte Annex-B prefixes, but excludes transport headers.
     descriptor = metadata.begin(pts, size, idr);
     if (descriptor.length != 96) throw new IOException("descriptor size");
     if (firstPts < 0) firstPts = pts;
@@ -109,6 +111,7 @@ public final class H264Rtp {
     }
   }
 
+  // Every fragment carries the same 96-byte descriptor and a distinct RTP sequence.
   private void packet(byte[] payload, long ts, boolean marker) throws IOException {
     byte[] p = new byte[payload.length + 116];
     ByteBuffer b = ByteBuffer.wrap(p);

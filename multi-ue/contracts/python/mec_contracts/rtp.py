@@ -5,6 +5,7 @@ from dataclasses import dataclass, asdict
 import struct
 import uuid
 
+# Fixed network byte order must match Android FrameDescriptor and the M59 layout.
 DESCRIPTOR = struct.Struct("!BBH16sQQQIIB3xQQQQQ")
 assert DESCRIPTOR.size == 96
 
@@ -25,11 +26,16 @@ class Descriptor:
     tx_unix_ns: int = 0
     flags: int = 0
 
+    def __post_init__(self):
+        # The experiment permits decodable IDR keyframes and P interframes only.
+        if self.frame_type not in (1, 3):
+            raise ValueError("frame type must be IDR(1) or P(3)")
+
     def pack(self):
         if (
             not self.media_epoch
             or self.encoded_bytes <= 0
-            or self.frame_type not in range(4)
+            or self.frame_type not in (1, 3)
         ):
             raise ValueError("invalid frame descriptor")
         if self.flags & ~15:
@@ -163,6 +169,7 @@ def canonical_au(nals):
     return b"".join(b"\0\0\0\1" + n for n in nals)
 
 
+# Repeat one immutable descriptor across all packets, including fragmented NALs.
 def packetize(nals, descriptor, sequence, timestamp, ssrc, mtu=1200, extension_id=1):
     if not 1 <= extension_id <= 255 or mtu < 256:
         raise ValueError("invalid MTU/extension ID")
@@ -226,6 +233,7 @@ class Assembly:
             and self.unique_bytes == self.descriptor.encoded_bytes
         )
 
+    # Count canonical encoded bytes once per packet; RTP headers are not frame payload.
     def add(self, p):
         if p.descriptor != self.descriptor:
             raise ValueError("conflicting repeated descriptor")

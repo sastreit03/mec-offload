@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
+# Collect environment evidence; discovery alone does not establish live readiness.
 def main():
  p=argparse.ArgumentParser();p.add_argument('--gpu',action='store_true');p.add_argument('--output',default='runs/preflight.json');a=p.parse_args();out=dict(python=platform.python_version(),platform=platform.platform(),docker=bool(shutil.which('docker')))
  for cmd in [['gst-inspect-1.0','--version'],['nvidia-smi']]:

@@ -1,5 +1,6 @@
 compatibility: measured-testbed-v1
 synthetic: false
+# Latency values are normalized to 1-Mbps encoding; variances are in seconds squared.
 network:
   mean_s: null
   P0_s2: null

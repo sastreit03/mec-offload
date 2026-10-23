@@ -26,6 +26,7 @@ class Tracker:
             # Frame-based retention is explicitly original-video time, independent of detector completions.
             self.tracker.max_time_lost = round(retention_s * fps)
 
+    # Original frame-number gaps age tracks; detector completion order is not time.
     def update(self, frame_id, payload=None):
         if frame_id <= self.last:
             raise ValueError("tracker cannot move backward")

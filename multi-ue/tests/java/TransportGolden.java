@@ -2,6 +2,7 @@ import edu.clemson.mecrtp.FrameDescriptor;
 import edu.clemson.mecrtp.H264Rtp;
 import java.util.UUID;
 import java.util.Base64;
+// Emit a deterministic Java transport fixture for comparison with the Python parser.
 public class TransportGolden {
  public static void main(String[] args)throws Exception {
   byte[] data=new byte[5005];data[3]=1;data[4]=0x65;java.util.Arrays.fill(data,5,data.length,(byte)42);

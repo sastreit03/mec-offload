@@ -29,6 +29,7 @@ class Client:
             response_deserializer=pb.Envelope.FromString,
         )
 
+    # Awareness updates use bounded unary calls; telemetry uses a separate stream.
     async def call(self, value, timeout=0.25):
         if self.channel is None:
             await self.connect()
@@ -55,6 +56,7 @@ class Client:
             await self.channel.close()
 
 
+# Bind JSON-envelope handlers without depending on the legacy OAI protobuf schema.
 def add_service(server, exchange, reports):
     import grpc
     from .generated import mec_edgeric_pb2 as pb

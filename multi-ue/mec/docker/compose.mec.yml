@@ -24,6 +24,7 @@ services:
       test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8765/readyz')"]
       start_period: 120s
       interval: 10s
+  # Install the UE-subnet route in the MEC network namespace through the existing UPF.
   mec-route-init:
     image: alpine:3.20
     network_mode: service:mec

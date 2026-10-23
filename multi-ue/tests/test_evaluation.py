@@ -41,3 +41,31 @@ def test_all_transmitted_frames_and_late_receipt(tmp_path):
         and r["missing_results"] == 1
         and r["slo_compliance"] == 1 / 3
     )
+
+
+def test_admission_rate_and_failure_reasons(tmp_path):
+    records = [
+        dict(type="admission_decision", accepted=True),
+        dict(type="admission_decision", accepted=False, reason="video_capacity"),
+        dict(type="transmitted", run_id="r", video_id="v", frame_id=1, tx_mono_ns=0),
+        dict(
+            type="result_receipt",
+            run_id="r",
+            video_id="v",
+            frame_id=1,
+            outcome="failed",
+            reason="execution_failed",
+            receipt_mono_ns=1,
+        ),
+        dict(type="transmitted", run_id="r", video_id="v", frame_id=2, tx_mono_ns=0),
+    ]
+    path = tmp_path / "events"
+    path.write_text("\n".join(json.dumps(record) for record in records))
+
+    result = module.evaluate(path)
+
+    assert result["admission_rate"] == 0.5
+    assert result["failures_by_reason"] == {
+        "execution_failed": 1,
+        "missing_result": 1,
+    }

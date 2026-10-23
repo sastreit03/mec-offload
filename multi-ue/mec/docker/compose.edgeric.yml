@@ -4,9 +4,10 @@ services:
   edgeric-mec:
     image: multi-ue-edgeric:baseline
     container_name: edgeric-mec
+    # Share gNB localhost for ZMQ while exposing gRPC through its reachable namespace.
     network_mode: container:${GNB_CONTAINER:-oai-gnb}
     restart: "no"
     volumes:
       - ../../config:/work/multi-ue/config:ro
       - ../../runs:/work/multi-ue/runs
-      - ${RAN_TRACE_DIR:-../../../edgeric-validation}:/trace:ro
+      # Aetheredge: RAN telemetry now uses the shared gNB-namespace ZMQ sockets.

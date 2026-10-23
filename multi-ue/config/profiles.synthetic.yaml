@@ -1,4 +1,5 @@
 compatibility: synthetic-dev-v1
+# Synthetic values exercise software paths only and are rejected in experimental mode.
 synthetic: true
 network:
   mean_s: 0.01

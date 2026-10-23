@@ -50,6 +50,14 @@ def test_bad_descriptor_and_nonfinite_json():
         loads('{"x":NaN}')
 
 
+@pytest.mark.parametrize("frame_type", [0, 2, 4])
+def test_only_idr_and_p_descriptor_types_are_allowed(frame_type):
+    with pytest.raises(ValueError, match="IDR"):
+        Descriptor(
+            str(uuid.uuid4()), 1, 0, 0, 1, 1, frame_type, 100, 1, 2, 3, 4, 15
+        )
+
+
 def test_policy_features_recursively_exclude_transport():
     assert policy_features(
         {

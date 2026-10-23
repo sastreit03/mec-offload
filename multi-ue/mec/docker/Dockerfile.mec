@@ -9,6 +9,7 @@ RUN python -m pip install -r requirements.txt -r mec/requirements-gpu.txt
 COPY contracts contracts
 COPY mec/src mec/src
 COPY config config
+# Include system-installed GStreamer bindings in the container Python search path.
 ENV PYTHONPATH=/work/multi-ue/contracts/python:/work/multi-ue/mec/src:/usr/lib/python3/dist-packages
 ENV CUDA_MPS_PIPE_DIRECTORY=/tmp/nvidia-mps CUDA_MPS_LOG_DIRECTORY=/tmp/nvidia-log
 CMD ["python", "-m", "mec_server.app", "--config", "config/mec.experimental.yaml"]

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# These commands manage the MEC additions; the core and RAN stacks have separate launchers.
 case "${1:-}" in
  build-mec) docker build -f mec/docker/Dockerfile.mec -t multi-ue-mec:baseline . ;;
  build-edge) docker build -f mec/docker/Dockerfile.edgeric -t multi-ue-edgeric:baseline .. ;;

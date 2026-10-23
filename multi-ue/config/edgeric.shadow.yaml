@@ -1,11 +1,10 @@
+# Shadow computes proposals without publishing weights to the gNB.
 mode: shadow
 listen: 0.0.0.0:50052
-trace_file: /trace/*/scheduler.csv
 runs_dir: runs/edgeric
 max_sessions: 64
-allow_capacity_proxy: false
-capacity_table: null
-payload_fraction: null
+# Aetheredge: Initially treat new-data TBS as payload; MEC progress remains confirmed.
+payload_fraction: 1.0
 capacity_max_age_s: 0.3
 log_weight_samples: true
 utility:

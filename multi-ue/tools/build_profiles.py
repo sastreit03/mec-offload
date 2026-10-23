@@ -33,6 +33,7 @@ def main():
     a = p.parse_args()
     catalog = yaml.safe_load(Path(a.catalog).read_text())
     cs = {x["id"]: x for x in catalog["configurations"]}
+    # Join measurements by catalog ID; the threshold is relative to the task reference.
     qualified = {}
     with open(a.measurements) as f:
         for r in csv.DictReader(f):
@@ -68,6 +69,7 @@ def main():
                 if c["application"] == "tracking"
                 else 0.0,
             )
+    # Network calibration is supplied separately from model timing and accuracy.
     network = yaml.safe_load(Path(a.network).read_text())
     for key in [
         "mean_s",

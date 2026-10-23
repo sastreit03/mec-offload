@@ -18,7 +18,7 @@ def main():
     p.add_argument("--warmup", type=int, required=True)
     p.add_argument("--output", type=Path, required=True)
     a = p.parse_args()
-    from mec_server.workers import Workers, PRIORITIES
+    from mec_server.workers import Workers, DEFAULT_PRIORITIES
     import cv2
 
     catalog = yaml.safe_load(Path(a.catalog).read_text())
@@ -39,6 +39,7 @@ def main():
             time.sleep(0.01)
         (a.output / "workers.json").write_text(json.dumps(workers.ready, indent=2))
         cap = cv2.VideoCapture(a.video)
+        # Measure each resident model once per application, across the three priorities.
         unique = {(c["application"], c["model"]): c for c in catalog["configurations"]}
         with (a.output / "processing.csv").open("w") as f:
             fields = [
@@ -66,7 +67,7 @@ def main():
                     if not ok:
                         raise RuntimeError("empty/unreadable input video")
                     rgb = cv2.cvtColor(cv2.resize(bgr, (1280, 720)), cv2.COLOR_BGR2RGB)
-                    priority = PRIORITIES[n % 3]
+                    priority = DEFAULT_PRIORITIES[n % len(DEFAULT_PRIORITIES)]
                     workers.submit(
                         c["application"],
                         priority,

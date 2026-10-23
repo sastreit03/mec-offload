@@ -168,6 +168,7 @@ public final class AvcSource {
     fileStart = session.config().getLong("boundary_unix_ns");
   }
 
+  // Camera and dataset frames share bitrate changes, keyframe requests, and YUV scaling.
   private void submit(Image source, long pts) throws Exception {
     if (!active) return;
     int index = encoder.dequeueInputBuffer(0);
@@ -209,6 +210,7 @@ public final class AvcSource {
         index, 0, raw == null ? width * height * 3 / 2 : raw.capacity(), pts, 0);
   }
 
+  // Pace prerecorded frames by playback time rather than their original recording date.
   private void pump() {
     if (!active) return;
     try {
@@ -281,6 +283,7 @@ public final class AvcSource {
     return session.clockNow();
   }
 
+  // Convert codec output into access units before RTP packetization.
   private void drain() throws Exception {
     MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
     while (active) {

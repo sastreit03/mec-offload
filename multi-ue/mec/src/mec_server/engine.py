@@ -15,7 +15,7 @@ from .statistics import History, NetworkFilter
 from .policies import HeuristicGoP, HeuristicPriority, validate_joint
 from .recording import Recorder, ReplayStore
 from .media import Receiver, MockReceiver
-from .workers import Workers, PRIORITIES
+from .workers import Workers
 from .tracking import Tracker
 from mec_contracts.rpc import Client
 from mec_contracts.wire import envelope, result_id, integer, dumps
@@ -83,6 +83,11 @@ class Video:
     drain_until: float | None = None
     input_closed: bool = False
     suspension_boundary: int | None = None
+    suspension_version: int = 0
+    control_version: int = 0
+    transmission_control: dict | None = None
+    last_descriptor_id: int = -1
+    suspension_gap_version: int = 0
     finalized: bool = False
     gap_scan: int = 0
     resolved: object = field(default_factory=Ranges)
@@ -115,12 +120,17 @@ class Frame:
     detection_ready_ns: int | None = None
 
 
+# The asyncio loop owns registries; receiver threads and workers report events.
 class Engine:
     def __init__(self, cfg, catalog, profiles, workers=None):
         self.cfg = cfg
         self.catalog = catalog
         self.profiles = profiles
-        self.candidates = qualified(catalog, profiles)
+        self.candidates = {
+            cid: c
+            for cid, c in qualified(catalog, profiles).items()
+            if c["application"] in cfg.applications
+        }
         self.root = Path(cfg.runs_dir) / cfg.run_id / "mec"
         self.record = Recorder(self.root)
         self.replay = ReplayStore(self.root / "replay.sqlite3")
@@ -133,14 +143,14 @@ class Engine:
         self.quarantined = set()
         self.pending = {
             (a, p): deque()
-            for a in ("tracking", "detection", "segmentation")
-            for p in PRIORITIES
+            for a in cfg.applications
+            for p in cfg.priority_streams
         }
         self.histories = {}
         self.residence = {}
         self.queue_history = History(cfg.global_queue_initial_s)
         self.policy = HeuristicGoP()
-        self.priority = HeuristicPriority()
+        self.priority = HeuristicPriority(cfg.priority_streams)
         self.plan_version = 0
         self.config_version = 0
         self.last_members = ()
@@ -152,6 +162,7 @@ class Engine:
         self.rpc = Client(cfg.edgeric_target)
         self.awareness = asyncio.PriorityQueue(maxsize=4096)
         self.awareness_seq = 0
+        self.synced_awareness_revision = 0
         self.sync_needed = True
         self.progress = {}
         self.last_progress = {}
@@ -169,6 +180,8 @@ class Engine:
                 backend=cfg.backend,
                 weights_dir=cfg.weights_dir,
                 warmup_count=cfg.warmup_count,
+                applications=cfg.applications,
+                priority_streams=cfg.priority_streams,
             ),
         )
         for cid, c in self.candidates.items():
@@ -236,7 +249,13 @@ class Engine:
 
     def aware(self, kind, priority=1, **value):
         self.awareness_seq += 1
-        msg = envelope(kind, self.cfg.run_id, **value)
+        # The creation revision lets a later authoritative sync fence queued stale updates.
+        msg = envelope(
+            kind,
+            self.cfg.run_id,
+            awareness_revision=self.awareness_seq,
+            **value,
+        )
         try:
             self.awareness.put_nowait((priority, self.awareness_seq, msg))
         except asyncio.QueueFull:
@@ -255,6 +274,7 @@ class Engine:
             association_revision=u.association_revision,
         )
 
+    # A reconnect replaces control ownership while retaining the ongoing video.
     def hello(self, resume_token, peer_ip, sender):
         hashed = (
             hashlib.sha256(resume_token.encode()).hexdigest() if resume_token else ""
@@ -296,6 +316,12 @@ class Engine:
             connection_id=u.connection_id,
             catalog_version=self.catalog["version"],
             supported_configurations=list(self.candidates.values()),
+            input_profile=dict(
+                width=self.catalog["source_hw"][1],
+                height=self.catalog["source_hw"][0],
+                fps=self.cfg.fps,
+                gop_frames=self.cfg.gop_frames,
+            ),
             active_video_id=u.active_video,
             server_unix_ns=time.time_ns(),
             schema_version_control=1,
@@ -310,6 +336,7 @@ class Engine:
         u.disconnect_at = time.monotonic()
         self.record.event("disconnected", ue_id=uid, connection_id=u.connection_id)
 
+    # Reserve each lifecycle command before awaiting setup so retries share one outcome.
     async def command(self, u, m):
         kind = m.get("type")
         if kind == "time_sync":
@@ -370,7 +397,7 @@ class Engine:
     def readiness(self):
         return dict(
             ready=not self.closed
-            and len(self.workers.ready) == 3
+            and set(self.workers.ready) == set(self.cfg.applications)
             and bool(self.candidates)
             and not self.worker_failures
             and not self.record.error,
@@ -382,6 +409,7 @@ class Engine:
             qualified_candidates=len(self.candidates),
         )
 
+    # Admission may use a brief cached-report grace; ordinary freshness stays stricter.
     def usable_radio(self, uid, admission=False):
         if self.cfg.mode == "development":
             return True
@@ -419,13 +447,69 @@ class Engine:
             t.value if self.candidates[cid]["application"] == "tracking" else 0
         )
 
+    @staticmethod
+    def execution_key(candidate):
+        return (
+            candidate["application"],
+            candidate["model"],
+            tuple(candidate["input_hw"]),
+            candidate["precision"],
+        )
+
+    # A model failure covers every bitrate entry backed by the same loaded model.
+    def quarantine_candidate(self, cid, error):
+        failed_key = self.execution_key(self.candidates[cid])
+        affected = {
+            candidate_id
+            for candidate_id, candidate in self.candidates.items()
+            if self.execution_key(candidate) == failed_key
+        }
+        self.quarantined.update(affected)
+        self.record.event(
+            "candidate_quarantined",
+            candidate_id=cid,
+            affected_candidates=sorted(affected),
+            execution_key=list(failed_key),
+            reason=error,
+        )
+
+    # Select one configuration per UE against shared radio and compute budgets.
     def choose(self, videos):
+        decision_start = time.monotonic_ns()
         us = {}
         cs = {
             cid: dict(c, processing_s=self.processing(cid))
             for cid, c in self.candidates.items()
             if cid not in self.quarantined
         }
+
+        def finish(proposal, fallback_reason=None):
+            validated = bool(
+                proposal is not None
+                and validate_joint(
+                    proposal,
+                    us,
+                    cs,
+                    self.cfg.radio_budget,
+                    self.cfg.compute_budget_s_per_s,
+                )
+            )
+            decision_end = time.monotonic_ns()
+            self.record.event(
+                "gop_decision",
+                snapshot_id=str(uuid.uuid4()),
+                decision_type="gop_bitrate_dnn",
+                policy_version=self.policy.version,
+                proposed=proposal,
+                validated=validated,
+                fallback_reason=fallback_reason,
+                executed=proposal if validated else None,
+                decision_start_monotonic_ns=decision_start,
+                decision_end_monotonic_ns=decision_end,
+                decision_latency_ns=decision_end - decision_start,
+            )
+            return proposal
+
         now = time.monotonic()
         for v in videos:
             u = self.ues[v.uid]
@@ -438,7 +522,7 @@ class Engine:
                 committed = (v.applied or v.pending)["candidate_id"]
                 ids = [cid for cid in ids if cid == committed]
             if not ids:
-                return None
+                return finish(None, "no_usable_candidate")
             u.network.propagate(now)
             radio = (self.last_report or {}).get("ues", {}).get(u.uid, {})
             if not self.usable_radio(v.uid) and v.uid in self.last_usable:
@@ -452,7 +536,7 @@ class Engine:
                 else self.profiles["network"].get("radio_bps_per_unit")
             )
             if rate is None or rate <= 0:
-                return None
+                return finish(None, "invalid_radio_conversion")
             us[u.uid] = dict(
                 candidate_ids=ids,
                 slo_s=v.slo,
@@ -464,30 +548,34 @@ class Engine:
         proposal = self.policy.propose(
             us, cs, self.cfg.radio_budget, self.cfg.compute_budget_s_per_s
         )
-        self.record.event(
-            "gop_decision",
-            snapshot_id=str(uuid.uuid4()),
-            policy_version=self.policy.version,
-            proposed=proposal,
-            validated=bool(
-                proposal is not None
-                and validate_joint(
-                    proposal,
-                    us,
-                    cs,
-                    self.cfg.radio_budget,
-                    self.cfg.compute_budget_s_per_s,
-                )
-            ),
+        return finish(
+            proposal,
+            "heuristic_search_failed" if proposal is None else None,
         )
-        return proposal
 
+    # Hold admission serialization across receiver setup and recheck joint feasibility.
     async def start_video(self, u, m):
         async with self.admission_lock:
+            decision_start = time.monotonic_ns()
             seq = m["client_seq"]
             vid = str(uuid.uuid4())
 
             def denied(reason):
+                decision_end = time.monotonic_ns()
+                # Keep rejected offered work visible to admission-rate analysis.
+                self.record.event(
+                    "admission_decision",
+                    ue_id=u.uid,
+                    video_id=vid,
+                    client_seq=seq,
+                    application=m.get("application"),
+                    input=m.get("input"),
+                    accepted=False,
+                    reason=reason,
+                    decision_start_monotonic_ns=decision_start,
+                    decision_end_monotonic_ns=decision_end,
+                    decision_latency_ns=decision_end - decision_start,
+                )
                 return envelope(
                     "video_response",
                     self.cfg.run_id,
@@ -505,7 +593,7 @@ class Engine:
                 return denied("not_ready")
             if not self.usable_radio(u.uid, admission=True):
                 return denied("usable_telemetry_required")
-            if m["application"] not in ("detection", "tracking", "segmentation"):
+            if m["application"] not in self.cfg.applications:
                 return denied("unsupported_application")
             if (
                 sum(v.state not in TERMINAL for v in self.videos.values())
@@ -513,10 +601,15 @@ class Engine:
             ):
                 return denied("video_capacity")
             fmt = m.get("input", {})
-            if (fmt.get("width", 1280), fmt.get("height", 720), fmt.get("fps", 30)) != (
-                1280,
-                720,
-                30,
+            height, width = self.catalog["source_hw"]
+            if (
+                fmt.get("width", width),
+                fmt.get("height", height),
+                fmt.get("fps", self.cfg.fps),
+            ) != (
+                width,
+                height,
+                self.cfg.fps,
             ):
                 return denied("unsupported_profiled_input")
             slo = float(m.get("slo_ms", self.cfg.slo_s * 1000)) / 1000
@@ -543,12 +636,6 @@ class Engine:
             if proposal is None:
                 v.state = "DENIED"
                 u.active_video = None
-                self.record.event(
-                    "admission_denied",
-                    ue_id=u.uid,
-                    video_id=vid,
-                    reason="heuristic_search_failed",
-                )
                 return denied("no_budget_feasible_assignment_found")
             used = {
                 x.port
@@ -608,6 +695,20 @@ class Engine:
             self.record.event(
                 "admitted", ue_id=u.uid, video_id=vid, application=v.app, slo_s=v.slo
             )
+            decision_end = time.monotonic_ns()
+            self.record.event(
+                "admission_decision",
+                ue_id=u.uid,
+                video_id=vid,
+                client_seq=seq,
+                application=v.app,
+                input=m.get("input"),
+                accepted=True,
+                reason=None,
+                decision_start_monotonic_ns=decision_start,
+                decision_end_monotonic_ns=decision_end,
+                decision_latency_ns=decision_end - decision_start,
+            )
             return envelope(
                 "video_response",
                 self.cfg.run_id,
@@ -639,26 +740,48 @@ class Engine:
                 ),
             )
 
+    # Advertise future phased boundaries; sent plans remain pending until media evidence.
     def plan(self, vs, proposal):
         self.plan_version += 1
         members = sorted(vs, key=lambda v: (v.admitted, v.uid))
         n = len(members)
         now = time.time_ns()
+        period_ns = round(self.cfg.gop_frames / self.cfg.fps * 1e9)
         activation = math.ceil(
-            (now + self.cfg.gop_lead_s * 1e9 - self.epoch_unix_ns) / 1e9
+            (now + self.cfg.gop_lead_s * 1e9 - self.epoch_unix_ns) / period_ns
         )
         for i, v in enumerate(members):
             self.config_version += 1
+            v.control_version += 1
             cid = proposal[v.uid]
             c = self.candidates[cid]
-            offset = i * (30 // n)
+            offset = (
+                i * (self.cfg.gop_frames // n)
+                if self.cfg.keyframe_interleaving.enabled
+                else 0
+            )
             boundary = (
                 self.epoch_unix_ns
-                + activation * 1_000_000_000
-                + round(offset / 30 * 1e9)
+                + activation * period_ns
+                + round(offset / self.cfg.fps * 1e9)
             )
+            basis = v.applied or v.pending
+            first_frame = 0
+            if basis:
+                # Project the existing source timeline to the future activation boundary.
+                first_frame = basis.get("first_frame_id", 0) + max(
+                    0,
+                    round(
+                        (boundary - basis.get("first_tx_unix_ns", basis["boundary_unix_ns"]))
+                        * basis["fps"]
+                        / 1e9
+                    ),
+                )
             cfg = dict(
                 command_id=str(uuid.uuid4()),
+                control_version=v.control_version,
+                stop_unix_ns=v.suspension_boundary,
+                suspension_version=v.suspension_version,
                 catalog_version=self.catalog["version"],
                 config_version=self.config_version,
                 plan_version=self.plan_version,
@@ -666,10 +789,11 @@ class Engine:
                 boundary_unix_ns=boundary,
                 epoch_unix_ns=self.epoch_unix_ns,
                 offset_frames=offset,
-                gop_frames=30,
-                fps=30,
-                width=1280,
-                height=720,
+                gop_frames=self.cfg.gop_frames,
+                fps=self.cfg.fps,
+                first_frame_id=first_frame,
+                width=self.catalog["source_hw"][1],
+                height=self.catalog["source_hw"][0],
                 bitrate_bps=c["bitrate_bps"],
                 model=c["model"],
                 candidate_id=cid,
@@ -679,6 +803,15 @@ class Engine:
             v.configs[self.config_version] = c
             v.plans[self.plan_version] = cfg
             v.pending = cfg
+            v.transmission_control = dict(
+                control_version=v.control_version,
+                command_id=cfg["command_id"],
+                status="ACTIVE",
+                suspension_version=v.suspension_version,
+                effective_unix_ns=boundary,
+                plan_version=self.plan_version,
+                stop_unix_ns=v.suspension_boundary,
+            )
             self.send(
                 v.uid,
                 envelope(
@@ -691,6 +824,7 @@ class Engine:
                 video_id=v.vid,
                 media_epoch=v.epoch,
                 expectation=self.expectation(v, cfg, False),
+                transmission_control=v.transmission_control,
             )
         self.last_members = tuple(v.vid for v in members)
 
@@ -699,10 +833,11 @@ class Engine:
         res = self.residence_for(v, c["id"]).value
         return dict(
             applied=applied,
+            control_version=cfg.get("control_version", 0),
             config_version=cfg["config_version"],
             plan_version=cfg["plan_version"],
-            fps=30,
-            gop_frames=30,
+            fps=cfg["fps"],
+            gop_frames=cfg["gop_frames"],
             epoch_unix_ns=cfg["epoch_unix_ns"],
             offset_frames=cfg["offset_frames"],
             activation_cycle=cfg["activation_cycle"],
@@ -712,6 +847,7 @@ class Engine:
             size_profile={"I": c["frame_bytes_I"], "P": c["frame_bytes_P"]},
         )
 
+    # Reserve network time using full MEC residence, separate from processing medians.
     def residence_for(self, v, cid):
         c = self.candidates[cid]
         key = (
@@ -729,18 +865,75 @@ class Engine:
         v = self.videos.get(m["video_id"])
         if not v or v.uid != u.uid:
             raise ValueError("video identity mismatch")
-        final = integer(m["final_frame_id"])
-        v.final_id = final
-        v.state = "DRAINING"
-        v.input_close_at = time.monotonic() + self.cfg.final_arrival_s
+        # A later command cannot reopen a lifecycle the drain loop already finalized.
+        if v.state not in TERMINAL:
+            v.final_id = integer(m["final_frame_id"])
+            v.state = "DRAINING"
+            v.input_close_at = time.monotonic() + self.cfg.final_arrival_s
         return envelope(
             "video_end_ack",
             self.cfg.run_id,
             ue_id=u.uid,
             video_id=v.vid,
             client_seq=m["client_seq"],
+            status=v.state,
         )
 
+    # Media may arrive out of order, so only newer evidence can advance session state.
+    def _observe_plan(self, v, d, plan):
+        key = (d.plan_version, d.config_version)
+        applied_key = (
+            (v.applied["plan_version"], v.applied["config_version"])
+            if v.applied
+            else None
+        )
+        pending_key = (
+            (v.pending["plan_version"], v.pending["config_version"])
+            if v.pending
+            else None
+        )
+
+        # A delayed frame retains its own plan without rolling back the session.
+        if applied_key and key < applied_key:
+            return v.applied
+
+        if pending_key and key < pending_key:
+            boundary_fid = v.pending.get("first_frame_id", 0)
+            boundary_ns = v.pending["boundary_unix_ns"]
+            # Ordered old-plan evidence beyond both boundaries means the switch was missed.
+            if (
+                d.frame_id >= boundary_fid
+                and d.flags & 8
+                and d.tx_unix_ns >= boundary_ns
+            ):
+                missed = v.pending
+                v.pending = None
+                self.record.event(
+                    "configuration_unapplied",
+                    video_id=v.vid,
+                    frame_id=d.frame_id,
+                    config_version=missed["config_version"],
+                    plan_version=missed["plan_version"],
+                )
+
+        if applied_key and key == applied_key:
+            return v.applied
+
+        observed = dict(
+            plan, first_frame_id=d.frame_id, first_tx_unix_ns=d.tx_unix_ns
+        )
+        v.applied = observed
+        v.current = observed
+        self.record.event(
+            "configuration_observed",
+            video_id=v.vid,
+            frame_id=d.frame_id,
+            config_version=d.config_version,
+            plan_version=d.plan_version,
+        )
+        return observed
+
+    # Forward actual encoded size before decode, retaining each frame's advertised model.
     def receive_descriptor(self, d, first_ns):
         v = self.videos.get(d.video_id)
         if (
@@ -795,25 +988,15 @@ class Engine:
                 ),
             )
             return
+        self.resolve_suspension_gap(v, d.frame_id, plan)
         f = Frame(v.vid, d.frame_id, d, first_ns, c)
+        f.times["first_packet_monotonic_ns"] = first_ns
         self.frames[key] = f
         if v.state == "AWAITING_DELIVERY":
             v.state = "ACTIVE"
         v.received += 1
-        if not v.applied or d.config_version != v.applied["config_version"]:
-            plan = dict(plan, first_frame_id=d.frame_id, first_tx_unix_ns=d.tx_unix_ns)
-            v.applied = plan
-            v.current = plan
-            self.record.event(
-                "configuration_observed",
-                video_id=v.vid,
-                frame_id=d.frame_id,
-                config_version=d.config_version,
-                plan_version=d.plan_version,
-            )
+        applied_plan = self._observe_plan(v, d, plan)
         u = self.ues[v.uid]
-        if v.applied and d.config_version == v.applied["config_version"]:
-            plan = v.applied
         res = self.residence_for(v, c["id"]).value
         deadline = (
             d.tx_unix_ns + round((v.slo - res) * 1e9)
@@ -837,10 +1020,13 @@ class Engine:
             frame_type=d.frame_type,
             nonpositive_network_budget=v.slo - res <= 0,
             clock_valid=deadline is not None,
+            # Report current session state even when this frame used an older plan.
             applied_expectation=dict(
-                self.expectation(v, plan, True),
-                first_frame_id=plan.get("first_frame_id", d.frame_id),
-                first_tx_unix_ns=plan.get("first_tx_unix_ns", d.tx_unix_ns),
+                self.expectation(v, applied_plan, True),
+                first_frame_id=applied_plan.get("first_frame_id", d.frame_id),
+                first_tx_unix_ns=applied_plan.get(
+                    "first_tx_unix_ns", d.tx_unix_ns
+                ),
             ),
         )
         v.radio_frames[d.frame_id] = dict(
@@ -856,6 +1042,7 @@ class Engine:
             nonpositive_network_budget=v.slo - res <= 0,
         )
 
+    # Reception completion closes UL demand independently of the inference outcome.
     def progress_event(self, d, unique, complete, received_ns):
         v = self.videos.get(d.video_id)
         f = self.frames.get((d.video_id, d.frame_id))
@@ -880,6 +1067,7 @@ class Engine:
         if complete:
             if f:
                 f.complete_ns = received_ns
+                f.times["complete_reception_monotonic_ns"] = received_ns
                 report = self.last_report or {}
                 r = report.get("ues", {}).get(v.uid, {})
                 valid = bool(
@@ -909,6 +1097,7 @@ class Engine:
             self.aware("progress", 0 if msg["complete"] else 1, **msg)
             self.last_progress[key] = time.monotonic()
 
+    # Assign priority once, then enforce the per-video pending-input limits.
     def decoded(self, d, rgb, decoded_ns):
         f = self.frames.get((d.video_id, d.frame_id))
         v = self.videos.get(d.video_id)
@@ -920,18 +1109,23 @@ class Engine:
         if v.input_closed:
             self.fail_frame(v.vid, d.frame_id, "input_closed")
             return
+        if f.config["id"] in self.quarantined:
+            self.fail_frame(v.vid, d.frame_id, "execution_candidate_quarantined")
+            return
         if (
-            v.state == "SUSPENDED"
-            and v.suspension_boundary
+            v.suspension_boundary is not None
             and d.tx_unix_ns >= v.suspension_boundary
+            and v.plans[d.plan_version].get("control_version", 0) <= v.suspension_version
         ):
             self.fail_frame(v.vid, d.frame_id, "session_suspended")
             return
         f.state = "PRIORITY_PENDING"
         f.decoded_ns = decoded_ns
         f.rgb = rgb
+        f.times["decoded_monotonic_ns"] = decoded_ns
         f.times["decode_s"] = (decoded_ns - f.complete_ns) / 1e9
         # N and L were cached at complete AU admission; decoding consumes L-now.
+        decision_start = time.monotonic_ns()
         waiting = max(0, (time.monotonic_ns() - f.complete_ns) / 1e9)
         f.priority = self.priority.propose(
             v.slo,
@@ -939,6 +1133,28 @@ class Engine:
             waiting,
             self.queue_history.value,
             self.processing(f.config["id"]),
+        )
+        decision_end = time.monotonic_ns()
+        f.times.update(
+            priority_decision_start_monotonic_ns=decision_start,
+            priority_decision_end_monotonic_ns=decision_end,
+            priority_decision_latency_ns=decision_end - decision_start,
+        )
+        self.record.event(
+            "priority_decision",
+            decision_type="frame_priority",
+            policy_version=self.priority.version,
+            video_id=v.vid,
+            frame_id=f.fid,
+            proposed=f.priority,
+            validated=f.priority is not None,
+            executed=f.priority,
+            fallback_reason="nonpositive_slack" if f.priority is None else None,
+            decision_start_monotonic_ns=decision_start,
+            decision_end_monotonic_ns=decision_end,
+            decision_latency_ns=decision_end - decision_start,
+            network_s=f.network_s,
+            waiting_s=waiting,
         )
         if f.priority is None:
             self.fail_frame(v.vid, d.frame_id, "nonpositive_slack")
@@ -959,16 +1175,9 @@ class Engine:
         if v.resolved.has(d.frame_id):
             return
         f.queue_ns = time.monotonic_ns()
+        f.times["queue_enter_monotonic_ns"] = f.queue_ns
         f.state = "QUEUED"
         self.pending[(v.app, f.priority)].append((v.vid, f.fid))
-        self.record.event(
-            "priority",
-            video_id=v.vid,
-            frame_id=f.fid,
-            priority=f.priority,
-            network_s=f.network_s,
-            waiting_s=waiting,
-        )
 
     def fail_frame(self, vid, fid, reason):
         f = self.frames.get((vid, fid))
@@ -980,16 +1189,38 @@ class Engine:
         self.resolve(
             f,
             "failed"
-            if reason in ("execution_failed", "transport_loss", "invalid_metadata")
+            if reason
+            in (
+                "execution_failed",
+                "execution_candidate_quarantined",
+                "transport_loss",
+                "invalid_metadata",
+            )
             else "dropped",
             reason,
         )
 
-    def resolve_missing(self, v, fid, reason):
+    # The first resumed descriptor closes the intentional source-frame gap.
+    def resolve_suspension_gap(self, v, fid, plan):
+        previous = v.last_descriptor_id
+        v.last_descriptor_id = max(previous, fid)
+        version = plan.get("control_version", 0)
+        if (
+            not v.suspension_boundary
+            or version <= v.suspension_version
+            or version <= v.suspension_gap_version
+        ):
+            return
+        for skipped in range(previous + 1, fid):
+            self.resolve_missing(v, skipped, "session_suspended", "dropped")
+        v.suspension_gap_version = version
+
+    # Frames without descriptors cannot supply trustworthy GoP or model metadata.
+    def resolve_missing(self, v, fid, reason, outcome="failed"):
         if v.resolved.has(fid):
             return
         v.resolved.add(fid)
-        v.counters["failed"] += 1
+        v.counters[outcome] += 1
         m = envelope(
             "frame_result",
             self.cfg.run_id,
@@ -997,14 +1228,14 @@ class Engine:
             video_id=v.vid,
             request_id=f"{v.vid}/{fid}",
             frame_id=fid,
-            result_id=result_id(v.vid, fid, "failed"),
+            result_id=result_id(v.vid, fid, outcome),
             gop_id=None,
             config_version=None,
             plan_version=None,
             application=v.app,
             model=None,
             priority=None,
-            outcome="failed",
+            outcome=outcome,
             reason=reason,
             stage_times={},
             payload=None,
@@ -1013,6 +1244,7 @@ class Engine:
         )
         self.task(self.deliver(v, m, None, time.monotonic_ns(), None))
 
+    # Fence the outcome before asynchronous serialization and durable replay storage.
     def resolve(self, f, outcome, reason=None, payload=None):
         v = self.videos[f.vid]
         if v.resolved.has(f.fid):
@@ -1021,6 +1253,7 @@ class Engine:
         v.counters[outcome] += 1
         rid = result_id(v.vid, f.fid, outcome)
         now = time.monotonic_ns()
+        f.times["result_ready_monotonic_ns"] = now
         message = envelope(
             "frame_result",
             self.cfg.run_id,
@@ -1048,7 +1281,12 @@ class Engine:
     async def deliver(self, v, message, complete_ns, ready_ns, cid):
         begin = time.monotonic_ns()
         raw = await asyncio.to_thread(dumps, message)
-        message["stage_times"]["result_prepare_s"] = (time.monotonic_ns() - begin) / 1e9
+        prepared = time.monotonic_ns()
+        message["stage_times"].update(
+            result_prepare_start_monotonic_ns=begin,
+            result_prepare_end_monotonic_ns=prepared,
+            result_prepare_s=(prepared - begin) / 1e9,
+        )
         self.record.put(
             "jobs.jsonl", {k: value for k, value in message.items() if k != "payload"}
         )
@@ -1073,6 +1311,7 @@ class Engine:
         )
         self.send(v.uid, message)
 
+    # Drain events, dispatch free streams, and advance lifecycle timers on one loop.
     async def tick(self):
         while True:
             now = time.monotonic()
@@ -1137,11 +1376,23 @@ class Engine:
                         )
                         continue
                     if m["type"] == "failed":
-                        self.quarantined.add(f.config["id"])
+                        f.times.update(
+                            worker_start_monotonic_ns=m["worker_start_ns"],
+                            worker_end_monotonic_ns=m["worker_finish_ns"],
+                            worker_elapsed_ns=m["worker_finish_ns"]
+                            - m["worker_start_ns"],
+                        )
+                        self.quarantine_candidate(f.config["id"], m.get("error"))
                         self.fail_frame(vid, fid, "execution_failed")
                         continue
                     v = self.videos[vid]
                     f.times.update(m["times"])
+                    f.times.update(
+                        worker_start_monotonic_ns=m["worker_start_ns"],
+                        worker_end_monotonic_ns=m["worker_finish_ns"],
+                        worker_elapsed_ns=m["worker_finish_ns"]
+                        - m["worker_start_ns"],
+                    )
                     wait = (m["worker_start_ns"] - f.queue_ns) / 1e9
                     f.times["queue_wait_s"] = wait
                     f.payload = m["payload"]
@@ -1162,6 +1413,9 @@ class Engine:
                     key = items.popleft()
                     f = self.frames.get(key)
                     if not f or f.state != "QUEUED":
+                        continue
+                    if f.config["id"] in self.quarantined:
+                        self.fail_frame(*key, "execution_candidate_quarantined")
                         continue
                     if ns >= f.deadline_ns:
                         self.fail_frame(*key, "deadline_expired")
@@ -1239,7 +1493,8 @@ class Engine:
                                 counters=v.counters,
                             ),
                         )
-            cycle = (time.time_ns() - self.epoch_unix_ns) // 1_000_000_000
+            period_ns = round(self.cfg.gop_frames / self.cfg.fps * 1e9)
+            cycle = (time.time_ns() - self.epoch_unix_ns) // period_ns
             if cycle != self.last_cycle and not self.closed:
                 self.last_cycle = cycle
                 self.coordinate()
@@ -1248,6 +1503,7 @@ class Engine:
                 self.snapshot()
             await asyncio.sleep(0.002)
 
+    # Use the earliest buffered tracking cutoff to bound waits on known predecessors.
     def tracker_tick(self, v, ns):
         if v.tracker_busy:
             return
@@ -1287,6 +1543,7 @@ class Engine:
         v.tracking_ready.pop(f.fid, None)
         self.task(self.track(v, f))
 
+    # Serialize updates per tracker while letting other videos and GPU streams proceed.
     async def track(self, v, f):
         try:
             start = time.monotonic_ns()
@@ -1302,6 +1559,7 @@ class Engine:
         finally:
             v.tracker_busy = False
 
+    # Closing media starts drain; shared application workers remain resident.
     def close_input(self, v, reason):
         if v.input_closed:
             return
@@ -1322,6 +1580,57 @@ class Engine:
         )
         self.record.event("input_closed", video_id=v.vid, reason=reason)
 
+    def suspend_video(self, v):
+        # Follow the latest advertised phase, including a pending transition.
+        # The command identifies that plan so older queued plans cannot undo the stop.
+        schedule = v.pending or v.applied or v.current
+        earliest = time.time_ns() + round(self.cfg.gop_lead_s * 1e9)
+        period = round(schedule["gop_frames"] / schedule["fps"] * 1e9)
+        phase = schedule["epoch_unix_ns"] + round(
+            schedule["offset_frames"] / schedule["fps"] * 1e9
+        )
+        earliest = max(earliest, schedule["boundary_unix_ns"])
+        cycle = max(0, (earliest - phase + period - 1) // period)
+        boundary = phase + cycle * period
+        v.control_version += 1
+        v.suspension_version = v.control_version
+        v.suspension_boundary = boundary
+        v.state = "SUSPENDED"
+        control = dict(
+            command_id=str(uuid.uuid4()),
+            control_version=v.control_version,
+            status="SUSPENDED",
+            effective_unix_ns=boundary,
+            activation_cycle=cycle,
+            plan_version=schedule["plan_version"],
+            epoch_unix_ns=schedule["epoch_unix_ns"],
+            offset_frames=schedule["offset_frames"],
+            fps=schedule["fps"],
+            gop_frames=schedule["gop_frames"],
+            stop_unix_ns=boundary,
+        )
+        v.transmission_control = control
+        self.send(
+            v.uid,
+            envelope(
+                "video_status",
+                self.cfg.run_id,
+                ue_id=v.uid,
+                video_id=v.vid,
+                reason="joint_budget_search_failed",
+                **control,
+            ),
+        )
+        self.aware(
+            "session",
+            ue_id=v.uid,
+            video_id=v.vid,
+            media_epoch=v.epoch,
+            transmission_control=control,
+        )
+        self.record.event("suspension_scheduled", video_id=v.vid, **control)
+
+    # At each master cycle, remove overload newest-first and reconsider suspended work.
     def coordinate(self):
         active = [
             v
@@ -1332,39 +1641,32 @@ class Engine:
             self.record.event("gop_frozen", reason="telemetry_unusable")
             return
         candidates = active[:]
+        proposal = None
         while candidates:
             proposal = self.choose(candidates)
             if proposal is not None:
                 break
             newest = max(candidates, key=lambda v: v.admitted)
             candidates.remove(newest)
-            newest.state = "SUSPENDED"
-            boundary = time.time_ns() + round(self.cfg.gop_lead_s * 1e9)
-            newest.suspension_boundary = boundary
-            self.send(
-                newest.uid,
-                envelope(
-                    "video_status",
-                    self.cfg.run_id,
-                    video_id=newest.vid,
-                    status="SUSPENDED",
-                    effective_unix_ns=boundary,
-                    reason="joint_budget_search_failed",
-                ),
-            )
-        if candidates:
-            # Reconsider suspended sessions oldest-first, with the same joint validator.
-            for v in sorted(
-                [v for v in self.videos.values() if v.state == "SUSPENDED"],
-                key=lambda v: v.admitted,
-            ):
-                if not self.usable_radio(v.uid, admission=True):
-                    continue
-                test = self.choose(candidates + [v])
-                if test is not None:
-                    candidates.append(v)
-                    proposal = test
-                    v.state = "ACTIVE"
+            self.suspend_video(newest)
+        # Recovery must also run when suspension left no active videos (M47/D57).
+        for v in sorted(
+            [v for v in self.videos.values() if v.state == "SUSPENDED"],
+            key=lambda v: v.admitted,
+        ):
+            if not self.usable_radio(v.uid, admission=True):
+                continue
+
+            trial = candidates + [v]
+            trial_proposal = self.choose(trial)
+            if trial_proposal is None:
+                continue
+
+            candidates = trial
+            proposal = trial_proposal
+            v.state = "ACTIVE"
+
+        if candidates and proposal is not None:
             self.plan(candidates, proposal)
 
     def snapshot(self):
@@ -1401,6 +1703,7 @@ class Engine:
                         current=v.current,
                         pending=v.pending,
                         applied=v.applied,
+                        transmission_control=v.transmission_control,
                         counters=v.counters,
                     )
                     for vid, v in self.videos.items()
@@ -1434,13 +1737,19 @@ class Engine:
             )
         )
 
+    # RPC retries run separately from reception; overflow requests a state resync.
     async def send_awareness(self):
         while True:
             try:
                 if self.sync_needed:
+                    snapshot_revision = self.awareness_seq
+                    # A concurrent queue overflow sets this back to true while RPC waits.
+                    self.sync_needed = False
                     message = envelope(
                         "sync",
                         self.cfg.run_id,
+                        # The snapshot includes every state change created through this revision.
+                        awareness_revision=snapshot_revision,
                         associations=[
                             dict(
                                 ue_id=u.uid,
@@ -1457,8 +1766,19 @@ class Engine:
                                 video_id=v.vid,
                                 media_epoch=v.epoch,
                                 input_closed=v.input_closed,
+                                transmission_control=v.transmission_control,
                                 expectation=self.expectation(v, v.applied, True)
                                 if v.applied
+                                else None,
+                                pending_expectation=self.expectation(
+                                    v, v.pending, False
+                                )
+                                if v.pending
+                                and (
+                                    not v.applied
+                                    or v.pending["plan_version"]
+                                    > v.applied["plan_version"]
+                                )
                                 else None,
                                 outstanding=list(v.radio_frames.values()),
                             )
@@ -1466,9 +1786,21 @@ class Engine:
                             if v.state not in TERMINAL or v.radio_frames
                         ],
                     )
-                    await self.rpc.call(message, self.cfg.awareness_timeout_s)
-                    self.sync_needed = False
+                    try:
+                        await self.rpc.call(message, self.cfg.awareness_timeout_s)
+                    except Exception:
+                        self.sync_needed = True
+                        raise
+                    self.synced_awareness_revision = max(
+                        self.synced_awareness_revision, snapshot_revision
+                    )
                 _, _, message = await self.awareness.get()
+                # The successful snapshot already represented older queued updates.
+                if (
+                    message.get("awareness_revision", 0)
+                    <= self.synced_awareness_revision
+                ):
+                    continue
                 try:
                     await self.rpc.call(message, self.cfg.awareness_timeout_s)
                 except Exception:
@@ -1529,6 +1861,7 @@ class Engine:
             if target < time.monotonic():
                 target = time.monotonic() + interval
 
+    # Source changes request recovery; report sequence numbers reject stale repeats.
     async def receive_reports(self):
         source = None
         while True:

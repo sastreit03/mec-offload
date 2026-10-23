@@ -31,6 +31,7 @@ class Ledger:
         self.max_frames = max_frames
         self.valid = True
 
+    # Actual size replaces a prediction while preserving already-accounted service.
     def descriptor(
         self, frame_id, start_ns, deadline_ns, size, actual, config=0, revision=0
     ):
@@ -81,6 +82,26 @@ class Ledger:
             frame_id, start_ns, deadline_ns, size, actual, config
         )
 
+    # Retire demand into compact ID intervals so delayed metadata cannot reopen it.
+    def retire(self, frame_id):
+        if frame_id <= self.watermark or any(
+            a <= frame_id <= b for a, b in self.closed
+        ):
+            return
+        self.frames.pop(frame_id, None)
+        merged = []
+        for a, b in sorted(self.closed + [(frame_id, frame_id)]):
+            if merged and a <= merged[-1][1] + 1:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], b))
+            else:
+                merged.append((a, b))
+        self.closed = merged
+        while self.closed and self.closed[0][0] <= self.watermark + 1:
+            self.watermark = max(self.watermark, self.closed.pop(0)[1])
+        if len(self.closed) >= self.max_frames:
+            self.valid = False
+
+    # Cumulative reception is monotonic; completion retires demand with an ID tombstone.
     def progress(self, frame_id, unique, sequence, complete=False):
         f = self.frames.get(frame_id)
         if f is None:
@@ -100,18 +121,7 @@ class Ledger:
         # Receipt and estimated radio delivery overlap. Never add their credits.
         f.estimated = max(f.estimated, float(unique))
         if complete:
-            del self.frames[frame_id]
-            merged = []
-            for a, b in sorted(self.closed + [(frame_id, frame_id)]):
-                if merged and a <= merged[-1][1] + 1:
-                    merged[-1] = (merged[-1][0], max(merged[-1][1], b))
-                else:
-                    merged.append((a, b))
-            self.closed = merged
-            while self.closed and self.closed[0][0] <= self.watermark + 1:
-                self.watermark = max(self.watermark, self.closed.pop(0)[1])
-            if len(self.closed) >= self.max_frames:
-                self.valid = False
+            self.retire(frame_id)
 
     def estimated_service(self, capacity_bytes, payload_fraction):
         """Provisional FIFO attribution only; mixed bearer traffic remains uncertain."""
@@ -132,6 +142,7 @@ class Ledger:
                 self.frames.values(), key=lambda f: (f.start_ns, f.frame_id)
             ).scheduled += capacity_bytes
 
+    # Oldest transmission and earliest deadline may belong to different frames.
     def snapshot(self, now_ns):
         fs = sorted(self.frames.values(), key=lambda f: (f.start_ns, f.frame_id))
         oldest = fs[0] if fs else None

@@ -19,6 +19,7 @@ public final class YuvScaler {
       int sourceHeight,
       int targetWidth,
       int targetHeight) {
+    // Plane buffers can have padding and interleaved chroma; honor both strides.
     int srcBase = source.position(), dstBase = target.position();
     for (int y = 0; y < targetHeight; y++) {
       int sy = top + (int) ((long) y * sourceHeight / targetHeight);
@@ -31,6 +32,7 @@ public final class YuvScaler {
     }
   }
 
+  // Even crop margins preserve the chroma alignment of YUV 4:2:0 input.
   public static void validateCrop(int width, int height, int left, int right, int top, int bottom) {
     if (left < 0
         || right < 0

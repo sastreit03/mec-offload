@@ -17,6 +17,7 @@ def dumps(value):
     return json.dumps(value, allow_nan=False, separators=(",", ":"))
 
 
+# Reject nonfinite constants before they can enter telemetry or policy arithmetic.
 def loads(raw):
     def invalid(value):
         raise ValueError(f"nonfinite JSON: {value}")
@@ -49,6 +50,7 @@ def integer(value, minimum=0, maximum=2**64 - 1):
     return value
 
 
+# Deterministic IDs let clients suppress duplicate live/replayed outcomes.
 def result_id(video_id, frame_id, outcome):
     return str(uuid.uuid5(uuid.UUID(video_id), f"{frame_id}/{outcome}"))
 

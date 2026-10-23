@@ -1,3 +1,4 @@
+# Development uses synthetic profiles and mock workers; it is not live-video validation.
 run_id: local-development
 mode: development
 catalog: tasks.yaml
@@ -7,6 +8,13 @@ advertised_ip: 192.168.72.136
 edgeric_target: 127.0.0.1:50052
 runs_dir: runs
 weights_dir: weights
+# Ablation controls; list lengths select the enabled applications and stream count.
+fps: 30
+gop_frames: 30
+applications: [detection, tracking, segmentation]
+priority_streams: [-5, -3, 0]
+keyframe_interleaving:
+  enabled: true
 warmup_count: 1
 radio_budget: 100000.0
 compute_budget_s_per_s: 2.0

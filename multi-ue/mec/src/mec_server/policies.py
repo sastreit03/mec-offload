@@ -16,9 +16,18 @@ class PriorityPolicy(Protocol):
 class HeuristicPriority:
     version = "slack-v1"
 
+    def __init__(self, streams=(-5, -3, 0)):
+        self.streams = tuple(streams)
+
+    # Waiting already spent and the queue allowance overlap, so take their maximum.
     def propose(self, slo_s, network_s, waiting_s, queue_s, processing_s):
         u = (slo_s - network_s - max(waiting_s, queue_s) - processing_s) / slo_s
-        return None if u <= 0 else -5 if u <= 0.2 else -3 if u <= 0.5 else 0
+        if u <= 0:
+            return None
+        urgency = 0 if u <= 0.2 else 1 if u <= 0.5 else 2
+        # Preserve three existing slack classes while allowing one or two streams.
+        index = (urgency * (len(self.streams) - 1) + 1) // 2
+        return self.streams[index]
 
 
 def probability(slo, bitrate, mu, variance, processing):
@@ -30,6 +39,7 @@ def probability(slo, bitrate, mu, variance, processing):
     return 0.5 * (1 + erf((slo - mean) / sqrt(2 * variance)))
 
 
+# Compute cost is seconds of work per second, not a count of CUDA streams.
 def costs(assignment, ues, candidates):
     radio, compute = 0.0, 0.0
     for uid, cid in assignment.items():
@@ -39,6 +49,7 @@ def costs(assignment, ues, candidates):
     return radio, compute
 
 
+# Candidate membership alone is insufficient: the complete assignment must fit.
 def validate_joint(assignment, ues, candidates, radio_budget, compute_budget):
     if set(assignment) != set(ues):
         return False

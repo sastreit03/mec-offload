@@ -3,6 +3,7 @@ from statistics import median, mean
 import math
 
 
+# Keep offline initialization until ten eligible measurements fill the window.
 class History:
     def __init__(self, initial, statistic="median"):
         if not math.isfinite(initial) or initial < 0:
@@ -35,6 +36,7 @@ class NetworkFilter:
         self.last_observation = None
         self.seen = set()
 
+    # Elapsed time grows uncertainty; a long observation gap restores the prior.
     def propagate(self, now):
         if (
             now
@@ -62,6 +64,7 @@ class NetworkFilter:
             or bitrate_bps <= 0
         ):
             return False
+        # Normalize the throughput-derived latency to a 1-Mbps encoding bitrate.
         y = size_bytes / throughput_bytes_s / (bitrate_bps / 1e6)
         if not math.isfinite(y) or y < 0:
             return False
