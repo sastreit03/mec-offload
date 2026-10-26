@@ -39,10 +39,10 @@ configurations:
   class_map_id: coco80
   backend: torchscript
   output_schema: detection.v1
-- id: detection-yolo26s-500k
+- id: detection-yolo26x-500k
   application: detection
-  model: yolo26s
-  artifact: detection/yolo26s.torchscript
+  model: yolo26x
+  artifact: detection/yolo26x.torchscript
   input_hw:
   - 640
   - 640
@@ -52,10 +52,10 @@ configurations:
   class_map_id: coco80
   backend: torchscript
   output_schema: detection.v1
-- id: detection-yolo26s-1000k
+- id: detection-yolo26x-1000k
   application: detection
-  model: yolo26s
-  artifact: detection/yolo26s.torchscript
+  model: yolo26x
+  artifact: detection/yolo26x.torchscript
   input_hw:
   - 640
   - 640
@@ -65,10 +65,10 @@ configurations:
   class_map_id: coco80
   backend: torchscript
   output_schema: detection.v1
-- id: detection-yolo26s-2000k
+- id: detection-yolo26x-2000k
   application: detection
-  model: yolo26s
-  artifact: detection/yolo26s.torchscript
+  model: yolo26x
+  artifact: detection/yolo26x.torchscript
   input_hw:
   - 640
   - 640
@@ -195,10 +195,10 @@ configurations:
   class_map_id: coco80
   backend: torchscript
   output_schema: tracking.v1
-- id: tracking-yolo26s-500k
+- id: tracking-yolo26x-500k
   application: tracking
-  model: yolo26s
-  artifact: tracking/yolo26s.torchscript
+  model: yolo26x
+  artifact: tracking/yolo26x.torchscript
   input_hw:
   - 640
   - 640
@@ -208,10 +208,10 @@ configurations:
   class_map_id: coco80
   backend: torchscript
   output_schema: tracking.v1
-- id: tracking-yolo26s-1000k
+- id: tracking-yolo26x-1000k
   application: tracking
-  model: yolo26s
-  artifact: tracking/yolo26s.torchscript
+  model: yolo26x
+  artifact: tracking/yolo26x.torchscript
   input_hw:
   - 640
   - 640
@@ -221,10 +221,10 @@ configurations:
   class_map_id: coco80
   backend: torchscript
   output_schema: tracking.v1
-- id: tracking-yolo26s-2000k
+- id: tracking-yolo26x-2000k
   application: tracking
-  model: yolo26s
-  artifact: tracking/yolo26s.torchscript
+  model: yolo26x
+  artifact: tracking/yolo26x.torchscript
   input_hw:
   - 640
   - 640

@@ -1,6 +1,6 @@
 # Aetheredge architecture fixes
 
-Updated October 23, 2026. This note summarizes the remediation work following
+Updated October 26, 2026. This note summarizes the remediation work following
 the review in `/tmp/mec-architecture-review.md`. It covers `multi-ue/`,
 `EdgeRIC-v2/muApp_mec/`, and the Aetheredge additions to OAI. It describes
 implemented software behavior; over-the-air correctness and performance still
@@ -127,9 +127,10 @@ requires a lower value.
 
 ## Validation and deferred work
 
-- The current Python suite has 69 passing tests, including focused lifecycle,
+- The current Python suite has 72 passing tests, including focused lifecycle,
   synchronization, suspension, configuration, execution-failure, evaluation,
-  and ZMQ counter tests. The EdgeRIC C++ bridge passes syntax compilation.
+  ZMQ counter, playlist, and successor-handoff tests. The EdgeRIC C++ bridge
+  passes syntax compilation.
 - A full OAI gNB build and live gNB/EdgeRIC/MEC run are still required. The
   local environment used during this work lacked `asn1c` and a writable OAI CPM
   cache.

@@ -224,6 +224,12 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
     return clock.now();
   }
 
+  /** Begin a prepared file at its planned boundary or now if local setup ran late. */
+  public synchronized long activate() {
+    nextRelease = Math.max(nextRelease, clock.now());
+    return nextRelease;
+  }
+
   public String video() {
     return video.toString();
   }

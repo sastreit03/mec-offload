@@ -65,3 +65,59 @@ def test_every_rejected_start_records_an_admission_decision():
         assert evidence["decision_latency_ns"] >= 0
 
     asyncio.run(exercise())
+
+
+def test_video_end_promotes_prepared_successor_without_waiting_for_completion():
+    engine = Engine.__new__(Engine)
+    engine.cfg = SimpleNamespace(run_id="run", final_arrival_s=0.5)
+    engine.aware = Mock()
+    engine.record = Mock()
+    user = UE("ue", "token", active_video="old", prepared_video="next")
+    old = Video("old", user.uid, "tracking", 1, 0, state="ACTIVE")
+    nxt = Video(
+        "next",
+        user.uid,
+        "tracking",
+        2,
+        0,
+        state="PREPARED",
+        predecessor_id="old",
+    )
+    engine.ues = {user.uid: user}
+    engine.videos = {old.vid: old, nxt.vid: nxt}
+
+    result = engine.end_video(
+        user,
+        dict(client_seq=7, video_id=old.vid, final_frame_id=12),
+    )
+
+    assert result["type"] == "video_end_ack"
+    assert old.state == "DRAINING" and old.final_id == 12
+    assert old.demand_closed
+    assert nxt.state == "AWAITING_DELIVERY"
+    assert user.active_video == nxt.vid and user.prepared_video is None
+
+
+def test_first_successor_packet_can_promote_before_video_end_control():
+    engine = Engine.__new__(Engine)
+    engine.aware = Mock()
+    engine.record = Mock()
+    user = UE("ue", "token", active_video="old", prepared_video="next")
+    old = Video("old", user.uid, "detection", 1, 0, state="ACTIVE")
+    nxt = Video(
+        "next",
+        user.uid,
+        "detection",
+        2,
+        0,
+        state="PREPARED",
+        predecessor_id="old",
+    )
+    engine.ues = {user.uid: user}
+    engine.videos = {old.vid: old, nxt.vid: nxt}
+
+    engine.promote_successor(nxt, "first_descriptor")
+
+    assert old.state == "HANDOFF_PENDING_END" and old.demand_closed
+    assert nxt.state == "AWAITING_DELIVERY"
+    assert user.active_video == nxt.vid and user.prepared_video is None

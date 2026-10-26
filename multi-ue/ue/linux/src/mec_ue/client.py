@@ -8,6 +8,7 @@ import sqlite3
 import subprocess
 from pathlib import Path
 from .media import Streamer
+from .playlist import Playlist
 
 
 # Map UE monotonic time to MEC wall time; keep SLO durations on the UE clock.
@@ -56,6 +57,15 @@ class Client:
             else dict(client_seq=0)
         )
         self.streamer = None
+        self.playlist = Playlist(args.source_dir, args.shuffle_seed) if args.source_dir else None
+        self.selection = self.playlist.next() if self.playlist else None
+        if self.selection:
+            self.args.source = str(self.selection.path)
+        self.prepared = None
+        self.successor_request = None
+        self.successor_selection = None
+        self.awaiting_successor = False
+        self.successor_prepare_s = 0.0
         self.pending_start = False
         self.start_request = None
         self.transmitted = {}
@@ -70,6 +80,22 @@ class Client:
         self.receipts_db = sqlite3.connect(self.root / "receipts.sqlite3")
         self.receipts_db.execute(
             "CREATE TABLE IF NOT EXISTS seen (id TEXT PRIMARY KEY)"
+        )
+        if self.playlist:
+            self.record(
+                "playlist_initialized",
+                seed=self.playlist.seed,
+                videos=len(self.playlist.files),
+            )
+            self.record_selection(self.selection)
+
+    def record_selection(self, selection):
+        self.record(
+            "video_selected",
+            source=selection.path.name,
+            playlist_cycle=selection.cycle,
+            playlist_position=selection.position,
+            shuffle_seed=self.playlist.seed,
         )
 
     def record(self, kind, **data):
@@ -150,6 +176,28 @@ class Client:
             task = asyncio.create_task(self.expiry(key, value["tx_mono_ns"]))
             self.expiry_tasks.add(task)
             task.add_done_callback(self.expiry_tasks.discard)
+        elif kind == "successor_needed" and self.playlist:
+            if (
+                self.streamer
+                and value.get("video_id") == self.streamer.response["video_id"]
+                and self.successor_request is None
+                and self.prepared is None
+            ):
+                self.successor_selection = self.playlist.next()
+                self.record_selection(self.successor_selection)
+                self.successor_request = dict(
+                    type="video_start",
+                    ue_id=self.uid,
+                    client_seq=self.next_seq(),
+                    predecessor_video_id=value["video_id"],
+                    expected_start_unix_ns=value["expected_start_unix_ns"],
+                    application=self.args.application,
+                    slo_ms=150,
+                    can_drop=False,
+                    can_drop_frames=False,
+                    input=dict(self.input_profile),
+                )
+                await self.send(self.successor_request)
         elif (
             kind == "media_end"
             and self.streamer
@@ -165,6 +213,36 @@ class Client:
                     final_frame_id=value["final_frame_id"],
                 )
             )
+            self.awaiting_successor = bool(self.playlist)
+            if self.prepared:
+                self.start_prepared()
+            elif self.playlist:
+                self.record(
+                    "successor_response_pending", reason="response_pending_at_eof"
+                )
+
+    def start_prepared(self):
+        """Promote a locally prepared response without waiting for old completion."""
+        if not self.prepared or not self.successor_selection:
+            return
+        response = self.prepared
+        selection = self.successor_selection
+        self.streamer = Streamer(
+            response,
+            str(selection.path),
+            self.args.source_ip,
+            self.clock,
+            self.media_event,
+            self.successor_prepare_s,
+        )
+        self.selection = selection
+        self.args.source = str(selection.path)
+        self.prepared = None
+        self.successor_request = None
+        self.successor_selection = None
+        self.awaiting_successor = False
+        self.streamer.start()
+        self.record("successor_started", video_id=response["video_id"])
 
     # Record deadline failure independently of result arrival, then reconcile missing data.
     async def expiry(self, key, tx):
@@ -296,6 +374,9 @@ class Client:
                                     self.input_profile = m.get(
                                         "input_profile", self.input_profile
                                     )
+                                    self.successor_prepare_s = float(
+                                        m.get("successor_prepare_s", 5.0)
+                                    )
                                     self.state["resume_token"] = m["resume_token"]
                                     self.save_state()
                                     sync = asyncio.create_task(self.synchronize())
@@ -308,25 +389,52 @@ class Client:
                                     )
                                 elif kind == "association_probe":
                                     asyncio.create_task(self.probe(m))
-                                elif (
-                                    kind == "association_status"
-                                    and m["valid"]
-                                    and self.streamer is None
-                                ):
-                                    if self.start_request is None:
-                                        self.start_request = dict(
-                                            type="video_start",
-                                            ue_id=self.uid,
-                                            client_seq=self.next_seq(),
-                                            application=self.args.application,
-                                            slo_ms=150,
-                                            can_drop=False,
-                                            can_drop_frames=False,
-                                            input=dict(self.input_profile),
-                                        )
-                                    await self.send(self.start_request)
+                                elif kind == "association_status" and m["valid"]:
+                                    if self.successor_request is not None:
+                                        # Deduplicated resend covers a control reconnect during preparation.
+                                        await self.send(self.successor_request)
+                                    elif self.streamer is None:
+                                        if self.start_request is None:
+                                            self.start_request = dict(
+                                                type="video_start",
+                                                ue_id=self.uid,
+                                                client_seq=self.next_seq(),
+                                                application=self.args.application,
+                                                slo_ms=150,
+                                                can_drop=False,
+                                                can_drop_frames=False,
+                                                input=dict(self.input_profile),
+                                            )
+                                        await self.send(self.start_request)
                                 elif kind == "video_response":
-                                    if m["accepted"] and self.streamer is None:
+                                    if (
+                                        self.successor_request
+                                        and m.get("client_seq")
+                                        == self.successor_request["client_seq"]
+                                    ):
+                                        if m["accepted"]:
+                                            self.record(
+                                                "admission_decision",
+                                                video_id=m["video_id"],
+                                                accepted=True,
+                                                reason=None,
+                                            )
+                                            self.prepared = m
+                                            if self.awaiting_successor:
+                                                self.start_prepared()
+                                        else:
+                                            self.record(
+                                                "admission_decision",
+                                                video_id=m.get("video_id"),
+                                                accepted=False,
+                                                reason=m.get("reason"),
+                                            )
+                                            self.record(
+                                                "successor_not_prepared",
+                                                reason=m.get("reason"),
+                                            )
+                                            self.successor_request = None
+                                    elif m["accepted"] and self.streamer is None:
                                         self.record(
                                             "admission_decision",
                                             video_id=m["video_id"],
@@ -340,7 +448,14 @@ class Client:
                                             self.args.source_ip,
                                             self.clock,
                                             self.media_event,
+                                            self.successor_prepare_s
+                                            if self.playlist
+                                            else 0,
                                         )
+                                        if self.successor_selection:
+                                            self.selection = self.successor_selection
+                                            self.successor_selection = None
+                                            self.awaiting_successor = False
                                         self.streamer.start()
                                     elif not m["accepted"]:
                                         self.record(
@@ -375,7 +490,27 @@ class Client:
                                         "CANCELLED",
                                     ):
                                         self.streamer.stop()
-                                        asyncio.create_task(self.finish())
+                                        if not self.playlist:
+                                            asyncio.create_task(self.finish())
+                                        else:
+                                            # Admission failure falls back to the normal post-terminal path.
+                                            self.streamer = None
+                                            self.start_request = None
+                                            if self.successor_selection:
+                                                self.args.source = str(
+                                                    self.successor_selection.path
+                                                )
+                                elif (
+                                    kind == "video_status"
+                                    and self.prepared
+                                    and m["video_id"] == self.prepared["video_id"]
+                                    and m["status"] in ("FAILED", "EXPIRED", "CANCELLED")
+                                ):
+                                    self.record(
+                                        "successor_not_prepared", reason=m["status"]
+                                    )
+                                    self.prepared = None
+                                    self.successor_request = None
                                 elif kind == "frame_result":
                                     if self.receipts_db.execute(
                                         "SELECT 1 FROM seen WHERE id=?",
@@ -460,6 +595,8 @@ def main():
         help="derive and refresh softUE IPv4 address automatically",
     )
     p.add_argument("--source", default="0", help="camera index or dataset video path")
+    p.add_argument("--source-dir", help="directory of prerecorded videos to shuffle")
+    p.add_argument("--shuffle-seed", type=int, help="reproducible playlist seed")
     p.add_argument(
         "--application",
         choices=["tracking", "detection", "segmentation"],

@@ -27,11 +27,16 @@ public final class AvcSource {
   private int width, height, fps, bitrate;
   private long fileStart, firstPts = -1;
   private boolean inputEos;
+  private final long prepareNs;
+  private long durationUs = -1;
+  private boolean preparationSent;
 
-  public AvcSource(Context c, StreamSession s, StreamSession.Events e) throws Exception {
+  public AvcSource(Context c, StreamSession s, StreamSession.Events e, double prepareS)
+      throws Exception {
     context = c;
     session = s;
     events = e;
+    prepareNs = Math.round(prepareS * 1e9);
     thread.start();
     handler = new Handler(thread.getLooper());
   }
@@ -159,13 +164,14 @@ public final class AvcSource {
       }
     }
     if (track < 0) throw new Exception("No video track");
+    if (f.containsKey(MediaFormat.KEY_DURATION)) durationUs = f.getLong(MediaFormat.KEY_DURATION);
     extractor.selectTrack(track);
     f.setInteger(
         MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
     decoder = MediaCodec.createDecoderByType(f.getString(MediaFormat.KEY_MIME));
     decoder.configure(f, null, null, 0);
     decoder.start();
-    fileStart = session.config().getLong("boundary_unix_ns");
+    fileStart = session.activate();
   }
 
   // Camera and dataset frames share bitrate changes, keyframe requests, and YUV scaling.
@@ -235,6 +241,18 @@ public final class AvcSource {
         if (i >= 0) {
           if (firstPts < 0) firstPts = info.presentationTimeUs;
           long release = fileStart + (info.presentationTimeUs - firstPts) * 1000;
+          if (!preparationSent
+              && prepareNs > 0
+              && durationUs > 0
+              && durationUs - info.presentationTimeUs <= prepareNs / 1000) {
+            long remainingUs = Math.max(0, durationUs - info.presentationTimeUs);
+            events.event(
+                "successor_needed",
+                new org.json.JSONObject()
+                    .put("video_id", session.video())
+                    .put("expected_start_unix_ns", release + remainingUs * 1000));
+            preparationSent = true;
+          }
           Image image = decoder.getOutputImage(i);
           if (image != null) {
             long wait = Math.max(0, (release - sessionClock()) / 1_000_000);
@@ -266,7 +284,10 @@ public final class AvcSource {
           if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
             drain();
             events.event(
-                "media_end", new org.json.JSONObject().put("final_frame_id", session.lastFrame()));
+                "media_end",
+                new org.json.JSONObject()
+                    .put("video_id", session.video())
+                    .put("final_frame_id", session.lastFrame()));
             close();
             return;
           }

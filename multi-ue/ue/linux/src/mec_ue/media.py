@@ -61,12 +61,13 @@ class Encoder:
 
 # A dedicated thread owns capture, encoding, pacing, and UDP transmission.
 class Streamer:
-    def __init__(self, response, source, source_ip, clock, event):
+    def __init__(self, response, source, source_ip, clock, event, prepare_s=0):
         self.response = response
         self.source = source
         self.source_ip = source_ip
         self.clock = clock
         self.event = event
+        self.prepare_s = prepare_s
         self.current = dict(response["config"])
         self.pending = []
         self.lock = threading.Lock()
@@ -144,6 +145,10 @@ class Streamer:
             )
             if not cap.isOpened():
                 raise RuntimeError("camera/video could not be opened")
+            total_frames = 0
+            if self.prepare_s > 0 and not self.source.isdecimal():
+                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            preparation_sent = False
             encoder = Encoder(
                 cfg["width"], cfg["height"], cfg["fps"], cfg["bitrate_bps"]
             )
@@ -155,9 +160,27 @@ class Streamer:
             ssrc = secrets.randbits(32)
             seq = secrets.randbits(16)
             rtp_base = secrets.randbits(32)
-            release = cfg["boundary_unix_ns"]
+            # Local setup may finish after a prepared boundary; do not burst to catch up.
+            release = max(cfg["boundary_unix_ns"], self.clock.unix_ns())
             force = True
             while not self.stopped.is_set():
+                if (
+                    self.prepare_s > 0
+                    and total_frames > 0
+                    and not preparation_sent
+                    and total_frames - self.frame_id
+                    <= max(1, round(self.prepare_s * cfg["fps"]))
+                ):
+                    remaining = max(0, total_frames - self.frame_id)
+                    self.event(
+                        "successor_needed",
+                        dict(
+                            video_id=self.response["video_id"],
+                            expected_start_unix_ns=release
+                            + round(remaining * 1e9 / cfg["fps"]),
+                        ),
+                    )
+                    preparation_sent = True
                 delay = (release - self.clock.unix_ns()) / 1e9
                 if delay > 0 and self.stopped.wait(delay):
                     break

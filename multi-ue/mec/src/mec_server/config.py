@@ -61,6 +61,8 @@ class Settings(BaseModel):
     fps: int = 30
     slo_s: float = 0.15
     first_media_s: float = 5.0
+    # Give prerecorded clients time to prepare the next receiver before EOF.
+    successor_prepare_s: float = 5.0
     final_arrival_s: float = 0.5
     drain_s: float = 5.0
     disconnect_s: float = 5.0
@@ -123,6 +125,8 @@ class Settings(BaseModel):
                 raise ValueError(f"required profiled setting: {key}")
         if self.fps <= 0 or self.gop_frames <= 0:
             raise ValueError("positive FPS and GoP frame length required")
+        if self.successor_prepare_s <= 0:
+            raise ValueError("positive successor preparation time required")
         if not self.applications or len(set(self.applications)) != len(
             self.applications
         ):

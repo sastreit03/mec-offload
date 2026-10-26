@@ -50,6 +50,7 @@ class UE:
     peer_ip: str = ""
     connected: bool = False
     active_video: str | None = None
+    prepared_video: str | None = None
     sender: object = None
     generation: int = 0
     association_revision: int = 0
@@ -89,6 +90,10 @@ class Video:
     last_descriptor_id: int = -1
     suspension_gap_version: int = 0
     finalized: bool = False
+    # A prerecorded successor has transport/configuration ready before its handoff.
+    predecessor_id: str | None = None
+    expected_start: float | None = None
+    demand_closed: bool = False
     gap_scan: int = 0
     resolved: object = field(default_factory=Ranges)
     radio_frames: dict = field(default_factory=dict)
@@ -323,6 +328,8 @@ class Engine:
                 gop_frames=self.cfg.gop_frames,
             ),
             active_video_id=u.active_video,
+            prepared_video_id=u.prepared_video,
+            successor_prepare_s=self.cfg.successor_prepare_s,
             server_unix_ns=time.time_ns(),
             schema_version_control=1,
         )
@@ -587,6 +594,12 @@ class Engine:
                     reason=reason,
                 )
 
+            predecessor_id = m.get("predecessor_video_id")
+            if predecessor_id is not None:
+                return await self.prepare_successor(
+                    u, m, vid, decision_start, denied
+                )
+
             if u.active_video and self.videos[u.active_video].state not in TERMINAL:
                 return denied("active_video_exists")
             if not self.readiness()["ready"]:
@@ -596,7 +609,12 @@ class Engine:
             if m["application"] not in self.cfg.applications:
                 return denied("unsupported_application")
             if (
-                sum(v.state not in TERMINAL for v in self.videos.values())
+                # Prepared successors and draining predecessors replace, rather than add,
+                # sustained workloads; the independent port check bounds receivers.
+                sum(
+                    v.state in ("ACTIVE", "AWAITING_DELIVERY", "SUSPENDED")
+                    for v in self.videos.values()
+                )
                 >= self.cfg.max_videos
             ):
                 return denied("video_capacity")
@@ -709,36 +727,178 @@ class Engine:
                 decision_end_monotonic_ns=decision_end,
                 decision_latency_ns=decision_end - decision_start,
             )
-            return envelope(
-                "video_response",
-                self.cfg.run_id,
-                ue_id=u.uid,
-                client_seq=seq,
-                video_id=vid,
-                accepted=True,
-                status="awaiting_delivery",
-                media_epoch=v.epoch,
-                endpoint=dict(host=self.cfg.advertised_ip, port=port),
-                initial_frame_id=0,
-                slo_ms=v.slo * 1000,
-                latency_origin="transmission",
-                config=v.pending,
-                rtp=dict(
-                    extension_id=1, descriptor_bytes=96, mtu=1200, payload_type=96
-                ),
-                queue_contract=dict(
-                    max_pending_frames=self.cfg.pending_frames,
-                    max_pending_bytes=self.cfg.pending_bytes_per_video,
-                    mandatory_drops=[
-                        "nonpositive_slack",
-                        "deadline_expired",
-                        "buffer_overflow",
-                        "session_suspended",
-                        "transport_loss",
-                        "tracking_cutoff",
-                    ],
-                ),
+            return self.video_response(u, v, seq)
+
+    def video_response(self, u, v, seq):
+        """Return the common transport contract for active and prepared videos."""
+        return envelope(
+            "video_response",
+            self.cfg.run_id,
+            ue_id=u.uid,
+            client_seq=seq,
+            video_id=v.vid,
+            accepted=True,
+            status="prepared" if v.state == "PREPARED" else "awaiting_delivery",
+            media_epoch=v.epoch,
+            endpoint=dict(host=self.cfg.advertised_ip, port=v.port),
+            initial_frame_id=0,
+            slo_ms=v.slo * 1000,
+            latency_origin="transmission",
+            config=v.pending,
+            rtp=dict(extension_id=1, descriptor_bytes=96, mtu=1200, payload_type=96),
+            queue_contract=dict(
+                max_pending_frames=self.cfg.pending_frames,
+                max_pending_bytes=self.cfg.pending_bytes_per_video,
+                mandatory_drops=[
+                    "nonpositive_slack",
+                    "deadline_expired",
+                    "buffer_overflow",
+                    "session_suspended",
+                    "transport_loss",
+                    "tracking_cutoff",
+                ],
+            ),
+        )
+
+    async def prepare_successor(self, u, m, vid, decision_start, denied):
+        """Prepare one same-workload successor without double-counting its demand."""
+        predecessor_id = m["predecessor_video_id"]
+        predecessor = self.videos.get(predecessor_id)
+        if (
+            predecessor is None
+            or predecessor.uid != u.uid
+            or u.active_video != predecessor_id
+            or predecessor.state in TERMINAL
+        ):
+            return denied("invalid_predecessor")
+        if u.prepared_video and self.videos[u.prepared_video].state not in TERMINAL:
+            return denied("successor_exists")
+        if m.get("application") != predecessor.app:
+            return denied("successor_workload_changed")
+        fmt = m.get("input", {})
+        height, width = self.catalog["source_hw"]
+        if (fmt.get("width"), fmt.get("height"), fmt.get("fps")) != (
+            width,
+            height,
+            self.cfg.fps,
+        ):
+            return denied("unsupported_profiled_input")
+        slo = float(m.get("slo_ms", predecessor.slo * 1000)) / 1000
+        if not math.isfinite(slo) or slo <= 0 or abs(slo - predecessor.slo) > 1e-9:
+            return denied("successor_workload_changed")
+        start_unix_ns = integer(m["expected_start_unix_ns"])
+        basis = predecessor.applied or predecessor.pending or predecessor.current
+        if not basis or basis["candidate_id"] in self.quarantined:
+            return denied("successor_configuration_unavailable")
+
+        used = {
+            x.port for x in self.videos.values() if x.state not in TERMINAL and x.port
+        }
+        port = next(
+            (
+                p
+                for p in range(
+                    self.cfg.first_udp_port,
+                    self.cfg.first_udp_port + self.cfg.max_videos * 2,
+                )
+                if p not in used
+            ),
+            None,
+        )
+        if port is None:
+            return denied("receiver_capacity")
+
+        self.plan_version += 1
+        self.config_version += 1
+        cfg = dict(
+            basis,
+            command_id=str(uuid.uuid4()),
+            control_version=1,
+            stop_unix_ns=None,
+            suspension_version=0,
+            config_version=self.config_version,
+            plan_version=self.plan_version,
+            boundary_unix_ns=start_unix_ns,
+            first_frame_id=0,
+            first_tx_unix_ns=start_unix_ns,
+        )
+        v = Video(
+            vid,
+            u.uid,
+            predecessor.app,
+            secrets.randbits(52) or 1,
+            time.monotonic(),
+            state="PREPARED",
+            port=port,
+            slo=slo,
+            can_drop=predecessor.can_drop,
+            can_drop_frames=predecessor.can_drop_frames,
+            predecessor_id=predecessor_id,
+            expected_start=time.monotonic()
+            + max(0.0, (start_unix_ns - time.time_ns()) / 1e9),
+        )
+        candidate = self.candidates[basis["candidate_id"]]
+        v.configs[cfg["config_version"]] = candidate
+        v.plans[cfg["plan_version"]] = cfg
+        v.pending = cfg
+        v.control_version = 1
+        v.transmission_control = dict(
+            control_version=1,
+            command_id=cfg["command_id"],
+            status="ACTIVE",
+            suspension_version=0,
+            effective_unix_ns=start_unix_ns,
+            plan_version=cfg["plan_version"],
+            stop_unix_ns=None,
+        )
+        receiver = (MockReceiver if self.cfg.backend == "mock" else Receiver)(
+            vid, v.epoch, port, self.cfg, self.post
+        )
+        try:
+            await asyncio.to_thread(receiver.start)
+        except Exception as ex:
+            await asyncio.to_thread(receiver.close)
+            self.record.event("receiver_setup_failed", video_id=vid, reason=repr(ex))
+            return denied("setup_failed")
+        v.receiver = receiver
+        if v.app == "tracking":
+            # Each video owns a fresh tracker, so state never crosses the handoff.
+            v.tracker = Tracker(
+                self.cfg.fps, self.cfg.tracker_retention_s, self.cfg.backend == "mock"
             )
+        self.videos[vid] = v
+        u.prepared_video = vid
+        self.aware(
+            "session",
+            ue_id=v.uid,
+            video_id=v.vid,
+            media_epoch=v.epoch,
+            expectation=self.expectation(v, cfg, False),
+            transmission_control=v.transmission_control,
+        )
+        decision_end = time.monotonic_ns()
+        self.record.event(
+            "admission_decision",
+            ue_id=u.uid,
+            video_id=vid,
+            predecessor_video_id=predecessor_id,
+            client_seq=m["client_seq"],
+            application=v.app,
+            input=m.get("input"),
+            accepted=True,
+            reason=None,
+            decision_start_monotonic_ns=decision_start,
+            decision_end_monotonic_ns=decision_end,
+            decision_latency_ns=decision_end - decision_start,
+        )
+        self.record.event(
+            "successor_prepared",
+            ue_id=u.uid,
+            video_id=vid,
+            predecessor_video_id=predecessor_id,
+            expected_start_unix_ns=start_unix_ns,
+        )
+        return self.video_response(u, v, m["client_seq"])
 
     # Advertise future phased boundaries; sent plans remain pending until media evidence.
     def plan(self, vs, proposal):
@@ -870,6 +1030,12 @@ class Engine:
             v.final_id = integer(m["final_frame_id"])
             v.state = "DRAINING"
             v.input_close_at = time.monotonic() + self.cfg.final_arrival_s
+            # Stop future radio predictions immediately while accepting late UDP packets.
+            self.close_demand(v)
+            if u.prepared_video:
+                successor = self.videos.get(u.prepared_video)
+                if successor and successor.predecessor_id == v.vid:
+                    self.promote_successor(successor, "video_end")
         return envelope(
             "video_end_ack",
             self.cfg.run_id,
@@ -877,6 +1043,56 @@ class Engine:
             video_id=v.vid,
             client_seq=m["client_seq"],
             status=v.state,
+        )
+
+    def close_demand(self, v):
+        """Stop future predictions once while preserving the late-packet ledger."""
+        if v.demand_closed:
+            return
+        v.demand_closed = True
+        v.control_version += 1
+        stop = time.time_ns()
+        v.transmission_control = dict(
+            control_version=v.control_version,
+            command_id=str(uuid.uuid4()),
+            status="ACTIVE",
+            suspension_version=v.suspension_version,
+            effective_unix_ns=stop,
+            plan_version=(v.applied or v.pending or v.current or {}).get(
+                "plan_version", 0
+            ),
+            stop_unix_ns=stop,
+        )
+        self.aware(
+            "session",
+            ue_id=v.uid,
+            video_id=v.vid,
+            media_epoch=v.epoch,
+            transmission_control=v.transmission_control,
+        )
+
+    def promote_successor(self, v, trigger):
+        """Make a prepared successor current regardless of cross-transport ordering."""
+        if v.state != "PREPARED":
+            return
+        u = self.ues[v.uid]
+        predecessor = self.videos.get(v.predecessor_id)
+        if predecessor and predecessor.state not in TERMINAL:
+            self.close_demand(predecessor)
+            if predecessor.state not in ("DRAINING", "HANDOFF_PENDING_END"):
+                predecessor.state = "HANDOFF_PENDING_END"
+        v.state = "AWAITING_DELIVERY"
+        # First-media expiry begins at promotion, not at early receiver setup.
+        v.admitted = time.monotonic()
+        u.active_video = v.vid
+        if u.prepared_video == v.vid:
+            u.prepared_video = None
+        self.record.event(
+            "successor_promoted",
+            ue_id=u.uid,
+            video_id=v.vid,
+            predecessor_video_id=v.predecessor_id,
+            trigger=trigger,
         )
 
     # Media may arrive out of order, so only newer evidence can advance session state.
@@ -943,6 +1159,9 @@ class Engine:
             or v.resolved.has(d.frame_id)
         ):
             return
+        if v.state == "PREPARED":
+            # UDP may beat the predecessor's WebSocket video_end message.
+            self.promote_successor(v, "first_descriptor")
         key = (v.vid, d.frame_id)
         if key in self.frames:
             if self.frames[key].descriptor != d:
@@ -1456,6 +1675,27 @@ class Engine:
                 ):
                     self.close_input(v, "first_media_timeout")
                     v.state = "EXPIRED"
+                    if u.active_video == v.vid:
+                        u.active_video = None
+                if (
+                    v.state == "PREPARED"
+                    and v.expected_start is not None
+                    and now >= v.expected_start + self.cfg.first_media_s
+                ):
+                    self.close_input(v, "prepared_successor_timeout")
+                    v.state = "EXPIRED"
+                    if u.prepared_video == v.vid:
+                        u.prepared_video = None
+                    self.send(
+                        v.uid,
+                        envelope(
+                            "video_status",
+                            self.cfg.run_id,
+                            video_id=v.vid,
+                            status=v.state,
+                            reason="prepared_successor_timeout",
+                        ),
+                    )
                 if (
                     v.input_close_at is not None
                     and now >= v.input_close_at
@@ -1481,7 +1721,10 @@ class Engine:
                             self.fail_frame(v.vid, f.fid, "drain_timeout")
                         if v.state not in TERMINAL:
                             v.state = "COMPLETED"
-                        u.active_video = None
+                        if u.active_video == v.vid:
+                            u.active_video = None
+                        if u.prepared_video == v.vid:
+                            u.prepared_video = None
                         v.finalized = True
                         self.send(
                             v.uid,
@@ -1567,6 +1810,7 @@ class Engine:
         v.drain_until = time.monotonic() + self.cfg.drain_s
         if v.receiver:
             self.task(asyncio.to_thread(v.receiver.close))
+        self.close_demand(v)
         if reason != "video_end":
             for f in list(self.frames.values()):
                 if f.vid == v.vid and f.state != "PROCESSING":
@@ -1680,6 +1924,7 @@ class Engine:
                         connection_id=u.connection_id,
                         connected=u.connected,
                         active_video=u.active_video,
+                        prepared_video=u.prepared_video,
                         reported_ip=u.ip,
                         observed_peer_ip=u.peer_ip,
                         clock_mapping=u.clock_mapping,

@@ -62,16 +62,18 @@ The new container shares `container:oai-gnb` networking, subscribes to localhost
 
 ## UE launch
 
-Android: open `ue/android` in Android Studio with JDK17/Android35, build/install the debug app, grant camera permission, enter the reachable MEC address, select detection/tracking/segmentation, then choose rear camera or a dataset video using the document picker. Keep the application in the foreground. It requests the cellular network and binds control, media and probe sockets to it. No UE IP or RNTI is entered manually. Its JSONL evidence is in the application's external-files directory; pull it with `adb` for reconciliation. Native UI displays result status/schema; image overlays are not implemented.
+Android: open `ue/android` in Android Studio with JDK17/Android35, build/install the debug app, grant camera permission, enter the reachable MEC address, select detection/tracking/segmentation, then choose rear camera or a dataset directory using the document-tree picker. A directory is shuffled with a recorded seed, every video runs once per cycle, and the next prerecorded session is prepared before EOF. Camera mode remains a single continuous session. Keep the application in the foreground. It requests the cellular network and binds control, media and probe sockets to it. No UE IP or RNTI is entered manually. Its JSONL evidence is in the application's external-files directory; pull it with `adb` for reconciliation. Native UI displays result status/schema; image overlays are not implemented.
 
 Linux softUE: install Python/GStreamer/OpenCV dependencies and mount this source at `/multi-ue` in the existing softUE container. Run:
 
 ```bash
 scripts/softue-client.sh --source /datasets/clip.mp4 --application detection --logs /multi-ue/runs/ue-a
+# Continuous prerecorded playlist; omit --shuffle-seed for a random recorded seed.
+scripts/softue-client.sh --source-dir /datasets --shuffle-seed 17 --application detection --logs /multi-ue/runs/ue-a
 # Camera: --source 0
 ```
 
-The wrapper supplies the interface name; the client discovers and refreshes its IPv4 address automatically. Override `SOFTUE_CONTAINER`, `SOFTUE_INTERFACE` or `MEC_SERVER` as needed. This does not build or replace softUE or its B210 setup.
+Mount the host dataset directory read-only at `/datasets` in the softUE container. The wrapper supplies the interface name; the client discovers and refreshes its IPv4 address automatically. Override `SOFTUE_CONTAINER`, `SOFTUE_INTERFACE` or `MEC_SERVER` as needed. This does not build or replace softUE or its B210 setup.
 
 Association is a serialized experimental traffic-signature procedure, not a cryptographic or deterministic radio identity source. Ambiguous matches remain PF and retry. The per-run EdgeRIC mapping is generated automatically. IP/connection change, missing RNTI, lease expiry and source restart trigger invalidation/reprobe. Silent reuse of the same numeric RNTI is detected only within the configured revalidation/lease bounds; measure recovery with non-MEC/background traffic before experiments. Probe traffic affects offered load and must be marked in analysis.
 

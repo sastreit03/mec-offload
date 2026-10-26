@@ -192,5 +192,3 @@ class Associations:
     def valid(self, uid, now):
         b = self.bindings.get(uid)
         return b if b and b.rnti is not None and b.valid_until > now else None
-Area	Pasted requirement	Current implementation
-OAI modification sequence	Inspect and propose OAI/protobuf extensions, but do not modify the

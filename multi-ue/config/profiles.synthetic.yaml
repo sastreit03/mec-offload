@@ -36,30 +36,30 @@ candidates:
     frame_bytes_I: 25000
     frame_bytes_P: 8333
     tracker_s: 0.001
-  detection-yolo26s-500k:
+  detection-yolo26x-500k:
     qualified: true
     score: 0.95
     reference_score: 1.0
-    processing_s: 0.004
-    residence_s: 0.022
+    processing_s: 0.012
+    residence_s: 0.03
     frame_bytes_I: 6250
     frame_bytes_P: 2083
     tracker_s: 0.001
-  detection-yolo26s-1000k:
+  detection-yolo26x-1000k:
     qualified: true
     score: 0.95
     reference_score: 1.0
-    processing_s: 0.004
-    residence_s: 0.022
+    processing_s: 0.012
+    residence_s: 0.03
     frame_bytes_I: 12500
     frame_bytes_P: 4166
     tracker_s: 0.001
-  detection-yolo26s-2000k:
+  detection-yolo26x-2000k:
     qualified: true
     score: 0.95
     reference_score: 1.0
-    processing_s: 0.004
-    residence_s: 0.022
+    processing_s: 0.012
+    residence_s: 0.03
     frame_bytes_I: 25000
     frame_bytes_P: 8333
     tracker_s: 0.001
@@ -144,30 +144,30 @@ candidates:
     frame_bytes_I: 25000
     frame_bytes_P: 8333
     tracker_s: 0.001
-  tracking-yolo26s-500k:
+  tracking-yolo26x-500k:
     qualified: true
     score: 0.95
     reference_score: 1.0
-    processing_s: 0.004
-    residence_s: 0.022
+    processing_s: 0.012
+    residence_s: 0.03
     frame_bytes_I: 6250
     frame_bytes_P: 2083
     tracker_s: 0.001
-  tracking-yolo26s-1000k:
+  tracking-yolo26x-1000k:
     qualified: true
     score: 0.95
     reference_score: 1.0
-    processing_s: 0.004
-    residence_s: 0.022
+    processing_s: 0.012
+    residence_s: 0.03
     frame_bytes_I: 12500
     frame_bytes_P: 4166
     tracker_s: 0.001
-  tracking-yolo26s-2000k:
+  tracking-yolo26x-2000k:
     qualified: true
     score: 0.95
     reference_score: 1.0
-    processing_s: 0.004
-    residence_s: 0.022
+    processing_s: 0.012
+    residence_s: 0.03
     frame_bytes_I: 25000
     frame_bytes_P: 8333
     tracker_s: 0.001

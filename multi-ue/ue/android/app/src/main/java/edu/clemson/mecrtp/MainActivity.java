@@ -6,6 +6,7 @@ import android.content.*;
 import android.content.pm.PackageManager;
 import android.net.*;
 import android.os.*;
+import android.provider.DocumentsContract;
 import android.widget.*;
 import java.io.*;
 import java.net.*;
@@ -29,14 +30,20 @@ public final class MainActivity extends Activity {
   private Spinner application;
   private TextView status;
   private Uri file;
+  private VideoPlaylist playlist;
+  private VideoPlaylist.Selection selection, successorSelection;
   private final java.util.List<StreamSession> retiring = new CopyOnWriteArrayList<>();
   private android.database.sqlite.SQLiteDatabase receiptIds;
   private StreamSession session;
+  private StreamSession preparedSession;
   private AvcSource media;
   private String uid, connection, run;
   private int inputWidth = 1280, inputHeight = 720, inputFps = 30;
   private String cellularIp = "";
   private JSONObject startRequest;
+  private JSONObject successorRequest;
+  private boolean awaitingSuccessor;
+  private double successorPrepareS;
   private volatile boolean enabled;
   private int generation;
   private long clientSeq;
@@ -66,12 +73,13 @@ public final class MainActivity extends Activity {
             new String[] {"detection", "tracking", "segmentation"}));
     root.addView(application);
     Button choose = new Button(this);
-    choose.setText("Choose dataset video");
+    choose.setText("Choose dataset video directory");
     choose.setOnClickListener(
         v -> {
-          Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-          i.setType("video/*");
-          i.addCategory(Intent.CATEGORY_OPENABLE);
+          Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
+          i.addFlags(
+              Intent.FLAG_GRANT_READ_URI_PERMISSION
+                  | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
           startActivityForResult(i, 8);
         });
     root.addView(choose);
@@ -80,6 +88,8 @@ public final class MainActivity extends Activity {
     camera.setOnClickListener(
         v -> {
           file = null;
+          playlist = null;
+          selection = null;
           show("Rear camera selected");
         });
     root.addView(camera);
@@ -179,13 +189,9 @@ public final class MainActivity extends Activity {
             }
           });
       if (type.equals("media_end") && session != null)
-        send(
-            new JSONObject()
-                .put("type", "video_end")
-                .put("ue_id", uid)
-                .put("video_id", session.video())
-                .put("client_seq", seq())
-                .put("final_frame_id", session.lastFrame()));
+        ui.post(() -> mediaEnded(value));
+      if (type.equals("successor_needed") && playlist != null)
+        ui.post(() -> prepareSuccessor(value));
       if (type.equals("plan_unapplied")) send(new JSONObject(value.toString()).put("type", type));
       if (type.equals("sender_error")) show(value.toString());
     } catch (Exception e) {
@@ -204,6 +210,7 @@ public final class MainActivity extends Activity {
                   network = n;
                   try {
                     if (session != null) session.network(n);
+                    if (preparedSession != null) preparedSession.network(n);
                   } catch (Exception e) {
                     event("media_rebind_error", object("reason", e.toString()));
                   }
@@ -227,6 +234,7 @@ public final class MainActivity extends Activity {
                     if (changed) {
                       try {
                         if (session != null) session.network(n);
+                        if (preparedSession != null) preparedSession.network(n);
                       } catch (Exception e) {
                         event("media_rebind_error", object("reason", e.toString()));
                       }
@@ -368,6 +376,7 @@ public final class MainActivity extends Activity {
           inputHeight = inputProfile.getInt("height");
           inputFps = inputProfile.getInt("fps");
         }
+        successorPrepareS = m.optDouble("successor_prepare_s", 5.0);
         prefs
             .edit()
             .putString("token:" + prefs.getString("host", ""), m.getString("resume_token"))
@@ -390,6 +399,7 @@ public final class MainActivity extends Activity {
         probe(m);
         break;
       case "association_status":
+        if (m.getBoolean("valid") && successorRequest != null) send(successorRequest);
         if (enabled && m.getBoolean("valid") && session == null) {
           if (startRequest == null)
             startRequest =
@@ -411,7 +421,31 @@ public final class MainActivity extends Activity {
         }
         break;
       case "video_response":
-        if (m.getBoolean("accepted") && session == null) {
+        if (successorRequest != null
+            && m.getLong("client_seq") == successorRequest.getLong("client_seq")) {
+          if (m.getBoolean("accepted")) {
+            event(
+                "admission_decision",
+                new JSONObject()
+                    .put("video_id", m.getString("video_id"))
+                    .put("accepted", true)
+                    .put("reason", JSONObject.NULL));
+            preparedSession = new StreamSession(m, clock, this::event, getExternalFilesDir(null));
+            preparedSession.network(network);
+            if (awaitingSuccessor) startPreparedSuccessor();
+          } else {
+            event(
+                "admission_decision",
+                new JSONObject()
+                    .put("video_id", m.optString("video_id"))
+                    .put("accepted", false)
+                    .put("reason", m.optString("reason")));
+            event(
+                "successor_not_prepared",
+                new JSONObject().put("reason", m.optString("reason")));
+            successorRequest = null;
+          }
+        } else if (m.getBoolean("accepted") && session == null) {
           event(
               "admission_decision",
               new JSONObject()
@@ -420,7 +454,7 @@ public final class MainActivity extends Activity {
                   .put("reason", JSONObject.NULL));
           session = new StreamSession(m, clock, this::event, getExternalFilesDir(null));
           session.network(network);
-          media = new AvcSource(this, session, this::event);
+          media = new AvcSource(this, session, this::event, playlist == null ? 0 : successorPrepareS);
           media.start(file);
           show("Streaming " + session.video());
         } else if (!m.getBoolean("accepted")) {
@@ -437,6 +471,9 @@ public final class MainActivity extends Activity {
       // Route plans only to their video; retired sessions remain available for late receipts.
       case "gop_config":
         if (session != null && session.video().equals(m.getString("video_id"))) session.command(m);
+        else if (preparedSession != null
+            && preparedSession.video().equals(m.getString("video_id")))
+          preparedSession.command(m);
         break;
       case "video_status":
         if (session != null && session.video().equals(m.getString("video_id"))) {
@@ -449,7 +486,18 @@ public final class MainActivity extends Activity {
             retire(session);
             session = null;
             startRequest = null;
-            if (!m.getString("status").equals("EXPIRED")) {
+            if (playlist != null && preparedSession != null) {
+              startPreparedSuccessor();
+            } else if (playlist != null) {
+              // A failed early preparation retries through ordinary admission.
+              if (successorSelection == null) {
+                successorSelection = playlist.next();
+                recordSelection(successorSelection);
+              }
+              selection = successorSelection;
+              file = selection.uri;
+              successorSelection = null;
+            } else if (playlist == null && !m.getString("status").equals("EXPIRED")) {
               enabled = false;
               ui.postDelayed(
                   () -> {
@@ -458,6 +506,14 @@ public final class MainActivity extends Activity {
                   5200);
             }
           }
+        } else if (preparedSession != null
+            && preparedSession.video().equals(m.getString("video_id"))
+            && java.util.Arrays.asList("FAILED", "EXPIRED", "CANCELLED")
+                .contains(m.getString("status"))) {
+          preparedSession.close();
+          preparedSession = null;
+          successorRequest = null;
+          event("successor_not_prepared", object("reason", m.getString("status")));
         }
         break;
       // Stable result IDs deduplicate reconnect replay before recording a receipt.
@@ -498,6 +554,114 @@ public final class MainActivity extends Activity {
     old.close();
     retiring.add(old);
     ui.postDelayed(() -> retiring.remove(old), 5200);
+  }
+
+  // Request the next prerecorded session while the current file still has lead time.
+  private void prepareSuccessor(JSONObject value) {
+    try {
+      if (session == null
+          || successorRequest != null
+          || preparedSession != null
+          || !session.video().equals(value.getString("video_id"))) return;
+      successorSelection = playlist.next();
+      recordSelection(successorSelection);
+      successorRequest =
+          new JSONObject()
+              .put("type", "video_start")
+              .put("ue_id", uid)
+              .put("client_seq", seq())
+              .put("predecessor_video_id", session.video())
+              .put("expected_start_unix_ns", value.getLong("expected_start_unix_ns"))
+              .put("application", application.getSelectedItem().toString())
+              .put("slo_ms", 150)
+              .put("can_drop", false)
+              .put("can_drop_frames", false)
+              .put(
+                  "input",
+                  new JSONObject()
+                      .put("width", inputWidth)
+                      .put("height", inputHeight)
+                      .put("fps", inputFps));
+      send(successorRequest);
+    } catch (Exception e) {
+      event("successor_prepare_error", object("reason", e.toString()));
+    }
+  }
+
+  // Queue video_end, then switch locally without waiting for its acknowledgement.
+  private void mediaEnded(JSONObject value) {
+    try {
+      if (session == null || !session.video().equals(value.getString("video_id"))) return;
+      send(
+          new JSONObject()
+              .put("type", "video_end")
+              .put("ue_id", uid)
+              .put("video_id", session.video())
+              .put("client_seq", seq())
+              .put("final_frame_id", value.getLong("final_frame_id")));
+      awaitingSuccessor = playlist != null;
+      if (preparedSession != null) startPreparedSuccessor();
+      else if (playlist != null)
+        event("successor_response_pending", object("reason", "response_pending_at_eof"));
+    } catch (Exception e) {
+      event("client_error", object("reason", e.toString()));
+    }
+  }
+
+  private void startPreparedSuccessor() throws Exception {
+    if (preparedSession == null || successorSelection == null) return;
+    if (session != null) retire(session);
+    session = preparedSession;
+    selection = successorSelection;
+    file = selection.uri;
+    preparedSession = null;
+    successorSelection = null;
+    successorRequest = null;
+    awaitingSuccessor = false;
+    media = new AvcSource(this, session, this::event, successorPrepareS);
+    media.start(file);
+    event("successor_started", object("video_id", session.video()));
+    show("Streaming " + selection.name);
+  }
+
+  private void recordSelection(VideoPlaylist.Selection selected) {
+    try {
+      event(
+          "video_selected",
+          new JSONObject()
+              .put("source", selected.name)
+              .put("playlist_cycle", selected.cycle)
+              .put("playlist_position", selected.position)
+              .put("shuffle_seed", playlist.seed));
+    } catch (Exception e) {
+      throw new IllegalArgumentException(e);
+    }
+  }
+
+  // Enumerate videos through Android's persisted document-tree permission.
+  private void collectVideos(Uri tree, String documentId, java.util.List<VideoPlaylist.Selection> out)
+      throws Exception {
+    Uri children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, documentId);
+    String[] projection = {
+      DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+      DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+      DocumentsContract.Document.COLUMN_MIME_TYPE
+    };
+    try (android.database.Cursor cursor =
+        getContentResolver().query(children, projection, null, null, null)) {
+      if (cursor == null) return;
+      while (cursor.moveToNext()) {
+        String id = cursor.getString(0), name = cursor.getString(1), mime = cursor.getString(2);
+        if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) {
+          collectVideos(tree, id, out);
+        } else if ((mime != null && mime.startsWith("video/"))
+            || name.toLowerCase(java.util.Locale.ROOT).matches(".*\\.(mp4|mov|mkv|m4v)$")) {
+          out.add(
+              new VideoPlaylist.Selection(
+                  DocumentsContract.buildDocumentUriUsingTree(tree, id), name, 0, 0));
+        }
+      }
+    }
   }
 
   private void probe(JSONObject m) {
@@ -548,6 +712,11 @@ public final class MainActivity extends Activity {
 
   private void end() {
     try {
+      // Explicit user stop disables automatic prerecorded continuation.
+      playlist = null;
+      awaitingSuccessor = false;
+      if (preparedSession != null) preparedSession.close();
+      preparedSession = null;
       if (media != null) media.close();
       if (session != null && session.lastFrame() >= 0)
         send(
@@ -570,10 +739,25 @@ public final class MainActivity extends Activity {
   protected void onActivityResult(int request, int result, Intent data) {
     super.onActivityResult(request, result, data);
     if (request == 8 && result == RESULT_OK) {
-      file = data.getData();
-      getContentResolver()
-          .takePersistableUriPermission(file, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-      show("Dataset selected: " + file);
+      try {
+        Uri tree = data.getData();
+        getContentResolver()
+            .takePersistableUriPermission(tree, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        java.util.List<VideoPlaylist.Selection> files = new java.util.ArrayList<>();
+        collectVideos(tree, DocumentsContract.getTreeDocumentId(tree), files);
+        playlist = new VideoPlaylist(files);
+        selection = playlist.next();
+        file = selection.uri;
+        event(
+            "playlist_initialized",
+            new JSONObject().put("seed", playlist.seed).put("videos", playlist.size()));
+        recordSelection(selection);
+        show("Dataset directory: " + playlist.size() + " videos");
+      } catch (Exception e) {
+        playlist = null;
+        file = null;
+        show("Dataset directory failed: " + e);
+      }
     }
   }
 
@@ -582,6 +766,7 @@ public final class MainActivity extends Activity {
     enabled = false;
     if (media != null) media.close();
     if (session != null) session.close();
+    if (preparedSession != null) preparedSession.close();
     if (ws != null) ws.cancel();
     if (callback != null) connectivity.unregisterNetworkCallback(callback);
     timer.shutdownNow();
