@@ -14,6 +14,7 @@ case "${1:-}" in
    mps_pipe="${CUDA_MPS_PIPE_DIRECTORY:-/tmp/nvidia-mps}"
    mps_log="${CUDA_MPS_LOG_DIRECTORY:-/tmp/nvidia-log}"
    mps_pct="${MPS_ACTIVE_THREAD_PCT:-30.0}"
+   host_uid="$(id -u)"
 
    # The MEC container runs as UID 0, so its MPS server must also run as UID 0.
    sudo install -d -m 1777 "$mps_pipe" "$mps_log"
@@ -33,8 +34,13 @@ case "${1:-}" in
        nvidia-cuda-mps-control -d
    fi
 
-   # Starting an existing UID-0 server is harmless and keeps repeated starts simple.
-   printf 'set_default_active_thread_percentage %s\nstart_server -uid 0\n' "$mps_pct" | \
+   # MEC runs as root; SRK runs the gNB as the invoking host user.
+   commands="set_default_active_thread_percentage $mps_pct"
+   if [[ "$host_uid" != 0 ]]; then
+     commands+=$'\n'"start_server -uid $host_uid"
+   fi
+   commands+=$'\n'"start_server -uid 0"
+   printf '%s\n' "$commands" | \
      sudo env \
        CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
        CUDA_MPS_LOG_DIRECTORY="$mps_log" \
@@ -45,7 +51,7 @@ case "${1:-}" in
      CUDA_MPS_LOG_DIRECTORY="$mps_log" \
      nvidia-cuda-mps-control)"
    if [[ -z "${server_list//[[:space:]]/}" ]]; then
-     echo "MPS control daemon started, but no UID-0 server is available" >&2
+     echo "MPS control daemon started, but no CUDA server is available" >&2
      exit 1
    fi
    echo "MPS server ready: $server_list"
