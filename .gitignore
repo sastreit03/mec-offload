@@ -17,7 +17,7 @@
 /datasets/
 
 # Runtime output can be large and may contain per-frame data
-#/multi-ue/runs/
+/multi-ue/runs/
 
 # Python-generated files
 /multi-ue/**/__pycache__/
