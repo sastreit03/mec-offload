@@ -1,0 +1,27 @@
+# Development uses synthetic profiles and mock workers; it is not live-video validation.
+run_id: calibration-20261027-162358
+mode: development
+catalog: tasks.yaml
+profiles: profiles.synthetic.yaml
+backend: torchscript
+advertised_ip: 192.168.72.136
+edgeric_target: 192.168.71.140:50052
+runs_dir: runs
+weights_dir: weights
+# Ablation controls; list lengths select the enabled applications and stream count.
+fps: 30
+gop_frames: 30
+applications: [detection, tracking, segmentation]
+priority_streams: [-5, -3, 0]
+keyframe_interleaving:
+  enabled: true
+warmup_count: 5
+radio_budget: 100000.0
+compute_budget_s_per_s: 2.0
+global_queue_initial_s: 0.001
+profile_compatibility: synthetic-dev-v1
+ran_telemetry:
+  aggregation_window_ms: 100
+  report_interval_ms: 100
+  stale_ms: 300
+  prolonged_outage_s: 5

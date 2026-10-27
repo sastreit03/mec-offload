@@ -1,4 +1,4 @@
-run_id: CHANGE-ME
+run_id: bringup-20261027-01
 mode: experimental
 catalog: tasks.yaml
 profiles: profiles.measured.yaml
@@ -15,7 +15,7 @@ priority_streams: [-5, -3, 0]
 keyframe_interleaving:
   enabled: true
 # Null values intentionally block startup until target-testbed profiling supplies them.
-warmup_count: null
+warmup_count: 5
 radio_budget: null
 compute_budget_s_per_s: null
 global_queue_initial_s: null

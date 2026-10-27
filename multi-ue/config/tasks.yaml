@@ -39,45 +39,6 @@ configurations:
   class_map_id: coco80
   backend: torchscript
   output_schema: detection.v1
-- id: detection-yolo26x-500k
-  application: detection
-  model: yolo26x
-  artifact: detection/yolo26x.torchscript
-  input_hw:
-  - 640
-  - 640
-  precision: fp16
-  bitrate_bps: 500000
-  confidence: 0.1
-  class_map_id: coco80
-  backend: torchscript
-  output_schema: detection.v1
-- id: detection-yolo26x-1000k
-  application: detection
-  model: yolo26x
-  artifact: detection/yolo26x.torchscript
-  input_hw:
-  - 640
-  - 640
-  precision: fp16
-  bitrate_bps: 1000000
-  confidence: 0.1
-  class_map_id: coco80
-  backend: torchscript
-  output_schema: detection.v1
-- id: detection-yolo26x-2000k
-  application: detection
-  model: yolo26x
-  artifact: detection/yolo26x.torchscript
-  input_hw:
-  - 640
-  - 640
-  precision: fp16
-  bitrate_bps: 2000000
-  confidence: 0.1
-  class_map_id: coco80
-  backend: torchscript
-  output_schema: detection.v1
 - id: detection-yolo26m-500k
   application: detection
   model: yolo26m
@@ -156,6 +117,45 @@ configurations:
   class_map_id: coco80
   backend: torchscript
   output_schema: detection.v1
+- id: detection-yolo26x-500k
+  application: detection
+  model: yolo26x
+  artifact: detection/yolo26x.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 500000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: detection.v1
+- id: detection-yolo26x-1000k
+  application: detection
+  model: yolo26x
+  artifact: detection/yolo26x.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 1000000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: detection.v1
+- id: detection-yolo26x-2000k
+  application: detection
+  model: yolo26x
+  artifact: detection/yolo26x.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 2000000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: detection.v1
 - id: tracking-yolo26n-500k
   application: tracking
   model: yolo26n
@@ -186,45 +186,6 @@ configurations:
   application: tracking
   model: yolo26n
   artifact: tracking/yolo26n.torchscript
-  input_hw:
-  - 640
-  - 640
-  precision: fp16
-  bitrate_bps: 2000000
-  confidence: 0.1
-  class_map_id: coco80
-  backend: torchscript
-  output_schema: tracking.v1
-- id: tracking-yolo26x-500k
-  application: tracking
-  model: yolo26x
-  artifact: tracking/yolo26x.torchscript
-  input_hw:
-  - 640
-  - 640
-  precision: fp16
-  bitrate_bps: 500000
-  confidence: 0.1
-  class_map_id: coco80
-  backend: torchscript
-  output_schema: tracking.v1
-- id: tracking-yolo26x-1000k
-  application: tracking
-  model: yolo26x
-  artifact: tracking/yolo26x.torchscript
-  input_hw:
-  - 640
-  - 640
-  precision: fp16
-  bitrate_bps: 1000000
-  confidence: 0.1
-  class_map_id: coco80
-  backend: torchscript
-  output_schema: tracking.v1
-- id: tracking-yolo26x-2000k
-  application: tracking
-  model: yolo26x
-  artifact: tracking/yolo26x.torchscript
   input_hw:
   - 640
   - 640
@@ -303,6 +264,45 @@ configurations:
   application: tracking
   model: yolo26l
   artifact: tracking/yolo26l.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 2000000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: tracking.v1
+- id: tracking-yolo26x-500k
+  application: tracking
+  model: yolo26x
+  artifact: tracking/yolo26x.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 500000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: tracking.v1
+- id: tracking-yolo26x-1000k
+  application: tracking
+  model: yolo26x
+  artifact: tracking/yolo26x.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 1000000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: tracking.v1
+- id: tracking-yolo26x-2000k
+  application: tracking
+  model: yolo26x
+  artifact: tracking/yolo26x.torchscript
   input_hw:
   - 640
   - 640

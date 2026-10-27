@@ -80,6 +80,8 @@ def main():
         "radio_bps_per_unit",
     ]:
         positive(network[key])
+    # Present measured candidates in the same model/bitrate order as the catalog.
+    qualified = {cid: qualified[cid] for cid in cs if cid in qualified}
     Path(a.output).write_text(
         yaml.safe_dump(
             dict(
