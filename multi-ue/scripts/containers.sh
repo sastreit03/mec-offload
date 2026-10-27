@@ -4,7 +4,7 @@ cd "$(dirname "$0")/.."
 # These commands manage the MEC additions; the core and RAN stacks have separate launchers.
 case "${1:-}" in
  build-mec) docker build -f mec/docker/Dockerfile.mec -t multi-ue-mec:baseline . ;;
- build-edge) docker build -f mec/docker/Dockerfile.edgeric -t multi-ue-edgeric:baseline .. ;;
+ build-edgeric) docker build -f mec/docker/Dockerfile.edgeric -t multi-ue-edgeric:baseline .. ;;
  start-mec) mkdir -p runs weights; docker compose -f mec/docker/compose.mec.yml up -d ;;
  stop-mec) docker compose -f mec/docker/compose.mec.yml down ;;
  start-edgeric) mkdir -p runs "${RAN_TRACE_DIR:-../edgeric-validation}"; docker compose -f mec/docker/compose.edgeric.yml up -d ;;

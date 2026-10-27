@@ -80,7 +80,7 @@ scripts/softue-client.sh --source-dir /datasets --shuffle-seed 17 --application 
 # Camera: --source 0
 ```
 
-Mount the host dataset directory read-only at `/datasets` in the softUE container. The wrapper supplies the interface name; the client discovers and refreshes its IPv4 address automatically. Override `SOFTUE_CONTAINER`, `SOFTUE_INTERFACE` or `MEC_SERVER` as needed. This does not build or replace softUE or its B210 setup.
+Mount the host dataset directory read-only at `/datasets` in the softUE container. The wrapper supplies the interface name, installs a host route for the MEC through that tunnel, and the client discovers and refreshes its IPv4 address automatically. Override `SOFTUE_CONTAINER`, `SOFTUE_INTERFACE` or `MEC_SERVER` as needed. This does not build or replace softUE or its B210 setup.
 
 Association is a serialized experimental traffic-signature procedure, not a cryptographic or deterministic radio identity source. Ambiguous matches remain PF and retry. The per-run EdgeRIC mapping is generated automatically. IP/connection change, missing RNTI, lease expiry and source restart trigger invalidation/reprobe. Silent reuse of the same numeric RNTI is detected only within the configured revalidation/lease bounds; measure recovery with non-MEC/background traffic before experiments. Probe traffic affects offered load and must be marked in analysis.
 
