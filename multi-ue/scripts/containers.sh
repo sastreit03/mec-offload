@@ -17,11 +17,12 @@ case "${1:-}" in
 
    # The MEC container runs as UID 0, so this machine needs one UID 0 server.
    # The gNB runs on a different machine with its own independent MPS daemon.
-   sudo install -d -m 1777 "$mps_pipe" "$mps_log"
+   sudo -v
+   sudo -n install -d -m 1777 "$mps_pipe" "$mps_log"
 
    # Bound control requests so a stale daemon cannot hang this terminal.
    mps_control() {
-     timeout 5s sudo env \
+     timeout 5s sudo -n env \
        CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
        CUDA_MPS_LOG_DIRECTORY="$mps_log" \
        nvidia-cuda-mps-control
@@ -35,7 +36,7 @@ case "${1:-}" in
    fi
 
    if [[ -z "$root_daemon_args" ]]; then
-     timeout 5s sudo env \
+     timeout 5s sudo -n env \
        CUDA_VISIBLE_DEVICES=0 \
        CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
        CUDA_MPS_LOG_DIRECTORY="$mps_log" \
@@ -72,7 +73,8 @@ case "${1:-}" in
 
    # Match the root ownership and directories used by start-mps, with a bound
    # so an unhealthy control daemon cannot hang the operator terminal.
-   printf 'quit\n' | timeout 5s sudo env \
+   sudo -v
+   printf 'quit\n' | timeout 5s sudo -n env \
      CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
      CUDA_MPS_LOG_DIRECTORY="$mps_log" \
      nvidia-cuda-mps-control
