@@ -19,3 +19,11 @@ services:
     #entrypoint: /bin/bash
     #cap_add:
     # - SYS_ADMIN
+  oai-nr-ue:
+    volumes:
+      # Aetheredge: keep application code read-only while datasets stay local.
+      - ../../../multi-ue/contracts:/multi-ue/contracts:ro
+      - ../../../multi-ue/ue/linux:/multi-ue/ue/linux:ro
+      - ../../../multi-ue/datasets:/datasets:ro
+      # UE evidence must remain available on the Orin after the container exits.
+      - ../../../multi-ue/runs:/multi-ue/runs
