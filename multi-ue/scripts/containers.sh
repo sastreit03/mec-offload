@@ -14,42 +14,42 @@ case "${1:-}" in
    mps_pipe="${CUDA_MPS_PIPE_DIRECTORY:-/tmp/nvidia-mps}"
    mps_log="${CUDA_MPS_LOG_DIRECTORY:-/tmp/nvidia-log}"
    mps_pct="${MPS_ACTIVE_THREAD_PCT:-30.0}"
-   host_uid="$(id -u)"
 
-   # The MEC container runs as UID 0, so its MPS server must also run as UID 0.
+   # Aetheredge uses one root-owned multi-user server for the root MEC container
+   # and the host-UID gNB container. Two per-UID servers cannot run together.
    sudo install -d -m 1777 "$mps_pipe" "$mps_log"
 
-   # Do not terminate an MPS daemon that may still have active CUDA clients.
-   if pgrep -f 'nvidia-cuda-mps-control -d' >/dev/null && \
-      ! pgrep -u 0 -f 'nvidia-cuda-mps-control -d' >/dev/null; then
-     echo "MPS is running as a non-root user; stop it before starting the MEC MPS service" >&2
-     exit 1
-   fi
-
-   if ! pgrep -u 0 -f 'nvidia-cuda-mps-control -d' >/dev/null; then
-     sudo env \
-       CUDA_VISIBLE_DEVICES=0 \
-       CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
-       CUDA_MPS_LOG_DIRECTORY="$mps_log" \
-       nvidia-cuda-mps-control -d
-   fi
-
-   # MEC runs as root; SRK runs the gNB as the invoking host user.
-   commands="set_default_active_thread_percentage $mps_pct"
-   if [[ "$host_uid" != 0 ]]; then
-     commands+=$'\n'"start_server -uid $host_uid"
-   fi
-   commands+=$'\n'"start_server -uid 0"
-   printf '%s\n' "$commands" | \
-     sudo env \
+   # Bound control requests so a stale daemon cannot hang this terminal.
+   mps_control() {
+     timeout 5s sudo env \
        CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
        CUDA_MPS_LOG_DIRECTORY="$mps_log" \
        nvidia-cuda-mps-control
+   }
 
-   server_list="$(printf 'get_server_list\n' | sudo env \
-     CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
-     CUDA_MPS_LOG_DIRECTORY="$mps_log" \
-     nvidia-cuda-mps-control)"
+   daemon_args="$(pgrep -u 0 -af '[n]vidia-cuda-mps-control' || true)"
+   if [[ -n "$daemon_args" && "$daemon_args" != *-multiuser-server* ]]; then
+     echo "MPS is already running without multi-user mode; stop its CUDA clients and restart MPS" >&2
+     exit 1
+   fi
+
+   if [[ -z "$daemon_args" ]]; then
+     timeout 5s sudo env \
+       CUDA_VISIBLE_DEVICES=0 \
+       CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
+       CUDA_MPS_LOG_DIRECTORY="$mps_log" \
+       nvidia-cuda-mps-control -d -multiuser-server
+   fi
+
+   printf 'set_default_active_thread_percentage %s\n' "$mps_pct" | mps_control
+
+   server_list="$(printf 'get_server_list\n' | mps_control)"
+   if [[ -z "${server_list//[[:space:]]/}" ]]; then
+     # Prestart the root server used by the MEC; multi-user mode also accepts
+     # CUDA clients launched by the host-UID gNB container.
+     printf 'start_server -uid 0\n' | mps_control
+     server_list="$(printf 'get_server_list\n' | mps_control)"
+   fi
    if [[ -z "${server_list//[[:space:]]/}" ]]; then
      echo "MPS control daemon started, but no CUDA server is available" >&2
      exit 1
