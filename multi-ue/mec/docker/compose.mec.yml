@@ -3,6 +3,9 @@ services:
   mec:
     image: multi-ue-mec:baseline
     container_name: multi-ue-mec
+    # Aetheredge: keep measured experimental startup as the default while
+    # allowing an explicit calibration profile for initial end-to-end checks.
+    command: ["python", "-m", "mec_server.app", "--config", "config/${MEC_CONFIG:-mec.experimental.yaml}"]
     gpus: all
     restart: "no"
     ipc: host

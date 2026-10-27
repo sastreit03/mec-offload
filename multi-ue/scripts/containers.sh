@@ -7,10 +7,10 @@ case "${1:-}" in
  build-edge) docker build -f mec/docker/Dockerfile.edgeric -t multi-ue-edgeric:baseline .. ;;
  start-mec) mkdir -p runs weights; docker compose -f mec/docker/compose.mec.yml up -d ;;
  stop-mec) docker compose -f mec/docker/compose.mec.yml down ;;
- start-edge) mkdir -p runs "${RAN_TRACE_DIR:-../edgeric-validation}"; docker compose -f mec/docker/compose.edgeric.yml up -d ;;
- stop-edge) docker compose -f mec/docker/compose.edgeric.yml down ;;
+ start-edgeric) mkdir -p runs "${RAN_TRACE_DIR:-../edgeric-validation}"; docker compose -f mec/docker/compose.edgeric.yml up -d ;;
+ stop-edgeric) docker compose -f mec/docker/compose.edgeric.yml down ;;
  gpu) docker run --rm --gpus all multi-ue-mec:baseline python -c 'import torch; print(torch.__version__, torch.cuda.is_available()); print(torch.cuda.get_device_name())' ;;
- mps-start)
+ start-mps)
    mps_pipe="${CUDA_MPS_PIPE_DIRECTORY:-/tmp/nvidia-mps}"
    mps_log="${CUDA_MPS_LOG_DIRECTORY:-/tmp/nvidia-log}"
    mps_pct="${MPS_ACTIVE_THREAD_PCT:-30.0}"
@@ -56,5 +56,31 @@ case "${1:-}" in
    fi
    echo "MPS server ready: $server_list"
    ;;
- *) printf 'Usage: %s {build-mec|build-edge|start-mec|stop-mec|start-edge|stop-edge|gpu|mps-start}\n' "$0"; exit 2 ;;
+ stop-mps)
+   mps_pipe="${CUDA_MPS_PIPE_DIRECTORY:-/tmp/nvidia-mps}"
+   mps_log="${CUDA_MPS_LOG_DIRECTORY:-/tmp/nvidia-log}"
+
+   # Aetheredge: do not terminate MPS while the MEC still has CUDA clients.
+   if [[ "$(docker inspect -f '{{.State.Running}}' multi-ue-mec 2>/dev/null || true)" == "true" ]]; then
+     echo "MEC is still running; run stop-mec before stop-mps" >&2
+     exit 1
+   fi
+   if ! pgrep -u 0 -af '[n]vidia-cuda-mps-control' >/dev/null; then
+     echo "MPS is already stopped"
+     exit 0
+   fi
+
+   # Match the root ownership and directories used by start-mps, with a bound
+   # so an unhealthy control daemon cannot hang the operator terminal.
+   printf 'quit\n' | timeout 5s sudo env \
+     CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
+     CUDA_MPS_LOG_DIRECTORY="$mps_log" \
+     nvidia-cuda-mps-control
+   if pgrep -u 0 -af '[n]vidia-cuda-mps-control' >/dev/null; then
+     echo "MPS did not stop within five seconds" >&2
+     exit 1
+   fi
+   echo "MPS stopped"
+   ;;
+ *) printf 'Usage: %s {build-mec|build-edge|start-mec|stop-mec|start-edgeric|stop-edgeric|gpu|start-mps|stop-mps}\n' "$0"; exit 2 ;;
 esac

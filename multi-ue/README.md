@@ -40,11 +40,18 @@ The development MEC uses synthetic profiles and mock receivers: it intentionally
 
 ## Prepare the MEC Spark
 
-1. Retain the existing core containers/network setup. Stop the previous demo MEC container occupying its address/port. Use `scripts/containers.sh mps-start` on the MEC host before workers. This uses that host's MPS service, separately from the RAN Spark.
+1. Retain the existing core containers/network setup. Stop the previous demo MEC container occupying its address/port. Use `scripts/containers.sh start-mps` on the MEC host before workers. This uses that host's MPS service, separately from the RAN Spark.
 2. Supply local task-appropriate checkpoints under a checkpoint directory. Run `tools/export_models.py --checkpoints PATH --output weights` in the target NVIDIA environment. Detection and tracking load separate copies. SegFormer checkpoints must have the intended class head/map; quality qualification is independent of successful export.
 3. Profile with the core stack running. Populate the measured profile file and required settings in `config/mec.experimental.yaml`. `tools/build_profiles.py --help` describes the joined measurement CSV. Do not copy synthetic values into an experimental file.
 4. Set a fresh shared `run_id` for each measured run; retain prior run directories. Configure reachable addresses, model/profile hashes and calibrated budgets. Initial example addresses follow the supplied source, not a discovery guarantee.
 5. Build/start with `scripts/containers.sh build-mec` and `scripts/containers.sh start-mec`. The independent compose file attaches to `oai-traffic-net`/`oai-public-net` and installs the existing UE-subnet route via UPF. Verify `/readyz` and `scripts/containers.sh gpu`; inspect worker/model/stream startup records.
+
+For initial live-path validation before measured budgets are available, start the
+same real-worker image with the explicit calibration configuration:
+
+```bash
+MEC_CONFIG=mec.calibration.yaml scripts/containers.sh start-mec
+```
 
 ## Prepare the RAN Spark
 
@@ -55,7 +62,7 @@ Stop any old muApp or container publishing weights on localhost:5556 before star
 ```bash
 cd multi-ue
 scripts/containers.sh build-edge
-scripts/containers.sh start-edge
+scripts/containers.sh start-edgeric
 ```
 
 The new container shares `container:oai-gnb` networking, subscribes to localhost:5555, and serves gRPC on the gNB IPvlan address at port 50052. No E2 service model is used. With `mode: shadow`, it computes/logs proposed weights and **sends no weight messages**. Changing to `heuristic` is a later startup configuration after the telemetry/capacity and shadow gates pass. `ran_index` is echoed as in the existing implementation; strict k/k+1 deadline enforcement remains deferred by user instruction.
@@ -81,4 +88,4 @@ Association is a serialized experimental traffic-signature procedure, not a cryp
 
 End the video, allow drain plus the five-second missing-result reconciliation period, and preserve all UE/MEC/EdgeRIC logs and gNB traces. `tools/evaluate_ue.py UE_EVENTS.jsonl` uses **every transmitted frame** as the denominator. A later result cannot turn a missed 150-ms deadline into success. Local result serialization/send is not proof of UE delivery.
 
-Stop the new containers with `scripts/containers.sh stop-mec` and `stop-edge`; the scripts do not stop the existing core/gNB. Keep the MPS service alive while any application uses it. SIGTERM/Ctrl+C attempts a final snapshot; hard kills cannot guarantee log flushing.
+Stop the new containers with `scripts/containers.sh stop-mec` and `stop-edgeric`; the scripts do not stop the existing core/gNB. Then use `scripts/containers.sh stop-mps` after the MEC has exited. SIGTERM/Ctrl+C attempts a final snapshot; hard kills cannot guarantee log flushing.
