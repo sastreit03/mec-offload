@@ -15,8 +15,8 @@ case "${1:-}" in
    mps_log="${CUDA_MPS_LOG_DIRECTORY:-/tmp/nvidia-log}"
    mps_pct="${MPS_ACTIVE_THREAD_PCT:-30.0}"
 
-   # Aetheredge uses one root-owned multi-user server for the root MEC container
-   # and the host-UID gNB container. Two per-UID servers cannot run together.
+   # The MEC container runs as UID 0, so this machine needs one UID 0 server.
+   # The gNB runs on a different machine with its own independent MPS daemon.
    sudo install -d -m 1777 "$mps_pipe" "$mps_log"
 
    # Bound control requests so a stale daemon cannot hang this terminal.
@@ -27,26 +27,26 @@ case "${1:-}" in
        nvidia-cuda-mps-control
    }
 
-   daemon_args="$(pgrep -u 0 -af '[n]vidia-cuda-mps-control' || true)"
-   if [[ -n "$daemon_args" && "$daemon_args" != *-multiuser-server* ]]; then
-     echo "MPS is already running without multi-user mode; stop its CUDA clients and restart MPS" >&2
+   daemon_args="$(pgrep -af '[n]vidia-cuda-mps-control' || true)"
+   root_daemon_args="$(pgrep -u 0 -af '[n]vidia-cuda-mps-control' || true)"
+   if [[ -n "$daemon_args" && -z "$root_daemon_args" ]]; then
+     echo "MPS is already running as a non-root user; stop it before starting the MEC MPS service" >&2
      exit 1
    fi
 
-   if [[ -z "$daemon_args" ]]; then
+   if [[ -z "$root_daemon_args" ]]; then
      timeout 5s sudo env \
        CUDA_VISIBLE_DEVICES=0 \
        CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
        CUDA_MPS_LOG_DIRECTORY="$mps_log" \
-       nvidia-cuda-mps-control -d -multiuser-server
+       nvidia-cuda-mps-control -d
    fi
 
    printf 'set_default_active_thread_percentage %s\n' "$mps_pct" | mps_control
 
    server_list="$(printf 'get_server_list\n' | mps_control)"
    if [[ -z "${server_list//[[:space:]]/}" ]]; then
-     # Prestart the root server used by the MEC; multi-user mode also accepts
-     # CUDA clients launched by the host-UID gNB container.
+     # Prestart the root server used by the root MEC container.
      printf 'start_server -uid 0\n' | mps_control
      server_list="$(printf 'get_server_list\n' | mps_control)"
    fi
