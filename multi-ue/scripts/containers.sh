@@ -35,7 +35,25 @@ case "${1:-}" in
      exit 1
    fi
 
-   if [[ -z "$root_daemon_args" ]]; then
+   # Aetheredge: a process can survive after its control socket disappears.
+   # With no active MEC, remove that stale state before launching a new daemon.
+   control_ready=false
+   if [[ -e "$mps_pipe/control" ]] && \
+      printf 'get_server_list\n' | mps_control >/dev/null 2>&1; then
+     control_ready=true
+   fi
+   if [[ "$control_ready" != true ]]; then
+     if [[ "$(docker inspect -f '{{.State.Running}}' multi-ue-mec 2>/dev/null || true)" == "true" ]]; then
+       echo "MPS control is unavailable while the MEC is running; stop the MEC before repairing MPS" >&2
+       exit 1
+     fi
+     sudo -n pkill -TERM -f '[n]vidia-cuda-mps-server' 2>/dev/null || true
+     sudo -n pkill -TERM -f '[n]vidia-cuda-mps-control' 2>/dev/null || true
+     sleep 1
+     sudo -n pkill -KILL -f '[n]vidia-cuda-mps-server' 2>/dev/null || true
+     sudo -n pkill -KILL -f '[n]vidia-cuda-mps-control' 2>/dev/null || true
+     sudo -n rm -rf "$mps_pipe"
+     sudo -n install -d -m 1777 "$mps_pipe" "$mps_log"
      timeout 5s sudo -n env \
        CUDA_VISIBLE_DEVICES=0 \
        CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
@@ -66,7 +84,8 @@ case "${1:-}" in
      echo "MEC is still running; run stop-mec before stop-mps" >&2
      exit 1
    fi
-   if ! pgrep -u 0 -af '[n]vidia-cuda-mps-control' >/dev/null; then
+   if ! pgrep -u 0 -af '[n]vidia-cuda-mps-control' >/dev/null && \
+      [[ ! -e "$mps_pipe/control" ]]; then
      echo "MPS is already stopped"
      exit 0
    fi
@@ -74,15 +93,24 @@ case "${1:-}" in
    # Match the root ownership and directories used by start-mps, with a bound
    # so an unhealthy control daemon cannot hang the operator terminal.
    sudo -v
-   printf 'quit\n' | timeout 5s sudo -n env \
-     CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
-     CUDA_MPS_LOG_DIRECTORY="$mps_log" \
-     nvidia-cuda-mps-control
-   if pgrep -u 0 -af '[n]vidia-cuda-mps-control' >/dev/null; then
+   if [[ -e "$mps_pipe/control" ]]; then
+     printf 'quit\n' | timeout 5s sudo -n env \
+       CUDA_MPS_PIPE_DIRECTORY="$mps_pipe" \
+       CUDA_MPS_LOG_DIRECTORY="$mps_log" \
+       nvidia-cuda-mps-control 2>/dev/null || true
+   fi
+   # Aetheredge: also clear a daemon whose control socket was already lost.
+   sudo -n pkill -TERM -f '[n]vidia-cuda-mps-server' 2>/dev/null || true
+   sudo -n pkill -TERM -f '[n]vidia-cuda-mps-control' 2>/dev/null || true
+   sleep 1
+   sudo -n pkill -KILL -f '[n]vidia-cuda-mps-server' 2>/dev/null || true
+   sudo -n pkill -KILL -f '[n]vidia-cuda-mps-control' 2>/dev/null || true
+   sudo -n rm -rf "$mps_pipe"
+   if pgrep -u 0 -af '[n]vidia-cuda-mps-(control|server)' >/dev/null; then
      echo "MPS did not stop within five seconds" >&2
      exit 1
    fi
    echo "MPS stopped"
    ;;
- *) printf 'Usage: %s {build-mec|build-edge|start-mec|stop-mec|start-edgeric|stop-edgeric|gpu|start-mps|stop-mps}\n' "$0"; exit 2 ;;
+ *) printf 'Usage: %s {build-mec|build-edgeric|start-mec|stop-mec|start-edgeric|stop-edgeric|gpu|start-mps|stop-mps}\n' "$0"; exit 2 ;;
 esac

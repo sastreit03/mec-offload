@@ -61,7 +61,7 @@ Stop any old muApp or container publishing weights on localhost:5556 before star
 
 ```bash
 cd multi-ue
-scripts/containers.sh build-edge
+scripts/containers.sh build-edgeric
 scripts/containers.sh start-edgeric
 ```
 
