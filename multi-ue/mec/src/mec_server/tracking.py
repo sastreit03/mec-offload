@@ -12,6 +12,7 @@ class Tracker:
         if not mock:
             from ultralytics.trackers.byte_tracker import BYTETracker
 
+            # Ultralytics 8.4 reads timing retention from the tracker configuration.
             self.tracker = BYTETracker(
                 SimpleNamespace(
                     track_high_thresh=0.25,
@@ -20,8 +21,7 @@ class Tracker:
                     track_buffer=round(retention_s * fps),
                     match_thresh=0.8,
                     fuse_score=True,
-                ),
-                frame_rate=30,
+                )
             )
             # Frame-based retention is explicitly original-video time, independent of detector completions.
             self.tracker.max_time_lost = round(retention_s * fps)
