@@ -5,6 +5,8 @@ import argparse
 import csv
 import json
 from pathlib import Path
+import threading
+import time
 
 
 def decode_rle(runs, height, width, np):
@@ -39,7 +41,7 @@ def miou(confusion, np):
 class Decoder:
     """Decode complete Annex-B access units with the MEC's H.264 software path."""
 
-    def __init__(self, fps):
+    def __init__(self, fps, target_frame_id, np):
         import gi
 
         gi.require_version("Gst", "1.0")
@@ -50,16 +52,23 @@ class Decoder:
         self.Gst = Gst
         self.GstVideo = GstVideo
         self.fps = fps
+        self.target_frame_id = target_frame_id
+        self.np = np
+        self.target_rgb = None
+        self.seen_frame_ids = []
+        self.condition = threading.Condition()
         self.pipeline = Gst.parse_launch(
-            'appsrc name=encoded is-live=false block=true format=time '
+            'appsrc name=encoded is-live=false block=true format=time max-bytes=4194304 '
             'caps="video/x-h264,stream-format=byte-stream,alignment=au" ! '
             'h264parse ! avdec_h264 ! videoconvert ! '
             'video/x-raw,format=RGB ! '
-            'appsink name=decoded max-buffers=1 drop=false sync=false '
+            'appsink name=decoded emit-signals=true max-buffers=4 drop=false sync=false '
             'wait-on-eos=false enable-last-sample=false'
         )
         self.source = self.pipeline.get_by_name("encoded")
         self.sink = self.pipeline.get_by_name("decoded")
+        # Drain frames on GStreamer's streaming thread while the main thread feeds AUs.
+        self.sink.connect("new-sample", self._new_sample)
         if self.pipeline.set_state(Gst.State.PLAYING) == Gst.StateChangeReturn.FAILURE:
             raise RuntimeError("decoder pipeline setup failed")
 
@@ -77,34 +86,47 @@ class Decoder:
         )
         return source_frame_id, rgb
 
-    def frame(self, access_unit, frame_id, np):
-        """Push one access unit and return a decoded frame when one is ready."""
+    def _new_sample(self, sink):
+        sample = sink.emit("pull-sample")
+        if sample is None:
+            return self.Gst.FlowReturn.ERROR
+        source_frame_id, rgb = self._sample(sample, self.np)
+        with self.condition:
+            self.seen_frame_ids.append(source_frame_id)
+            if source_frame_id == self.target_frame_id:
+                self.target_rgb = rgb
+            self.condition.notify_all()
+        return self.Gst.FlowReturn.OK
+
+    def frame(self, access_unit, frame_id):
+        """Feed one access unit; the appsink callback drains decoded frames."""
         buffer = self.Gst.Buffer.new_allocate(None, len(access_unit), None)
         buffer.fill(0, access_unit)
         buffer.pts = round(frame_id * 1e9 / self.fps)
         buffer.duration = round(1e9 / self.fps)
         if self.source.emit("push-buffer", buffer) != self.Gst.FlowReturn.OK:
             raise RuntimeError("decoder input flow error")
-        # Frame zero is expected to be retained; avoid a two-second wait there.
-        timeout = 100 * self.Gst.MSECOND if frame_id == 0 else 2 * self.Gst.SECOND
-        sample = self.sink.emit("try-pull-sample", timeout)
-        if sample is None:
-            # The parser normally holds the first frame until the next AU arrives.
-            if frame_id == 0:
-                return None
-            raise RuntimeError(f"decoder timed out after access unit {frame_id}")
-        return self._sample(sample, np)
 
-    def finish(self, np):
-        """Flush the final frame retained by the H.264 parser/decoder."""
+    def finish(self):
+        """Flush the parser and wait for the timestamped target frame."""
         self.source.emit("end-of-stream")
-        decoded = []
-        while True:
-            sample = self.sink.emit("try-pull-sample", 2 * self.Gst.SECOND)
-            if sample is None:
-                break
-            decoded.append(self._sample(sample, np))
-        return decoded
+        deadline = time.monotonic() + 10
+        with self.condition:
+            while self.target_rgb is None:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                self.condition.wait(remaining)
+            if self.target_rgb is None:
+                bounds = (
+                    (min(self.seen_frame_ids), max(self.seen_frame_ids))
+                    if self.seen_frame_ids else None
+                )
+                raise RuntimeError(
+                    f"decoder did not produce target {self.target_frame_id}; "
+                    f"decoded range={bounds} count={len(self.seen_frame_ids)}"
+                )
+            return self.target_rgb
 
     def close(self):
         self.pipeline.set_state(self.Gst.State.NULL)
@@ -193,7 +215,7 @@ def main():
             if not capture.isOpened():
                 raise RuntimeError(f"unreadable source video: {example['video']}")
             encoder = Encoder(1280, 720, args.fps, bitrate)
-            decoder = Decoder(args.fps)
+            decoder = Decoder(args.fps, target, np)
             decoded_rgb = None
             try:
                 for frame_id in range(target + 1):
@@ -210,14 +232,9 @@ def main():
                         keyframe=frame_id % args.gop_frames == 0,
                         bitrate=bitrate,
                     )
-                    decoded = decoder.frame(canonical_au(nals), frame_id, np)
-                    if decoded is not None and decoded[0] == target:
-                        decoded_rgb = decoded[1]
+                    decoder.frame(canonical_au(nals), frame_id)
                 # End-of-stream releases a target frame retained by the decoder.
-                if decoded_rgb is None:
-                    for decoded_frame_id, rgb in decoder.finish(np):
-                        if decoded_frame_id == target:
-                            decoded_rgb = rgb
+                decoded_rgb = decoder.finish()
             finally:
                 decoder.close()
                 encoder.close()
