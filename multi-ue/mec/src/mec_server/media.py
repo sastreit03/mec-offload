@@ -51,8 +51,10 @@ class Receiver:
         result = self.pipeline.set_state(Gst.State.PLAYING)
         if result == Gst.StateChangeReturn.FAILURE:
             raise RuntimeError("receiver pipeline setup failed")
-        _, state, _ = self.pipeline.get_state(2 * Gst.SECOND)
-        if state != Gst.State.PLAYING:
+        # Aetheredge: RTP cannot arrive until admission returns this receiver's port.
+        # Accept GStreamer's asynchronous transition when PLAYING is its target.
+        _, state, pending = self.pipeline.get_state(0)
+        if state != Gst.State.PLAYING and pending != Gst.State.PLAYING:
             raise RuntimeError("receiver did not reach PLAYING")
         self.post(
             "pipeline",
