@@ -134,6 +134,9 @@ unrelated traffic produces a material bias.
 - YOLO26s was replaced by YOLO26x in the active task catalog, model export list,
   and synthetic profile entries. The temporary profiling catalog remains for
   reproducibility.
+- The profiling catalog now contains the full 0.5, 1, 2, and 4 Mbit/s
+  cross-product for every DNN and application (48 candidates). The final four
+  bitrate/DNN pairs per application remain subject to measured quality results.
 
 ## Prerecorded-video UE continuity
 
@@ -174,8 +177,8 @@ session binding when the network address changes.
 | Android Gradle build after continuity work | Not run successfully on this host | Host Java 8 is too old for Android Gradle Plugin 8.7.3; compile on JDK 17 before deployment. Structural delimiter checks passed but are not a substitute for compilation. |
 | Model artifact/configuration checks | Passed | Required artifacts were present and all SegFormer heads reported 19 labels. |
 | Model profiling | Completed | Real GPU measurements were collected in the profiling CSV files; this is processing profiling, not end-to-end latency. |
-| Full OAI build | Outstanding | The development environment lacked the prerequisites previously noted for a complete gNB build. |
-| Live gNB/EdgeRIC/MEC/UE run | Outstanding | ZMQ accuracy, association, OTA behavior, sustained load, SLO tails, and coexistence remain to be measured. |
+| Full OAI build | Built and deployed | Includes the Aetheredge ZMQ capacity/grant telemetry and raw UL-byte association input. Image identity was not recorded. |
+| Live gNB/EdgeRIC/MEC/UE run | Partial pass | One detection UE returned all 1,217 outcomes; 1,167 completed inference and 602 met the 150-ms SLO. Multi-UE, other applications, telemetry accuracy, and coexistence remain unverified. |
 
 The current unit and integration suite covers RTP fragmentation, reordering and
 duplicates; descriptor validation; control identity and replay fencing; demand
@@ -202,4 +205,9 @@ control-first and media-first arrival.
    latency, result delivery, resource consumption, logging overhead, and SLO
    distributions under sustained load. Report distributions and failure
    reasons rather than only averages or successful startup.
+
+The deployed bring-up also corrected receiver startup for an asynchronous RTP
+pipeline, selected a 100-ms jitter window after a 20-ms window caused decode
+loss, and raised the per-video decoded pending limit from 8 to 16 frames. Exact
+image IDs, deployed configuration copies, and model hashes were not retained.
 

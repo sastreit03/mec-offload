@@ -131,9 +131,14 @@ requires a lower value.
   synchronization, suspension, configuration, execution-failure, evaluation,
   ZMQ counter, playlist, and successor-handoff tests. The EdgeRIC C++ bridge
   passes syntax compilation.
-- A full OAI gNB build and live gNB/EdgeRIC/MEC run are still required. The
-  local environment used during this work lacked `asn1c` and a writable OAI CPM
-  cache.
+- A deployed single-UE detection run validated live ZMQ association, capacity
+  telemetry, RTP transport, model execution, result return, and video closure.
+  OAI now reports raw newly received UL bytes for association, the MEC accepts
+  an asynchronously starting RTP receiver, the validated jitter setting is
+  100 ms, and the decoded-frame pending limit is 16.
+- The 100-ms run returned all 1,217 outcomes, completed inference for 1,167
+  frames, and met the 150-ms end-to-end SLO for 602 frames (49.47%). Deployment
+  image IDs, exact configuration copies, and model hashes were not captured.
 - Live tests must compare reference capacity with committed grants and compare
   new-data TBS deltas with later MEC unique-byte progress. The latest-grant
   snapshot supports sampling rather than an exhaustive record of every grant.

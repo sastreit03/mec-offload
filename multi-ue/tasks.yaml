@@ -1,4 +1,6 @@
 version: mec-catalog-v1
+# Keep the full bitrate/model cross-product until measured quality identifies
+# the four application-specific bitrate/DNN pairs used in experiments.
 configurations:
 - id: detection-yolo26n-500k
   application: detection
@@ -35,6 +37,19 @@ configurations:
   - 640
   precision: fp16
   bitrate_bps: 2000000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: detection.v1
+- id: detection-yolo26n-4000k
+  application: detection
+  model: yolo26n
+  artifact: detection/yolo26n.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 4000000
   confidence: 0.1
   class_map_id: coco80
   backend: torchscript
@@ -78,6 +93,19 @@ configurations:
   class_map_id: coco80
   backend: torchscript
   output_schema: detection.v1
+- id: detection-yolo26m-4000k
+  application: detection
+  model: yolo26m
+  artifact: detection/yolo26m.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 4000000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: detection.v1
 - id: detection-yolo26l-500k
   application: detection
   model: yolo26l
@@ -113,6 +141,19 @@ configurations:
   - 640
   precision: fp16
   bitrate_bps: 2000000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: detection.v1
+- id: detection-yolo26l-4000k
+  application: detection
+  model: yolo26l
+  artifact: detection/yolo26l.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 4000000
   confidence: 0.1
   class_map_id: coco80
   backend: torchscript
@@ -156,6 +197,19 @@ configurations:
   class_map_id: coco80
   backend: torchscript
   output_schema: detection.v1
+- id: detection-yolo26x-4000k
+  application: detection
+  model: yolo26x
+  artifact: detection/yolo26x.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 4000000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: detection.v1
 - id: tracking-yolo26n-500k
   application: tracking
   model: yolo26n
@@ -191,6 +245,19 @@ configurations:
   - 640
   precision: fp16
   bitrate_bps: 2000000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: tracking.v1
+- id: tracking-yolo26n-4000k
+  application: tracking
+  model: yolo26n
+  artifact: tracking/yolo26n.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 4000000
   confidence: 0.1
   class_map_id: coco80
   backend: torchscript
@@ -234,6 +301,19 @@ configurations:
   class_map_id: coco80
   backend: torchscript
   output_schema: tracking.v1
+- id: tracking-yolo26m-4000k
+  application: tracking
+  model: yolo26m
+  artifact: tracking/yolo26m.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 4000000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: tracking.v1
 - id: tracking-yolo26l-500k
   application: tracking
   model: yolo26l
@@ -269,6 +349,19 @@ configurations:
   - 640
   precision: fp16
   bitrate_bps: 2000000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: tracking.v1
+- id: tracking-yolo26l-4000k
+  application: tracking
+  model: yolo26l
+  artifact: tracking/yolo26l.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 4000000
   confidence: 0.1
   class_map_id: coco80
   backend: torchscript
@@ -312,6 +405,19 @@ configurations:
   class_map_id: coco80
   backend: torchscript
   output_schema: tracking.v1
+- id: tracking-yolo26x-4000k
+  application: tracking
+  model: yolo26x
+  artifact: tracking/yolo26x.torchscript
+  input_hw:
+  - 640
+  - 640
+  precision: fp16
+  bitrate_bps: 4000000
+  confidence: 0.1
+  class_map_id: coco80
+  backend: torchscript
+  output_schema: tracking.v1
 - id: segmentation-segformer-b0-500k
   application: segmentation
   model: segformer-b0
@@ -347,6 +453,19 @@ configurations:
   - 896
   precision: fp16
   bitrate_bps: 2000000
+  confidence: 0.1
+  class_map_id: cityscapes19
+  backend: torchscript
+  output_schema: segmentation.v1
+- id: segmentation-segformer-b0-4000k
+  application: segmentation
+  model: segformer-b0
+  artifact: segmentation/segformer-b0.torchscript
+  input_hw:
+  - 512
+  - 896
+  precision: fp16
+  bitrate_bps: 4000000
   confidence: 0.1
   class_map_id: cityscapes19
   backend: torchscript
@@ -390,6 +509,19 @@ configurations:
   class_map_id: cityscapes19
   backend: torchscript
   output_schema: segmentation.v1
+- id: segmentation-segformer-b1-4000k
+  application: segmentation
+  model: segformer-b1
+  artifact: segmentation/segformer-b1.torchscript
+  input_hw:
+  - 512
+  - 896
+  precision: fp16
+  bitrate_bps: 4000000
+  confidence: 0.1
+  class_map_id: cityscapes19
+  backend: torchscript
+  output_schema: segmentation.v1
 - id: segmentation-segformer-b2-500k
   application: segmentation
   model: segformer-b2
@@ -429,6 +561,19 @@ configurations:
   class_map_id: cityscapes19
   backend: torchscript
   output_schema: segmentation.v1
+- id: segmentation-segformer-b2-4000k
+  application: segmentation
+  model: segformer-b2
+  artifact: segmentation/segformer-b2.torchscript
+  input_hw:
+  - 512
+  - 896
+  precision: fp16
+  bitrate_bps: 4000000
+  confidence: 0.1
+  class_map_id: cityscapes19
+  backend: torchscript
+  output_schema: segmentation.v1
 - id: segmentation-segformer-b3-500k
   application: segmentation
   model: segformer-b3
@@ -464,6 +609,19 @@ configurations:
   - 896
   precision: fp16
   bitrate_bps: 2000000
+  confidence: 0.1
+  class_map_id: cityscapes19
+  backend: torchscript
+  output_schema: segmentation.v1
+- id: segmentation-segformer-b3-4000k
+  application: segmentation
+  model: segformer-b3
+  artifact: segmentation/segformer-b3.torchscript
+  input_hw:
+  - 512
+  - 896
+  precision: fp16
+  bitrate_bps: 4000000
   confidence: 0.1
   class_map_id: cityscapes19
   backend: torchscript

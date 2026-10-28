@@ -1,6 +1,7 @@
 compatibility: synthetic-dev-v1
 # Synthetic values exercise software paths only and are rejected in experimental mode.
 synthetic: true
+# Synthetic entries mirror the complete catalog; experimental mode rejects them.
 network:
   mean_s: 0.01
   P0_s2: 0.0001
@@ -36,6 +37,15 @@ candidates:
     frame_bytes_I: 25000
     frame_bytes_P: 8333
     tracker_s: 0.001
+  detection-yolo26n-4000k:
+    qualified: true
+    score: 0.95
+    reference_score: 1.0
+    processing_s: 0.002
+    residence_s: 0.02
+    frame_bytes_I: 50000
+    frame_bytes_P: 16667
+    tracker_s: 0.001
   detection-yolo26m-500k:
     qualified: true
     score: 0.95
@@ -62,6 +72,15 @@ candidates:
     residence_s: 0.024
     frame_bytes_I: 25000
     frame_bytes_P: 8333
+    tracker_s: 0.001
+  detection-yolo26m-4000k:
+    qualified: true
+    score: 0.95
+    reference_score: 1.0
+    processing_s: 0.006
+    residence_s: 0.024
+    frame_bytes_I: 50000
+    frame_bytes_P: 16667
     tracker_s: 0.001
   detection-yolo26l-500k:
     qualified: true
@@ -90,6 +109,15 @@ candidates:
     frame_bytes_I: 25000
     frame_bytes_P: 8333
     tracker_s: 0.001
+  detection-yolo26l-4000k:
+    qualified: true
+    score: 0.95
+    reference_score: 1.0
+    processing_s: 0.008
+    residence_s: 0.026000000000000002
+    frame_bytes_I: 50000
+    frame_bytes_P: 16667
+    tracker_s: 0.001
   detection-yolo26x-500k:
     qualified: true
     score: 0.95
@@ -116,6 +144,15 @@ candidates:
     residence_s: 0.03
     frame_bytes_I: 25000
     frame_bytes_P: 8333
+    tracker_s: 0.001
+  detection-yolo26x-4000k:
+    qualified: true
+    score: 0.95
+    reference_score: 1.0
+    processing_s: 0.012
+    residence_s: 0.03
+    frame_bytes_I: 50000
+    frame_bytes_P: 16667
     tracker_s: 0.001
   tracking-yolo26n-500k:
     qualified: true
@@ -144,6 +181,15 @@ candidates:
     frame_bytes_I: 25000
     frame_bytes_P: 8333
     tracker_s: 0.001
+  tracking-yolo26n-4000k:
+    qualified: true
+    score: 0.95
+    reference_score: 1.0
+    processing_s: 0.002
+    residence_s: 0.02
+    frame_bytes_I: 50000
+    frame_bytes_P: 16667
+    tracker_s: 0.001
   tracking-yolo26m-500k:
     qualified: true
     score: 0.95
@@ -170,6 +216,15 @@ candidates:
     residence_s: 0.024
     frame_bytes_I: 25000
     frame_bytes_P: 8333
+    tracker_s: 0.001
+  tracking-yolo26m-4000k:
+    qualified: true
+    score: 0.95
+    reference_score: 1.0
+    processing_s: 0.006
+    residence_s: 0.024
+    frame_bytes_I: 50000
+    frame_bytes_P: 16667
     tracker_s: 0.001
   tracking-yolo26l-500k:
     qualified: true
@@ -198,6 +253,15 @@ candidates:
     frame_bytes_I: 25000
     frame_bytes_P: 8333
     tracker_s: 0.001
+  tracking-yolo26l-4000k:
+    qualified: true
+    score: 0.95
+    reference_score: 1.0
+    processing_s: 0.008
+    residence_s: 0.026000000000000002
+    frame_bytes_I: 50000
+    frame_bytes_P: 16667
+    tracker_s: 0.001
   tracking-yolo26x-500k:
     qualified: true
     score: 0.95
@@ -224,6 +288,15 @@ candidates:
     residence_s: 0.03
     frame_bytes_I: 25000
     frame_bytes_P: 8333
+    tracker_s: 0.001
+  tracking-yolo26x-4000k:
+    qualified: true
+    score: 0.95
+    reference_score: 1.0
+    processing_s: 0.012
+    residence_s: 0.03
+    frame_bytes_I: 50000
+    frame_bytes_P: 16667
     tracker_s: 0.001
   segmentation-segformer-b0-500k:
     qualified: true
@@ -252,6 +325,15 @@ candidates:
     frame_bytes_I: 25000
     frame_bytes_P: 8333
     tracker_s: 0.001
+  segmentation-segformer-b0-4000k:
+    qualified: true
+    score: 0.95
+    reference_score: 1.0
+    processing_s: 0.002
+    residence_s: 0.02
+    frame_bytes_I: 50000
+    frame_bytes_P: 16667
+    tracker_s: 0.001
   segmentation-segformer-b1-500k:
     qualified: true
     score: 0.95
@@ -278,6 +360,15 @@ candidates:
     residence_s: 0.022
     frame_bytes_I: 25000
     frame_bytes_P: 8333
+    tracker_s: 0.001
+  segmentation-segformer-b1-4000k:
+    qualified: true
+    score: 0.95
+    reference_score: 1.0
+    processing_s: 0.004
+    residence_s: 0.022
+    frame_bytes_I: 50000
+    frame_bytes_P: 16667
     tracker_s: 0.001
   segmentation-segformer-b2-500k:
     qualified: true
@@ -306,6 +397,15 @@ candidates:
     frame_bytes_I: 25000
     frame_bytes_P: 8333
     tracker_s: 0.001
+  segmentation-segformer-b2-4000k:
+    qualified: true
+    score: 0.95
+    reference_score: 1.0
+    processing_s: 0.006
+    residence_s: 0.024
+    frame_bytes_I: 50000
+    frame_bytes_P: 16667
+    tracker_s: 0.001
   segmentation-segformer-b3-500k:
     qualified: true
     score: 0.95
@@ -332,4 +432,13 @@ candidates:
     residence_s: 0.026000000000000002
     frame_bytes_I: 25000
     frame_bytes_P: 8333
+    tracker_s: 0.001
+  segmentation-segformer-b3-4000k:
+    qualified: true
+    score: 0.95
+    reference_score: 1.0
+    processing_s: 0.008
+    residence_s: 0.026000000000000002
+    frame_bytes_I: 50000
+    frame_bytes_P: 16667
     tracker_s: 0.001
