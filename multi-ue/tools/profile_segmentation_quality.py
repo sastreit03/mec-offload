@@ -63,28 +63,50 @@ class Decoder:
         if self.pipeline.set_state(Gst.State.PLAYING) == Gst.StateChangeReturn.FAILURE:
             raise RuntimeError("decoder pipeline setup failed")
 
+    def _sample(self, sample, np):
+        """Return the source frame ID and RGB pixels carried by one sample."""
+        output = sample.get_buffer()
+        info = self.GstVideo.VideoInfo.new_from_caps(sample.get_caps())
+        raw = output.extract_dup(0, output.get_size())
+        source_frame_id = round(output.pts * self.fps / 1e9)
+        rgb = (
+            np.frombuffer(raw, dtype=np.uint8)
+            .reshape(info.height, info.stride[0])[:, : info.width * 3]
+            .reshape(info.height, info.width, 3)
+            .copy()
+        )
+        return source_frame_id, rgb
+
     def frame(self, access_unit, frame_id, np):
+        """Push one access unit and return a decoded frame when one is ready."""
         buffer = self.Gst.Buffer.new_allocate(None, len(access_unit), None)
         buffer.fill(0, access_unit)
         buffer.pts = round(frame_id * 1e9 / self.fps)
         buffer.duration = round(1e9 / self.fps)
         if self.source.emit("push-buffer", buffer) != self.Gst.FlowReturn.OK:
             raise RuntimeError("decoder input flow error")
-        sample = self.sink.emit("try-pull-sample", 2 * self.Gst.SECOND)
+        # Frame zero is expected to be retained; avoid a two-second wait there.
+        timeout = 100 * self.Gst.MSECOND if frame_id == 0 else 2 * self.Gst.SECOND
+        sample = self.sink.emit("try-pull-sample", timeout)
         if sample is None:
-            raise RuntimeError(f"decoder timed out at frame {frame_id}")
-        output = sample.get_buffer()
-        info = self.GstVideo.VideoInfo.new_from_caps(sample.get_caps())
-        raw = output.extract_dup(0, output.get_size())
-        return (
-            np.frombuffer(raw, dtype=np.uint8)
-            .reshape(info.height, info.stride[0])[:, : info.width * 3]
-            .reshape(info.height, info.width, 3)
-            .copy()
-        )
+            # The parser normally holds the first frame until the next AU arrives.
+            if frame_id == 0:
+                return None
+            raise RuntimeError(f"decoder timed out after access unit {frame_id}")
+        return self._sample(sample, np)
+
+    def finish(self, np):
+        """Flush the final frame retained by the H.264 parser/decoder."""
+        self.source.emit("end-of-stream")
+        decoded = []
+        while True:
+            sample = self.sink.emit("try-pull-sample", 2 * self.Gst.SECOND)
+            if sample is None:
+                break
+            decoded.append(self._sample(sample, np))
+        return decoded
 
     def close(self):
-        self.source.emit("end-of-stream")
         self.pipeline.set_state(self.Gst.State.NULL)
 
 
@@ -188,7 +210,14 @@ def main():
                         keyframe=frame_id % args.gop_frames == 0,
                         bitrate=bitrate,
                     )
-                    decoded_rgb = decoder.frame(canonical_au(nals), frame_id, np)
+                    decoded = decoder.frame(canonical_au(nals), frame_id, np)
+                    if decoded is not None and decoded[0] == target:
+                        decoded_rgb = decoded[1]
+                # End-of-stream releases a target frame retained by the decoder.
+                if decoded_rgb is None:
+                    for decoded_frame_id, rgb in decoder.finish(np):
+                        if decoded_frame_id == target:
+                            decoded_rgb = rgb
             finally:
                 decoder.close()
                 encoder.close()
