@@ -51,7 +51,7 @@ class Settings(BaseModel):
     control_port: int = 8765
     first_udp_port: int = 5000
     max_videos: int = 30
-    pending_frames: int = 8
+    pending_frames: int = 16
     pending_bytes_per_video: int = 64 * 1024 * 1024
     decoded_max_bytes: int = 8 * 1024 * 1024
     encoded_max_bytes: int = 8 * 1024 * 1024
