@@ -158,6 +158,26 @@ class Client:
             )
         return self.args.source_ip
 
+    def refresh_server_route(self, source_ip):
+        if not self.args.source_interface:
+            return
+        server_ip = socket.gethostbyname(self.args.server)
+        # Aetheredge: a PDU reattach may change the UE address without replacing
+        # the interface, so refresh the host route before every control reconnect.
+        subprocess.run(
+            [
+                "ip",
+                "route",
+                "replace",
+                f"{server_ip}/32",
+                "dev",
+                self.args.source_interface,
+                "src",
+                source_ip,
+            ],
+            check=True,
+        )
+
     async def send(self, value):
         if self.ws:
             await self.ws.send(json.dumps(value, separators=(",", ":")))
@@ -330,14 +350,26 @@ class Client:
             while not self.stopped:
                 try:
                     self.args.source_ip = await asyncio.to_thread(self.source_ip)
+                    await asyncio.to_thread(
+                        self.refresh_server_route, self.args.source_ip
+                    )
                     if self.streamer:
                         self.streamer.source_ip = self.args.source_ip
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock.bind((self.args.source_ip, 0))
                     sock.setblocking(False)
-                    await self.loop.sock_connect(
-                        sock, (self.args.server, self.args.port)
-                    )
+                    try:
+                        # Bound failed data-plane attempts so route/address changes
+                        # are detected promptly by the next reconnect iteration.
+                        await asyncio.wait_for(
+                            self.loop.sock_connect(
+                                sock, (self.args.server, self.args.port)
+                            ),
+                            timeout=5,
+                        )
+                    except Exception:
+                        sock.close()
+                        raise
                     headers = (
                         {"x-mec-resume-token": self.state["resume_token"]}
                         if self.state.get("resume_token")
