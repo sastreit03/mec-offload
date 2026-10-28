@@ -6,6 +6,8 @@ WORKDIR /work/multi-ue
 COPY requirements.txt requirements.txt
 COPY mec/requirements-gpu.txt mec/requirements-gpu.txt
 RUN python -m pip install -r requirements.txt -r mec/requirements-gpu.txt
+# Fail the image build if ByteTrack's compiled assignment module cannot load.
+RUN python -c "import lap"
 COPY contracts contracts
 COPY mec/src mec/src
 COPY config config
