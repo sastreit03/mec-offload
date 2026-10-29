@@ -5,7 +5,16 @@ cd "$(dirname "$0")/.."
 case "${1:-}" in
  build-mec) docker build -f mec/docker/Dockerfile.mec -t multi-ue-mec:baseline . ;;
  build-edgeric) docker build -f mec/docker/Dockerfile.edgeric -t multi-ue-edgeric:baseline .. ;;
- start-mec) mkdir -p runs weights; docker compose -f mec/docker/compose.mec.yml up -d ;;
+ start-mec)
+   mec_config="${MEC_CONFIG:-mec.collection.yaml}"
+   if [[ ! -f "config/$mec_config" ]]; then
+     echo "MEC configuration not found: config/$mec_config" >&2
+     exit 1
+   fi
+   echo "Starting MEC with config/$mec_config"
+   mkdir -p runs weights
+   MEC_CONFIG="$mec_config" docker compose -f mec/docker/compose.mec.yml up -d
+   ;;
  stop-mec) docker compose -f mec/docker/compose.mec.yml down ;;
  start-edgeric) mkdir -p runs "${RAN_TRACE_DIR:-../edgeric-validation}"; docker compose -f mec/docker/compose.edgeric.yml up -d ;;
  stop-edgeric) docker compose -f mec/docker/compose.edgeric.yml down ;;

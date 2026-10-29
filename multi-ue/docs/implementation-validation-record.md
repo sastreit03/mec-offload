@@ -208,6 +208,8 @@ The immediate experimental target is the fixed-policy mode recorded in
 validation: OAI remains PF, EdgeRIC observes in shadow mode, and the MEC uses
 fixed DNN/bitrate choices and per-application FIFO execution. Deadline misses
 remain measured outcomes but will not discard otherwise processable frames.
+The container launcher defaults to `mec.collection.yaml`; experimental mode
+must be selected explicitly after its heuristic budgets have been calibrated.
 The source mode now validates fixed candidates and priority `-3`, bypasses
 heuristic decisions, preserves late work through a completion-based drain, and
 marks hard safety limits as invalid runs. It must still pass live preflight,
