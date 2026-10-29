@@ -79,7 +79,7 @@ def decode(path):
     )
 
 
-def select_archive(archive, count, seed):
+def archive_candidates(archive, count, seed):
     with zipfile.ZipFile(archive) as source:
         members = sorted(
             name
@@ -89,28 +89,23 @@ def select_archive(archive, count, seed):
         )
     if len(members) < count:
         raise ValueError(f"archive contains {len(members)} videos; need {count}")
-    return sorted(random.Random(seed).sample(members, count))
+    random.Random(seed).shuffle(members)
+    return members
 
 
-def stage_archive(archive, members, output):
+def stage_archive_member(archive, member, output):
     with zipfile.ZipFile(archive) as source:
-        names = [PurePosixPath(member).name for member in members]
-        if len(set(names)) != len(names):
-            raise ValueError("selected archive videos have duplicate base names")
-        for member, name in zip(members, names):
-            target = output / name
-            if target.exists():
-                continue
-            with source.open(member) as incoming, tempfile.NamedTemporaryFile(
-                dir=output, delete=False
-            ) as temporary:
-                shutil.copyfileobj(incoming, temporary)
-                temporary_path = Path(temporary.name)
-            temporary_path.replace(target)
-    return [output / PurePosixPath(member).name for member in members]
+        target = output / PurePosixPath(member).name
+        with source.open(member) as incoming, tempfile.NamedTemporaryFile(
+            dir=output, delete=False
+        ) as temporary:
+            shutil.copyfileobj(incoming, temporary)
+            temporary_path = Path(temporary.name)
+        temporary_path.replace(target)
+    return target
 
 
-def stage_directory(source, count, seed, output):
+def directory_candidates(source, count, seed):
     files = sorted(
         path
         for path in Path(source).rglob("*")
@@ -118,16 +113,18 @@ def stage_directory(source, count, seed, output):
     )
     if len(files) < count:
         raise ValueError(f"source contains {len(files)} videos; need {count}")
-    selected = sorted(random.Random(seed).sample(files, count))
-    if len({path.name for path in selected}) != len(selected):
-        raise ValueError("selected videos have duplicate base names")
-    targets = []
-    for path in selected:
-        target = output / path.name
-        if not target.exists():
-            shutil.copy2(path, target)
-        targets.append(target)
-    return targets
+    random.Random(seed).shuffle(files)
+    return files
+
+
+def stage_directory_member(source, output):
+    target = output / source.name
+    with tempfile.NamedTemporaryFile(dir=output, delete=False) as temporary:
+        with source.open("rb") as incoming:
+            shutil.copyfileobj(incoming, temporary)
+        temporary_path = Path(temporary.name)
+    temporary_path.replace(target)
+    return target
 
 
 def inventory(assets, android_prefix, linux_prefix):
@@ -173,24 +170,36 @@ def main():
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)
     if args.archive:
-        selected = select_archive(args.archive, args.count, args.seed)
-        paths = stage_archive(args.archive, selected, output)
-        source = {"archive": str(args.archive), "members": selected}
+        candidates = archive_candidates(args.archive, args.count, args.seed)
+        materialize = lambda candidate: stage_archive_member(
+            args.archive, candidate, output
+        )
     else:
-        paths = stage_directory(args.source_dir, args.count, args.seed, output)
-        source = {"directory": str(args.source_dir)}
+        candidates = directory_candidates(args.source_dir, args.count, args.seed)
+        materialize = lambda candidate: stage_directory_member(candidate, output)
 
     assets = []
-    for number, path in enumerate(paths, 1):
-        print(f"[{number}/{len(paths)}] validating {path.name}", flush=True)
-        metadata = probe(path)
-        if metadata["source_frames"] < args.minimum_frames:
-            raise RuntimeError(
-                f"{path} has {metadata['source_frames']} frames; "
-                f"need {args.minimum_frames}"
-            )
-        if args.decode_check:
-            decode(path)
+    selected_sources = []
+    for candidate_number, candidate in enumerate(candidates, 1):
+        path = materialize(candidate)
+        print(
+            f"[{len(assets) + 1}/{args.count}] validating {path.name} "
+            f"(candidate {candidate_number})",
+            flush=True,
+        )
+        try:
+            metadata = probe(path)
+            if metadata["source_frames"] < args.minimum_frames:
+                raise RuntimeError(
+                    f"only {metadata['source_frames']} frames; "
+                    f"need {args.minimum_frames}"
+                )
+            if args.decode_check:
+                decode(path)
+        except (RuntimeError, subprocess.CalledProcessError, ValueError) as error:
+            print(f"SKIP {path.name}: {error}", flush=True)
+            path.unlink(missing_ok=True)
+            continue
         assets.append(
             {
                 "media_id": path.stem,
@@ -202,9 +211,28 @@ def main():
                 "height": int(metadata["height"]),
                 "r_frame_rate": metadata.get("r_frame_rate"),
                 "duration_s": float(metadata["duration"]),
-                "selection_number": number,
+                "selection_number": len(assets) + 1,
             }
         )
+        selected_sources.append(str(candidate))
+        if len(assets) == args.count:
+            break
+
+    if len(assets) != args.count:
+        raise RuntimeError(f"only {len(assets)} valid videos were available")
+
+    # Remove files left by an interrupted or superseded staging attempt.
+    accepted = {item["filename"] for item in assets}
+    for path in output.iterdir():
+        if path.is_file() and path.suffix.lower() in VIDEO_SUFFIXES:
+            if path.name not in accepted:
+                path.unlink()
+
+    source = (
+        {"archive": str(args.archive), "members": selected_sources}
+        if args.archive
+        else {"directory": str(args.source_dir), "files": selected_sources}
+    )
 
     canonical = {
         "schema_version": 1,
