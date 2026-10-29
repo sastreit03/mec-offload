@@ -93,6 +93,24 @@ filter in both directions during a scenario. A channel condition reuses its
 realization seed across UE-count, application-rotation, and DNN/bitrate
 ablations to support paired comparisons.
 
+## Precomputed channel traces
+
+The gNB exposes CIR control on TCP port 5560, separate from EdgeRIC's ZMQ
+ports. Campaign runs select a precomputed trace once at the scenario boundary;
+the gNB then advances through local `config.json`/`cirs.bin` data without
+per-slot ZMQ messages. Each trace slot is reused for the RX and TX emulator
+calls so the common SISO realization has the same time evolution in UL and DL.
+The loader reports the active condition, SHA-256, playback generation, and
+slot position.
+
+`tools/build_channel_trace_bank.py` creates AWGN traces and Sionna PHY 3GPP
+TDL-C, TDL-D, CDL-C, and CDL-D traces. Delays are quantized using the gNB FFT
+size and subcarrier spacing returned by `config_req`; valid tap indices are
+0 through 255. `tools/channel_preflight.py` checks the complete 111-condition
+bank, SISO gNB configuration, Docker port mapping, radio-parameter agreement,
+file hashes, binary sizes, finite coefficients, and tap-delay bounds before a
+campaign starts.
+
 Each UE stores 42 source videos with at least 1,200 frames. Eight 150-frame
 segments per video provide 336 slots, of which 333 are assigned without
 replacement to the 111 channel conditions and three application rotations.
@@ -162,8 +180,11 @@ utilization does not measure individual CUDA-stream or kernel residency.
 
 1. Keep EdgeRIC in shadow mode and verify at startup that no weight publisher
    controls OAI.
-2. Add a preflight check and a post-run completeness check. A valid run has one
+2. Add a post-run completeness check. A valid run has one
    terminal result for every transmitted frame and no queue-bound, worker,
    transport, decoder, or logging failure.
-3. Add the checkpointed scenario runner, SRK channel loader integration, and
-   joined dataset exporter.
+3. Add the checkpointed scenario runner and joined dataset exporter. Channel
+   selection and trace-bank preflight are available, but the runner must invoke
+   selection and verify its generation before arming each scenario.
+4. Calibrate requested emulator SINR against measured PUSCH/PUCCH SNR and BLER
+   with pass-through and AWGN pilots.

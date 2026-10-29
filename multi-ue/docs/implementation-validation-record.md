@@ -237,3 +237,12 @@ locked SHA-256 for `scenarios.jsonl`. Runtime attempts use a separate
 `attempt_id`; the MEC propagates the campaign/scenario/attempt join key through
 MEC evidence and replay, EdgeRIC reports, and Linux and Android UE evidence.
 
+The channel-emulation control plane now uses configurable TCP port 5560. The
+gNB can select a hashed precomputed `config.json`/`cirs.bin` trace from a
+read-only bank at a scenario boundary and reports its condition, generation,
+and playback position. Each symbol-static SISO slot is reused for the UL and
+DL calls before advancing. Offline preflight validates all 111 campaign traces,
+SISO configuration, port mapping, radio parameters, hashes, packed sizes, and
+the SRK tap-delay range of indices 0 through 255. Live gNB validation and SINR
+calibration remain required after rebuilding the image.
+

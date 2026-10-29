@@ -6,7 +6,8 @@ SPDX-License-Identifier: Apache-2.0
  * @file cir_zmq.h
  * @brief Public API for the CIR ZMQ plugin.
  *
- * This plugin exposes a ZMQ REP socket (tcp:// *:5555) that accepts JSON
+ * This plugin exposes a configurable ZMQ REP socket (default tcp:// *:5560)
+ * that accepts JSON
  * messages to configure and update channel impulse response (CIR) data
  * at runtime.  A control application connects with a ZMQ REQ socket and
  * can:
@@ -43,7 +44,7 @@ SPDX-License-Identifier: Apache-2.0
  * Creates the ZMQ context and REP socket, and allocates internal CIR
  * storage for num_ofdm_symbols_per_slot symbols, each with num_taps taps.
  * All arrays are initialised to meaningful defaults:
- *   - sigma_scaling = 1.0, sigma_max = 1.0
+ *   - sigma_scaling = 0.0, sigma_max = 0.0 (noise-free pass-through)
  *   - norms[s] = 1.0 for all s
  *   - taps: first tap I=1.0, Q=0.0; remaining taps zero
  *   - tap_indices: [0, 1, 2, ..., num_taps-1] for each symbol
@@ -55,13 +56,17 @@ SPDX-License-Identifier: Apache-2.0
  * @param fft_size_param               FFT size used by the OFDM system.
  * @param subcarrier_spacing_param     Subcarrier spacing in Hz.
  * @param frequency_param              Carrier frequency in Hz.
+ * @param port_param                   TCP control port.
+ * @param trace_root_param             Read-only root containing trace folders.
  * @return 0 on success, -1 on failure.
  */
 int32_t cir_zmq_init(int num_taps_param,
                      int num_ofdm_symbols_per_slot,
                      int fft_size_param,
                      float subcarrier_spacing_param,
-                     float frequency_param);
+                     float frequency_param,
+                     int port_param,
+                     const char *trace_root_param);
 
 /** @brief Per-thread initialisation (currently a no-op). */
 int32_t cir_zmq_init_thread(void);

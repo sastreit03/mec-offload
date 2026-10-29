@@ -10,10 +10,14 @@ SPDX-License-Identifier: Apache-2.0
 // Help strings for channel emulation CLI options (used by config paramdef_t)
 #define CHNEMU_HLP_CIRFOLDER  "Path to CIR folder for channel emulation (enables channel emulation when set)\n"
 #define CHNEMU_HLP_CIRZMQTAPS "Number of CIR taps for ZMQ-based channel emulation (enables cir_zmq when set)\n"
+#define CHNEMU_HLP_CIRZMQPORT "CIR ZMQ control port (default: 5560)\n"
+#define CHNEMU_HLP_CIRZMQROOT "Read-only root of the precomputed CIR trace bank\n"
 
 // Channel emulation parameters read from command line via config module
 static char *cir_folder_path_param = NULL;
 static int cir_zmq_num_taps_param = 0;
+static int cir_zmq_port_param = 5560;
+static char *cir_zmq_trace_root_param = NULL;
 
 // Flag to track if channel emulation is enabled
 static int channel_emulation_enabled = 0;
@@ -60,7 +64,10 @@ static float (*cir_get_sigma_max_fn)(void) = NULL;
  /**
   * @brief Try to load and init channel emulation with the cir_zmq source.
   */
- static int init_channel_emu_cir_zmq(int num_taps, const NR_DL_FRAME_PARMS *fp)
+ static int init_channel_emu_cir_zmq(int num_taps,
+                                     int port,
+                                     const char *trace_root,
+                                     const NR_DL_FRAME_PARMS *fp)
  {
      int ret = load_cir_zmq_lib(NULL, &cir_zmq_interface);
      if (ret != 0 || cir_zmq_interface.init == NULL) return -1;
@@ -74,10 +81,11 @@ static float (*cir_get_sigma_max_fn)(void) = NULL;
      float frequency = (float)fp->dl_CarrierFreq;
  
      ret = cir_zmq_interface.init(num_taps, num_symbols_per_slot,
-                                   fft_size, subcarrier_spacing, frequency);
+                                   fft_size, subcarrier_spacing, frequency,
+                                   port, trace_root);
      if (ret != 0) return -1;
  
-     // Init channel emulator with default sigma values (cir_zmq defaults: 1.0, 1.0)
+     // Start noise-free; selecting a trace updates both sigma values.
      float sigma_scaling = cir_zmq_interface.get_sigma_scaling();
      float sigma_max = cir_zmq_interface.get_sigma_max();
      ret = chn_emu_interface.init(num_taps, num_symbols_per_slot, sigma_scaling, sigma_max);
@@ -90,8 +98,10 @@ static float (*cir_get_sigma_max_fn)(void) = NULL;
      cir_zmq_active = 1;
  
      printf("Channel emulation enabled: CIR source=cir_zmq, num_taps=%d, "
-            "symbols_per_slot=%d, fft_size=%d, scs=%.0f, freq=%.0f\n",
-            num_taps, num_symbols_per_slot, fft_size, subcarrier_spacing, frequency);
+            "port=%d, trace_root=%s, symbols_per_slot=%d, fft_size=%d, "
+            "scs=%.0f, freq=%.0f\n",
+            num_taps, port, trace_root ? trace_root : "", num_symbols_per_slot,
+            fft_size, subcarrier_spacing, frequency);
      return 0;
  }
 
@@ -107,6 +117,9 @@ void init_channel_emulator_libs(const NR_DL_FRAME_PARMS *fp)
         paramdef_t channel_emulator_params[] = {
             {"cir-folder",       CHNEMU_HLP_CIRFOLDER,  0, .strptr = &cir_folder_path_param, .defstrval = NULL, TYPE_STRING, 0},
             {"cir-zmq-num-taps", CHNEMU_HLP_CIRZMQTAPS, 0, .iptr = &cir_zmq_num_taps_param,  .defintval = 0,   TYPE_INT,    0},
+            {"cir-zmq-port",     CHNEMU_HLP_CIRZMQPORT, 0, .iptr = &cir_zmq_port_param,      .defintval = 5560, TYPE_INT,    0},
+            {"cir-zmq-trace-root", CHNEMU_HLP_CIRZMQROOT, 0, .strptr = &cir_zmq_trace_root_param,
+             .defstrval = "/opt/oai-gnb/plugins/channel_emulation/data/trace_bank", TYPE_STRING, 0},
         };
         config_get(cfg, channel_emulator_params, sizeofArray(channel_emulator_params), NULL);
     }
@@ -120,7 +133,8 @@ void init_channel_emulator_libs(const NR_DL_FRAME_PARMS *fp)
     // Channel emulation plugins - two mutually exclusive sources
     if (cir_zmq_num_taps > 0 && fp != NULL) {
         // ZMQ-based CIR source (takes priority over cir_folder)
-        if (init_channel_emu_cir_zmq(cir_zmq_num_taps, fp) == 0) {
+        if (init_channel_emu_cir_zmq(cir_zmq_num_taps, cir_zmq_port_param,
+                                     cir_zmq_trace_root_param, fp) == 0) {
             channel_emulation_enabled = 1;
         } else {
             printf("Channel emulation plugins not loaded (cir_zmq init failed)\n");

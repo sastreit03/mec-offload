@@ -7,7 +7,7 @@ SPDX-License-Identifier: Apache-2.0
  * @brief CIR ZMQ plugin -- exposes a ZMQ REQ/REP interface for runtime
  *        channel impulse response (CIR) updates.
  *
- * Protocol (JSON over ZMQ REQ/REP on tcp:// *:5555):
+ * Protocol (JSON over ZMQ REQ/REP, default tcp:// *:5560):
  *
  *   Request: {"msg_type": "config_req"}
  *   Reply:   {"msg_type": "config_res", "num_taps": N, "fft_size": N,
@@ -24,6 +24,14 @@ SPDX-License-Identifier: Apache-2.0
  *
  *   Request: {"msg_type": "nrx", "enabled": true|false}
  *   Reply:   {"msg_type": "nrx_ack", "enabled": 0|1}
+ *
+ *   Request: {"msg_type": "trace_select", "condition_id": "...",
+ *             "trace_sha256": "..."}
+ *   Reply:   {"msg_type": "trace_ack", "condition_id": "...",
+ *             "trace_sha256": "...", "generation": N, "num_slots": N}
+ *
+ *   Request: {"msg_type": "trace_status"}
+ *   Reply:   current source, condition, hash, generation and playback slot.
  *
  *   Error:   {"msg_type": "error", "error": "...", "details": "..."}
  *
@@ -43,8 +51,13 @@ SPDX-License-Identifier: Apache-2.0
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <errno.h>
+#include <ctype.h>
+#include <limits.h>
+#include <math.h>
 #include <pthread.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <cjson/cJSON.h>
 #include "cir_zmq.h"
@@ -59,6 +72,8 @@ static int num_symbols = 0;   // num_ofdm_symbols_per_slot
 static int fft_size = 0;
 static float subcarrier_spacing = 0.0f;
 static float frequency = 0.0f;
+static int control_port = 5560;
+static char trace_root[PATH_MAX] = {0};
 
 static int custom_receiver_enabled = 0;
 
@@ -76,8 +91,8 @@ static int zmq_thread_created = 0;
 static volatile int zmq_thread_idle_in_recv = 0;  // 1 when blocked in zmq_recv
 
 // CIR internal flat arrays (protected by mutex)
-static float sigma_scaling_val = 1.0f;
-static float sigma_max_val = 1.0f;
+static float sigma_scaling_val = 0.0f;
+static float sigma_max_val = 0.0f;
 static float *norms_array = NULL;       // [S]
 static float *taps_array = NULL;        // [S * 2*T]
 static uint16_t *tap_indices_array = NULL; // [S * T]
@@ -91,6 +106,16 @@ static size_t tap_indices_len = 0;      // S * T
 static size_t cir_entry_size_bytes = 0;
 static size_t packed_total_bytes = 0;
 static uint8_t *packed_cir_out = NULL;
+
+// Aetheredge: selected precomputed trace, advanced locally without ZMQ traffic.
+static uint8_t *trace_data = NULL;
+static size_t trace_num_slots = 0;
+static size_t trace_current_slot = 0;
+static int trace_reads_per_slot = 1;
+static int trace_reads_current_slot = 0;
+static unsigned long long trace_generation = 0;
+static char active_condition_id[128] = "pass-through";
+static char active_trace_sha256[65] = "";
 
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -118,6 +143,205 @@ static int handle_unknown_message(const char *type_str) {
     return -1;
 }
 
+static int valid_condition_id(const char *value) {
+    if (!value || !value[0] || strlen(value) >= sizeof(active_condition_id)) return 0;
+    for (const unsigned char *p = (const unsigned char *)value; *p; p++) {
+        if (!isalnum(*p) && *p != '-' && *p != '_' && *p != '.') return 0;
+    }
+    return 1;
+}
+
+static int valid_sha256(const char *value) {
+    if (!value || strlen(value) != 64) return 0;
+    for (int i = 0; i < 64; i++) if (!isxdigit((unsigned char)value[i])) return 0;
+    return 1;
+}
+
+static char *read_text_file(const char *path) {
+    FILE *file = fopen(path, "rb");
+    if (!file) return NULL;
+    if (fseek(file, 0, SEEK_END) != 0) { fclose(file); return NULL; }
+    long size = ftell(file);
+    if (size <= 0 || size > 1024 * 1024 || fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return NULL;
+    }
+    char *data = (char *)malloc((size_t)size + 1);
+    if (!data) { fclose(file); return NULL; }
+    if (fread(data, 1, (size_t)size, file) != (size_t)size) {
+        free(data);
+        fclose(file);
+        return NULL;
+    }
+    data[size] = '\0';
+    fclose(file);
+    return data;
+}
+
+static int validate_trace_entries(const uint8_t *data, size_t num_cirs) {
+    const size_t taps_bytes = (size_t)num_taps * 2 * sizeof(float);
+    for (size_t cir = 0; cir < num_cirs; cir++) {
+        const uint8_t *entry = data + cir * cir_entry_size_bytes;
+        float norm;
+        memcpy(&norm, entry, sizeof(norm));
+        if (!isfinite(norm) || norm <= 0.0f) return -1;
+        entry += sizeof(float);
+        for (int tap = 0; tap < num_taps * 2; tap++) {
+            float component;
+            memcpy(&component, entry + (size_t)tap * sizeof(float), sizeof(component));
+            if (!isfinite(component)) return -1;
+        }
+        entry += taps_bytes;
+        for (int tap = 0; tap < num_taps; tap++) {
+            uint16_t index;
+            memcpy(&index, entry + (size_t)tap * sizeof(uint16_t), sizeof(index));
+            // SRK supports a 256-sample delay window: valid indices are 0..255.
+            if (index >= 256) return -1;
+        }
+    }
+    return 0;
+}
+
+static void add_trace_state(cJSON *response) {
+    pthread_mutex_lock(&mutex);
+    cJSON_AddStringToObject(response, "source", trace_data ? "trace_bank" : "direct");
+    cJSON_AddStringToObject(response, "condition_id", active_condition_id);
+    cJSON_AddStringToObject(response, "trace_sha256", active_trace_sha256);
+    cJSON_AddNumberToObject(response, "generation", (double)trace_generation);
+    cJSON_AddNumberToObject(response, "num_slots", (double)trace_num_slots);
+    cJSON_AddNumberToObject(response, "current_slot", (double)trace_current_slot);
+    cJSON_AddNumberToObject(response, "reads_per_slot", trace_reads_per_slot);
+    pthread_mutex_unlock(&mutex);
+}
+
+static int handle_trace_status(void) {
+    cJSON *response = cJSON_CreateObject();
+    cJSON_AddStringToObject(response, "msg_type", "trace_status_res");
+    add_trace_state(response);
+    char *json_string = cJSON_PrintUnformatted(response);
+    cJSON_Delete(response);
+    zmq_send(rep_socket, json_string, strlen(json_string), 0);
+    free(json_string);
+    return 0;
+}
+
+static int handle_trace_select(cJSON *json) {
+    cJSON *condition = cJSON_GetObjectItem(json, "condition_id");
+    cJSON *expected_hash = cJSON_GetObjectItem(json, "trace_sha256");
+    if (!cJSON_IsString(condition) || !valid_condition_id(condition->valuestring)
+        || !cJSON_IsString(expected_hash) || !valid_sha256(expected_hash->valuestring)) {
+        send_error_response("Invalid trace selection",
+                            "condition_id and 64-character trace_sha256 are required");
+        return -1;
+    }
+
+    char config_path[PATH_MAX];
+    char binary_path[PATH_MAX];
+    int n1 = snprintf(config_path, sizeof(config_path), "%s/%s/config.json",
+                      trace_root, condition->valuestring);
+    int n2 = snprintf(binary_path, sizeof(binary_path), "%s/%s/cirs.bin",
+                      trace_root, condition->valuestring);
+    if (n1 < 0 || n2 < 0 || n1 >= (int)sizeof(config_path) || n2 >= (int)sizeof(binary_path)) {
+        send_error_response("Trace path too long", condition->valuestring);
+        return -1;
+    }
+
+    char *config_text = read_text_file(config_path);
+    if (!config_text) {
+        send_error_response("Trace config unavailable", config_path);
+        return -1;
+    }
+    cJSON *config = cJSON_Parse(config_text);
+    free(config_text);
+    cJSON *channel = config ? cJSON_GetObjectItem(config, "channel_emulation") : NULL;
+    cJSON *metadata = config ? cJSON_GetObjectItem(config, "aetheredge") : NULL;
+    cJSON *file_taps = channel ? cJSON_GetObjectItem(channel, "num_taps") : NULL;
+    cJSON *file_cirs = channel ? cJSON_GetObjectItem(channel, "num_cirs") : NULL;
+    cJSON *file_sigma_scaling = channel ? cJSON_GetObjectItem(channel, "sigma_scaling") : NULL;
+    cJSON *file_sigma_max = channel ? cJSON_GetObjectItem(channel, "sigma_max") : NULL;
+    cJSON *file_condition = metadata ? cJSON_GetObjectItem(metadata, "condition_id") : NULL;
+    cJSON *file_hash = metadata ? cJSON_GetObjectItem(metadata, "trace_sha256") : NULL;
+    cJSON *file_reads_per_slot = metadata ? cJSON_GetObjectItem(metadata, "reads_per_slot") : NULL;
+    if (!cJSON_IsNumber(file_taps) || !cJSON_IsNumber(file_cirs)
+        || !cJSON_IsNumber(file_sigma_scaling) || !cJSON_IsNumber(file_sigma_max)
+        || !cJSON_IsString(file_condition) || !cJSON_IsString(file_hash)
+        || !cJSON_IsNumber(file_reads_per_slot)) {
+        cJSON_Delete(config);
+        send_error_response("Invalid trace config", config_path);
+        return -1;
+    }
+    int file_num_cirs = file_cirs->valueint;
+    if (file_taps->valueint != num_taps || file_num_cirs <= 0
+        || file_num_cirs % num_symbols != 0
+        || strcmp(file_condition->valuestring, condition->valuestring) != 0
+        || strcasecmp(file_hash->valuestring, expected_hash->valuestring) != 0
+        || (file_reads_per_slot->valueint != 1 && file_reads_per_slot->valueint != 2)
+        || !isfinite(file_sigma_scaling->valuedouble)
+        || !isfinite(file_sigma_max->valuedouble)
+        || file_sigma_scaling->valuedouble < 0.0 || file_sigma_max->valuedouble < 0.0) {
+        cJSON_Delete(config);
+        send_error_response("Trace config mismatch",
+                            "tap count, symbols, identity, hash, or noise parameters differ");
+        return -1;
+    }
+
+    struct stat st;
+    size_t bytes = (size_t)file_num_cirs * cir_entry_size_bytes;
+    if (stat(binary_path, &st) != 0 || st.st_size < 0 || (size_t)st.st_size != bytes) {
+        cJSON_Delete(config);
+        send_error_response("Trace binary size mismatch", binary_path);
+        return -1;
+    }
+    FILE *file = fopen(binary_path, "rb");
+    uint8_t *loaded = file ? (uint8_t *)malloc(bytes) : NULL;
+    if (!file || !loaded || fread(loaded, 1, bytes, file) != bytes) {
+        if (file) fclose(file);
+        free(loaded);
+        cJSON_Delete(config);
+        send_error_response("Trace binary unavailable", binary_path);
+        return -1;
+    }
+    fclose(file);
+    if (validate_trace_entries(loaded, (size_t)file_num_cirs) != 0) {
+        free(loaded);
+        cJSON_Delete(config);
+        send_error_response("Invalid trace samples",
+                            "non-finite values, nonpositive norms, or tap index outside 0..255");
+        return -1;
+    }
+
+    pthread_mutex_lock(&mutex);
+    uint8_t *old = trace_data;
+    trace_data = loaded;
+    trace_num_slots = (size_t)file_num_cirs / (size_t)num_symbols;
+    trace_current_slot = 0;
+    trace_reads_per_slot = file_reads_per_slot->valueint;
+    trace_reads_current_slot = 0;
+    sigma_scaling_val = (float)file_sigma_scaling->valuedouble;
+    sigma_max_val = (float)file_sigma_max->valuedouble;
+    snprintf(active_condition_id, sizeof(active_condition_id), "%s", condition->valuestring);
+    snprintf(active_trace_sha256, sizeof(active_trace_sha256), "%s", file_hash->valuestring);
+    trace_generation++;
+    unsigned long long generation = trace_generation;
+    size_t slots = trace_num_slots;
+    pthread_mutex_unlock(&mutex);
+    free(old);
+    cJSON_Delete(config);
+
+    cJSON *response = cJSON_CreateObject();
+    cJSON_AddStringToObject(response, "msg_type", "trace_ack");
+    cJSON_AddStringToObject(response, "condition_id", active_condition_id);
+    cJSON_AddStringToObject(response, "trace_sha256", active_trace_sha256);
+    cJSON_AddNumberToObject(response, "generation", (double)generation);
+    cJSON_AddNumberToObject(response, "num_slots", (double)slots);
+    cJSON_AddStringToObject(response, "effective", "next_emulator_read");
+    char *json_string = cJSON_PrintUnformatted(response);
+    cJSON_Delete(response);
+    zmq_send(rep_socket, json_string, strlen(json_string), 0);
+    free(json_string);
+    return 0;
+}
+
 // Function to handle config request and send config response
 static int handle_config_request(void) {
     cJSON *response = cJSON_CreateObject();
@@ -127,6 +351,9 @@ static int handle_config_request(void) {
     cJSON_AddNumberToObject(response, "fft_size", fft_size);
     cJSON_AddNumberToObject(response, "subcarrier_spacing", subcarrier_spacing);
     cJSON_AddNumberToObject(response, "frequency", frequency);
+    cJSON_AddNumberToObject(response, "control_port", control_port);
+    cJSON_AddStringToObject(response, "trace_root", trace_root);
+    add_trace_state(response);
     char *json_string = cJSON_Print(response);
     cJSON_Delete(response);
     zmq_send(rep_socket, json_string, strlen(json_string), 0);
@@ -237,9 +464,25 @@ static int handle_cir_message(cJSON *json) {
             send_error_response("Invalid tap index value", details);
             return -1;
         }
+        if (item->valuedouble < 0.0 || item->valuedouble >= 256.0) {
+            pthread_mutex_unlock(&mutex);
+            send_error_response("Invalid tap index value", "tap index must be in [0, 255]");
+            return -1;
+        }
         tap_indices_array[i] = (uint16_t)item->valuedouble;
     }
+    // A direct update deliberately replaces any file-backed trace.
+    uint8_t *old_trace = trace_data;
+    trace_data = NULL;
+    trace_num_slots = 0;
+    trace_current_slot = 0;
+    trace_reads_per_slot = 1;
+    trace_reads_current_slot = 0;
+    snprintf(active_condition_id, sizeof(active_condition_id), "%s", "direct-cir");
+    active_trace_sha256[0] = '\0';
+    trace_generation++;
     pthread_mutex_unlock(&mutex);
+    free(old_trace);
 
     // Send acknowledgment
     cJSON *response = cJSON_CreateObject();
@@ -292,6 +535,10 @@ static int handle_json_message(const char* message, size_t msg_len) {
         ret = handle_cir_message(json);
     } else if (strcmp(type_str, "nrx") == 0) {
         ret = handle_nrx_message(json);
+    } else if (strcmp(type_str, "trace_select") == 0) {
+        ret = handle_trace_select(json);
+    } else if (strcmp(type_str, "trace_status") == 0) {
+        ret = handle_trace_status();
     } else {
         ret = handle_unknown_message(type_str);
     }
@@ -307,7 +554,9 @@ int32_t cir_zmq_init(int num_taps_param,
                      int num_ofdm_symbols_per_slot,
                      int fft_size_param,
                      float subcarrier_spacing_param,
-                     float frequency_param) {
+                     float frequency_param,
+                     int port_param,
+                     const char *trace_root_param) {
 
     // Store configuration parameters
     num_taps = num_taps_param;
@@ -315,6 +564,13 @@ int32_t cir_zmq_init(int num_taps_param,
     fft_size = fft_size_param;
     subcarrier_spacing = subcarrier_spacing_param;
     frequency = frequency_param;
+    if (port_param <= 0 || port_param > 65535 || !trace_root_param || !trace_root_param[0]
+        || strlen(trace_root_param) >= sizeof(trace_root)) {
+        fprintf(stderr, "Invalid CIR ZMQ port or trace root\n");
+        return -1;
+    }
+    control_port = port_param;
+    snprintf(trace_root, sizeof(trace_root), "%s", trace_root_param);
 
     // Create ZMQ context and REP socket (skip if already open)
     if (!zmq_context) {
@@ -330,8 +586,10 @@ int32_t cir_zmq_init(int num_taps_param,
             fprintf(stderr, "Failed to create ZMQ REP socket\n");
             return -1;
         }
-        if (zmq_bind(rep_socket, "tcp://*:5555") != 0) {
-            fprintf(stderr, "Failed to bind ZMQ socket to tcp://*:5555: %s\n",
+        char endpoint[64];
+        snprintf(endpoint, sizeof(endpoint), "tcp://*:%d", control_port);
+        if (zmq_bind(rep_socket, endpoint) != 0) {
+            fprintf(stderr, "Failed to bind ZMQ socket to %s: %s\n", endpoint,
                     zmq_strerror(errno));
             zmq_close(rep_socket);
             rep_socket = NULL;
@@ -344,6 +602,11 @@ int32_t cir_zmq_init(int num_taps_param,
     free(taps_array);        taps_array = NULL;
     free(tap_indices_array); tap_indices_array = NULL;
     free(packed_cir_out);    packed_cir_out = NULL;
+    free(trace_data);        trace_data = NULL;
+    trace_num_slots = 0;
+    trace_current_slot = 0;
+    trace_reads_per_slot = 1;
+    trace_reads_current_slot = 0;
 
     // Compute array dimensions
     norms_len = (size_t)num_symbols;
@@ -382,9 +645,9 @@ int32_t cir_zmq_init(int num_taps_param,
         return -1;
     }
 
-    // Initialise defaults: sigma_scaling=1, sigma_max=1
-    sigma_scaling_val = 1.0f;
-    sigma_max_val = 1.0f;
+    // Aetheredge: start in noise-free pass-through until a trace is selected.
+    sigma_scaling_val = 0.0f;
+    sigma_max_val = 0.0f;
 
     // Initialise per-symbol defaults
     for (int s = 0; s < num_symbols; s++) {
@@ -398,9 +661,15 @@ int32_t cir_zmq_init(int num_taps_param,
         }
     }
 
+    snprintf(active_condition_id, sizeof(active_condition_id), "%s", "pass-through");
+    active_trace_sha256[0] = '\0';
+    trace_generation = 0;
+
     printf("\nCIR ZMQ initialized with num_taps=%d, num_ofdm_symbols_per_slot=%d, "
-           "fft_size=%d, subcarrier_spacing=%.1f, frequency=%.0f\n\n",
-           num_taps, num_symbols, fft_size, subcarrier_spacing, frequency);
+           "fft_size=%d, subcarrier_spacing=%.1f, frequency=%.0f, port=%d, "
+           "trace_root=%s\n\n",
+           num_taps, num_symbols, fft_size, subcarrier_spacing, frequency,
+           control_port, trace_root);
 
 #ifndef ENABLE_NANOBIND
     /* In OAI build: start the ZMQ receive thread so the REP socket accepts requests.
@@ -445,6 +714,11 @@ int32_t cir_zmq_shutdown(void) {
     free(taps_array);        taps_array = NULL;
     free(tap_indices_array); tap_indices_array = NULL;
     free(packed_cir_out);    packed_cir_out = NULL;
+    free(trace_data);        trace_data = NULL;
+    trace_num_slots = 0;
+    trace_current_slot = 0;
+    trace_reads_per_slot = 1;
+    trace_reads_current_slot = 0;
     norms_len = 0;
     taps_len = 0;
     tap_indices_len = 0;
@@ -485,7 +759,19 @@ const void* cir_zmq_read(void) {
 
     pthread_mutex_lock(&mutex);
 
-    // Pack internal arrays into the per-symbol binary layout
+    if (trace_data && trace_num_slots > 0) {
+        size_t offset = trace_current_slot * packed_total_bytes;
+        memcpy(packed_cir_out, trace_data + offset, packed_total_bytes);
+        trace_reads_current_slot++;
+        if (trace_reads_current_slot >= trace_reads_per_slot) {
+            trace_reads_current_slot = 0;
+            trace_current_slot = (trace_current_slot + 1) % trace_num_slots;
+        }
+        pthread_mutex_unlock(&mutex);
+        return (const void *)packed_cir_out;
+    }
+
+    // Pack a directly supplied one-slot CIR into the emulator layout.
     for (int s = 0; s < num_symbols; s++) {
         uint8_t *entry = packed_cir_out + (size_t)s * cir_entry_size_bytes;
 
@@ -567,15 +853,19 @@ NB_MODULE(cir_zmq_py, m) {
                      int num_ofdm_symbols_per_slot,
                      int fft_size_param,
                      float subcarrier_spacing_param,
-                     float frequency_param) {
+                     float frequency_param,
+                     int port_param,
+                     const char *trace_root_param) {
         return cir_zmq_init(num_taps_param, num_ofdm_symbols_per_slot,
                            fft_size_param, subcarrier_spacing_param,
-                           frequency_param);
+                           frequency_param, port_param, trace_root_param);
     }, nb::arg("num_taps"),
        nb::arg("num_ofdm_symbols_per_slot"),
        nb::arg("fft_size"),
        nb::arg("subcarrier_spacing"),
        nb::arg("frequency"),
+       nb::arg("port") = 5560,
+       nb::arg("trace_root") = "/tmp/aetheredge-trace-bank",
     "Initialize the CIR ZMQ server");
 
     m.def("shutdown", []() {
@@ -598,6 +888,9 @@ NB_MODULE(cir_zmq_py, m) {
         if (!norms_array || !taps_array || !tap_indices_array) {
             throw std::runtime_error("CIR read: plugin not initialised");
         }
+
+        // Exercise production playback advancement in file-trace tests.
+        cir_zmq_read();
 
         pthread_mutex_lock(&mutex);
 

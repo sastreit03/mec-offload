@@ -20,7 +20,9 @@ typedef int32_t(cir_zmq_initfunc_t)(int num_taps_param,
                                      int num_ofdm_symbols_per_slot,
                                      int fft_size_param,
                                      float subcarrier_spacing_param,
-                                     float frequency_param);
+                                     float frequency_param,
+                                     int port_param,
+                                     const char *trace_root_param);
 typedef int32_t(cir_zmq_init_threadfunc_t)(void);
 typedef int32_t(cir_zmq_shutdownfunc_t)(void);
 typedef int(cir_zmq_receive_t)(void);

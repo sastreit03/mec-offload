@@ -6,8 +6,7 @@
 # Live test script for the CIR ZMQ plugin.
 #
 # Run this while the OAI gNB is running with cir_zmq enabled. The script
-# connects to the gNB's ZMQ REP socket (default: localhost:5556 when gNB is
-# in Docker, since container port 5555 is mapped to host 5556), exercises
+# connects to the gNB's CIR control socket (default: localhost:5560), exercises
 # all message types (config_req, cir, nrx), and runs a timed sequence of
 # CIR updates using a scaled Dirac to vary effective SNR.
 #
@@ -15,7 +14,7 @@
 #   python test_cir_zmq_live.py [--host HOST] [--port PORT] [--wait-secs N] [--steps N] [--no-nrx]
 #
 # Example (gNB in Docker):
-#   python test_cir_zmq_live.py --host localhost --port 5556 --wait-secs 10
+#   python test_cir_zmq_live.py --host localhost --port 5560 --wait-secs 10
 #
 
 import argparse
@@ -27,7 +26,7 @@ import zmq
 
 
 DEFAULT_HOST = "localhost"
-DEFAULT_PORT = 5556
+DEFAULT_PORT = 5560
 DEFAULT_WAIT_SECS = 10
 DEFAULT_STEPS = 4
 SOCKET_TIMEOUT_MS = 10000
@@ -46,7 +45,7 @@ def parse_args():
         "--port",
         type=int,
         default=DEFAULT_PORT,
-        help=f"gNB ZMQ port (default: {DEFAULT_PORT}, use 5556 when gNB is in Docker)",
+        help=f"gNB CIR control port (default: {DEFAULT_PORT})",
     )
     p.add_argument(
         "--wait-secs",

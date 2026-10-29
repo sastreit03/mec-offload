@@ -141,7 +141,8 @@ services:
             edge_net:
                 ipv4_address: 192.168.74.140
         ports:
-            - 5556:5555
+            # Aetheredge: CIR control is separate from EdgeRIC metrics/weights.
+            - 5560:5560
         devices:
             - /dev/bus/usb/:/dev/bus/usb/
         volumes:
@@ -149,6 +150,8 @@ services:
             - /tmp/nvidia-log:/tmp/nvidia-log
             - ${GNB_CONFIG:-../common/gnb.sa.usrpb200.24prbs.conf}:/opt/oai-gnb/etc/gnb.conf
             - ../../plugins:/opt/oai-gnb/plugins # mount all plugins for weights, logs, data capture, etc.
+            # Aetheredge: runtime channel traces are immutable inside the gNB.
+            - ../../plugins/channel_emulation/data/trace_bank:/opt/oai-gnb/plugins/channel_emulation/data/trace_bank:ro
             - ../../../edgeric-validation:/edgeric-validation
         ipc: host
         healthcheck:

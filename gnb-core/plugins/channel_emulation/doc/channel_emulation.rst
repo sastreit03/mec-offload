@@ -52,7 +52,7 @@ The channel emulation demo shown at `GTC DC 2025 <https://developer.nvidia.com/b
 .. code-block:: bash
    # enable the channel emulator in config/rfsim/.env file
    # ZMQ-based CIR (interactive, use with Sionna RT GUI)
-   GNB_EXTRA_OPTIONS="--cir-zmq-num-taps 48"
+   GNB_EXTRA_OPTIONS="--cir-zmq-num-taps 48 --cir-zmq-port 5560"
 
    # Start MPS
    ./scripts/start_mps.sh
@@ -85,7 +85,7 @@ The default configuration file ``spark_quectel.yaml`` mentioned earlier is shipp
 
 .. note::
 
-   The Sionna RT GUI requires RT cores for real-time ray tracing and is designed for DGX Spark. On Jetson platforms, the GUI can run on a separate CUDA-enabled host machine; just forward ports 5555 (stats ZMQ) and 5556 (CIR ZMQ) to the Jetson via ssh port forwarding.
+   The Sionna RT GUI requires RT cores for real-time ray tracing and is designed for DGX Spark. On Jetson platforms, the GUI can run on a separate CUDA-enabled host machine; forward port 5555 for statistics and port 5560 for CIR control.
 
 Configuration
 -------------
@@ -102,12 +102,14 @@ The channel emulator is configured via the ``GNB_EXTRA_OPTIONS`` environment var
 
 .. code-block:: bash
 
-   GNB_EXTRA_OPTIONS="--loader.chn_emu.shlibpath /usr/local/lib --loader.cir_zmq.shlibpath /usr/local/lib --cir-zmq-num-taps 48"
+   GNB_EXTRA_OPTIONS="--loader.chn_emu.shlibpath /usr/local/lib --loader.cir_zmq.shlibpath /usr/local/lib --cir-zmq-num-taps 48 --cir-zmq-port 5560"
 
 These options are set in the ``.env`` file for your configuration (e.g., ``config/b200/.env`` or ``config/rfsim/.env``). The relevant command-line options are:
 
 - ``--cir-folder``: Folder containing ``config.json`` and ``cirs.bin`` (file mode only).
 - ``--cir-zmq-num-taps``: Number of CIR taps (ZMQ mode only).
+- ``--cir-zmq-port``: CIR control port (default 5560).
+- ``--cir-zmq-trace-root``: Read-only root containing precomputed trace folders.
 
 A new CIR folder can be generated with the Sionna RT GUI, and then copied to the OAI `plugins/channel_emulation/` directory.
 
@@ -193,13 +195,14 @@ ZMQ-Based CIR Source
 
 The ZMQ mode is activated by loading the ``cir_zmq`` library (see `Configuration`_). The number of CIR taps is set via the parameter ``--cir-zmq-num-taps``.
 
-The ZMQ CIR source (``plugins/channel_emulation/zmq_loader/``) exposes a ZeroMQ REP socket on port 5555 that accepts JSON messages to update CIRs at runtime.
-In case the GUI is running on a different machine, you can forward the ports 5555 and 5556 to the DGX Spark via ssh port forwarding.
+The ZMQ CIR source (``plugins/channel_emulation/zmq_loader/``) exposes a ZeroMQ REP socket on configurable port 5560. This avoids the EdgeRIC metrics and weights ports.
 
 Supported message types are:
 
 - ``config_req``: Query the current emulator configuration (FFT size, subcarrier spacing, carrier frequency, number of taps).
 - ``cir``: Push new CIR taps and noise parameters.
+- ``trace_select``: Atomically select a validated ``config.json``/``cirs.bin`` trace from the read-only trace bank.
+- ``trace_status``: Return the active condition, hash, generation, and playback position.
 
 The ZMQ source initializes with sensible defaults (pass-through channel) and updates CIRs as messages arrive.
 This is the recommended mode for interactive use with the Sionna RT GUI, which streams CIRs based on the simulated scene. The GUI can run on the same machine (e.g., DGX Spark) or on a remote machine connected over Ethernet.

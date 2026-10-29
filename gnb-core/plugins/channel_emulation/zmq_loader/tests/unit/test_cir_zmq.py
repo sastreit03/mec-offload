@@ -10,8 +10,11 @@ exercise every ZMQ message type, error path, and public API function.
 """
 
 import json
+import hashlib
+import struct
 import threading
 import time
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -27,7 +30,8 @@ NUM_SYMBOLS = 14  # num_ofdm_symbols_per_slot
 FFT_SIZE = 512
 SUBCARRIER_SPACING = 30000.0
 FREQUENCY = 3500000000.0
-ZMQ_ENDPOINT = "tcp://localhost:5555"
+ZMQ_ENDPOINT = "tcp://localhost:5560"
+TRACE_ROOT = Path("/tmp/aetheredge-trace-bank")
 
 
 # ---------------------------------------------------------------------------
@@ -201,6 +205,62 @@ def test_config_request(initialized_server, zmq_client):
     assert response["fft_size"] == FFT_SIZE
     assert response["subcarrier_spacing"] == SUBCARRIER_SPACING
     assert response["frequency"] == FREQUENCY
+    assert response["control_port"] == 5560
+    assert response["trace_root"] == str(TRACE_ROOT)
+
+
+def test_select_precomputed_trace(initialized_server, zmq_client):
+    """A validated file trace is selected atomically and advances by slot."""
+    condition = "awgn-sinr10"
+    folder = TRACE_ROOT / condition
+    folder.mkdir(parents=True, exist_ok=True)
+    entry = struct.pack("f", 1.0)
+    entry += struct.pack(f"{2 * NUM_TAPS}f", 1.0, 0.0, *([0.0] * (2 * NUM_TAPS - 2)))
+    entry += struct.pack(f"{NUM_TAPS}H", *range(NUM_TAPS))
+    entry += b"\0" * ((4 - len(entry) % 4) % 4)
+    payload = entry * (NUM_SYMBOLS * 2)
+    trace_hash = hashlib.sha256(payload).hexdigest()
+    (folder / "cirs.bin").write_bytes(payload)
+    (folder / "config.json").write_text(json.dumps({
+        "channel_emulation": {
+            "num_taps": NUM_TAPS,
+            "num_cirs": NUM_SYMBOLS * 2,
+            "sigma_scaling": 0.5,
+            "sigma_max": 1.0,
+        },
+        "aetheredge": {
+            "condition_id": condition,
+            "trace_sha256": trace_hash,
+            "reads_per_slot": 2,
+        },
+    }))
+
+    response = send_and_receive(initialized_server, zmq_client, {
+        "msg_type": "trace_select",
+        "condition_id": condition,
+        "trace_sha256": trace_hash,
+    })
+    assert response["msg_type"] == "trace_ack"
+    assert response["condition_id"] == condition
+    assert response["trace_sha256"] == trace_hash
+    assert response["generation"] == 1
+    assert response["num_slots"] == 2
+
+    status = send_and_receive(
+        initialized_server, zmq_client, {"msg_type": "trace_status"}
+    )
+    assert status["source"] == "trace_bank"
+    assert status["condition_id"] == condition
+    assert status["current_slot"] == 0
+    assert status["reads_per_slot"] == 2
+
+    # UL and DL consume the same slot before playback advances.
+    initialized_server.read()
+    initialized_server.read()
+    status = send_and_receive(
+        initialized_server, zmq_client, {"msg_type": "trace_status"}
+    )
+    assert status["current_slot"] == 1
 
 
 @pytest.mark.skip(reason="In-process build does not start ZMQ thread; use live script against gNB")
@@ -266,7 +326,7 @@ def test_cir_read(initialized_server, zmq_client):
 
 def test_default_cir_after_init(initialized_server):
     """After init (no CIR message sent), read() should return meaningful defaults:
-    sigma_scaling=1, sigma_max=1, norms all 1.0,
+    sigma_scaling=0, sigma_max=0, norms all 1.0,
     first tap per symbol I=1.0 rest zero, tap_indices sequential."""
     sigma_scaling, sigma_max, norms, taps, tap_indices = initialized_server.read()
 
@@ -274,8 +334,8 @@ def test_default_cir_after_init(initialized_server):
     T = NUM_TAPS
 
     # Scalar defaults
-    assert abs(sigma_scaling - 1.0) < 1e-6
-    assert abs(sigma_max - 1.0) < 1e-6
+    assert abs(sigma_scaling) < 1e-6
+    assert abs(sigma_max) < 1e-6
 
     # norms: all 1.0
     assert len(norms) == S
@@ -569,13 +629,13 @@ def test_128_taps_supported(compiled_cir_zmq):
 
 
 def test_get_sigma_scaling_default(initialized_server):
-    """get_sigma_scaling should return 1.0 after init (before any CIR message)."""
-    assert abs(initialized_server.get_sigma_scaling() - 1.0) < 1e-6
+    """get_sigma_scaling is zero in initial noise-free pass-through."""
+    assert abs(initialized_server.get_sigma_scaling()) < 1e-6
 
 
 def test_get_sigma_max_default(initialized_server):
-    """get_sigma_max should return 1.0 after init (before any CIR message)."""
-    assert abs(initialized_server.get_sigma_max() - 1.0) < 1e-6
+    """get_sigma_max is zero in initial noise-free pass-through."""
+    assert abs(initialized_server.get_sigma_max()) < 1e-6
 
 
 def test_get_sigma_after_cir(initialized_server, zmq_client):

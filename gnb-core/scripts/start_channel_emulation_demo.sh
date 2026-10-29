@@ -20,6 +20,8 @@
 #   SIONNA_RT_GUI_DIR   Path to the Sionna RT GUI (default: ext/sionna-rt-gui)
 #   MPS_ACTIVE_THREAD_PCT  MPS thread percentage (default: 50.0)
 #   CIR_ZMQ_NUM_TAPS   Number of CIR taps (default: 48)
+#   CIR_ZMQ_PORT       CIR control port (default: 5560)
+#   CIR_ZMQ_TRACE_ROOT Precomputed trace-bank root inside gNB container
 #   SKIP_GUI            Set to 1 to skip the GUI (default: 0)
 
 set -e
@@ -31,6 +33,8 @@ ENV_FILE="$CONFIGS_DIR/rfsim/.env"
 GUI_CONFIG="${1:-}"
 
 CIR_ZMQ_NUM_TAPS="${CIR_ZMQ_NUM_TAPS:-48}"
+CIR_ZMQ_PORT="${CIR_ZMQ_PORT:-5560}"
+CIR_ZMQ_TRACE_ROOT="${CIR_ZMQ_TRACE_ROOT:-/opt/oai-gnb/plugins/channel_emulation/data/trace_bank}"
 IPERF_SERVER="192.168.72.135"
 UE_TIMEOUT=120
 
@@ -114,7 +118,7 @@ if ! grep -q '^GNB_EXTRA_OPTIONS=.*cir-zmq-num-taps' "$ENV_FILE"; then
     if grep -q '#.*GNB_EXTRA_OPTIONS=.*cir-zmq-num-taps' "$ENV_FILE"; then
         sed -i '0,/#.*GNB_EXTRA_OPTIONS=.*cir-zmq-num-taps/{s/^#\s*//}' "$ENV_FILE"
     else
-        echo "GNB_EXTRA_OPTIONS=\"--cir-zmq-num-taps ${CIR_ZMQ_NUM_TAPS}\"" >> "$ENV_FILE"
+        echo "GNB_EXTRA_OPTIONS=\"--cir-zmq-num-taps ${CIR_ZMQ_NUM_TAPS} --cir-zmq-port ${CIR_ZMQ_PORT} --cir-zmq-trace-root ${CIR_ZMQ_TRACE_ROOT}\"" >> "$ENV_FILE"
     fi
 fi
 log "Using config: rfsim (env: $ENV_FILE)"
@@ -181,7 +185,7 @@ fi
 
 if [[ "${SKIP_GUI:-0}" == "1" ]]; then
     log "Skipping GUI (SKIP_GUI=1)."
-    log "Channel emulator ZMQ is available on host port 5556."
+    log "Channel emulator ZMQ is available on host port ${CIR_ZMQ_PORT}."
     log "Stats ZMQ is available on host port 5555."
 else
     if [ -z "$GUI_CONFIG" ]; then
@@ -190,7 +194,7 @@ else
         echo "  To start the GUI manually:"
         echo "    plugins/channel_emulation/scripts/start_mps_gui.sh <config.yaml>"
         echo ""
-        echo "  The channel emulator ZMQ is available on host port 5556."
+        echo "  The channel emulator ZMQ is available on host port ${CIR_ZMQ_PORT}."
         echo "  The stats ZMQ is available on host port 5555."
     else
         log "Starting MPS and Sionna RT GUI..."

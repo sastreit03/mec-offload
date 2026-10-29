@@ -62,6 +62,10 @@ tiers:
     segmentation: segformer-b0
 
 channels:
+  control_port: 5560
+  num_taps: 48
+  trace_root: /opt/oai-gnb/plugins/channel_emulation/data/trace_bank
+  reads_per_slot: 2  # Reuse each CIR slot once for UL and once for DL.
   sinr_db: [0, 10, 20]
   statistical_models: [TDL-C, TDL-D, CDL-C, CDL-D]
   # RMS delay spread for the 3GPP TDL/CDL channel models.

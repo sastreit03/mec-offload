@@ -1,5 +1,9 @@
 # Multi-UE heuristic baseline
 
+The fixed-policy campaign and SRK trace-bank workflow are documented in
+[`docs/data-collection-mode.md`](docs/data-collection-mode.md) and
+[`docs/channel-emulation.md`](docs/channel-emulation.md).
+
 This is an additive implementation bundle for the supplied testbed. Place `multi-ue/` and `EdgeRIC-v2/muApp_mec/` beside the existing `gnb-core/`. It contains no OAI source replacement and does not use `docker-compose.override.yaml`. Keep the repaired OAI image and current SRK launches.
 
 The MEC owns admission, joint GoP selection, frame priority, execution and results. EdgeRIC owns ephemeral radio associations and demand/weights. The UE owns encoding, actual configuration application, transmitted-frame evidence and complete-result receipts. RL interfaces are prepared; no RL feature set, reward, algorithm or training scheme is selected.
