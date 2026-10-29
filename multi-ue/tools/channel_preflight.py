@@ -7,6 +7,7 @@ import argparse
 import json
 import re
 from pathlib import Path
+from urllib.parse import urlparse
 
 import yaml
 
@@ -50,7 +51,7 @@ def main():
     parser.add_argument("--trace-bank", required=True)
     parser.add_argument("--gnb-config")
     parser.add_argument("--compose")
-    parser.add_argument("--endpoint", help="e.g. tcp://127.0.0.1:5560")
+    parser.add_argument("--endpoint", help="e.g. tcp://192.168.73.140:5560")
     parser.add_argument("--write-loader-config")
     parser.add_argument("--select-condition")
     args = parser.parse_args()
@@ -90,16 +91,29 @@ def main():
         validate_siso(Path(args.gnb_config))
     if args.compose:
         compose = Path(args.compose).read_text()
-        if not re.search(r"(?:^|\s|[-\"'])5560:5560(?:$|\s|[\"'])", compose, re.MULTILINE):
-            raise ValueError("Compose file does not expose CIR control port 5560:5560")
         if re.search(r"(?:^|\s|[-\"'])5556:5555(?:$|\s|[\"'])", compose, re.MULTILINE):
             raise ValueError("obsolete CIR mapping 5556:5555 remains in Compose file")
+        # The controller is host-side, so it reaches the gNB on oai-e2-net.
+        endpoint_host = urlparse(
+            args.endpoint or "tcp://192.168.73.140:5560"
+        ).hostname
+        if endpoint_host and not re.search(
+            rf"e2_net:\s*\n\s+ipv4_address:\s*{re.escape(endpoint_host)}\s*$",
+            compose,
+            re.MULTILINE,
+        ):
+            raise ValueError(
+                f"Compose file does not assign CIR control host {endpoint_host} "
+                "to the gNB e2_net interface"
+            )
         if not re.search(r"channel_emulation/data/trace_bank[^\n]*:ro\s*$", compose, re.MULTILINE):
             raise ValueError("Compose file does not mount the trace bank read-only")
 
     online = None
+    final_generation = None
     if args.endpoint:
         online = request(args.endpoint, {"msg_type": "config_req"})
+        final_generation = online["generation"]
         if online.get("msg_type") != "config_res":
             raise RuntimeError(f"unexpected loader response: {online}")
         if int(online["control_port"]) != 5560:
@@ -137,6 +151,7 @@ def main():
             status = request(args.endpoint, {"msg_type": "trace_status"})
             if status.get("condition_id") != args.select_condition:
                 raise RuntimeError("loader did not retain selected condition")
+            final_generation = status["generation"]
             print(json.dumps(status, indent=2))
 
     total_bytes = sum(record["bytes"] for record in records.values())
@@ -144,7 +159,7 @@ def main():
     print(f"conditions: {len(records)}")
     print(f"trace bytes: {total_bytes}")
     if online:
-        print(f"loader: {args.endpoint} generation={online['generation']}")
+        print(f"loader: {args.endpoint} generation={final_generation}")
 
 
 if __name__ == "__main__":

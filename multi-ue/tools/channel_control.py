@@ -12,7 +12,8 @@ from channel_trace import validate_trace_folder
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("command", choices=("config", "status", "select"))
-    parser.add_argument("--endpoint", default="tcp://127.0.0.1:5560")
+    # The host reaches the gNB through its static oai-e2-net bridge address.
+    parser.add_argument("--endpoint", default="tcp://192.168.73.140:5560")
     parser.add_argument("--trace-bank")
     parser.add_argument("--condition-id")
     args = parser.parse_args()

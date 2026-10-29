@@ -2,9 +2,10 @@
 
 The campaign uses one symbol-static SISO realization for the aggregate radio
 waveform in both UL and DL. Statistical-model `delay_spread_ns` is RMS delay
-spread. The gNB CIR controller listens on TCP port 5560 and starts in
-noise-free pass-through. A scenario selects a complete precomputed file trace;
-no per-slot ZMQ messages are sent.
+spread. The gNB CIR controller listens on TCP port 5560 at its static
+`oai-e2-net` address, `192.168.73.140`, and starts in noise-free pass-through.
+A scenario selects a complete precomputed file trace; no per-slot ZMQ messages
+are sent.
 
 ## Build the trace bank
 
@@ -16,7 +17,7 @@ mkdir -p multi-ue/runs/campaigns/aetheredge-fixed-policy-v1
 mkdir -p gnb-core/plugins/channel_emulation/data/trace_bank
 
 gnb-core/env/bin/python multi-ue/tools/channel_control.py config \
-  --endpoint tcp://127.0.0.1:5560 \
+  --endpoint tcp://192.168.73.140:5560 \
   > multi-ue/runs/campaigns/aetheredge-fixed-policy-v1/channel-loader-config.json
 ```
 
@@ -48,7 +49,7 @@ gnb-core/env/bin/python multi-ue/tools/channel_preflight.py \
   --trace-bank gnb-core/plugins/channel_emulation/data/trace_bank \
   --gnb-config gnb-core/config/common/gnb.sa.band78.106prbs.conf \
   --compose gnb-core/config/common/docker-compose.yaml \
-  --endpoint tcp://127.0.0.1:5560 \
+  --endpoint tcp://192.168.73.140:5560 \
   --select-condition awgn-sinr20
 ```
 

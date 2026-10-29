@@ -241,8 +241,15 @@ The channel-emulation control plane now uses configurable TCP port 5560. The
 gNB can select a hashed precomputed `config.json`/`cirs.bin` trace from a
 read-only bank at a scenario boundary and reports its condition, generation,
 and playback position. Each symbol-static SISO slot is reused for the UL and
-DL calls before advancing. Offline preflight validates all 111 campaign traces,
-SISO configuration, port mapping, radio parameters, hashes, packed sizes, and
-the SRK tap-delay range of indices 0 through 255. Live gNB validation and SINR
-calibration remain required after rebuilding the image.
+DL calls before advancing. Host control reaches port 5560 through the gNB's
+static `oai-e2-net` address (`192.168.73.140`) because Docker did not realize
+the requested host-port publication for the multi-network container.
+
+The rebuilt live gNB reported 1,536 FFT points, 14 symbols per slot, 30-kHz
+subcarrier spacing, and 3.31968-GHz carrier frequency. The generated bank
+contains all 111 conditions and 7,318,100,328 trace bytes (6.9 GiB). Preflight
+validated the radio parameters, hashes, packed sizes, SISO configuration, and
+tap-delay indices, then selected `awgn-sinr20` with hash
+`0618dc20945fad4cb56cba80ac67ef15829b420cbc250ecefa558f85ab95ec79` at
+generation 1. Live SINR calibration remains required.
 

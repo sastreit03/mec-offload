@@ -140,9 +140,6 @@ services:
             # with gNB, and RT-RIC will be on edge_net
             edge_net:
                 ipv4_address: 192.168.74.140
-        ports:
-            # Aetheredge: CIR control is separate from EdgeRIC metrics/weights.
-            - 5560:5560
         devices:
             - /dev/bus/usb/:/dev/bus/usb/
         volumes:
