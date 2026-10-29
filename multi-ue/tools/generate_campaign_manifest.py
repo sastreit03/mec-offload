@@ -44,8 +44,10 @@ def candidate_index(catalog):
 def channel_conditions(config):
     channels = config["channels"]
     scope = channels["scope"]
-    if scope != "common_uplink":
-        raise ValueError("this campaign requires channels.scope=common_uplink")
+    if scope != "common_bidirectional":
+        raise ValueError(
+            "this campaign requires channels.scope=common_bidirectional"
+        )
     conditions = []
     if channels.get("include_awgn"):
         for sinr in channels["sinr_db"]:
@@ -54,7 +56,7 @@ def channel_conditions(config):
                     condition_id=f"awgn-sinr{sinr}",
                     model="AWGN",
                     sinr_db=sinr,
-                    delay_ns=None,
+                    delay_spread_ns=None,
                     speed_mps=None,
                     scope=scope,
                 )
@@ -62,16 +64,18 @@ def channel_conditions(config):
     for model, sinr, delay, speed in product(
         channels["statistical_models"],
         channels["sinr_db"],
-        channels["delays_ns"],
+        channels["delay_spreads_ns"],
         channels["speeds_mps"],
     ):
         slug = model.lower()
         conditions.append(
             dict(
-                condition_id=f"{slug}-sinr{sinr}-delay{delay}-speed{speed}",
+                condition_id=(
+                    f"{slug}-sinr{sinr}-delay-spread{delay}-speed{speed}"
+                ),
                 model=model,
                 sinr_db=sinr,
-                delay_ns=delay,
+                delay_spread_ns=delay,
                 speed_mps=speed,
                 scope=scope,
             )

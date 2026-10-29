@@ -76,7 +76,7 @@ CUDA priority and both schedulers are fixed. The selected design contains
 2,664 scenarios:
 
 - 111 channel conditions: AWGN at three SINRs, plus TDL-C, TDL-D, CDL-C, and
-  CDL-D across three SINRs, three delays, and three speeds;
+  CDL-D across three SINRs, three RMS delay spreads, and three speeds;
 - three cyclic application assignments;
 - four common DNN/bitrate tiers; and
 - separate one-UE and four-UE cases.
@@ -85,11 +85,13 @@ This is `111 × 3 × 4 × 2 = 2,664`. At five seconds of offered media per
 scenario, the minimum media time is 13,320 seconds (3.7 hours), excluding
 attachment, settling, draining, validation, and transitions.
 
-The three statistical-channel speeds are 0, 1, and 10 m/s. The SRK channel
-scope is `common_uplink`: one realization filters the aggregate uplink signal,
-so all active UEs experience the same filter in a scenario. A channel
-condition reuses its realization seed across UE-count, application-rotation,
-and DNN/bitrate ablations to support paired comparisons.
+The three statistical-channel speeds are 0, 1, and 10 m/s, and the
+`delay_spread_ns` values are RMS delay spreads of 0, 100, and 300 ns. The SRK
+channel scope is `common_bidirectional`: one SISO realization filters the
+aggregate uplink and downlink waveforms, so all active UEs experience the same
+filter in both directions during a scenario. A channel condition reuses its
+realization seed across UE-count, application-rotation, and DNN/bitrate
+ablations to support paired comparisons.
 
 Each UE stores 42 source videos with at least 1,200 frames. Eight 150-frame
 segments per video provide 336 slots, of which 333 are assigned without

@@ -64,11 +64,12 @@ tiers:
 channels:
   sinr_db: [0, 10, 20]
   statistical_models: [TDL-C, TDL-D, CDL-C, CDL-D]
-  delays_ns: [0, 100, 300]
+  # RMS delay spread for the 3GPP TDL/CDL channel models.
+  delay_spreads_ns: [0, 100, 300]
   speeds_mps: [0, 1, 10]
   include_awgn: true
-  # SRK applies one channel realization to the aggregate uplink waveform.
-  scope: common_uplink
+  # SRK applies one SISO realization to the aggregate UL and DL waveforms.
+  scope: common_bidirectional
 
 media:
   selection: unique_segment_per_channel_rotation_and_ue

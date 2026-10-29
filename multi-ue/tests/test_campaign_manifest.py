@@ -42,7 +42,10 @@ def test_fixed_campaign_expands_to_2664_stable_joinable_scenarios():
     assert [x["scenario_id"] for x in first] == [x["scenario_id"] for x in second]
     assert len({x["scenario_id"] for x in first}) == 2664
     assert {x["channel"]["speed_mps"] for x in first} == {None, 0, 1, 10}
-    assert all(x["channel"]["scope"] == "common_uplink" for x in first)
+    assert all(x["channel"]["scope"] == "common_bidirectional" for x in first)
+    assert {
+        x["channel"]["delay_spread_ns"] for x in first
+    } == {None, 0, 100, 300}
     assert all(x["policies"]["cuda_priority"] == -3 for x in first)
     assert all(x["ues"] for x in first)
 
