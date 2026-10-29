@@ -1,0 +1,38 @@
+# Fixed-policy dataset collection. Replace the three candidate IDs together
+# for each DNN/bitrate tier before starting a scenario block.
+run_id: collection-replace-me
+mode: collection
+catalog: tasks.yaml
+profiles: profiles.measured.yaml
+backend: torchscript
+advertised_ip: 192.168.72.136
+edgeric_target: 192.168.71.140:50052
+runs_dir: runs
+weights_dir: weights
+fps: 30
+gop_frames: 30
+applications: [detection, tracking, segmentation]
+priority_streams: [-3]
+gop_policy: fixed
+priority_policy: fixed
+fixed_candidates:
+  detection: detection-yolo26x-500k
+  tracking: tracking-yolo26x-500k
+  segmentation: segmentation-segformer-b3-500k
+keyframe_interleaving:
+  enabled: true
+warmup_count: 5
+profile_compatibility: measured-testbed-v1
+# Five seconds at 30 FPS produces 150 frames per video. These bounds add
+# headroom while keeping a runaway source from exhausting MEC memory.
+pending_frames: 192
+pending_bytes_per_video: 536870912
+tracker_buffer: 192
+# Lateness never drops a frame; this watchdog marks a genuinely stuck run failed.
+drain_s: 120.0
+jitter_ms: 100
+ran_telemetry:
+  aggregation_window_ms: 100
+  report_interval_ms: 100
+  stale_ms: 300
+  prolonged_outage_s: 5

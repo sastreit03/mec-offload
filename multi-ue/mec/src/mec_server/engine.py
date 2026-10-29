@@ -10,13 +10,14 @@ import uuid
 from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
-from .config import qualified
+from .config import collection_candidates, qualified
 from .statistics import History, NetworkFilter
 from .policies import HeuristicGoP, HeuristicPriority, validate_joint
 from .recording import Recorder, ReplayStore
 from .media import Receiver, MockReceiver
 from .workers import Workers
 from .tracking import Tracker
+from .gpu import DeviceGpuSampler
 from mec_contracts.rpc import Client
 from mec_contracts.wire import envelope, result_id, integer, dumps
 
@@ -90,6 +91,8 @@ class Video:
     last_descriptor_id: int = -1
     suspension_gap_version: int = 0
     finalized: bool = False
+    deliveries: int = 0
+    collection_error: str | None = None
     # A prerecorded successor has transport/configuration ready before its handoff.
     predecessor_id: str | None = None
     expected_start: float | None = None
@@ -131,13 +134,19 @@ class Engine:
         self.cfg = cfg
         self.catalog = catalog
         self.profiles = profiles
+        eligible = (
+            collection_candidates(catalog, profiles)
+            if cfg.mode == "collection"
+            else qualified(catalog, profiles)
+        )
         self.candidates = {
             cid: c
-            for cid, c in qualified(catalog, profiles).items()
+            for cid, c in eligible.items()
             if c["application"] in cfg.applications
         }
         self.root = Path(cfg.runs_dir) / cfg.run_id / "mec"
         self.record = Recorder(self.root)
+        self.gpu = DeviceGpuSampler()
         self.replay = ReplayStore(self.root / "replay.sqlite3")
         self.ues = {}
         self.tokens = {}
@@ -153,7 +162,7 @@ class Engine:
         }
         self.histories = {}
         self.residence = {}
-        self.queue_history = History(cfg.global_queue_initial_s)
+        self.queue_history = History(cfg.global_queue_initial_s or 0.0)
         self.policy = HeuristicGoP()
         self.priority = HeuristicPriority(cfg.priority_streams)
         self.plan_version = 0
@@ -212,6 +221,10 @@ class Engine:
             profiles=profiles,
         )
 
+    @property
+    def collection_mode(self):
+        return getattr(self.cfg, "mode", None) == "collection"
+
     def task(self, coro):
         t = asyncio.create_task(coro)
         self.background.append(t)
@@ -244,7 +257,12 @@ class Engine:
             if kind == "decoded":
                 d = data["descriptor"]
                 self.loop.call_soon_threadsafe(
-                    self.fail_frame, d.video_id, d.frame_id, "buffer_overflow"
+                    self.fail_frame,
+                    d.video_id,
+                    d.frame_id,
+                    "collection_event_overflow"
+                    if self.collection_mode
+                    else "buffer_overflow",
                 )
 
     def send(self, uid, message):
@@ -304,8 +322,14 @@ class Engine:
         u.sender = sender
         if old:
             old(envelope("connection_replaced", self.cfg.run_id, ue_id=uid))
-        u.network = NetworkFilter(self.profiles["network"])
-        u.network.reset(time.monotonic())
+        # Fixed collection records raw radio evidence without using a network predictor.
+        u.network = (
+            None
+            if self.collection_mode
+            else NetworkFilter(self.profiles["network"])
+        )
+        if u.network:
+            u.network.reset(time.monotonic())
         self.association(u)
         self.record.event(
             "connected",
@@ -330,6 +354,7 @@ class Engine:
             active_video_id=u.active_video,
             prepared_video_id=u.prepared_video,
             successor_prepare_s=self.cfg.successor_prepare_s,
+            collection_mode=self.collection_mode,
             server_unix_ns=time.time_ns(),
             schema_version_control=1,
         )
@@ -409,7 +434,8 @@ class Engine:
             and not self.worker_failures
             and not self.record.error,
             backend=self.cfg.backend,
-            experimental=self.cfg.mode == "experimental",
+            experimental=self.cfg.mode in ("experimental", "collection"),
+            mode=self.cfg.mode,
             workers=self.workers.ready,
             worker_failures=self.worker_failures,
             recording_error=self.record.error,
@@ -418,7 +444,7 @@ class Engine:
 
     # Admission may use a brief cached-report grace; ordinary freshness stays stricter.
     def usable_radio(self, uid, admission=False):
-        if self.cfg.mode == "development":
+        if (self.cfg.mode == "development" or self.collection_mode):
             return True
         report = self.last_report
         if not report:
@@ -483,6 +509,30 @@ class Engine:
     # Select one configuration per UE against shared radio and compute budgets.
     def choose(self, videos):
         decision_start = time.monotonic_ns()
+        if self.collection_mode:
+            proposal = {
+                video.uid: self.cfg.fixed_candidates[video.app] for video in videos
+            }
+            valid = all(
+                candidate_id in self.candidates
+                and candidate_id not in self.quarantined
+                for candidate_id in proposal.values()
+            )
+            decision_end = time.monotonic_ns()
+            self.record.event(
+                "gop_decision",
+                snapshot_id=str(uuid.uuid4()),
+                decision_type="fixed_collection_candidate",
+                policy_version="collection-v1",
+                proposed=proposal,
+                validated=valid,
+                fallback_reason=None if valid else "fixed_candidate_unavailable",
+                executed=proposal if valid else None,
+                decision_start_monotonic_ns=decision_start,
+                decision_end_monotonic_ns=decision_end,
+                decision_latency_ns=decision_end - decision_start,
+            )
+            return proposal if valid else None
         us = {}
         cs = {
             cid: dict(c, processing_s=self.processing(cid))
@@ -749,7 +799,9 @@ class Engine:
             queue_contract=dict(
                 max_pending_frames=self.cfg.pending_frames,
                 max_pending_bytes=self.cfg.pending_bytes_per_video,
-                mandatory_drops=[
+                mandatory_drops=[]
+                if self.collection_mode
+                else [
                     "nonpositive_slack",
                     "deadline_expired",
                     "buffer_overflow",
@@ -757,7 +809,9 @@ class Engine:
                     "transport_loss",
                     "tracking_cutoff",
                 ],
+                hard_limit_invalidates_run=self.collection_mode,
             ),
+            collection_mode=self.collection_mode,
         )
 
     async def prepare_successor(self, u, m, vid, decision_start, denied):
@@ -1018,7 +1072,12 @@ class Engine:
             c["precision"],
         )
         if key not in self.residence:
-            self.residence[key] = History(self.candidates[cid]["residence_s"], "mean")
+            # Collection has no heuristic residence calibration requirement;
+            # measured processing is a labeled lower-bound until live samples replace it.
+            initial = self.candidates[cid].get("residence_s")
+            if initial is None:
+                initial = self.candidates[cid]["processing_s"]
+            self.residence[key] = History(initial, "mean")
         return self.residence[key]
 
     def end_video(self, u, m):
@@ -1287,25 +1346,28 @@ class Engine:
             if f:
                 f.complete_ns = received_ns
                 f.times["complete_reception_monotonic_ns"] = received_ns
-                report = self.last_report or {}
-                r = report.get("ues", {}).get(v.uid, {})
-                valid = bool(
-                    self.cfg.allow_scheduled_throughput_estimate
-                    and r.get("throughput_valid")
-                    and time.time_ns() - report.get("window_end_unix_ns", 0)
-                    <= 300_000_000
-                )
-                self.ues[v.uid].network.observe(
-                    (v.vid, d.frame_id),
-                    d.encoded_bytes,
-                    r.get("throughput_bytes_s") or 0,
-                    f.config["bitrate_bps"],
-                    time.monotonic(),
-                    valid,
-                )
                 u = self.ues[v.uid]
-                u.network.propagate(received_ns / 1e9)
-                f.network_s = f.config["bitrate_bps"] / 1e6 * u.network.mu
+                if u.network:
+                    report = self.last_report or {}
+                    r = report.get("ues", {}).get(v.uid, {})
+                    valid = bool(
+                        self.cfg.allow_scheduled_throughput_estimate
+                        and r.get("throughput_valid")
+                        and time.time_ns() - report.get("window_end_unix_ns", 0)
+                        <= 300_000_000
+                    )
+                    u.network.observe(
+                        (v.vid, d.frame_id),
+                        d.encoded_bytes,
+                        r.get("throughput_bytes_s") or 0,
+                        f.config["bitrate_bps"],
+                        time.monotonic(),
+                        valid,
+                    )
+                    u.network.propagate(received_ns / 1e9)
+                    f.network_s = f.config["bitrate_bps"] / 1e6 * u.network.mu
+                else:
+                    f.network_s = 0.0
                 f.deadline_ns = f.complete_ns + round((v.slo - f.network_s) * 1e9)
             self.flush_progress((v.vid, d.frame_id))
             del v.radio_frames[d.frame_id]
@@ -1325,7 +1387,7 @@ class Engine:
         if f.complete_ns is None:
             self.fail_frame(v.vid, d.frame_id, "incomplete_encoded_access_unit")
             return
-        if v.input_closed:
+        if v.input_closed and not self.collection_mode:
             self.fail_frame(v.vid, d.frame_id, "input_closed")
             return
         if f.config["id"] in self.quarantined:
@@ -1343,15 +1405,19 @@ class Engine:
         f.rgb = rgb
         f.times["decoded_monotonic_ns"] = decoded_ns
         f.times["decode_s"] = (decoded_ns - f.complete_ns) / 1e9
-        # N and L were cached at complete AU admission; decoding consumes L-now.
+        # Collection uses one configured stream; deadlines remain evidence only.
         decision_start = time.monotonic_ns()
         waiting = max(0, (time.monotonic_ns() - f.complete_ns) / 1e9)
-        f.priority = self.priority.propose(
-            v.slo,
-            f.network_s,
-            waiting,
-            self.queue_history.value,
-            self.processing(f.config["id"]),
+        f.priority = (
+            self.cfg.priority_streams[0]
+            if self.collection_mode
+            else self.priority.propose(
+                v.slo,
+                f.network_s,
+                waiting,
+                self.queue_history.value,
+                self.processing(f.config["id"]),
+            )
         )
         decision_end = time.monotonic_ns()
         f.times.update(
@@ -1362,7 +1428,11 @@ class Engine:
         self.record.event(
             "priority_decision",
             decision_type="frame_priority",
-            policy_version=self.priority.version,
+            policy_version=(
+                "collection-fixed-v1"
+                if self.collection_mode
+                else self.priority.version
+            ),
             video_id=v.vid,
             frame_id=f.fid,
             proposed=f.priority,
@@ -1383,14 +1453,33 @@ class Engine:
             for x in self.frames.values()
             if x.vid == v.vid and x.state in ("PRIORITY_PENDING", "QUEUED")
         ]
-        while (
+        over_limit = (
             len(pending) > self.cfg.pending_frames
             or sum(x.rgb.nbytes for x in pending if x.rgb is not None)
             > self.cfg.pending_bytes_per_video
-        ):
+        )
+        if over_limit and self.collection_mode:
+            v.collection_error = "collection_buffer_limit"
+            self.record.event(
+                "collection_run_invalid",
+                video_id=v.vid,
+                reason=v.collection_error,
+                pending_frames=len(pending),
+                pending_bytes=sum(
+                    x.rgb.nbytes for x in pending if x.rgb is not None
+                ),
+            )
+            self.fail_frame(v.vid, d.frame_id, v.collection_error)
+            return
+        while over_limit:
             oldest = min(pending, key=lambda x: x.fid)
             pending.remove(oldest)
             self.fail_frame(v.vid, oldest.fid, "buffer_overflow")
+            over_limit = (
+                len(pending) > self.cfg.pending_frames
+                or sum(x.rgb.nbytes for x in pending if x.rgb is not None)
+                > self.cfg.pending_bytes_per_video
+            )
         if v.resolved.has(d.frame_id):
             return
         f.queue_ns = time.monotonic_ns()
@@ -1408,12 +1497,16 @@ class Engine:
         self.resolve(
             f,
             "failed"
-            if reason
+            if self.collection_mode
+            or reason
             in (
                 "execution_failed",
                 "execution_candidate_quarantined",
                 "transport_loss",
                 "invalid_metadata",
+                "collection_event_overflow",
+                "collection_buffer_limit",
+                "collection_drain_watchdog",
             )
             else "dropped",
             reason,
@@ -1452,7 +1545,10 @@ class Engine:
             config_version=None,
             plan_version=None,
             application=v.app,
+            task_id=v.vid,
             model=None,
+            candidate_id=None,
+            bitrate_bps=None,
             priority=None,
             outcome=outcome,
             reason=reason,
@@ -1461,6 +1557,7 @@ class Engine:
             loss_detected_at_unix_ns=time.time_ns(),
             metadata_available=False,
         )
+        v.deliveries += 1
         self.task(self.deliver(v, m, None, time.monotonic_ns(), None))
 
     # Fence the outcome before asynchronous serialization and durable replay storage.
@@ -1485,7 +1582,10 @@ class Engine:
             config_version=f.descriptor.config_version,
             plan_version=f.descriptor.plan_version,
             application=v.app,
+            task_id=v.vid,
             model=f.config["model"],
+            candidate_id=f.config["id"],
+            bitrate_bps=f.config["bitrate_bps"],
             priority=f.priority,
             outcome=outcome,
             reason=reason,
@@ -1495,40 +1595,56 @@ class Engine:
         f.rgb = None
         self.frames.pop((f.vid, f.fid), None)
         v.tracking_ready.pop(f.fid, None)
+        v.deliveries += 1
         self.task(self.deliver(v, message, f.complete_ns, now, f.config["id"]))
 
     async def deliver(self, v, message, complete_ns, ready_ns, cid):
-        begin = time.monotonic_ns()
-        raw = await asyncio.to_thread(dumps, message)
-        prepared = time.monotonic_ns()
-        message["stage_times"].update(
-            result_prepare_start_monotonic_ns=begin,
-            result_prepare_end_monotonic_ns=prepared,
-            result_prepare_s=(prepared - begin) / 1e9,
-        )
-        self.record.put(
-            "jobs.jsonl", {k: value for k, value in message.items() if k != "payload"}
-        )
-        if message["outcome"] == "completed" and complete_ns:
-            residence = (time.monotonic_ns() - complete_ns) / 1e9
-            self.residence_for(v, cid).add(residence)
-            self.record.event(
-                "residence",
-                ue_id=v.uid,
-                video_id=v.vid,
-                frame_id=message["frame_id"],
-                candidate_id=cid,
-                residence_s=residence,
+        try:
+            begin = time.monotonic_ns()
+            await asyncio.to_thread(dumps, message)
+            prepared = time.monotonic_ns()
+            message["stage_times"].update(
+                result_prepare_start_monotonic_ns=begin,
+                result_prepare_end_monotonic_ns=prepared,
+                result_prepare_s=(prepared - begin) / 1e9,
             )
-        await asyncio.to_thread(
-            self.replay.save,
-            v.uid,
-            v.vid,
-            message["frame_id"],
-            message["result_id"],
-            message,
-        )
-        self.send(v.uid, message)
+            self.record.put(
+                "jobs.jsonl",
+                {k: value for k, value in message.items() if k != "payload"},
+            )
+            if message["outcome"] == "completed" and complete_ns:
+                residence = (time.monotonic_ns() - complete_ns) / 1e9
+                self.residence_for(v, cid).add(residence)
+                self.record.event(
+                    "residence",
+                    ue_id=v.uid,
+                    video_id=v.vid,
+                    frame_id=message["frame_id"],
+                    candidate_id=cid,
+                    residence_s=residence,
+                )
+            await asyncio.to_thread(
+                self.replay.save,
+                v.uid,
+                v.vid,
+                message["frame_id"],
+                message["result_id"],
+                message,
+            )
+            self.send(v.uid, message)
+        except Exception as ex:
+            if self.collection_mode:
+                v.collection_error = "result_delivery_failed"
+                self.record.event(
+                    "collection_run_invalid",
+                    video_id=v.vid,
+                    frame_id=message["frame_id"],
+                    reason=v.collection_error,
+                    error=repr(ex),
+                )
+            raise
+        finally:
+            v.deliveries -= 1
 
     # Drain events, dispatch free streams, and advance lifecycle timers on one loop.
     async def tick(self):
@@ -1570,7 +1686,8 @@ class Engine:
                     self.flush_progress(key)
             for f in list(self.frames.values()):
                 if (
-                    f.state == "RECEIVING"
+                    not self.collection_mode
+                    and f.state == "RECEIVING"
                     and f.complete_ns is not None
                     and ns >= f.deadline_ns
                 ):
@@ -1620,7 +1737,10 @@ class Engine:
                         f.state = "REORDER_WAIT"
                         f.detection_ready_ns = ns
                         v.tracking_ready[fid] = f
-                        while len(v.tracking_ready) > self.cfg.tracker_buffer:
+                        while (
+                            not self.collection_mode
+                            and len(v.tracking_ready) > self.cfg.tracker_buffer
+                        ):
                             oldest = min(v.tracking_ready)
                             self.fail_frame(vid, oldest, "tracking_buffer_overflow")
                     else:
@@ -1636,7 +1756,7 @@ class Engine:
                     if f.config["id"] in self.quarantined:
                         self.fail_frame(*key, "execution_candidate_quarantined")
                         continue
-                    if ns >= f.deadline_ns:
+                    if not self.collection_mode and ns >= f.deadline_ns:
                         self.fail_frame(*key, "deadline_expired")
                         continue
                     job = dict(
@@ -1716,11 +1836,42 @@ class Engine:
                         v.gap_scan = min(v.gap_scan + 256, v.final_id + 1)
                     outstanding = [f for f in self.frames.values() if f.vid == v.vid]
                     gaps_done = v.final_id is None or v.gap_scan > v.final_id
-                    if gaps_done and (not outstanding or now >= v.drain_until):
-                        for f in outstanding:
-                            self.fail_frame(v.vid, f.fid, "drain_timeout")
+                    drained = (
+                        gaps_done
+                        and not outstanding
+                        and not v.tracker_busy
+                        and v.deliveries == 0
+                    )
+                    watchdog = now >= v.drain_until
+                    if drained or watchdog:
+                        if watchdog and not drained:
+                            reason = (
+                                "collection_drain_watchdog"
+                                if self.collection_mode
+                                else "drain_timeout"
+                            )
+                            if self.collection_mode:
+                                if v.collection_error != reason:
+                                    v.collection_error = reason
+                                    self.record.event(
+                                        "collection_run_invalid",
+                                        video_id=v.vid,
+                                        reason=reason,
+                                        outstanding_frames=len(outstanding),
+                                        pending_deliveries=v.deliveries,
+                                        tracker_busy=v.tracker_busy,
+                                    )
+                            for f in outstanding:
+                                self.fail_frame(v.vid, f.fid, reason)
+                            # Result persistence/delivery may finish after frames resolve.
+                            if v.deliveries or v.tracker_busy:
+                                continue
                         if v.state not in TERMINAL:
-                            v.state = "COMPLETED"
+                            v.state = (
+                                "FAILED"
+                                if self.collection_mode and v.collection_error
+                                else "COMPLETED"
+                            )
                         if u.active_video == v.vid:
                             u.active_video = None
                         if u.prepared_video == v.vid:
@@ -1734,11 +1885,16 @@ class Engine:
                                 video_id=v.vid,
                                 status=v.state,
                                 counters=v.counters,
+                                reason=v.collection_error,
                             ),
                         )
             period_ns = round(self.cfg.gop_frames / self.cfg.fps * 1e9)
             cycle = (time.time_ns() - self.epoch_unix_ns) // period_ns
-            if cycle != self.last_cycle and not self.closed:
+            if (
+                cycle != self.last_cycle
+                and not self.closed
+                and not self.collection_mode
+            ):
                 self.last_cycle = cycle
                 self.coordinate()
             if now - self.last_snapshot >= self.cfg.snapshot_s:
@@ -1755,6 +1911,19 @@ class Engine:
         )
         ready = sorted(v.tracking_ready)
         if not ready:
+            return
+        if self.collection_mode:
+            # Wait for known predecessors, then update the per-video tracker in order.
+            target = ready[0]
+            if any(f.fid < target for f in fs):
+                return
+            f = self.frames.get((v.vid, target))
+            if not f:
+                return
+            v.tracker_busy = True
+            f.state = "TRACKING"
+            v.tracking_ready.pop(f.fid, None)
+            self.task(self.track(v, f))
             return
         cutoff = min(
             self.frames[(v.vid, fid)].deadline_ns
@@ -1876,6 +2045,8 @@ class Engine:
 
     # At each master cycle, remove overload newest-first and reconsider suspended work.
     def coordinate(self):
+        if self.collection_mode:
+            return
         active = [
             v
             for v in self.videos.values()
@@ -2069,8 +2240,7 @@ class Engine:
             await asyncio.sleep(max(0, target - time.monotonic()))
             end = time.time_ns()
             sequence += 1
-            self.aware(
-                "mec_resources",
+            report = dict(
                 sequence=sequence,
                 window_start_unix_ns=start,
                 window_end_unix_ns=end,
@@ -2100,7 +2270,11 @@ class Engine:
                 ],
                 tracker_active=[v.vid for v in self.videos.values() if v.tracker_busy],
                 workers=self.workers.ready,
+                # Aetheredge: NVML supplies device load, not CUDA kernel residency.
+                gpu=self.gpu.sample(),
             )
+            self.aware("mec_resources", **report)
+            self.record.event("mec_resources", snapshot=report)
             start = end
             target += interval
             if target < time.monotonic():
@@ -2182,4 +2356,5 @@ class Engine:
             await asyncio.gather(*self.background, return_exceptions=True)
         self.snapshot()
         await self.rpc.close()
+        self.gpu.close()
         await asyncio.to_thread(self.record.close)

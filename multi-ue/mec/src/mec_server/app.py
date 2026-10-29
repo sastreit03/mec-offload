@@ -104,18 +104,27 @@ def create_app(engine):
     # Each connection has its own outgoing queue and generation fence.
     async def control(ws: WebSocket):
         await ws.accept()
-        out = asyncio.PriorityQueue(maxsize=128)
+        # A five-second collection run can finish 150 frames in a burst while
+        # the terminal status waits behind them.
+        out = asyncio.PriorityQueue(maxsize=1024 if engine.collection_mode else 128)
         sequence = 0
 
         def enqueue(m):
             nonlocal sequence
             sequence += 1
-            priority = 1 if m["type"] == "frame_result" else 0
+            # Terminal collection status follows every already-enqueued frame result.
+            terminal = m["type"] == "video_status" and m.get("status") in (
+                "COMPLETED",
+                "FAILED",
+                "CANCELLED",
+                "EXPIRED",
+            )
+            priority = 2 if terminal else 1 if m["type"] == "frame_result" else 0
             try:
                 out.put_nowait((priority, sequence, m))
             except asyncio.QueueFull:
                 engine.record.event("socket_queue_full", message_type=m["type"])
-                if m["type"] != "frame_result":
+                if engine.collection_mode or m["type"] != "frame_result":
                     asyncio.create_task(ws.close(code=1013))
 
         u, hello = engine.hello(

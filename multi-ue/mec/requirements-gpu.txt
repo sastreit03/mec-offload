@@ -5,3 +5,5 @@ lap==0.5.13
 transformers==4.57.3
 opencv-python-headless==4.12.0.88
 scipy>=1.13,<2
+# Aetheredge: NVML provides low-rate device utilization without a CUDA context.
+nvidia-ml-py>=12,<14

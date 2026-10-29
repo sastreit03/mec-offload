@@ -17,6 +17,7 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
   private final long epoch;
   private final String host;
   private final int port;
+  private final boolean collectionMode;
   private DatagramSocket socket;
   private Network network;
   private JSONObject current;
@@ -36,6 +37,7 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
     epoch = response.getLong("media_epoch");
     host = response.getJSONObject("endpoint").getString("host");
     port = response.getJSONObject("endpoint").getInt("port");
+    collectionMode = response.optBoolean("collection_mode", false);
     current = response.getJSONObject("config");
     controlVersion = current.optLong("control_version", 0);
     nextRelease = current.getLong("boundary_unix_ns");
@@ -212,11 +214,13 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
             "deadline_miss", new JSONObject().put("video_id", video).put("frame_id", x.getKey()));
       }
       if (t[1] == 0 && t[2] == 1 && now - t[0] >= 5_150_000_000L) {
+        if (collectionMode) continue;
         t[2] = 2;
         events.event(
             "final_missing", new JSONObject().put("video_id", video).put("frame_id", x.getKey()));
       }
-      if (now - t[0] >= 5_150_000_000L) iterator.remove();
+      if (t[1] != 0 || (!collectionMode && now - t[0] >= 5_150_000_000L))
+        iterator.remove();
     }
   }
 

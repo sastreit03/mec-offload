@@ -46,6 +46,38 @@ message UeMetrics {
     uint32 latest_grant_harq_round = 37;
     uint32 latest_grant_target_frame = 38;
     uint32 latest_grant_target_slot = 39;
+
+    // Aetheredge: Explicit scheduler/link state; zero remains a valid value.
+    bool radio_state_valid = 40;
+    uint32 radio_state_frame = 41;
+    uint32 radio_state_slot = 42;
+    uint32 scheduler_ul_mcs = 43;
+    uint32 scheduler_dl_mcs = 44;
+    float ul_bler = 45;
+    float dl_bler = 46;
+    float pusch_snr_db = 47;
+    float pucch_snr_db = 48;
+    bool link_quality_valid = 49;
+
+    // Aetheredge: DL grant totals mirror the loss-proof UL accounting.
+    uint64 dl_new_data_tbs_bytes_total = 50;
+    uint64 dl_new_data_prbs_total = 51;
+    uint64 dl_retransmission_tbs_bytes_total = 52;
+    uint64 dl_retransmission_prbs_total = 53;
+    bool latest_dl_grant_valid = 54;
+    bool latest_dl_grant_retransmission = 55;
+    uint32 latest_dl_grant_prbs = 56;
+    uint32 latest_dl_grant_tbs_bytes = 57;
+    uint32 latest_dl_grant_mcs = 58;
+    uint32 latest_dl_grant_harq_round = 59;
+    uint32 latest_dl_grant_frame = 60;
+    uint32 latest_dl_grant_slot = 61;
+
+    // Aetheredge: RLC occupancy and MAC/RLC boundary totals stay distinct.
+    uint64 dl_rlc_buffer_bytes = 62;
+    uint64 dl_rlc_interface_sdu_bytes_total = 63;
+    uint64 ul_rlc_interface_sdu_bytes_total = 64;
+    bool rlc_counters_valid = 65;
 }
 
 message Metrics {

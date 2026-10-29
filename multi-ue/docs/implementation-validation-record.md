@@ -1,6 +1,6 @@
 # Aetheredge implementation and validation record
 
-Updated October 26, 2026. This record summarizes the code changes and checks
+Updated October 28, 2026. This record summarizes the code changes and checks
 performed during the architecture review and initial testbed preparation. It
 supplements `architecture-fixes.md`, which contains the shorter finding-by-
 finding remediation summary. The authoritative design inputs remain the three
@@ -168,7 +168,7 @@ session binding when the network address changes.
 |---|---:|---|
 | Initial committed Python suite | 35 passed, 1 warning | Established the review baseline with mocked workers and local transports. |
 | Post-remediation Python suite | 69 passed | Covered the ten findings, configuration, failure enforcement, evaluation, and ZMQ counter accounting. |
-| Current full Python suite | 72 passed, 1 warning | Adds prerecorded playlist and both successor-handoff orderings. The warning is an unrelated Starlette test-client deprecation. |
+| Current full Python suite | 78 passed, 1 warning | Adds prerecorded playlist, successor handoff, fixed collection-mode controls, extended RAN telemetry, and labelled NVML device sampling. The warning is an unrelated Starlette test-client deprecation. |
 | Focused continuity suite | 29 passed | Exercised lifecycle, playlist, and related control paths during implementation. |
 | Python byte compilation | Passed | Changed Python files are syntactically importable. |
 | Git whitespace/error check | Passed | `git diff --check` reports no malformed patch whitespace. |
@@ -180,6 +180,15 @@ session binding when the network address changes.
 | Full OAI build | Built and deployed | Includes the Aetheredge ZMQ capacity/grant telemetry and raw UL-byte association input. Image identity was not recorded. |
 | Live gNB/EdgeRIC/MEC/UE run | Partial pass | One detection UE returned all 1,217 outcomes; 1,167 completed inference and 602 met the 150-ms SLO. Multi-UE, other applications, telemetry accuracy, and coexistence remain unverified. |
 
+The subsequent telemetry extension adds explicit UL/DL MCS and BLER,
+PUSCH/PUCCH SNR, latest and cumulative UL/DL PRB/TBS grants, frame/slot, and
+RLC DL occupancy and direction-labelled MAC/RLC-interface totals to the versioned OAI ZMQ contract. EdgeRIC
+persists C-RNTI only in its local evidence and derives 100-ms counter deltas.
+MEC job records now carry candidate and bitrate directly, and MEC resource
+events include whole-device NVML utilization alongside host-submitted queues.
+These additions have unit/integration coverage but still require a rebuilt gNB
+and live value/rate validation before experiment collection.
+
 The current unit and integration suite covers RTP fragmentation, reordering and
 duplicates; descriptor validation; control identity and replay fencing; demand
 prediction and reconciliation; session retirement; authoritative recovery;
@@ -189,6 +198,18 @@ semantics; randomized playlist cycling; and successor promotion under both
 control-first and media-first arrival.
 
 ## Required next validation
+
+The immediate experimental target is the fixed-policy mode recorded in
+`data-collection-mode.md`. It is intentionally separate from heuristic
+validation: OAI remains PF, EdgeRIC observes in shadow mode, and the MEC uses
+fixed DNN/bitrate choices and per-application FIFO execution. Deadline misses
+remain measured outcomes but will not discard otherwise processable frames.
+The source mode now validates fixed candidates and priority `-3`, bypasses
+heuristic decisions, preserves late work through a completion-based drain, and
+marks hard safety limits as invalid runs. It must still pass live preflight,
+memory, worst-case drain, and completeness gates before the scenario matrix
+begins. The updated Python suite passes 78 tests; Android deployment
+compilation remains a target-toolchain check.
 
 1. Build the OAI gNB, EdgeRIC, MEC, Linux UE, and Android UE with the deployment
    toolchains and immutable container inputs that will be used for experiments.

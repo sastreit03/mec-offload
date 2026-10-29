@@ -95,6 +95,8 @@ class Settings(BaseModel):
     max_clock_uncertainty_ns: int = 20_000_000
     gop_policy: str = "heuristic"
     priority_policy: str = "heuristic"
+    # Collection runs select one immutable catalog candidate per application.
+    fixed_candidates: dict[Application, str] = Field(default_factory=dict)
     ran_telemetry: dict = Field(
         default_factory=lambda: dict(
             aggregation_window_ms=100,
@@ -106,23 +108,34 @@ class Settings(BaseModel):
 
     # Experimental runs require explicit calibration and cannot use mock execution.
     def check(self):
-        if self.mode not in ("experimental", "development"):
+        if self.mode not in ("experimental", "development", "collection"):
             raise ValueError("mode")
         if self.backend not in ("torchscript", "mock"):
             raise ValueError("backend")
-        if self.mode == "experimental" and self.backend == "mock":
+        if self.mode in ("experimental", "collection") and self.backend == "mock":
             raise ValueError("mock forbidden in experimental mode")
-        if self.gop_policy != "heuristic" or self.priority_policy != "heuristic":
-            raise ValueError("RL policy implementation deferred")
-        for key in (
-            "warmup_count",
-            "radio_budget",
-            "compute_budget_s_per_s",
-            "global_queue_initial_s",
-            "profile_compatibility",
+        if self.mode != "collection" and (
+            self.gop_policy != "heuristic" or self.priority_policy != "heuristic"
         ):
+            raise ValueError("RL policy implementation deferred")
+        if self.mode == "collection":
+            if self.priority_streams != (-3,):
+                raise ValueError("collection mode requires priority stream -3")
+            if set(self.fixed_candidates) != set(self.applications):
+                raise ValueError(
+                    "collection mode requires one fixed candidate per application"
+                )
+        for key in ("warmup_count", "profile_compatibility"):
             if getattr(self, key) is None:
                 raise ValueError(f"required profiled setting: {key}")
+        if self.mode != "collection":
+            for key in (
+                "radio_budget",
+                "compute_budget_s_per_s",
+                "global_queue_initial_s",
+            ):
+                if getattr(self, key) is None:
+                    raise ValueError(f"required profiled setting: {key}")
         if self.fps <= 0 or self.gop_frames <= 0:
             raise ValueError("positive FPS and GoP frame length required")
         if self.successor_prepare_s <= 0:
@@ -137,20 +150,21 @@ class Settings(BaseModel):
             raise ValueError("priority streams must be unique and ordered high-to-low")
         if self.warmup_count < 1:
             raise ValueError("positive profiled warmup count required")
-        if (
-            not all(
-                math.isfinite(x)
-                for x in (
-                    self.radio_budget,
-                    self.compute_budget_s_per_s,
-                    self.global_queue_initial_s,
+        if self.mode != "collection":
+            if (
+                not all(
+                    math.isfinite(x)
+                    for x in (
+                        self.radio_budget,
+                        self.compute_budget_s_per_s,
+                        self.global_queue_initial_s,
+                    )
                 )
-            )
-            or self.global_queue_initial_s < 0
-        ):
-            raise ValueError("finite profile settings required")
-        if self.radio_budget <= 0 or self.compute_budget_s_per_s <= 0:
-            raise ValueError("positive budgets")
+                or self.global_queue_initial_s < 0
+            ):
+                raise ValueError("finite profile settings required")
+            if self.radio_budget <= 0 or self.compute_budget_s_per_s <= 0:
+                raise ValueError("positive budgets")
 
 
 def load(path):
@@ -173,26 +187,62 @@ def load(path):
         raise ValueError("initial profiled workload requires 1280x720 source video")
     if c["fps"] != s.fps or c["gop_frames"] != s.gop_frames:
         raise ValueError("catalog FPS/GoP must match MEC settings")
-    for key in (
-        "mean_s",
-        "P0_s2",
-        "R_s2",
-        "q_s2_per_s",
-        "V_frame_s2",
-        "radio_bps_per_unit",
-    ):
-        value = profiles.get("network", {}).get(key)
-        if (
-            not isinstance(value, (int, float))
-            or not math.isfinite(value)
-            or value <= 0
+    if s.mode != "collection":
+        for key in (
+            "mean_s",
+            "P0_s2",
+            "R_s2",
+            "q_s2_per_s",
+            "V_frame_s2",
+            "radio_bps_per_unit",
         ):
-            raise ValueError(f"missing finite positive calibration: network.{key}")
+            value = profiles.get("network", {}).get(key)
+            if (
+                not isinstance(value, (int, float))
+                or not math.isfinite(value)
+                or value <= 0
+            ):
+                raise ValueError(f"missing finite positive calibration: network.{key}")
     if profiles.get("compatibility") != s.profile_compatibility:
         raise ValueError("incompatible profile set")
-    if profiles.get("synthetic") and s.mode == "experimental":
+    if profiles.get("synthetic") and s.mode in ("experimental", "collection"):
         raise ValueError("synthetic profiles forbidden")
+    if s.mode == "collection":
+        by_id = {candidate["id"]: candidate for candidate in c["configurations"]}
+        measured = collection_candidates(c, profiles)
+        for application, candidate_id in s.fixed_candidates.items():
+            candidate = by_id.get(candidate_id)
+            if candidate is None or candidate["application"] != application:
+                raise ValueError(f"invalid fixed candidate for {application}")
+            if candidate_id not in measured:
+                raise ValueError(
+                    f"fixed candidate lacks measured execution profile: {candidate_id}"
+                )
     return s, c, profiles
+
+
+def collection_candidates(catalog, profiles):
+    """Return measured execution candidates without applying quality qualification."""
+    result = {}
+    for candidate in catalog["configurations"]:
+        candidate = dict(candidate)
+        profile = profiles.get("candidates", {}).get(candidate["id"])
+        required = ("processing_s", "frame_bytes_I", "frame_bytes_P")
+        if not profile or any(
+            not isinstance(profile.get(key), (int, float))
+            or not math.isfinite(profile[key])
+            or profile[key] <= 0
+            for key in required
+        ):
+            continue
+        if (
+            candidate["application"] == "tracking"
+            and not profile.get("tracker_s", 0) > 0
+        ):
+            continue
+        candidate.update(profile)
+        result[candidate["id"]] = candidate
+    return result
 
 
 # Only candidates with quality evidence and complete timing initialization survive.
@@ -208,11 +258,8 @@ def qualified(catalog, profiles):
             for k in ("score", "reference_score")
         ):
             continue
-        if (
-            not p
-            or not p.get("qualified")
-            or p.get("score", -1) < 0.9 * p.get("reference_score", math.inf)
-        ):
+        # Preliminary experiments retain every candidate with measured quality.
+        if not p or not p.get("qualified"):
             continue
         required = ("processing_s", "residence_s", "frame_bytes_I", "frame_bytes_P")
         if any(

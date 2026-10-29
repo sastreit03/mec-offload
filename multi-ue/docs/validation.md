@@ -1,5 +1,12 @@
 # Staged acceptance record
 
+The approved fixed-policy dataset campaign is specified separately in
+`data-collection-mode.md`. That campaign fixes OAI to PF, keeps EdgeRIC in
+shadow mode, fixes MEC candidates and CUDA priority, and drains all accepted
+frames. It does not constitute acceptance of heuristic MEC or RAN scheduling.
+The collection mode is implemented in source as of October 28, 2026. Live
+single-UE and worst-case four-UE drain and memory validation remain pending.
+
 Authoritative specifications: MEC architecture2.1 (2026-10-15, M01–M79), decision architecture4.4 (2026-10-15, D01–D82), OAI/EdgeRIC architecture1.5 (2026-10-19, R01–R67). Original DOCX bytes are bundled. Current user instructions override initial strict slot-deadline implementation and prohibit OAI edits.
 
 | Stage | Acceptance and evidence | Current state |

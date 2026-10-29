@@ -74,6 +74,7 @@ class Client:
         self.events = asyncio.Queue(maxsize=4096)
         self.loop = None
         self.slo_ns = 150_000_000
+        self.collection_mode = False
         self.input_profile = dict(width=1280, height=720, fps=30, gop_frames=30)
         self.expiry_tasks = set()
         self.finishing = False
@@ -271,6 +272,11 @@ class Client:
         if value and not value.get("received"):
             value["deadline_failed"] = True
             self.record("deadline_miss", video_id=key[0], frame_id=key[1])
+        if self.collection_mode:
+            # Collection keeps late frames open until their terminal MEC result arrives.
+            if value and value.get("received"):
+                self.transmitted.pop(key, None)
+            return
         await asyncio.sleep(5)
         value = self.transmitted.get(key)
         if value and not value.get("received"):
@@ -282,7 +288,7 @@ class Client:
         if self.finishing:
             return
         self.finishing = True
-        await asyncio.sleep(5.2)
+        await asyncio.sleep(0.2 if self.collection_mode else 5.2)
         self.stopped = True
         if self.ws:
             await self.ws.close()
@@ -408,6 +414,9 @@ class Client:
                                     )
                                     self.successor_prepare_s = float(
                                         m.get("successor_prepare_s", 5.0)
+                                    )
+                                    self.collection_mode = bool(
+                                        m.get("collection_mode", False)
                                     )
                                     self.state["resume_token"] = m["resume_token"]
                                     self.save_state()
@@ -580,6 +589,8 @@ class Client:
                                             tx and tx.get("final_missing")
                                         ),
                                     )
+                                    if self.collection_mode:
+                                        self.transmitted.pop(key, None)
                                     print(
                                         json.dumps(
                                             {

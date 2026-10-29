@@ -89,7 +89,16 @@ class Window:
         self.end_ns = end_ns
         self.source = source
         self.ues = defaultdict(
-            lambda: dict(prbs=0, tbs_bytes=0, retry_prbs=0, retry_tbs_bytes=0)
+            lambda: dict(
+                prbs=0,
+                tbs_bytes=0,
+                retry_prbs=0,
+                retry_tbs_bytes=0,
+                dl_prbs=0,
+                dl_tbs_bytes=0,
+                dl_retry_prbs=0,
+                dl_retry_tbs_bytes=0,
+            )
         )
         self.opportunities = {}
         self.events = 0
@@ -112,13 +121,28 @@ class Window:
         u["retry_tbs_bytes" if retry else "tbs_bytes"] += r["tbs"]
 
     # Aetheredge: Aggregate loss-proof ZMQ counter deltas without CSV parsing.
-    def add_counters(self, rnti, prbs, tbs_bytes, retry_prbs, retry_tbs_bytes):
+    def add_counters(
+        self,
+        rnti,
+        prbs,
+        tbs_bytes,
+        retry_prbs,
+        retry_tbs_bytes,
+        dl_prbs=0,
+        dl_tbs_bytes=0,
+        dl_retry_prbs=0,
+        dl_retry_tbs_bytes=0,
+    ):
         self.events += 1
         u = self.ues[rnti]
         u["prbs"] += prbs
         u["tbs_bytes"] += tbs_bytes
         u["retry_prbs"] += retry_prbs
         u["retry_tbs_bytes"] += retry_tbs_bytes
+        u["dl_prbs"] += dl_prbs
+        u["dl_tbs_bytes"] += dl_tbs_bytes
+        u["dl_retry_prbs"] += dl_retry_prbs
+        u["dl_retry_tbs_bytes"] += dl_retry_tbs_bytes
 
     def record(self):
         return dict(

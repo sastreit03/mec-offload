@@ -1,6 +1,7 @@
 from __future__ import annotations
 import asyncio
 import json
+import math
 import time
 import uuid
 from pathlib import Path
@@ -440,6 +441,10 @@ class Runtime:
                 metric.get("new_data_tbs_bytes_total", 0),
                 metric.get("retransmission_prbs_total", 0),
                 metric.get("retransmission_tbs_bytes_total", 0),
+                metric.get("dl_new_data_prbs_total", 0),
+                metric.get("dl_new_data_tbs_bytes_total", 0),
+                metric.get("dl_retransmission_prbs_total", 0),
+                metric.get("dl_retransmission_tbs_bytes_total", 0),
             )
             previous = self.radio_counters.get(rnti)
             self.radio_counters[rnti] = current
@@ -450,7 +455,7 @@ class Runtime:
                 counters_valid = False
                 continue
             if any(delta):
-                self.window.add_counters(rnti, delta[0], delta[1], delta[2], delta[3])
+                self.window.add_counters(rnti, *delta)
                 # Aetheredge: Retransmission deltas are telemetry only in this initial model.
                 self._apply_new_data_service(rnti, delta[1], now)
         self.radio_coverage_valid = counters_valid
@@ -647,15 +652,20 @@ class Runtime:
         record = self.window.record()
         allocated = record.pop("allocated_by_rnti")
         per = {}
+        local_per = {}
         for uid in self.associations.bindings:
             b = self.associations.valid(uid, now)
             r = allocated.get(b.rnti, {}) if b else {}
             capacity = self.capacity.get(b.rnti) if b else None
             # Aetheredge: Use the newest grant telemetry even when capacity is unchanged.
             validation = self.metrics.get(b.rnti, {}) if b else {}
+            def finite_value(key):
+                value = validation.get(key)
+                return value if not isinstance(value, float) or math.isfinite(value) else None
+
             rate = r.get("tbs_bytes", 0) / (self.window_ns / 1e9)
             fraction = self.cfg.get("payload_fraction")
-            per[uid] = dict(
+            entry = dict(
                 association_valid=bool(b),
                 connection_id=self.associations.bindings[uid].connection_id,
                 mapping_generation=self.associations.bindings[uid].generation,
@@ -663,6 +673,10 @@ class Runtime:
                 scheduled_tbs_bytes=r.get("tbs_bytes", 0),
                 retransmission_prbs=r.get("retry_prbs", 0),
                 retransmission_tbs_bytes=r.get("retry_tbs_bytes", 0),
+                dl_scheduled_prbs=r.get("dl_prbs", 0),
+                dl_scheduled_tbs_bytes=r.get("dl_tbs_bytes", 0),
+                dl_retransmission_prbs=r.get("dl_retry_prbs", 0),
+                dl_retransmission_tbs_bytes=r.get("dl_retry_tbs_bytes", 0),
                 throughput_bytes_s=rate * fraction if fraction is not None else None,
                 throughput_kind="scheduled_payload_conversion_estimate",
                 throughput_valid=bool(
@@ -674,6 +688,72 @@ class Runtime:
                 capacity_bytes_per_prb=capacity[0] if capacity else None,
                 capacity_kind="OAI_reference_tbs",
                 capacity_age_s=now - capacity[1] if capacity else None,
+                radio_state={
+                    key: finite_value(key)
+                    for key in (
+                        "radio_state_valid",
+                        "radio_state_frame",
+                        "radio_state_slot",
+                        "scheduler_ul_mcs",
+                        "scheduler_dl_mcs",
+                        "ul_bler",
+                        "dl_bler",
+                        "pusch_snr_db",
+                        "pucch_snr_db",
+                        "link_quality_valid",
+                    )
+                },
+                cumulative_grants={
+                    key: validation.get(key)
+                    for key in (
+                        "new_data_prbs_total",
+                        "new_data_tbs_bytes_total",
+                        "retransmission_prbs_total",
+                        "retransmission_tbs_bytes_total",
+                        "dl_new_data_prbs_total",
+                        "dl_new_data_tbs_bytes_total",
+                        "dl_retransmission_prbs_total",
+                        "dl_retransmission_tbs_bytes_total",
+                    )
+                },
+                latest_ul_grant={
+                    key: validation.get(key)
+                    for key in (
+                        "latest_grant_valid",
+                        "latest_grant_retransmission",
+                        "latest_grant_prbs",
+                        "latest_grant_tbs_bytes",
+                        "latest_grant_mcs",
+                        "latest_grant_harq_round",
+                        "latest_grant_target_frame",
+                        "latest_grant_target_slot",
+                    )
+                },
+                latest_dl_grant={
+                    key: validation.get(key)
+                    for key in (
+                        "latest_dl_grant_valid",
+                        "latest_dl_grant_retransmission",
+                        "latest_dl_grant_prbs",
+                        "latest_dl_grant_tbs_bytes",
+                        "latest_dl_grant_mcs",
+                        "latest_dl_grant_harq_round",
+                        "latest_dl_grant_frame",
+                        "latest_dl_grant_slot",
+                    )
+                },
+                rlc_counters={
+                    "valid": validation.get("rlc_counters_valid"),
+                    "dl_buffer_bytes": validation.get("dl_rlc_buffer_bytes"),
+                    "buffer_layer": "RLC",
+                    "dl_interface_sdu_bytes_total": validation.get(
+                        "dl_rlc_interface_sdu_bytes_total"
+                    ),
+                    "ul_interface_sdu_bytes_total": validation.get(
+                        "ul_rlc_interface_sdu_bytes_total"
+                    ),
+                    "throughput_boundary": "MAC/RLC interface",
+                },
                 # Aetheredge: Temporary context supports independent capacity validation.
                 capacity_validation={
                     key: validation.get(key)
@@ -702,6 +782,9 @@ class Runtime:
                     )
                 },
             )
+            per[uid] = entry
+            # C-RNTI remains local EdgeRIC evidence and is not sent to the MEC.
+            local_per[uid] = dict(entry, rnti=b.rnti if b else None)
         self.sequence += 1
         self.latest_report = dict(
             schema_version=1,
@@ -710,12 +793,14 @@ class Runtime:
             sequence=self.sequence,
             source_generation=self.source,
             radio_generation=self.radio_generation,
+            radio_report_sequence=self.radio_sequence,
+            ran_index=self.last_index,
             **record,
             ues=per,
             trace_coverage_valid=self.radio_coverage_valid,
             metric_age_s=now - self.latest_metric,
         )
-        self.event("radio_report", report=self.latest_report)
+        self.event("radio_report", report=dict(self.latest_report, ues=local_per))
         if self.sequence % 50 == 0:
             data = dict(
                 run_id=self.run_id,

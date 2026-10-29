@@ -1,6 +1,6 @@
 # Aetheredge architecture fixes
 
-Updated October 26, 2026. This note summarizes the remediation work following
+Updated October 28, 2026. This note summarizes the remediation work following
 the review in `/tmp/mec-architecture-review.md`. It covers `multi-ue/`,
 `EdgeRIC-v2/muApp_mec/`, and the Aetheredge additions to OAI. It describes
 implemented software behavior; over-the-air correctness and performance still
@@ -127,7 +127,15 @@ requires a lower value.
 
 ## Validation and deferred work
 
-- The current Python suite has 72 passing tests, including focused lifecycle,
+- A fixed-policy data-collection mode is implemented in source and awaits live
+  validation. It uses OAI PF scheduling, EdgeRIC shadow logging, one FIFO
+  queue and fixed-priority CUDA stream per application, scenario-selected
+  DNN/bitrate candidates, and completion-based draining without deadline
+  drops. Network-estimator calibration is not a prerequisite for that mode.
+  See `data-collection-mode.md` for the decision and implementation gates.
+- Collection-mode regressions pass as part of the current 77-test Python
+  suite. Queue sizing and worst-case draining still require live validation.
+- The current Python suite has 77 passing tests, including focused lifecycle,
   synchronization, suspension, configuration, execution-failure, evaluation,
   ZMQ counter, playlist, and successor-handoff tests. The EdgeRIC C++ bridge
   passes syntax compilation.

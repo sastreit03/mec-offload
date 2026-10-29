@@ -33,7 +33,7 @@ def main():
     a = p.parse_args()
     catalog = yaml.safe_load(Path(a.catalog).read_text())
     cs = {x["id"]: x for x in catalog["configurations"]}
-    # Join measurements by catalog ID; the threshold is relative to the task reference.
+    # Keep every candidate with valid measured quality for preliminary experiments.
     qualified = {}
     with open(a.measurements) as f:
         for r in csv.DictReader(f):
@@ -47,8 +47,6 @@ def main():
             if r["metric"] != metric or not r["dataset"] or not r["provenance"]:
                 raise ValueError("metric/dataset/provenance required")
             score, ref = positive(r["score"]), positive(r["reference_score"])
-            if score < 0.9 * ref:
-                continue
             qualified[cid] = dict(
                 qualified=True,
                 score=score,

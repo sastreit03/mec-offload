@@ -1,0 +1,17 @@
+# Replace these examples with 42 actual videos per UE. A source video is stored
+# once and may be used by every application. Every video must contain at least
+# 1,200 frames so it supplies eight nonoverlapping 150-frame segments.
+pools:
+  pixel1:
+    - {media_id: example-001, path: /datasets/campaign/example-001.mov, sha256: replace-with-64-hex-characters, source_frames: 1212}
+    # ...41 more videos...
+  pixel2:
+    - {media_id: example-001, path: /datasets/campaign/example-001.mov, sha256: replace-with-64-hex-characters, source_frames: 1212}
+    # ...41 more videos...
+  pixel3:
+    - {media_id: example-001, path: /datasets/campaign/example-001.mov, sha256: replace-with-64-hex-characters, source_frames: 1212}
+    # ...41 more videos...
+  linux1:
+    - {media_id: example-001, path: /datasets/campaign/example-001.mov, sha256: replace-with-64-hex-characters, source_frames: 1212}
+    # ...41 more videos...
+

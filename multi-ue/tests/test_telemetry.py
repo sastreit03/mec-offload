@@ -71,6 +71,23 @@ def test_aetheredge_zmq_capacity_and_cumulative_grant_deltas():
         new_data_tbs_bytes_total=1000,
         retransmission_prbs_total=2,
         retransmission_tbs_bytes_total=200,
+        radio_state_valid=True,
+        radio_state_frame=100,
+        radio_state_slot=7,
+        scheduler_ul_mcs=12,
+        scheduler_dl_mcs=18,
+        ul_bler=0.1,
+        dl_bler=0.2,
+        pusch_snr_db=14.5,
+        pucch_snr_db=12.0,
+        dl_new_data_prbs_total=20,
+        dl_new_data_tbs_bytes_total=2400,
+        dl_retransmission_prbs_total=1,
+        dl_retransmission_tbs_bytes_total=120,
+        dl_rlc_buffer_bytes=4096,
+        dl_rlc_interface_sdu_bytes_total=8000,
+        ul_rlc_interface_sdu_bytes_total=7000,
+        rlc_counters_valid=True,
     )
     decoded = metrics_pb2.Metrics.FromString(message.SerializeToString())
     assert decoded.ue_metrics[0].reference_tbs_bits == 4000
@@ -105,6 +122,10 @@ def test_aetheredge_zmq_capacity_and_cumulative_grant_deltas():
     runtime.metrics[7]["new_data_tbs_bytes_total"] = 1600
     runtime.metrics[7]["retransmission_prbs_total"] = 4
     runtime.metrics[7]["retransmission_tbs_bytes_total"] = 500
+    runtime.metrics[7]["dl_new_data_prbs_total"] = 25
+    runtime.metrics[7]["dl_new_data_tbs_bytes_total"] = 3000
+    runtime.metrics[7]["dl_retransmission_prbs_total"] = 3
+    runtime.metrics[7]["dl_retransmission_tbs_bytes_total"] = 360
     runtime._consume_ran_sample(1.1)
     allocated = runtime.window.record()["allocated_by_rnti"][7]
     assert allocated == {
@@ -112,6 +133,39 @@ def test_aetheredge_zmq_capacity_and_cumulative_grant_deltas():
         "tbs_bytes": 600,
         "retry_prbs": 2,
         "retry_tbs_bytes": 300,
+        "dl_prbs": 5,
+        "dl_tbs_bytes": 600,
+        "dl_retry_prbs": 2,
+        "dl_retry_tbs_bytes": 240,
     }
     # Aetheredge: Only 600 new-data bytes debit demand; retry bytes remain telemetry.
     assert ledger.frames[1].remaining == 1400
+
+    binding = SimpleNamespace(connection_id="connection", generation=2, rnti=7)
+    runtime.associations.bindings = {"ue": binding}
+    runtime.associations.valid = lambda *_: binding
+    runtime.window_ns = 100
+    runtime.run_id = "run"
+    runtime.source = "edge-generation"
+    runtime.sequence = 0
+    runtime.last_index = 55
+    runtime.latest_metric = 1.1
+    events = []
+    runtime.event = lambda kind, **fields: events.append((kind, fields))
+    runtime.publish(1.2)
+
+    report = runtime.latest_report
+    ue_report = report["ues"]["ue"]
+    assert "rnti" not in ue_report
+    assert ue_report["radio_state"]["scheduler_ul_mcs"] == 12
+    assert ue_report["cumulative_grants"]["dl_new_data_prbs_total"] == 25
+    assert ue_report["rlc_counters"] == {
+        "valid": True,
+        "dl_buffer_bytes": 4096,
+        "buffer_layer": "RLC",
+        "dl_interface_sdu_bytes_total": 8000,
+        "ul_interface_sdu_bytes_total": 7000,
+        "throughput_boundary": "MAC/RLC interface",
+    }
+    # C-RNTI is retained only in EdgeRIC's local event evidence.
+    assert events[-1][1]["report"]["ues"]["ue"]["rnti"] == 7

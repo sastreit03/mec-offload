@@ -1,0 +1,83 @@
+schema_version: 1
+campaign_name: aetheredge-fixed-policy-v1
+campaign_seed: 20261028
+
+duration_s: 5
+fps: 30
+gop_frames: 30
+
+policies:
+  ran_scheduler: proportional_fair
+  edgeric_mode: shadow
+  mec_mode: collection
+  mec_queue: fifo_per_application
+  cuda_priority: -3
+  drain_timeout_s: 120
+
+ues:
+  pixel1: {kind: android, hardware: Google Pixel 7}
+  pixel2: {kind: android, hardware: Google Pixel 7}
+  pixel3: {kind: android, hardware: Google Pixel 7}
+  linux1: {kind: linux, hardware: NVIDIA Jetson AGX Orin}
+
+ue_sets:
+  one_ue: [pixel1]
+  four_ue: [pixel1, pixel2, pixel3, linux1]
+
+application_rotations:
+  - pixel1: tracking
+    pixel2: detection
+    pixel3: segmentation
+    linux1: tracking
+  - pixel1: segmentation
+    pixel2: tracking
+    pixel3: detection
+    linux1: segmentation
+  - pixel1: detection
+    pixel2: segmentation
+    pixel3: tracking
+    linux1: detection
+
+# Each tier deliberately pairs the strongest DNN with the lowest bitrate.
+tiers:
+  - tier: 0
+    bitrate_bps: 500000
+    detection: yolo26x
+    tracking: yolo26x
+    segmentation: segformer-b3
+  - tier: 1
+    bitrate_bps: 1000000
+    detection: yolo26l
+    tracking: yolo26l
+    segmentation: segformer-b2
+  - tier: 2
+    bitrate_bps: 2000000
+    detection: yolo26m
+    tracking: yolo26m
+    segmentation: segformer-b1
+  - tier: 3
+    bitrate_bps: 4000000
+    detection: yolo26n
+    tracking: yolo26n
+    segmentation: segformer-b0
+
+channels:
+  sinr_db: [0, 10, 20]
+  statistical_models: [TDL-C, TDL-D, CDL-C, CDL-D]
+  delays_ns: [0, 100, 300]
+  speeds_mps: [0, 1, 10]
+  include_awgn: true
+  # SRK applies one channel realization to the aggregate uplink waveform.
+  scope: common_uplink
+
+media:
+  selection: unique_segment_per_channel_rotation_and_ue
+  videos_per_ue: 42
+  frames_per_scenario: 150
+  segments_per_video: 8
+
+execution:
+  randomize_order: true
+  expected_scenarios: 2664
+  checkpoint_database: runs/campaigns/aetheredge-fixed-policy-v1/state.sqlite3
+

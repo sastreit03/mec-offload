@@ -55,15 +55,19 @@ def main():
     import numpy as np
 
     dataset_labels = label_map(args.dataset_root / "id2label.json")
-    expected = dict(enumerate(EXPECTED_LABELS))
     maps = {"dataset": dataset_labels}
     for model in ("segformer-b0", "segformer-b1", "segformer-b2", "segformer-b3"):
         maps[model] = label_map(args.checkpoint_root / model / "config.json")
     for source, labels in maps.items():
-        if set(labels) != set(range(19)):
-            raise RuntimeError(f"{source} does not define exactly IDs 0..18")
+        expected_ids = set(range(19)) | ({255} if source == "dataset" else set())
+        if set(labels) != expected_ids:
+            raise RuntimeError(
+                f"{source} does not define the expected IDs {sorted(expected_ids)}"
+            )
         if [normalized(labels[i]) for i in range(19)] != EXPECTED_LABELS:
             raise RuntimeError(f"{source} label order differs from Cityscapes-19")
+    if normalized(dataset_labels[255]) not in {"unlabeled/ignore", "unlabeled ignore"}:
+        raise RuntimeError("dataset ID 255 is not identified as the ignore class")
 
     manifest = json.loads(args.manifest.read_text())
     args.output.mkdir(parents=True, exist_ok=True)
@@ -153,6 +157,7 @@ def main():
     (args.output / "report.json").write_text(json.dumps({
         "examples": len(rows),
         "labels": EXPECTED_LABELS,
+        "ignore_label": {"id": 255, "name": dataset_labels[255]},
         "class_pixels": {EXPECTED_LABELS[i]: int(class_pixels[i]) for i in range(19)},
         "color_mae": {
             "minimum": min(row["color_mae_full_resolution"] for row in rows),

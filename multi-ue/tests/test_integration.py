@@ -93,6 +93,9 @@ def test_mock_workers_grpc_lifecycle_replay_and_fencing(tmp_path):
                 await asyncio.sleep(0.01)
             result = next(x for x in messages if x["type"] == "frame_result")
             assert result["outcome"] == "completed"
+            assert result["task_id"] == vid
+            assert result["candidate_id"] == c["candidate_id"]
+            assert result["bitrate_bps"] == c["bitrate_bps"]
             assert (
                 not edge.sessions[vid]["ledger"].frames
                 or edge.sessions[vid]["ledger"].frames.get(0) is None
