@@ -232,3 +232,8 @@ pipeline, selected a 100-ms jitter window after a 20-ms window caused decode
 loss, and raised the per-video decoded pending limit from 8 to 16 frames. Exact
 image IDs, deployed configuration copies, and model hashes were not retained.
 
+The fixed-policy campaign manifest contains 2,664 unique scenario IDs and a
+locked SHA-256 for `scenarios.jsonl`. Runtime attempts use a separate
+`attempt_id`; the MEC propagates the campaign/scenario/attempt join key through
+MEC evidence and replay, EdgeRIC reports, and Linux and Android UE evidence.
+

@@ -20,6 +20,9 @@ class Runtime:
         self.cfg = config
         self.adapter = adapter
         self.run_id = None
+        self.campaign_id = None
+        self.scenario_id = None
+        self.attempt_id = None
         self.source = str(uuid.uuid4())
         self.associations = Associations(config["association"])
         self.sessions = {}
@@ -60,6 +63,9 @@ class Runtime:
                     type=kind,
                     monotonic_ns=time.monotonic_ns(),
                     run_id=self.run_id,
+                    campaign_id=self.campaign_id,
+                    scenario_id=self.scenario_id,
+                    attempt_id=self.attempt_id,
                     **data,
                 )
             )
@@ -85,6 +91,26 @@ class Runtime:
         temp.write_text(json.dumps(data, indent=2))
         temp.replace(self.root / "associations.json")
 
+    def join_context(self):
+        return {
+            "campaign_id": self.campaign_id,
+            "scenario_id": self.scenario_id,
+            "attempt_id": self.attempt_id,
+        }
+
+    @staticmethod
+    def message_context(message):
+        context = {
+            key: message.get(key)
+            for key in ("campaign_id", "scenario_id", "attempt_id")
+        }
+        values = tuple(context.values())
+        if any(value is not None for value in values) and not all(
+            isinstance(value, str) and value for value in values
+        ):
+            raise ValueError("incomplete scenario context")
+        return context
+
     # Validate run/media identity before applying MEC awareness messages.
     async def exchange(self, m):
         if m.get("schema_version") != 1:
@@ -92,6 +118,7 @@ class Runtime:
         run = m["run_id"]
         kind = m["type"]
         if kind == "sync":
+            context = self.message_context(m)
             if self.run_id != run:
                 self.sessions.clear()
                 self.retired_sessions.clear()
@@ -103,6 +130,22 @@ class Runtime:
                 revision = integer(revision)
                 if revision <= self.sync_revision:
                     return {"source_generation": self.source, "status": "stale"}
+            context_changed = context != self.join_context()
+            # Apply identity only after the revision fence; a delayed sync must
+            # never relabel current radio evidence as an older attempt.
+            self.campaign_id = context["campaign_id"]
+            self.scenario_id = context["scenario_id"]
+            self.attempt_id = context["attempt_id"]
+            if context_changed:
+                # Begin with a fresh radio window. Reacquire cumulative-counter
+                # baselines instead of charging prior traffic to this attempt.
+                self.radio_counters.clear()
+                self.capacity_samples.clear()
+                self.window = None
+                self.latest_report = None
+                self.radio_coverage_valid = False
+                self.latest_metric = 0.0
+                self.probe_commands.clear()
             # A full sync is authoritative for current sessions and actual radio demand.
             for a in m.get("associations", []):
                 self.associations.register(
@@ -129,6 +172,8 @@ class Runtime:
             return {"source_generation": self.source, "status": "synced"}
         if run != self.run_id:
             raise ValueError("sync required for run")
+        if self.message_context(m) != self.join_context():
+            raise ValueError("scenario context mismatch")
         revision = m.get("awareness_revision")
         if revision is not None:
             revision = integer(revision)
@@ -790,6 +835,7 @@ class Runtime:
             schema_version=1,
             type="radio_report",
             run_id=self.run_id,
+            **self.join_context(),
             sequence=self.sequence,
             source_generation=self.source,
             radio_generation=self.radio_generation,
@@ -804,6 +850,7 @@ class Runtime:
         if self.sequence % 50 == 0:
             data = dict(
                 run_id=self.run_id,
+                **self.join_context(),
                 source_generation=self.source,
                 bindings={u: asdict(b) for u, b in self.associations.bindings.items()},
                 matches=self.associations.last_result,

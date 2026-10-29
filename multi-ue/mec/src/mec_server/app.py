@@ -78,6 +78,7 @@ def create_app(engine):
         return dict(
             readiness=engine.readiness(),
             run_id=engine.cfg.run_id,
+            scenario=engine.scenario,
             videos={
                 v.vid: dict(
                     ue_id=v.uid, application=v.app, state=v.state, counters=v.counters
@@ -92,6 +93,13 @@ def create_app(engine):
             if engine.last_report
             else None,
         )
+
+    @app.post("/api/scenario/arm")
+    async def arm_scenario(value: dict):
+        try:
+            return engine.arm_scenario(value)
+        except ValueError as error:
+            return JSONResponse({"error": str(error)}, status_code=409)
 
     @app.get("/")
     def dashboard():
@@ -123,7 +131,14 @@ def create_app(engine):
             try:
                 out.put_nowait((priority, sequence, m))
             except asyncio.QueueFull:
-                engine.record.event("socket_queue_full", message_type=m["type"])
+                engine.record.event(
+                    "socket_queue_full",
+                    message_type=m["type"],
+                    **{
+                        key: m.get(key)
+                        for key in ("campaign_id", "scenario_id", "attempt_id")
+                    },
+                )
                 if engine.collection_mode or m["type"] != "frame_result":
                     asyncio.create_task(ws.close(code=1013))
 
@@ -146,6 +161,10 @@ def create_app(engine):
                     result_id=m.get("result_id"),
                     message_type=m["type"],
                     delivery="live_or_replay",
+                    **{
+                        key: m.get(key)
+                        for key in ("campaign_id", "scenario_id", "attempt_id")
+                    },
                 )
                 if m["type"] == "connection_replaced":
                     await ws.close(code=1000)
@@ -166,7 +185,13 @@ def create_app(engine):
                         await asyncio.sleep(0.005)
                     enqueue(m)
                     engine.record.event(
-                        "replay_attempt", ue_id=u.uid, result_id=m["result_id"]
+                        "replay_attempt",
+                        ue_id=u.uid,
+                        result_id=m["result_id"],
+                        **{
+                            key: m.get(key)
+                            for key in ("campaign_id", "scenario_id", "attempt_id")
+                        },
                     )
                 offset += len(page)
                 await asyncio.sleep(0)
@@ -181,9 +206,13 @@ def create_app(engine):
                 try:
                     result = await engine.command(u, m)
                     if result:
-                        enqueue(result)
+                        enqueue(engine.contextual(result))
                 except (ValueError, KeyError, TypeError) as ex:
-                    enqueue(envelope("error", engine.cfg.run_id, reason=str(ex)))
+                    enqueue(
+                        engine.contextual(
+                            envelope("error", engine.cfg.run_id, reason=str(ex))
+                        )
+                    )
         except WebSocketDisconnect:
             pass
         finally:

@@ -188,6 +188,9 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
     events.event(
         "result_receipt",
         new JSONObject()
+            .put("campaign_id", m.opt("campaign_id"))
+            .put("scenario_id", m.opt("scenario_id"))
+            .put("attempt_id", m.opt("attempt_id"))
             .put("video_id", video)
             .put("frame_id", fid)
             .put("result_id", id)

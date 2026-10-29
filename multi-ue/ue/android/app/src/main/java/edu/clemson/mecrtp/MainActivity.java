@@ -38,11 +38,13 @@ public final class MainActivity extends Activity {
   private StreamSession preparedSession;
   private AvcSource media;
   private String uid, connection, run;
+  private String campaignId, scenarioId, attemptId;
   private int inputWidth = 1280, inputHeight = 720, inputFps = 30;
   private String cellularIp = "";
   private JSONObject startRequest;
   private JSONObject successorRequest;
   private boolean awaitingSuccessor;
+  private boolean collectionMode;
   private double successorPrepareS;
   private volatile boolean enabled;
   private int generation;
@@ -178,6 +180,12 @@ public final class MainActivity extends Activity {
               .put("run_id", run)
               .put("ue_id", uid)
               .put("monotonic_ns", System.nanoTime());
+      if (!record.has("campaign_id"))
+        record.put("campaign_id", campaignId == null ? JSONObject.NULL : campaignId);
+      if (!record.has("scenario_id"))
+        record.put("scenario_id", scenarioId == null ? JSONObject.NULL : scenarioId);
+      if (!record.has("attempt_id"))
+        record.put("attempt_id", attemptId == null ? JSONObject.NULL : attemptId);
       log.execute(
           () -> {
             try (FileWriter f =
@@ -328,8 +336,31 @@ public final class MainActivity extends Activity {
   }
 
   private void send(JSONObject m) {
-    WebSocket s = ws;
-    if (s != null && !s.send(m.toString())) show("Control send queue unavailable");
+    try {
+      // Aetheredge: every UE message carries the immutable scenario join key.
+      m.put("campaign_id", campaignId == null ? JSONObject.NULL : campaignId)
+          .put("scenario_id", scenarioId == null ? JSONObject.NULL : scenarioId)
+          .put("attempt_id", attemptId == null ? JSONObject.NULL : attemptId);
+      WebSocket s = ws;
+      if (s != null && !s.send(m.toString())) show("Control send queue unavailable");
+    } catch (JSONException e) {
+      show("Scenario context encoding failed: " + e);
+    }
+  }
+
+  private void setContext(JSONObject m) throws JSONException {
+    boolean campaign = m.has("campaign_id") && !m.isNull("campaign_id");
+    boolean scenario = m.has("scenario_id") && !m.isNull("scenario_id");
+    boolean attempt = m.has("attempt_id") && !m.isNull("attempt_id");
+    if ((campaign || scenario || attempt) && !(campaign && scenario && attempt))
+      throw new JSONException("incomplete scenario context");
+    campaignId = campaign ? m.getString("campaign_id") : null;
+    scenarioId = scenario ? m.getString("scenario_id") : null;
+    attemptId = attempt ? m.getString("attempt_id") : null;
+  }
+
+  private boolean contextReady() {
+    return campaignId != null && scenarioId != null && attemptId != null;
   }
 
   private void association() throws Exception {
@@ -368,6 +399,7 @@ public final class MainActivity extends Activity {
         }
         run = m.getString("run_id");
         uid = m.getString("ue_id");
+        setContext(m);
         connection = m.getString("connection_id");
         // Use the MEC's validated input profile for configurable FPS experiments.
         JSONObject inputProfile = m.optJSONObject("input_profile");
@@ -377,6 +409,7 @@ public final class MainActivity extends Activity {
           inputFps = inputProfile.getInt("fps");
         }
         successorPrepareS = m.optDouble("successor_prepare_s", 5.0);
+        collectionMode = m.optBoolean("collection_mode", false);
         prefs
             .edit()
             .putString("token:" + prefs.getString("host", ""), m.getString("resume_token"))
@@ -386,6 +419,14 @@ public final class MainActivity extends Activity {
           ui.postDelayed(() -> timeSync(), wait);
         }
         association();
+        break;
+      case "scenario_context":
+        if (session != null || preparedSession != null)
+          throw new IllegalStateException("scenario context changed during active media");
+        setContext(m);
+        startRequest = null;
+        successorRequest = null;
+        event("scenario_context", new JSONObject());
         break;
       case "time_sync":
         clock.observe(
@@ -399,6 +440,7 @@ public final class MainActivity extends Activity {
         probe(m);
         break;
       case "association_status":
+        if (collectionMode && !contextReady()) break;
         if (m.getBoolean("valid") && successorRequest != null) send(successorRequest);
         if (enabled && m.getBoolean("valid") && session == null) {
           if (startRequest == null)
@@ -449,6 +491,9 @@ public final class MainActivity extends Activity {
           event(
               "admission_decision",
               new JSONObject()
+                  .put("campaign_id", m.opt("campaign_id"))
+                  .put("scenario_id", m.opt("scenario_id"))
+                  .put("attempt_id", m.opt("attempt_id"))
                   .put("video_id", m.getString("video_id"))
                   .put("accepted", true)
                   .put("reason", JSONObject.NULL));
@@ -533,6 +578,9 @@ public final class MainActivity extends Activity {
           event(
               "result_receipt",
               new JSONObject()
+                  .put("campaign_id", m.opt("campaign_id"))
+                  .put("scenario_id", m.opt("scenario_id"))
+                  .put("attempt_id", m.opt("attempt_id"))
                   .put("video_id", m.getString("video_id"))
                   .put("frame_id", m.getLong("frame_id"))
                   .put("result_id", id)

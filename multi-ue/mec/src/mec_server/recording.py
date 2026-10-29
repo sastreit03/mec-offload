@@ -10,18 +10,24 @@ import copy
 
 
 class Recorder:
-    def __init__(self, directory):
+    def __init__(self, directory, context=None):
         self.root = Path(directory)
         self.root.mkdir(parents=True, exist_ok=True)
         self.queue = queue.Queue(maxsize=16384)
         self.error = None
+        self.context = context or (lambda: {})
         self.thread = threading.Thread(target=self._writer, daemon=True)
         self.thread.start()
 
     def put(self, filename, record):
         # Refuse silent evidence loss. Health/readiness exposes failure.
         try:
-            self.queue.put_nowait((filename, copy.deepcopy(record)))
+            value = copy.deepcopy(record)
+            # Aetheredge: apply join identity at enqueue time so later scenario
+            # changes cannot relabel records waiting in the writer queue.
+            for key, item in self.context().items():
+                value.setdefault(key, item)
+            self.queue.put_nowait((filename, value))
         except queue.Full:
             self.error = "recording_queue_overflow"
 

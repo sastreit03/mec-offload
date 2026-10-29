@@ -47,6 +47,9 @@ class Client:
         self.ws = None
         self.uid = None
         self.run_id = None
+        self.campaign_id = None
+        self.scenario_id = None
+        self.attempt_id = None
         self.connection = None
         self.root = Path(args.logs)
         self.root.mkdir(parents=True, exist_ok=True)
@@ -100,12 +103,22 @@ class Client:
         )
 
     def record(self, kind, **data):
+        source_context = data.pop("_context", None)
+        context = (
+            {
+                key: source_context.get(key)
+                for key in ("campaign_id", "scenario_id", "attempt_id")
+            }
+            if source_context is not None
+            else self.join_context()
+        )
         try:
             self.events.put_nowait(
                 dict(
                     type=kind,
                     run_id=self.run_id,
                     ue_id=self.uid,
+                    **context,
                     monotonic_ns=time.monotonic_ns(),
                     **data,
                 )
@@ -181,7 +194,33 @@ class Client:
 
     async def send(self, value):
         if self.ws:
+            # Aetheredge: put the immutable scenario join key on every UE message.
+            value.update(self.join_context())
             await self.ws.send(json.dumps(value, separators=(",", ":")))
+
+    def join_context(self):
+        return dict(
+            campaign_id=self.campaign_id,
+            scenario_id=self.scenario_id,
+            attempt_id=self.attempt_id,
+        )
+
+    def set_context(self, message):
+        context = {
+            key: message.get(key)
+            for key in ("campaign_id", "scenario_id", "attempt_id")
+        }
+        values = tuple(context.values())
+        if any(value is not None for value in values) and not all(
+            isinstance(value, str) and value for value in values
+        ):
+            raise ValueError("incomplete scenario context")
+        self.campaign_id = context["campaign_id"]
+        self.scenario_id = context["scenario_id"]
+        self.attempt_id = context["attempt_id"]
+
+    def context_ready(self):
+        return all(self.join_context().values())
 
     # The media thread posts frame evidence back to the asyncio control loop.
     def media_event(self, kind, value):
@@ -407,6 +446,7 @@ class Client:
                                         self.start_request = None
                                     self.uid = m["ue_id"]
                                     self.run_id = m["run_id"]
+                                    self.set_context(m)
                                     self.connection = m["connection_id"]
                                     # Request the validated media profile advertised by this MEC.
                                     self.input_profile = m.get(
@@ -421,6 +461,15 @@ class Client:
                                     self.state["resume_token"] = m["resume_token"]
                                     self.save_state()
                                     sync = asyncio.create_task(self.synchronize())
+                                elif kind == "scenario_context":
+                                    if self.streamer or self.prepared:
+                                        raise RuntimeError(
+                                            "scenario context changed during active media"
+                                        )
+                                    self.set_context(m)
+                                    self.start_request = None
+                                    self.successor_request = None
+                                    self.record("scenario_context")
                                 elif kind == "time_sync":
                                     self.clock.observe(
                                         m["client_mono_ns"],
@@ -431,6 +480,8 @@ class Client:
                                 elif kind == "association_probe":
                                     asyncio.create_task(self.probe(m))
                                 elif kind == "association_status" and m["valid"]:
+                                    if self.collection_mode and not self.context_ready():
+                                        continue
                                     if self.successor_request is not None:
                                         # Deduplicated resend covers a control reconnect during preparation.
                                         await self.send(self.successor_request)
@@ -573,6 +624,7 @@ class Client:
                                         tx["received"] = True
                                     self.record(
                                         "result_receipt",
+                                        _context=m,
                                         video_id=m["video_id"],
                                         frame_id=m["frame_id"],
                                         result_id=m["result_id"],

@@ -107,6 +107,15 @@ experimental factors and do not depend on randomized execution order. Runtime
 attempt IDs are deliberately excluded from the manifest because retries are
 preserved separately by the checkpoint database.
 
+Before each attempt, the runner arms an idle MEC with the manifest
+`campaign_id` and `scenario_id` plus a newly generated `attempt_id`. The MEC is
+the runtime authority for this three-field join key. It puts the key on durable
+MEC evidence and replay payloads, synchronizes it to EdgeRIC, and broadcasts it
+to connected UEs. EdgeRIC radio reports and both Linux and Android UE evidence
+carry the same key. Collection-mode video lifecycle commands are rejected when
+the MEC is unarmed or the supplied key differs. Records created before arming
+retain null scenario fields; an attempt is never inferred from timestamps.
+
 `tools/prepare_campaign_media.py` deterministically selects 42 videos from a
 BDD100K archive or directory, verifies video metadata, optionally decodes each
 file fully, calculates SHA-256 values, and writes both `SHA256SUMS` and the
@@ -150,14 +159,9 @@ utilization does not measure individual CUDA-stream or kernel residency.
 ## Remaining work before collection
 
 1. Keep EdgeRIC in shadow mode and verify at startup that no weight publisher
-   controls OAI. Add joinable scenario and wall-clock evidence where current
-   EdgeRIC events expose only a host-local monotonic clock.
-2. Generate a scenario manifest containing the scenario ID, UE/application
-   assignment, candidate and bitrate, channel parameters, PF and shadow modes,
-   CUDA priority, duration, seeds, and code/config/model/container identities.
-3. Add a preflight check and a post-run completeness check. A valid run has one
+   controls OAI.
+2. Add a preflight check and a post-run completeness check. A valid run has one
    terminal result for every transmitted frame and no queue-bound, worker,
    transport, decoder, or logging failure.
-
-The scenario generator and joined dataset exporter will be specified after the
-remaining experiment-control decisions are supplied.
+3. Add the checkpointed scenario runner, SRK channel loader integration, and
+   joined dataset exporter.

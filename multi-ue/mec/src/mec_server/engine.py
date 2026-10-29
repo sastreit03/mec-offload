@@ -145,7 +145,8 @@ class Engine:
             if c["application"] in cfg.applications
         }
         self.root = Path(cfg.runs_dir) / cfg.run_id / "mec"
-        self.record = Recorder(self.root)
+        self.scenario = None
+        self.record = Recorder(self.root, self.join_context)
         self.gpu = DeviceGpuSampler()
         self.replay = ReplayStore(self.root / "replay.sqlite3")
         self.ues = {}
@@ -225,6 +226,91 @@ class Engine:
     def collection_mode(self):
         return getattr(self.cfg, "mode", None) == "collection"
 
+    def join_context(self):
+        value = dict(
+            run_id=self.cfg.run_id,
+            campaign_id=None,
+            scenario_id=None,
+            attempt_id=None,
+        )
+        if self.scenario:
+            value.update(self.scenario)
+        return value
+
+    def contextual(self, message):
+        """Attach the active immutable join context to a wire message."""
+        if message is None:
+            return None
+        for key, value in self.join_context().items():
+            message.setdefault(key, value)
+        return message
+
+    @staticmethod
+    def validated_context(value):
+        context = {}
+        for key in ("campaign_id", "scenario_id", "attempt_id"):
+            item = value.get(key)
+            if not isinstance(item, str) or not item.strip() or len(item) > 128:
+                raise ValueError(f"invalid {key}")
+            context[key] = item
+        return context
+
+    def idle(self):
+        return bool(
+            not self.frames
+            and not self.inflight
+            and all(not values for values in self.pending.values())
+            and all(
+                v.state in TERMINAL and v.deliveries == 0
+                for v in self.videos.values()
+            )
+        )
+
+    def arm_scenario(self, value):
+        context = self.validated_context(value)
+        if self.scenario == context:
+            return dict(status="already_armed", **context)
+        if not self.idle():
+            raise ValueError("MEC must be idle before arming a scenario")
+        self.scenario = context
+        self.videos.clear()
+        self.progress.clear()
+        self.last_progress.clear()
+        self.last_report = None
+        self.report_received = 0.0
+        self.last_usable.clear()
+        self.sync_needed = True
+        # Wake a sender blocked on an empty awareness queue. The subsequent
+        # authoritative sync subsumes this fence, so it is never sent.
+        self.awareness_seq += 1
+        fence = self.contextual(
+            envelope(
+                "scenario_fence",
+                self.cfg.run_id,
+                awareness_revision=self.awareness_seq,
+            )
+        )
+        try:
+            self.awareness.put_nowait((0, self.awareness_seq, fence))
+        except asyncio.QueueFull:
+            pass
+        self.record.event("scenario_armed")
+        message = self.contextual(
+            envelope("scenario_context", self.cfg.run_id, **context)
+        )
+        for uid in tuple(self.ues):
+            self.send(uid, dict(message))
+        return dict(status="armed", **context)
+
+    def validate_message_context(self, message):
+        if not self.scenario:
+            if self.collection_mode:
+                raise ValueError("scenario_not_armed")
+            return
+        actual = {key: message.get(key) for key in self.scenario}
+        if actual != self.scenario:
+            raise ValueError("scenario_context_mismatch")
+
     def task(self, coro):
         t = asyncio.create_task(coro)
         self.background.append(t)
@@ -268,7 +354,7 @@ class Engine:
     def send(self, uid, message):
         u = self.ues[uid]
         if u.connected and u.sender:
-            u.sender(message)
+            u.sender(self.contextual(message))
 
     def aware(self, kind, priority=1, **value):
         self.awareness_seq += 1
@@ -279,6 +365,7 @@ class Engine:
             awareness_revision=self.awareness_seq,
             **value,
         )
+        self.contextual(msg)
         try:
             self.awareness.put_nowait((priority, self.awareness_seq, msg))
         except asyncio.QueueFull:
@@ -337,7 +424,7 @@ class Engine:
             connection_id=u.connection_id,
             generation=u.generation,
         )
-        return u, envelope(
+        return u, self.contextual(envelope(
             "mec_hello",
             self.cfg.run_id,
             ue_id=uid,
@@ -357,7 +444,7 @@ class Engine:
             collection_mode=self.collection_mode,
             server_unix_ns=time.time_ns(),
             schema_version_control=1,
-        )
+        ))
 
     def disconnect(self, uid, generation):
         u = self.ues[uid]
@@ -395,6 +482,7 @@ class Engine:
             return None
         if kind not in ("video_start", "video_end"):
             raise ValueError("unknown control command")
+        self.validate_message_context(m)
         if m.get("ue_id") != u.uid:
             raise ValueError("identity does not match socket")
         seq = integer(m["client_seq"])
@@ -1600,6 +1688,8 @@ class Engine:
 
     async def deliver(self, v, message, complete_ns, ready_ns, cid):
         try:
+            # Freeze scenario identity before durable replay or asynchronous delivery.
+            self.contextual(message)
             begin = time.monotonic_ns()
             await asyncio.to_thread(dumps, message)
             prepared = time.monotonic_ns()
@@ -2202,6 +2292,7 @@ class Engine:
                             if v.state not in TERMINAL or v.radio_frames
                         ],
                     )
+                    self.contextual(message)
                     try:
                         await self.rpc.call(message, self.cfg.awareness_timeout_s)
                     except Exception:
@@ -2210,7 +2301,12 @@ class Engine:
                     self.synced_awareness_revision = max(
                         self.synced_awareness_revision, snapshot_revision
                     )
-                _, _, message = await self.awareness.get()
+                priority, sequence, message = await self.awareness.get()
+                # Arming may request a sync while this task is blocked above.
+                # Recheck the fence before sending the message that woke it.
+                if self.sync_needed:
+                    await self.awareness.put((priority, sequence, message))
+                    continue
                 # The successful snapshot already represented older queued updates.
                 if (
                     message.get("awareness_revision", 0)
@@ -2285,8 +2381,16 @@ class Engine:
         source = None
         while True:
             try:
-                async for r in self.rpc.stream(envelope("subscribe", self.cfg.run_id)):
+                request = self.contextual(envelope("subscribe", self.cfg.run_id))
+                async for r in self.rpc.stream(request):
                     if r.get("run_id") != self.cfg.run_id:
+                        continue
+                    expected = self.join_context()
+                    actual = {key: r.get(key) for key in expected}
+                    if actual != expected:
+                        self.record.event(
+                            "radio_report_context_mismatch", report_context=actual
+                        )
                         continue
                     if r["source_generation"] != source:
                         source = r["source_generation"]
