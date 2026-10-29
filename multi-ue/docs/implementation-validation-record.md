@@ -259,3 +259,11 @@ tap-delay indices, then selected `awgn-sinr20` with hash
 `0618dc20945fad4cb56cba80ac67ef15829b420cbc250ecefa558f85ab95ec79` at
 generation 1. Live SINR calibration remains required.
 
+With the loader reset to its pass-through baseline after a gNB restart, one
+attached Linux softUE sustained 21.6 Mbit/s UL at the external-DN receiver and
+8.28 Mbit/s DL at the UE over ten-second TCP tests. The UL sender reported zero
+TCP retransmissions and the DL sender three. This establishes bidirectional
+baseline function; AWGN 20/10/0-dB measurements and ordering still require
+capture. A trace selection is runtime state and must be reapplied after every
+gNB restart.
+
