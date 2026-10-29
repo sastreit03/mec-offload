@@ -93,6 +93,10 @@ echo "Starting nr-ue"
 docker compose --env-file "$env_file" up -d oai-nr-ue
 wait_for_container "oai-nr-ue"
 
+# Aetheredge: make the MEC data-plane route ready before an application starts.
+repo_root=$(realpath "${configs_dir}/../..")
+"${repo_root}/multi-ue/scripts/softue-route.sh"
+
 # Start xApp
 #docker compose --env-file "$env_file" up -d monitor_xapp
 

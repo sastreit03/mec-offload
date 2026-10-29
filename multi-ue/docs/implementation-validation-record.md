@@ -162,6 +162,10 @@ the UE tunnel through its interface rather than a hard-coded `12.1.1.2`
 address. Android binds to the selected cellular network and refreshes the
 session binding when the network address changes.
 
+Linux softUE startup now waits for the dynamically assigned tunnel address and
+installs the MEC-specific route before application launch. The application
+launcher reapplies the same idempotent route if the tunnel was recreated.
+
 ## Tests and checks performed
 
 | Check | Result | Meaning and limit |
