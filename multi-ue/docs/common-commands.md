@@ -148,6 +148,34 @@ assignment. Confirm `linux1` reports `connected=True` and
 relaunches the client after a softUE container restart or fatal local media
 sender error. Its lock prevents two Linux clients from using the same alias.
 
+## Validate campaign media random access
+
+Run on the **Orin** before starting a campaign. This checks the same exact
+seek and 150-frame decode operation used at runtime for all eight segments of
+all 42 videos. Container frame-count metadata alone is insufficient.
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+
+UE_IMAGE="$(docker inspect -f '{{.Config.Image}}' oai-nr-ue)"
+
+docker run --rm \
+  --entrypoint python3 \
+  -v "$PWD/tools:/multi-ue/tools:ro" \
+  -v "$PWD/datasets:/datasets:ro" \
+  -v "$PWD/runs:/multi-ue/runs" \
+  "$UE_IMAGE" \
+  /multi-ue/tools/validate_campaign_segments.py \
+    --root /datasets/campaign \
+    --frames 150 \
+    --segments 8 \
+    --workers 4 \
+    --output /multi-ue/runs/media-segment-validation
+```
+
+The command exits nonzero when any segment cannot be sought and fully decoded.
+Detailed results are saved in `segments.csv` and `summary.json`.
+
 ## Check whether scenario media has started or stalled
 
 Run on the **MEC Spark**. This is a one-shot check and does not wait for a
