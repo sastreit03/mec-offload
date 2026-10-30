@@ -17,6 +17,7 @@ restart_mec=false
 if ! timeout 5 curl -fsS http://192.168.71.142:8765/readyz >/dev/null 2>&1; then
   restart_mec=true
 elif [[ "$reason" == *"scenario timed out"* \
+  || "$reason" == *"scenario stalled"* \
   || "$reason" == *"unresolved frames"* \
   || "$reason" == *"terminal frame"* \
   || "$reason" == *"final frame"* \

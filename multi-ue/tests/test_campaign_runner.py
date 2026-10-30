@@ -3,6 +3,8 @@ from pathlib import Path
 import sys
 from types import SimpleNamespace
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
@@ -50,3 +52,52 @@ def test_operator_stop_does_not_run_recovery(tmp_path):
 
     assert state.row("scenario-a") == ("interrupted", 1)
     assert recovered == []
+
+
+def test_wait_fails_after_media_progress_stalls(tmp_path, monkeypatch):
+    context = {
+        "campaign_id": "campaign-a",
+        "scenario_id": "scenario-a",
+        "attempt_id": "attempt-a",
+    }
+    status = {
+        "scenario": context,
+        "videos": {
+            "video-a": {
+                "ue_alias": "pixel1",
+                "state": "ACTIVE",
+                "counters": {"completed": 134, "dropped": 0, "failed": 0},
+                "final_frame_id": None,
+                "collection_error": None,
+            }
+        },
+        "unresolved": 4,
+    }
+    monkeypatch.setattr(MODULE, "http_json", lambda *_: status)
+    monkeypatch.setattr(MODULE.time, "sleep", lambda *_: None)
+    state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
+    runner = MODULE.Runner(
+        SimpleNamespace(
+            output=str(tmp_path),
+            mec="http://mec.test",
+            scenario_timeout=1,
+            stall_timeout=0.01,
+            poll_interval=0,
+        ),
+        [],
+        state,
+    )
+    scenario = {
+        "campaign_id": "campaign-a",
+        "scenario_id": "scenario-a",
+        "ues": [
+            {
+                "ue_alias": "pixel1",
+                "candidate_id": "candidate-a",
+                "frame_count": 150,
+            }
+        ],
+    }
+
+    with pytest.raises(RuntimeError, match="scenario stalled"):
+        runner.wait(scenario, "attempt-a")

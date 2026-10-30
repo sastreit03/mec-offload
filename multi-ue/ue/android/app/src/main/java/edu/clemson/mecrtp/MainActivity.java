@@ -223,7 +223,18 @@ public final class MainActivity extends Activity {
       if (type.equals("successor_needed") && playlist != null && !collectionMode)
         ui.post(() -> prepareSuccessor(value));
       if (type.equals("plan_unapplied")) send(new JSONObject(value.toString()).put("type", type));
-      if (type.equals("sender_error")) show(value.toString());
+      if (type.equals("sender_error")) {
+        show(value.toString());
+        // Aetheredge: close a failed collection input so the MEC can resolve
+        // its received tail and the campaign runner can retry the scenario.
+        if (collectionMode && session != null && session.lastFrame() >= 0) {
+          org.json.JSONObject end =
+              new org.json.JSONObject()
+                  .put("video_id", session.video())
+                  .put("final_frame_id", session.lastFrame());
+          ui.post(() -> mediaEnded(end));
+        }
+      }
     } catch (Exception e) {
       enabled = false;
       show(e.toString());

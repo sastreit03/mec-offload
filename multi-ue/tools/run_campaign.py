@@ -211,6 +211,8 @@ class Runner:
     def wait(self, scenario, attempt_id):
         expected = {item["ue_alias"]: item for item in scenario["ues"]}
         deadline = time.monotonic() + self.args.scenario_timeout
+        progress_at = time.monotonic()
+        progress = None
         last = None
         while time.monotonic() < deadline and not self.stop:
             last = http_json(self.args.mec, "/api/status")
@@ -224,6 +226,27 @@ class Runner:
                 value.get("ue_alias"): value for value in last["videos"].values()
                 if value.get("ue_alias") in expected
             }
+            # Aetheredge: detect a dead UE media path without waiting for the
+            # broader scenario timeout. Any terminal count, state, or MEC
+            # unresolved-frame change resets this watchdog.
+            current_progress = (
+                last["unresolved"],
+                tuple(
+                    sorted(
+                        (
+                            alias,
+                            value["state"],
+                            tuple(sorted(value["counters"].items())),
+                            value.get("final_frame_id"),
+                            value.get("collection_error"),
+                        )
+                        for alias, value in videos.items()
+                    )
+                ),
+            )
+            if current_progress != progress:
+                progress = current_progress
+                progress_at = time.monotonic()
             if len(videos) == len(expected) and all(
                 value["state"] in TERMINAL for value in videos.values()
             ):
@@ -244,6 +267,11 @@ class Runner:
                 if errors:
                     raise RuntimeError("; ".join(errors))
                 return last
+            stalled_for = time.monotonic() - progress_at
+            if stalled_for >= self.args.stall_timeout:
+                raise RuntimeError(
+                    f"scenario stalled for {stalled_for:.1f} seconds"
+                )
             self.event(
                 "monitor", scenario_id=scenario["scenario_id"], attempt_id=attempt_id,
                 videos={
@@ -353,6 +381,10 @@ def main():
     parser.add_argument("--limit", type=int, help="stop after this many manifest rows")
     parser.add_argument("--max-attempts", type=int, default=3)
     parser.add_argument("--scenario-timeout", type=float, default=180)
+    parser.add_argument(
+        "--stall-timeout", type=float, default=30,
+        help="recover after this many seconds without media or drain progress",
+    )
     parser.add_argument("--preflight-timeout", type=float, default=180)
     parser.add_argument("--max-radio-age", type=float, default=1.0)
     parser.add_argument("--poll-interval", type=float, default=1)
