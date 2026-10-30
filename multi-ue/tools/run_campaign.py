@@ -520,8 +520,8 @@ def main():
     parser.add_argument("--max-attempts", type=int, default=3)
     parser.add_argument("--scenario-timeout", type=float, default=180)
     parser.add_argument(
-        "--start-lead-s", type=float, default=2.0,
-        help="future shared UE start timestamp after all assignment acknowledgements",
+        "--start-lead-s", type=float, default=6.0,
+        help="admission/setup lead before the shared UE media release",
     )
     parser.add_argument(
         "--assignment-timeout", type=float, default=20,

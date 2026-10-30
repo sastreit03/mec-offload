@@ -398,10 +398,7 @@ class Client:
             await self.send(dict(type="time_sync", client_mono_ns=time.monotonic_ns()))
 
     async def start_collection_at(self, start_unix_ns, attempt_id):
-        """Issue admission at the shared campaign timestamp for this attempt."""
-        delay = (start_unix_ns - self.clock.unix_ns()) / 1e9
-        if delay > 0:
-            await asyncio.sleep(delay)
+        """Prepare admission now; the media thread holds until the shared timestamp."""
         if (
             self.stopped
             or self.attempt_id != attempt_id
@@ -637,6 +634,11 @@ class Client:
                                             ).get("source_start_frame", 0),
                                             frame_count=(self.assignment or {}).get(
                                                 "frame_count"
+                                            ),
+                                            release_unix_ns=(
+                                                self.scenario_start_unix_ns
+                                                if self.collection_mode
+                                                else None
                                             ),
                                         )
                                         if self.successor_selection:

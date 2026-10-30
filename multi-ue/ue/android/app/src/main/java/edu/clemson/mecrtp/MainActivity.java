@@ -672,28 +672,18 @@ public final class MainActivity extends Activity {
         break;
       case "scenario_start":
         scenarioStartUnixNs = m.getLong("start_unix_ns");
-        final String scheduledAttempt = attemptId;
-        final long scheduledStart = scenarioStartUnixNs;
-        long delay = Math.max(0, scheduledStart - clock.now());
-        timer.schedule(
-            () -> {
-              try {
-                if (scheduledAttempt != null
-                    && scheduledAttempt.equals(attemptId)
-                    && assignment != null) {
-                  event(
-                      "scenario_start",
-                      new JSONObject()
-                          .put("scheduled_start_unix_ns", scheduledStart)
-                          .put("actual_request_unix_ns", clock.now()));
-                  requestStart();
-                }
-              } catch (Exception e) {
-                event("scenario_start_error", object("reason", e.toString()));
-              }
-            },
-            delay,
-            TimeUnit.NANOSECONDS);
+        // Admission and codec setup happen during the lead interval. StreamSession
+        // still holds the first encoded frame until this common timestamp.
+        try {
+          event(
+              "scenario_start",
+              new JSONObject()
+                  .put("scheduled_start_unix_ns", scenarioStartUnixNs)
+                  .put("actual_request_unix_ns", clock.now()));
+          requestStart();
+        } catch (Exception e) {
+          event("scenario_start_error", object("reason", e.toString()));
+        }
         break;
       case "time_sync":
         clock.observe(
@@ -748,7 +738,13 @@ public final class MainActivity extends Activity {
                   .put("video_id", m.getString("video_id"))
                   .put("accepted", true)
                   .put("reason", JSONObject.NULL));
-          session = new StreamSession(m, clock, this::event, getExternalFilesDir(null));
+          session =
+              new StreamSession(
+                  m,
+                  clock,
+                  this::event,
+                  getExternalFilesDir(null),
+                  collectionMode ? scenarioStartUnixNs : 0);
           startAdmittedSession(session, file);
         } else if (!m.getBoolean("accepted")) {
           event(

@@ -142,10 +142,11 @@ attempt. This prevents an uplink-associated UE with a failed downlink bearer
 from silently omitting its video while the other UEs continue.
 
 After all acknowledgements, the runner releases a two-phase start barrier. The
-MEC broadcasts one future wall-clock timestamp and every UE maps it to its
-monotonic clock before issuing `video_start`. UE evidence records the scheduled
+MEC broadcasts one future wall-clock timestamp. During the six-second lead,
+every UE requests admission and initializes its media pipeline, then holds its
+first frame until that shared timestamp. UE evidence records the scheduled
 timestamp and actual request timestamp; capture/transmission timestamps retain
-the measured residual skew from encoder setup and radio scheduling.
+the measured residual skew from radio scheduling.
 
 The arm payload also carries the complete per-UE assignment. Each UE registers
 a stable alias (`pixel1` through `pixel3`, or `linux1`), resolves the exact

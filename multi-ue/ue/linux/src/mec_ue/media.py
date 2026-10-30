@@ -20,8 +20,10 @@ class Encoder:
         self.GstVideo = GstVideo
         self.pipeline = Gst.parse_launch(
             f"appsrc name=raw is-live=true format=time block=true max-bytes={width * height * 3 * 2} "
-            f'caps="video/x-raw,format=BGR,width={width},height={height},framerate={fps}/1" ! videoconvert ! '
+            f'caps="video/x-raw,format=BGR,width={width},height={height},framerate={fps}/1" ! '
+            f'videoconvert ! video/x-raw,format=I420 ! '
             f"x264enc name=encoder tune=zerolatency speed-preset=veryfast bitrate={bitrate // 1000} key-int-max=300 bframes=0 byte-stream=true ! "
+            "video/x-h264,profile=baseline ! "
             "h264parse config-interval=-1 ! video/x-h264,stream-format=byte-stream,alignment=au ! "
             "appsink name=encoded max-buffers=1 drop=false sync=false wait-on-eos=false enable-last-sample=false"
         )
@@ -71,6 +73,7 @@ class Streamer:
         prepare_s=0,
         source_start_frame=0,
         frame_count=None,
+        release_unix_ns=None,
     ):
         self.response = response
         self.source = source
@@ -80,6 +83,7 @@ class Streamer:
         self.prepare_s = prepare_s
         self.source_start_frame = source_start_frame
         self.frame_count = frame_count
+        self.release_unix_ns = release_unix_ns
         self.current = dict(response["config"])
         self.pending = []
         self.lock = threading.Lock()
@@ -182,7 +186,11 @@ class Streamer:
             seq = secrets.randbits(16)
             rtp_base = secrets.randbits(32)
             # Local setup may finish after a prepared boundary; do not burst to catch up.
-            release = max(cfg["boundary_unix_ns"], self.clock.unix_ns())
+            release = max(
+                cfg["boundary_unix_ns"],
+                self.release_unix_ns or 0,
+                self.clock.unix_ns(),
+            )
             force = True
             while not self.stopped.is_set():
                 if self.frame_count is not None and self.frame_id >= self.frame_count:

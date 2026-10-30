@@ -31,6 +31,17 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
 
   public StreamSession(JSONObject response, ClockMap clock, Events events, java.io.File data)
       throws Exception {
+    this(response, clock, events, data, 0);
+  }
+
+  /** Prepare transport immediately while holding the first frame for a campaign release. */
+  public StreamSession(
+      JSONObject response,
+      ClockMap clock,
+      Events events,
+      java.io.File data,
+      long releaseUnixNs)
+      throws Exception {
     this.events = events;
     this.clock = clock;
     video = UUID.fromString(response.getString("video_id"));
@@ -40,7 +51,7 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
     collectionMode = response.optBoolean("collection_mode", false);
     current = response.getJSONObject("config");
     controlVersion = current.optLong("control_version", 0);
-    nextRelease = current.getLong("boundary_unix_ns");
+    nextRelease = Math.max(current.getLong("boundary_unix_ns"), releaseUnixNs);
   }
 
   public synchronized void network(Network n) throws Exception {
