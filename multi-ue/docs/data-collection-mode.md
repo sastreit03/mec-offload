@@ -141,6 +141,8 @@ a stable alias (`pixel1` through `pixel3`, or `linux1`), resolves the exact
 manifest media file, seeks to `source_start_frame`, selects the assigned
 application/DNN/bitrate, and stops after 150 submitted frames. Normal camera
 and shuffled prerecorded operation remain unchanged outside collection mode.
+An assignment is single-use within an attempt: both the MEC and UE reject a
+second video start until a new `attempt_id` supplies a new scenario context.
 
 `tools/prepare_campaign_media.py` deterministically selects 42 videos from a
 BDD100K archive or directory, verifies video metadata, optionally decodes each
@@ -162,6 +164,8 @@ receive a new attempt ID. `scripts/campaign_recover.sh` restarts an unavailable
 local EdgeRIC and, when passwordless SSH is configured, the remote MEC.
 `--scenario-id` and `--limit` support pilots without creating a second manifest
 or a separate checkpoint; a later full invocation skips pilot rows already valid.
+An operator interrupt records the active attempt as interrupted and exits
+without invoking automatic recovery.
 
 MEC awareness messages now include a process generation UUID. EdgeRIC accepts
 a reset revision counter only from a new generation, replaces associations
@@ -181,6 +185,11 @@ Deadline expiration and tracking cutoffs are not execution gates. End-of-input
 waits for frames, serialized tracking, durable result preparation, and result
 enqueueing. Terminal status is ordered after queued frame results. Linux and
 Android retain late-frame state until those results arrive.
+
+At end-of-input, a received access unit that cannot produce a decoded frame is
+returned as an explicit per-frame decode failure; an incomplete access unit is
+returned as transport loss. These are channel/media outcomes rather than a
+stuck MEC drain, so they do not wait for or trigger the collection watchdog.
 
 The initial bounded five-second configuration permits 192 pending decoded
 frames and 512 MiB per video, a 192-frame tracking reorder allowance, and a

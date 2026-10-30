@@ -2,9 +2,9 @@
 
 import asyncio
 from types import SimpleNamespace
-from unittest.mock import Mock
+from unittest.mock import Mock, call
 
-from mec_server.engine import Engine, UE, Video
+from mec_server.engine import Engine, Frame, UE, Video
 
 
 def test_new_end_sequence_cannot_reopen_completed_video():
@@ -121,3 +121,67 @@ def test_first_successor_packet_can_promote_before_video_end_control():
     assert old.state == "HANDOFF_PENDING_END" and old.demand_closed
     assert nxt.state == "AWAITING_DELIVERY"
     assert user.active_video == nxt.vid and user.prepared_video is None
+
+
+def test_collection_attempt_rejects_second_video_for_same_alias():
+    async def exercise():
+        engine = Engine.__new__(Engine)
+        engine.cfg = SimpleNamespace(
+            run_id="run", mode="collection", applications=("detection",)
+        )
+        engine.admission_lock = asyncio.Lock()
+        engine.record = Mock()
+        engine.videos = {}
+        engine.scenario_assignments = {
+            "pixel1": {
+                "application": "detection",
+                "candidate_id": "detection-yolo26m-2000k",
+                "media_id": "media-a",
+                "source_start_frame": 0,
+                "frame_count": 150,
+            }
+        }
+        engine.scenario_videos = {"pixel1": "prior-video"}
+        engine.readiness = Mock(return_value={"ready": True})
+        engine.usable_radio = Mock(return_value=True)
+        user = UE("ue", "token", alias="pixel1")
+
+        result = await engine.start_video(
+            user,
+            dict(
+                client_seq=4,
+                application="detection",
+                candidate_id="detection-yolo26m-2000k",
+                media_id="media-a",
+                source_start_frame=0,
+                frame_count=150,
+            ),
+        )
+
+        assert not result["accepted"]
+        assert result["reason"] == "scenario_already_started"
+
+    asyncio.run(exercise())
+
+
+def test_video_end_resolves_received_frames_that_decoder_cannot_emit():
+    engine = Engine.__new__(Engine)
+    engine.cfg = SimpleNamespace(run_id="run", mode="collection", drain_s=120.0)
+    engine.aware = Mock()
+    engine.record = Mock()
+    engine.task = Mock()
+    engine.fail_frame = Mock()
+    video = Video("video", "ue", "detection", 1, 0, state="DRAINING")
+    incomplete = Frame(video.vid, 148, None, 0, {})
+    complete = Frame(video.vid, 149, None, 0, {}, complete_ns=1)
+    engine.frames = {
+        (video.vid, incomplete.fid): incomplete,
+        (video.vid, complete.fid): complete,
+    }
+
+    engine.close_input(video, "video_end")
+
+    assert engine.fail_frame.call_args_list == [
+        call(video.vid, 148, "transport_loss"),
+        call(video.vid, 149, "decode_incomplete_after_video_end"),
+    ]

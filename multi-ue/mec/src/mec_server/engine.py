@@ -150,6 +150,7 @@ class Engine:
         self.root = Path(cfg.runs_dir) / cfg.run_id / "mec"
         self.scenario = None
         self.scenario_assignments = {}
+        self.scenario_videos = {}
         # Aetheredge: revisions restart at zero with every MEC process. This
         # generation lets EdgeRIC distinguish a restart from delayed messages.
         self.awareness_generation = str(uuid.uuid4())
@@ -300,6 +301,7 @@ class Engine:
             raise ValueError("MEC must be idle before arming a scenario")
         self.scenario = context
         self.scenario_assignments = assignments
+        self.scenario_videos.clear()
         self.videos.clear()
         self.progress.clear()
         self.last_progress.clear()
@@ -814,6 +816,10 @@ class Engine:
                 assignment = self.scenario_assignments.get(u.alias)
                 if assignment is None:
                     return denied("ue_not_active_in_scenario")
+                # Aetheredge: one immutable assignment creates exactly one video
+                # in an attempt, even if a terminal status prompts a client retry.
+                if u.alias in self.scenario_videos:
+                    return denied("scenario_already_started")
                 for field in (
                     "application",
                     "candidate_id",
@@ -931,6 +937,8 @@ class Engine:
             self.record.event(
                 "admitted", ue_id=u.uid, video_id=vid, application=v.app, slo_s=v.slo
             )
+            if assignment is not None:
+                self.scenario_videos[u.alias] = vid
             decision_end = time.monotonic_ns()
             self.record.event(
                 "admission_decision",
@@ -2150,7 +2158,20 @@ class Engine:
         if v.receiver:
             self.task(asyncio.to_thread(v.receiver.close))
         self.close_demand(v)
-        if reason != "video_end":
+        if reason == "video_end" and self.collection_mode:
+            # Aetheredge: stopping GStreamer cannot produce another decoded
+            # sample. Resolve received tail frames explicitly instead of leaving
+            # them in RECEIVING until the collection watchdog invalidates a run.
+            for f in list(self.frames.values()):
+                if f.vid == v.vid and f.state == "RECEIVING":
+                    self.fail_frame(
+                        v.vid,
+                        f.fid,
+                        "transport_loss"
+                        if f.complete_ns is None
+                        else "decode_incomplete_after_video_end",
+                    )
+        elif reason != "video_end":
             for f in list(self.frames.values()):
                 if f.vid == v.vid and f.state != "PROCESSING":
                     self.fail_frame(v.vid, f.fid, reason)

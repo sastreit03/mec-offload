@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -31,3 +32,21 @@ def test_checkpoint_marks_only_running_attempt_interrupted(tmp_path):
     state.start(scenario, "attempt-a")
     reopened = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
     assert reopened.row("scenario-a") == ("interrupted", 1)
+
+
+def test_operator_stop_does_not_run_recovery(tmp_path):
+    state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
+    scenario = {"scenario_id": "scenario-a", "execution_index": 0}
+    runner = MODULE.Runner(
+        SimpleNamespace(output=str(tmp_path), max_attempts=3), [scenario], state
+    )
+    runner.attempt = lambda *_: (_ for _ in ()).throw(
+        MODULE.RunnerStopped("runner stopped")
+    )
+    recovered = []
+    runner.recover = lambda *args: recovered.append(args)
+
+    runner.run()
+
+    assert state.row("scenario-a") == ("interrupted", 1)
+    assert recovered == []

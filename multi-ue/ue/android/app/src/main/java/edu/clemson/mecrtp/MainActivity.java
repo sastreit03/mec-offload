@@ -638,6 +638,9 @@ public final class MainActivity extends Activity {
             retire(session);
             session = null;
             startRequest = null;
+            // Aetheredge: a collection assignment is single-use. The next
+            // attempt supplies a new assignment through scenario_context.
+            if (collectionMode) assignment = null;
             if (!collectionMode && playlist != null && preparedSession != null) {
               startPreparedSuccessor();
             } else if (!collectionMode && playlist != null) {

@@ -1,0 +1,678 @@
+schema_version: 1
+pools:
+  pixel1:
+  - media_id: 01c9d396-c1de70b1
+    path: /sdcard/Movies/AetheredgeCampaign/01c9d396-c1de70b1.mov
+    sha256: 9b244a7a0841e0305a5b8bc94210f51ff86526e92ff9e9f2d2a2a1826e23ba09
+    source_frames: 1210
+  - media_id: 02701fba-809c39f3
+    path: /sdcard/Movies/AetheredgeCampaign/02701fba-809c39f3.mov
+    sha256: 38b6e62116cf2c25dd676361d93e21582e8e93e195605d10f144eb8316be30a6
+    source_frames: 1207
+  - media_id: 0081e3ea-2c0ec19d
+    path: /sdcard/Movies/AetheredgeCampaign/0081e3ea-2c0ec19d.mov
+    sha256: cb2c3989414104a29eb409e35ce1ae316e8766b2fad6a7c1723439adb394ba07
+    source_frames: 1210
+  - media_id: 007693e6-2535e7bf
+    path: /sdcard/Movies/AetheredgeCampaign/007693e6-2535e7bf.mov
+    sha256: c763235d673a8e7b4aad62322c0d3cd3656381ba214ba2723c14920aee55e694
+    source_frames: 1208
+  - media_id: 0033b19f-7f07efac
+    path: /sdcard/Movies/AetheredgeCampaign/0033b19f-7f07efac.mov
+    sha256: c4613c8f7280926394cff7ed5df2c82cb183693775bad47ea9beae60fd67094f
+    source_frames: 1215
+  - media_id: 01128d0a-031e0a61
+    path: /sdcard/Movies/AetheredgeCampaign/01128d0a-031e0a61.mov
+    sha256: 09a0978ac3bc3e8f464063d7fd67d584800e319041ed995a0b18fba6432ebce0
+    source_frames: 1202
+  - media_id: 0052b279-87c692aa
+    path: /sdcard/Movies/AetheredgeCampaign/0052b279-87c692aa.mov
+    sha256: e26864e58d9715220f26ab850fbce57a6d6c3570ecc88065ed99974a6c166f04
+    source_frames: 1209
+  - media_id: 02621ea2-399eaeb2
+    path: /sdcard/Movies/AetheredgeCampaign/02621ea2-399eaeb2.mov
+    sha256: 4a5f7406ab9c672f123cb9204b81a306d65476df46da07b0df9f6b2847b49fa2
+    source_frames: 1203
+  - media_id: 00091078-875c1f73
+    path: /sdcard/Movies/AetheredgeCampaign/00091078-875c1f73.mov
+    sha256: 6b0681d7bc6ce127b9fe2947dc98b4944ce6354f4353decae8fe9d44eee05a96
+    source_frames: 1208
+  - media_id: 01a8723d-89a1953a
+    path: /sdcard/Movies/AetheredgeCampaign/01a8723d-89a1953a.mov
+    sha256: 5a73295b4ee146a839cde0c39354b7a0d2c1e6607da530a3e9a8cf45df4a80cd
+    source_frames: 1208
+  - media_id: 029fd987-078c287a
+    path: /sdcard/Movies/AetheredgeCampaign/029fd987-078c287a.mov
+    sha256: a7257d4930af33c41cad85edc91fee466d7e5daffdad6e799a6628d7161e4527
+    source_frames: 1209
+  - media_id: 00e5e793-22614772
+    path: /sdcard/Movies/AetheredgeCampaign/00e5e793-22614772.mov
+    sha256: 7a9dc540885e028251a77be38c7c7821642b0ea2646e0144a7cc30271ed5665f
+    source_frames: 1209
+  - media_id: 01981fe5-b484769f
+    path: /sdcard/Movies/AetheredgeCampaign/01981fe5-b484769f.mov
+    sha256: 732a3d1f9b9b0f0f13bf05c4e090c25082a36c7b815efdfab05b70f919eb4faa
+    source_frames: 1209
+  - media_id: 02494b7b-589045ab
+    path: /sdcard/Movies/AetheredgeCampaign/02494b7b-589045ab.mov
+    sha256: db8a7fa52d798501e673791fff4e09d9418ca0952362bfe83ad4cd59d06d4665
+    source_frames: 1205
+  - media_id: 0166faa5-5fbc53c5
+    path: /sdcard/Movies/AetheredgeCampaign/0166faa5-5fbc53c5.mov
+    sha256: 02201f9c38854bb9afe8ec1fb43fb4c15721801e774321e017fd701c89be95aa
+    source_frames: 1203
+  - media_id: 01dd5d9a-4501cd3a
+    path: /sdcard/Movies/AetheredgeCampaign/01dd5d9a-4501cd3a.mov
+    sha256: b975587344f5ee4cd9f9dd10322825e249a275162b0b86284e7841d12531c45e
+    source_frames: 1202
+  - media_id: 0071d9c5-be7394cc
+    path: /sdcard/Movies/AetheredgeCampaign/0071d9c5-be7394cc.mov
+    sha256: c406f5ba2c283cd3a71b5682570bf62c563d64292ffe41feb273b7d02b26d4a8
+    source_frames: 1207
+  - media_id: 0081e3ea-cc69a1c4
+    path: /sdcard/Movies/AetheredgeCampaign/0081e3ea-cc69a1c4.mov
+    sha256: 09d56429ec51cae75c2020e0f839f46d2a3d1e802f6dfee49eb5ae8ea5c2498a
+    source_frames: 1205
+  - media_id: 00a820ef-98a12e22
+    path: /sdcard/Movies/AetheredgeCampaign/00a820ef-98a12e22.mov
+    sha256: eac766c2048c966e0f2a77b60649ae7abe0edcd7aecbe33488e3dee5d474c663
+    source_frames: 1203
+  - media_id: 0081da60-5fa22cc6
+    path: /sdcard/Movies/AetheredgeCampaign/0081da60-5fa22cc6.mov
+    sha256: 624d89c865db1fb5e1f2d116815b7918ca9e2ff6ee95771ceda192719d1cd88e
+    source_frames: 1203
+  - media_id: 00a820ef-d655700e
+    path: /sdcard/Movies/AetheredgeCampaign/00a820ef-d655700e.mov
+    sha256: f62889580e48367250776c24ce4745175892c5751f55aa5a818ddda8e022b718
+    source_frames: 1210
+  - media_id: 010d75f8-91f41ad8
+    path: /sdcard/Movies/AetheredgeCampaign/010d75f8-91f41ad8.mov
+    sha256: 9fa21e5613439907973f09bd4d642af55ede163aba2f4d9343aa131b33399557
+    source_frames: 1201
+  - media_id: 019539db-cc36496e
+    path: /sdcard/Movies/AetheredgeCampaign/019539db-cc36496e.mov
+    sha256: a88c704128e889d540942b183e8aa032e0ca2fca6424adef2f2b2b1101c60e49
+    source_frames: 1207
+  - media_id: 00721168-56efa5c2
+    path: /sdcard/Movies/AetheredgeCampaign/00721168-56efa5c2.mov
+    sha256: 526347204f3d2ee42a56bbf87c7c832ab7ca01ca1a42cfe0c883c1bd298ca39d
+    source_frames: 1205
+  - media_id: 021c4a16-f4d18785
+    path: /sdcard/Movies/AetheredgeCampaign/021c4a16-f4d18785.mov
+    sha256: 87021467914a6b8dbf128e0fe4ecdb9b2a63517effecd8c30c59e456d2b41f70
+    source_frames: 1203
+  - media_id: 01746216-8d8edd01
+    path: /sdcard/Movies/AetheredgeCampaign/01746216-8d8edd01.mov
+    sha256: d15c85c4cfa3efb3bcfc64e5d0aa1d307ace980848f02aca0ba1ff6d9311cf36
+    source_frames: 1205
+  - media_id: 00ffeef4-b105ce4d
+    path: /sdcard/Movies/AetheredgeCampaign/00ffeef4-b105ce4d.mov
+    sha256: d40214029384f0c41ff69d33a3dffe8a477d8582840bec8c0de207ba3cf539ed
+    source_frames: 1207
+  - media_id: 0060b445-5acc00ed
+    path: /sdcard/Movies/AetheredgeCampaign/0060b445-5acc00ed.mov
+    sha256: 9a4d0d71f1779f922bac7d6291efadaec790699456d5fe1384aa04cb73c7b635
+    source_frames: 1210
+  - media_id: 0289eba3-3b2c545e
+    path: /sdcard/Movies/AetheredgeCampaign/0289eba3-3b2c545e.mov
+    sha256: e9a2eeb2a400540a71dff979244c42584e091a476dee11809f323173b1add385
+    source_frames: 1202
+  - media_id: 000f157f-dab3a407
+    path: /sdcard/Movies/AetheredgeCampaign/000f157f-dab3a407.mov
+    sha256: e30071c4d8bf1e2a40eed0e4cc0c833fe8e7a9df9eda47226f7b222ba6ad9051
+    source_frames: 1210
+  - media_id: 0088cf04-319858ad
+    path: /sdcard/Movies/AetheredgeCampaign/0088cf04-319858ad.mov
+    sha256: 9419866ffa5bb9fb08a274b3abe0fda368001f655adec7e4f83ed622b5382b60
+    source_frames: 1205
+  - media_id: 02982dfe-1dd674e5
+    path: /sdcard/Movies/AetheredgeCampaign/02982dfe-1dd674e5.mov
+    sha256: 737bc12bfa0c01dc583c1abf9b17e68a89b6d3ba7215a7b061c9f1c70253c9de
+    source_frames: 1216
+  - media_id: 003baca5-ad660439
+    path: /sdcard/Movies/AetheredgeCampaign/003baca5-ad660439.mov
+    sha256: b423110e774d63fb4d1a39caa00971fcdaed7f43c87bba5334122d5a1c8b570e
+    source_frames: 1206
+  - media_id: 01ed3f01-c4dd8d1d
+    path: /sdcard/Movies/AetheredgeCampaign/01ed3f01-c4dd8d1d.mov
+    sha256: e7e1b01db3d6e2d79c5ceb5fc2526e7460d0dbcf842da1de1086c8f84c4c2ed3
+    source_frames: 1207
+  - media_id: 02133057-fc70cc0e
+    path: /sdcard/Movies/AetheredgeCampaign/02133057-fc70cc0e.mov
+    sha256: 93739c6af7acfc998a0668bae743882ff120c58fceaf60eb3b4b081961ff3717
+    source_frames: 1212
+  - media_id: 015f02db-80d95c9f
+    path: /sdcard/Movies/AetheredgeCampaign/015f02db-80d95c9f.mov
+    sha256: b353b6a430acc734b81af5e768672b5ebb8dd0e0a5bbece07a7945d2bc964b05
+    source_frames: 1214
+  - media_id: 006676e5-624162a7
+    path: /sdcard/Movies/AetheredgeCampaign/006676e5-624162a7.mov
+    sha256: dc45ccbea2fefc83bdb84b1667dcd3e8026b63e0070be6ecc45dc59a31a7fd3a
+    source_frames: 1203
+  - media_id: 02669bf6-e34063e6
+    path: /sdcard/Movies/AetheredgeCampaign/02669bf6-e34063e6.mov
+    sha256: ea774f6619936820785728cde41d3edb915521765581840639a625ea4bd04b53
+    source_frames: 1211
+  - media_id: 00adbb3f-7757d4ea
+    path: /sdcard/Movies/AetheredgeCampaign/00adbb3f-7757d4ea.mov
+    sha256: f5263497609d0c9740d9e5fdbd6aac063fc5e0049f73c068c2b25a854721d7a0
+    source_frames: 1204
+  - media_id: 005ee183-bcfab89f
+    path: /sdcard/Movies/AetheredgeCampaign/005ee183-bcfab89f.mov
+    sha256: dc51de8ac31279a2fc365360e4724c9730ffbb9f8a397b9cbdb0444e18a740d1
+    source_frames: 1205
+  - media_id: 002827ad-8748e2fb
+    path: /sdcard/Movies/AetheredgeCampaign/002827ad-8748e2fb.mov
+    sha256: bcc09f73080acc7118ebed75bb6de2a5c1352039be63e40cbc93e3b2a82263b7
+    source_frames: 1214
+  - media_id: 01a4deab-0f7d41cc
+    path: /sdcard/Movies/AetheredgeCampaign/01a4deab-0f7d41cc.mov
+    sha256: 9a22940fa456e8e0cff60460df1ea7c0151b7a425e24ff1a98beb6233ae650bf
+    source_frames: 1206
+  pixel2:
+  - media_id: 01c9d396-c1de70b1
+    path: /sdcard/Movies/AetheredgeCampaign/01c9d396-c1de70b1.mov
+    sha256: 9b244a7a0841e0305a5b8bc94210f51ff86526e92ff9e9f2d2a2a1826e23ba09
+    source_frames: 1210
+  - media_id: 02701fba-809c39f3
+    path: /sdcard/Movies/AetheredgeCampaign/02701fba-809c39f3.mov
+    sha256: 38b6e62116cf2c25dd676361d93e21582e8e93e195605d10f144eb8316be30a6
+    source_frames: 1207
+  - media_id: 0081e3ea-2c0ec19d
+    path: /sdcard/Movies/AetheredgeCampaign/0081e3ea-2c0ec19d.mov
+    sha256: cb2c3989414104a29eb409e35ce1ae316e8766b2fad6a7c1723439adb394ba07
+    source_frames: 1210
+  - media_id: 007693e6-2535e7bf
+    path: /sdcard/Movies/AetheredgeCampaign/007693e6-2535e7bf.mov
+    sha256: c763235d673a8e7b4aad62322c0d3cd3656381ba214ba2723c14920aee55e694
+    source_frames: 1208
+  - media_id: 0033b19f-7f07efac
+    path: /sdcard/Movies/AetheredgeCampaign/0033b19f-7f07efac.mov
+    sha256: c4613c8f7280926394cff7ed5df2c82cb183693775bad47ea9beae60fd67094f
+    source_frames: 1215
+  - media_id: 01128d0a-031e0a61
+    path: /sdcard/Movies/AetheredgeCampaign/01128d0a-031e0a61.mov
+    sha256: 09a0978ac3bc3e8f464063d7fd67d584800e319041ed995a0b18fba6432ebce0
+    source_frames: 1202
+  - media_id: 0052b279-87c692aa
+    path: /sdcard/Movies/AetheredgeCampaign/0052b279-87c692aa.mov
+    sha256: e26864e58d9715220f26ab850fbce57a6d6c3570ecc88065ed99974a6c166f04
+    source_frames: 1209
+  - media_id: 02621ea2-399eaeb2
+    path: /sdcard/Movies/AetheredgeCampaign/02621ea2-399eaeb2.mov
+    sha256: 4a5f7406ab9c672f123cb9204b81a306d65476df46da07b0df9f6b2847b49fa2
+    source_frames: 1203
+  - media_id: 00091078-875c1f73
+    path: /sdcard/Movies/AetheredgeCampaign/00091078-875c1f73.mov
+    sha256: 6b0681d7bc6ce127b9fe2947dc98b4944ce6354f4353decae8fe9d44eee05a96
+    source_frames: 1208
+  - media_id: 01a8723d-89a1953a
+    path: /sdcard/Movies/AetheredgeCampaign/01a8723d-89a1953a.mov
+    sha256: 5a73295b4ee146a839cde0c39354b7a0d2c1e6607da530a3e9a8cf45df4a80cd
+    source_frames: 1208
+  - media_id: 029fd987-078c287a
+    path: /sdcard/Movies/AetheredgeCampaign/029fd987-078c287a.mov
+    sha256: a7257d4930af33c41cad85edc91fee466d7e5daffdad6e799a6628d7161e4527
+    source_frames: 1209
+  - media_id: 00e5e793-22614772
+    path: /sdcard/Movies/AetheredgeCampaign/00e5e793-22614772.mov
+    sha256: 7a9dc540885e028251a77be38c7c7821642b0ea2646e0144a7cc30271ed5665f
+    source_frames: 1209
+  - media_id: 01981fe5-b484769f
+    path: /sdcard/Movies/AetheredgeCampaign/01981fe5-b484769f.mov
+    sha256: 732a3d1f9b9b0f0f13bf05c4e090c25082a36c7b815efdfab05b70f919eb4faa
+    source_frames: 1209
+  - media_id: 02494b7b-589045ab
+    path: /sdcard/Movies/AetheredgeCampaign/02494b7b-589045ab.mov
+    sha256: db8a7fa52d798501e673791fff4e09d9418ca0952362bfe83ad4cd59d06d4665
+    source_frames: 1205
+  - media_id: 0166faa5-5fbc53c5
+    path: /sdcard/Movies/AetheredgeCampaign/0166faa5-5fbc53c5.mov
+    sha256: 02201f9c38854bb9afe8ec1fb43fb4c15721801e774321e017fd701c89be95aa
+    source_frames: 1203
+  - media_id: 01dd5d9a-4501cd3a
+    path: /sdcard/Movies/AetheredgeCampaign/01dd5d9a-4501cd3a.mov
+    sha256: b975587344f5ee4cd9f9dd10322825e249a275162b0b86284e7841d12531c45e
+    source_frames: 1202
+  - media_id: 0071d9c5-be7394cc
+    path: /sdcard/Movies/AetheredgeCampaign/0071d9c5-be7394cc.mov
+    sha256: c406f5ba2c283cd3a71b5682570bf62c563d64292ffe41feb273b7d02b26d4a8
+    source_frames: 1207
+  - media_id: 0081e3ea-cc69a1c4
+    path: /sdcard/Movies/AetheredgeCampaign/0081e3ea-cc69a1c4.mov
+    sha256: 09d56429ec51cae75c2020e0f839f46d2a3d1e802f6dfee49eb5ae8ea5c2498a
+    source_frames: 1205
+  - media_id: 00a820ef-98a12e22
+    path: /sdcard/Movies/AetheredgeCampaign/00a820ef-98a12e22.mov
+    sha256: eac766c2048c966e0f2a77b60649ae7abe0edcd7aecbe33488e3dee5d474c663
+    source_frames: 1203
+  - media_id: 0081da60-5fa22cc6
+    path: /sdcard/Movies/AetheredgeCampaign/0081da60-5fa22cc6.mov
+    sha256: 624d89c865db1fb5e1f2d116815b7918ca9e2ff6ee95771ceda192719d1cd88e
+    source_frames: 1203
+  - media_id: 00a820ef-d655700e
+    path: /sdcard/Movies/AetheredgeCampaign/00a820ef-d655700e.mov
+    sha256: f62889580e48367250776c24ce4745175892c5751f55aa5a818ddda8e022b718
+    source_frames: 1210
+  - media_id: 010d75f8-91f41ad8
+    path: /sdcard/Movies/AetheredgeCampaign/010d75f8-91f41ad8.mov
+    sha256: 9fa21e5613439907973f09bd4d642af55ede163aba2f4d9343aa131b33399557
+    source_frames: 1201
+  - media_id: 019539db-cc36496e
+    path: /sdcard/Movies/AetheredgeCampaign/019539db-cc36496e.mov
+    sha256: a88c704128e889d540942b183e8aa032e0ca2fca6424adef2f2b2b1101c60e49
+    source_frames: 1207
+  - media_id: 00721168-56efa5c2
+    path: /sdcard/Movies/AetheredgeCampaign/00721168-56efa5c2.mov
+    sha256: 526347204f3d2ee42a56bbf87c7c832ab7ca01ca1a42cfe0c883c1bd298ca39d
+    source_frames: 1205
+  - media_id: 021c4a16-f4d18785
+    path: /sdcard/Movies/AetheredgeCampaign/021c4a16-f4d18785.mov
+    sha256: 87021467914a6b8dbf128e0fe4ecdb9b2a63517effecd8c30c59e456d2b41f70
+    source_frames: 1203
+  - media_id: 01746216-8d8edd01
+    path: /sdcard/Movies/AetheredgeCampaign/01746216-8d8edd01.mov
+    sha256: d15c85c4cfa3efb3bcfc64e5d0aa1d307ace980848f02aca0ba1ff6d9311cf36
+    source_frames: 1205
+  - media_id: 00ffeef4-b105ce4d
+    path: /sdcard/Movies/AetheredgeCampaign/00ffeef4-b105ce4d.mov
+    sha256: d40214029384f0c41ff69d33a3dffe8a477d8582840bec8c0de207ba3cf539ed
+    source_frames: 1207
+  - media_id: 0060b445-5acc00ed
+    path: /sdcard/Movies/AetheredgeCampaign/0060b445-5acc00ed.mov
+    sha256: 9a4d0d71f1779f922bac7d6291efadaec790699456d5fe1384aa04cb73c7b635
+    source_frames: 1210
+  - media_id: 0289eba3-3b2c545e
+    path: /sdcard/Movies/AetheredgeCampaign/0289eba3-3b2c545e.mov
+    sha256: e9a2eeb2a400540a71dff979244c42584e091a476dee11809f323173b1add385
+    source_frames: 1202
+  - media_id: 000f157f-dab3a407
+    path: /sdcard/Movies/AetheredgeCampaign/000f157f-dab3a407.mov
+    sha256: e30071c4d8bf1e2a40eed0e4cc0c833fe8e7a9df9eda47226f7b222ba6ad9051
+    source_frames: 1210
+  - media_id: 0088cf04-319858ad
+    path: /sdcard/Movies/AetheredgeCampaign/0088cf04-319858ad.mov
+    sha256: 9419866ffa5bb9fb08a274b3abe0fda368001f655adec7e4f83ed622b5382b60
+    source_frames: 1205
+  - media_id: 02982dfe-1dd674e5
+    path: /sdcard/Movies/AetheredgeCampaign/02982dfe-1dd674e5.mov
+    sha256: 737bc12bfa0c01dc583c1abf9b17e68a89b6d3ba7215a7b061c9f1c70253c9de
+    source_frames: 1216
+  - media_id: 003baca5-ad660439
+    path: /sdcard/Movies/AetheredgeCampaign/003baca5-ad660439.mov
+    sha256: b423110e774d63fb4d1a39caa00971fcdaed7f43c87bba5334122d5a1c8b570e
+    source_frames: 1206
+  - media_id: 01ed3f01-c4dd8d1d
+    path: /sdcard/Movies/AetheredgeCampaign/01ed3f01-c4dd8d1d.mov
+    sha256: e7e1b01db3d6e2d79c5ceb5fc2526e7460d0dbcf842da1de1086c8f84c4c2ed3
+    source_frames: 1207
+  - media_id: 02133057-fc70cc0e
+    path: /sdcard/Movies/AetheredgeCampaign/02133057-fc70cc0e.mov
+    sha256: 93739c6af7acfc998a0668bae743882ff120c58fceaf60eb3b4b081961ff3717
+    source_frames: 1212
+  - media_id: 015f02db-80d95c9f
+    path: /sdcard/Movies/AetheredgeCampaign/015f02db-80d95c9f.mov
+    sha256: b353b6a430acc734b81af5e768672b5ebb8dd0e0a5bbece07a7945d2bc964b05
+    source_frames: 1214
+  - media_id: 006676e5-624162a7
+    path: /sdcard/Movies/AetheredgeCampaign/006676e5-624162a7.mov
+    sha256: dc45ccbea2fefc83bdb84b1667dcd3e8026b63e0070be6ecc45dc59a31a7fd3a
+    source_frames: 1203
+  - media_id: 02669bf6-e34063e6
+    path: /sdcard/Movies/AetheredgeCampaign/02669bf6-e34063e6.mov
+    sha256: ea774f6619936820785728cde41d3edb915521765581840639a625ea4bd04b53
+    source_frames: 1211
+  - media_id: 00adbb3f-7757d4ea
+    path: /sdcard/Movies/AetheredgeCampaign/00adbb3f-7757d4ea.mov
+    sha256: f5263497609d0c9740d9e5fdbd6aac063fc5e0049f73c068c2b25a854721d7a0
+    source_frames: 1204
+  - media_id: 005ee183-bcfab89f
+    path: /sdcard/Movies/AetheredgeCampaign/005ee183-bcfab89f.mov
+    sha256: dc51de8ac31279a2fc365360e4724c9730ffbb9f8a397b9cbdb0444e18a740d1
+    source_frames: 1205
+  - media_id: 002827ad-8748e2fb
+    path: /sdcard/Movies/AetheredgeCampaign/002827ad-8748e2fb.mov
+    sha256: bcc09f73080acc7118ebed75bb6de2a5c1352039be63e40cbc93e3b2a82263b7
+    source_frames: 1214
+  - media_id: 01a4deab-0f7d41cc
+    path: /sdcard/Movies/AetheredgeCampaign/01a4deab-0f7d41cc.mov
+    sha256: 9a22940fa456e8e0cff60460df1ea7c0151b7a425e24ff1a98beb6233ae650bf
+    source_frames: 1206
+  pixel3:
+  - media_id: 01c9d396-c1de70b1
+    path: /sdcard/Movies/AetheredgeCampaign/01c9d396-c1de70b1.mov
+    sha256: 9b244a7a0841e0305a5b8bc94210f51ff86526e92ff9e9f2d2a2a1826e23ba09
+    source_frames: 1210
+  - media_id: 02701fba-809c39f3
+    path: /sdcard/Movies/AetheredgeCampaign/02701fba-809c39f3.mov
+    sha256: 38b6e62116cf2c25dd676361d93e21582e8e93e195605d10f144eb8316be30a6
+    source_frames: 1207
+  - media_id: 0081e3ea-2c0ec19d
+    path: /sdcard/Movies/AetheredgeCampaign/0081e3ea-2c0ec19d.mov
+    sha256: cb2c3989414104a29eb409e35ce1ae316e8766b2fad6a7c1723439adb394ba07
+    source_frames: 1210
+  - media_id: 007693e6-2535e7bf
+    path: /sdcard/Movies/AetheredgeCampaign/007693e6-2535e7bf.mov
+    sha256: c763235d673a8e7b4aad62322c0d3cd3656381ba214ba2723c14920aee55e694
+    source_frames: 1208
+  - media_id: 0033b19f-7f07efac
+    path: /sdcard/Movies/AetheredgeCampaign/0033b19f-7f07efac.mov
+    sha256: c4613c8f7280926394cff7ed5df2c82cb183693775bad47ea9beae60fd67094f
+    source_frames: 1215
+  - media_id: 01128d0a-031e0a61
+    path: /sdcard/Movies/AetheredgeCampaign/01128d0a-031e0a61.mov
+    sha256: 09a0978ac3bc3e8f464063d7fd67d584800e319041ed995a0b18fba6432ebce0
+    source_frames: 1202
+  - media_id: 0052b279-87c692aa
+    path: /sdcard/Movies/AetheredgeCampaign/0052b279-87c692aa.mov
+    sha256: e26864e58d9715220f26ab850fbce57a6d6c3570ecc88065ed99974a6c166f04
+    source_frames: 1209
+  - media_id: 02621ea2-399eaeb2
+    path: /sdcard/Movies/AetheredgeCampaign/02621ea2-399eaeb2.mov
+    sha256: 4a5f7406ab9c672f123cb9204b81a306d65476df46da07b0df9f6b2847b49fa2
+    source_frames: 1203
+  - media_id: 00091078-875c1f73
+    path: /sdcard/Movies/AetheredgeCampaign/00091078-875c1f73.mov
+    sha256: 6b0681d7bc6ce127b9fe2947dc98b4944ce6354f4353decae8fe9d44eee05a96
+    source_frames: 1208
+  - media_id: 01a8723d-89a1953a
+    path: /sdcard/Movies/AetheredgeCampaign/01a8723d-89a1953a.mov
+    sha256: 5a73295b4ee146a839cde0c39354b7a0d2c1e6607da530a3e9a8cf45df4a80cd
+    source_frames: 1208
+  - media_id: 029fd987-078c287a
+    path: /sdcard/Movies/AetheredgeCampaign/029fd987-078c287a.mov
+    sha256: a7257d4930af33c41cad85edc91fee466d7e5daffdad6e799a6628d7161e4527
+    source_frames: 1209
+  - media_id: 00e5e793-22614772
+    path: /sdcard/Movies/AetheredgeCampaign/00e5e793-22614772.mov
+    sha256: 7a9dc540885e028251a77be38c7c7821642b0ea2646e0144a7cc30271ed5665f
+    source_frames: 1209
+  - media_id: 01981fe5-b484769f
+    path: /sdcard/Movies/AetheredgeCampaign/01981fe5-b484769f.mov
+    sha256: 732a3d1f9b9b0f0f13bf05c4e090c25082a36c7b815efdfab05b70f919eb4faa
+    source_frames: 1209
+  - media_id: 02494b7b-589045ab
+    path: /sdcard/Movies/AetheredgeCampaign/02494b7b-589045ab.mov
+    sha256: db8a7fa52d798501e673791fff4e09d9418ca0952362bfe83ad4cd59d06d4665
+    source_frames: 1205
+  - media_id: 0166faa5-5fbc53c5
+    path: /sdcard/Movies/AetheredgeCampaign/0166faa5-5fbc53c5.mov
+    sha256: 02201f9c38854bb9afe8ec1fb43fb4c15721801e774321e017fd701c89be95aa
+    source_frames: 1203
+  - media_id: 01dd5d9a-4501cd3a
+    path: /sdcard/Movies/AetheredgeCampaign/01dd5d9a-4501cd3a.mov
+    sha256: b975587344f5ee4cd9f9dd10322825e249a275162b0b86284e7841d12531c45e
+    source_frames: 1202
+  - media_id: 0071d9c5-be7394cc
+    path: /sdcard/Movies/AetheredgeCampaign/0071d9c5-be7394cc.mov
+    sha256: c406f5ba2c283cd3a71b5682570bf62c563d64292ffe41feb273b7d02b26d4a8
+    source_frames: 1207
+  - media_id: 0081e3ea-cc69a1c4
+    path: /sdcard/Movies/AetheredgeCampaign/0081e3ea-cc69a1c4.mov
+    sha256: 09d56429ec51cae75c2020e0f839f46d2a3d1e802f6dfee49eb5ae8ea5c2498a
+    source_frames: 1205
+  - media_id: 00a820ef-98a12e22
+    path: /sdcard/Movies/AetheredgeCampaign/00a820ef-98a12e22.mov
+    sha256: eac766c2048c966e0f2a77b60649ae7abe0edcd7aecbe33488e3dee5d474c663
+    source_frames: 1203
+  - media_id: 0081da60-5fa22cc6
+    path: /sdcard/Movies/AetheredgeCampaign/0081da60-5fa22cc6.mov
+    sha256: 624d89c865db1fb5e1f2d116815b7918ca9e2ff6ee95771ceda192719d1cd88e
+    source_frames: 1203
+  - media_id: 00a820ef-d655700e
+    path: /sdcard/Movies/AetheredgeCampaign/00a820ef-d655700e.mov
+    sha256: f62889580e48367250776c24ce4745175892c5751f55aa5a818ddda8e022b718
+    source_frames: 1210
+  - media_id: 010d75f8-91f41ad8
+    path: /sdcard/Movies/AetheredgeCampaign/010d75f8-91f41ad8.mov
+    sha256: 9fa21e5613439907973f09bd4d642af55ede163aba2f4d9343aa131b33399557
+    source_frames: 1201
+  - media_id: 019539db-cc36496e
+    path: /sdcard/Movies/AetheredgeCampaign/019539db-cc36496e.mov
+    sha256: a88c704128e889d540942b183e8aa032e0ca2fca6424adef2f2b2b1101c60e49
+    source_frames: 1207
+  - media_id: 00721168-56efa5c2
+    path: /sdcard/Movies/AetheredgeCampaign/00721168-56efa5c2.mov
+    sha256: 526347204f3d2ee42a56bbf87c7c832ab7ca01ca1a42cfe0c883c1bd298ca39d
+    source_frames: 1205
+  - media_id: 021c4a16-f4d18785
+    path: /sdcard/Movies/AetheredgeCampaign/021c4a16-f4d18785.mov
+    sha256: 87021467914a6b8dbf128e0fe4ecdb9b2a63517effecd8c30c59e456d2b41f70
+    source_frames: 1203
+  - media_id: 01746216-8d8edd01
+    path: /sdcard/Movies/AetheredgeCampaign/01746216-8d8edd01.mov
+    sha256: d15c85c4cfa3efb3bcfc64e5d0aa1d307ace980848f02aca0ba1ff6d9311cf36
+    source_frames: 1205
+  - media_id: 00ffeef4-b105ce4d
+    path: /sdcard/Movies/AetheredgeCampaign/00ffeef4-b105ce4d.mov
+    sha256: d40214029384f0c41ff69d33a3dffe8a477d8582840bec8c0de207ba3cf539ed
+    source_frames: 1207
+  - media_id: 0060b445-5acc00ed
+    path: /sdcard/Movies/AetheredgeCampaign/0060b445-5acc00ed.mov
+    sha256: 9a4d0d71f1779f922bac7d6291efadaec790699456d5fe1384aa04cb73c7b635
+    source_frames: 1210
+  - media_id: 0289eba3-3b2c545e
+    path: /sdcard/Movies/AetheredgeCampaign/0289eba3-3b2c545e.mov
+    sha256: e9a2eeb2a400540a71dff979244c42584e091a476dee11809f323173b1add385
+    source_frames: 1202
+  - media_id: 000f157f-dab3a407
+    path: /sdcard/Movies/AetheredgeCampaign/000f157f-dab3a407.mov
+    sha256: e30071c4d8bf1e2a40eed0e4cc0c833fe8e7a9df9eda47226f7b222ba6ad9051
+    source_frames: 1210
+  - media_id: 0088cf04-319858ad
+    path: /sdcard/Movies/AetheredgeCampaign/0088cf04-319858ad.mov
+    sha256: 9419866ffa5bb9fb08a274b3abe0fda368001f655adec7e4f83ed622b5382b60
+    source_frames: 1205
+  - media_id: 02982dfe-1dd674e5
+    path: /sdcard/Movies/AetheredgeCampaign/02982dfe-1dd674e5.mov
+    sha256: 737bc12bfa0c01dc583c1abf9b17e68a89b6d3ba7215a7b061c9f1c70253c9de
+    source_frames: 1216
+  - media_id: 003baca5-ad660439
+    path: /sdcard/Movies/AetheredgeCampaign/003baca5-ad660439.mov
+    sha256: b423110e774d63fb4d1a39caa00971fcdaed7f43c87bba5334122d5a1c8b570e
+    source_frames: 1206
+  - media_id: 01ed3f01-c4dd8d1d
+    path: /sdcard/Movies/AetheredgeCampaign/01ed3f01-c4dd8d1d.mov
+    sha256: e7e1b01db3d6e2d79c5ceb5fc2526e7460d0dbcf842da1de1086c8f84c4c2ed3
+    source_frames: 1207
+  - media_id: 02133057-fc70cc0e
+    path: /sdcard/Movies/AetheredgeCampaign/02133057-fc70cc0e.mov
+    sha256: 93739c6af7acfc998a0668bae743882ff120c58fceaf60eb3b4b081961ff3717
+    source_frames: 1212
+  - media_id: 015f02db-80d95c9f
+    path: /sdcard/Movies/AetheredgeCampaign/015f02db-80d95c9f.mov
+    sha256: b353b6a430acc734b81af5e768672b5ebb8dd0e0a5bbece07a7945d2bc964b05
+    source_frames: 1214
+  - media_id: 006676e5-624162a7
+    path: /sdcard/Movies/AetheredgeCampaign/006676e5-624162a7.mov
+    sha256: dc45ccbea2fefc83bdb84b1667dcd3e8026b63e0070be6ecc45dc59a31a7fd3a
+    source_frames: 1203
+  - media_id: 02669bf6-e34063e6
+    path: /sdcard/Movies/AetheredgeCampaign/02669bf6-e34063e6.mov
+    sha256: ea774f6619936820785728cde41d3edb915521765581840639a625ea4bd04b53
+    source_frames: 1211
+  - media_id: 00adbb3f-7757d4ea
+    path: /sdcard/Movies/AetheredgeCampaign/00adbb3f-7757d4ea.mov
+    sha256: f5263497609d0c9740d9e5fdbd6aac063fc5e0049f73c068c2b25a854721d7a0
+    source_frames: 1204
+  - media_id: 005ee183-bcfab89f
+    path: /sdcard/Movies/AetheredgeCampaign/005ee183-bcfab89f.mov
+    sha256: dc51de8ac31279a2fc365360e4724c9730ffbb9f8a397b9cbdb0444e18a740d1
+    source_frames: 1205
+  - media_id: 002827ad-8748e2fb
+    path: /sdcard/Movies/AetheredgeCampaign/002827ad-8748e2fb.mov
+    sha256: bcc09f73080acc7118ebed75bb6de2a5c1352039be63e40cbc93e3b2a82263b7
+    source_frames: 1214
+  - media_id: 01a4deab-0f7d41cc
+    path: /sdcard/Movies/AetheredgeCampaign/01a4deab-0f7d41cc.mov
+    sha256: 9a22940fa456e8e0cff60460df1ea7c0151b7a425e24ff1a98beb6233ae650bf
+    source_frames: 1206
+  linux1:
+  - media_id: 01c9d396-c1de70b1
+    path: /datasets/campaign/01c9d396-c1de70b1.mov
+    sha256: 9b244a7a0841e0305a5b8bc94210f51ff86526e92ff9e9f2d2a2a1826e23ba09
+    source_frames: 1210
+  - media_id: 02701fba-809c39f3
+    path: /datasets/campaign/02701fba-809c39f3.mov
+    sha256: 38b6e62116cf2c25dd676361d93e21582e8e93e195605d10f144eb8316be30a6
+    source_frames: 1207
+  - media_id: 0081e3ea-2c0ec19d
+    path: /datasets/campaign/0081e3ea-2c0ec19d.mov
+    sha256: cb2c3989414104a29eb409e35ce1ae316e8766b2fad6a7c1723439adb394ba07
+    source_frames: 1210
+  - media_id: 007693e6-2535e7bf
+    path: /datasets/campaign/007693e6-2535e7bf.mov
+    sha256: c763235d673a8e7b4aad62322c0d3cd3656381ba214ba2723c14920aee55e694
+    source_frames: 1208
+  - media_id: 0033b19f-7f07efac
+    path: /datasets/campaign/0033b19f-7f07efac.mov
+    sha256: c4613c8f7280926394cff7ed5df2c82cb183693775bad47ea9beae60fd67094f
+    source_frames: 1215
+  - media_id: 01128d0a-031e0a61
+    path: /datasets/campaign/01128d0a-031e0a61.mov
+    sha256: 09a0978ac3bc3e8f464063d7fd67d584800e319041ed995a0b18fba6432ebce0
+    source_frames: 1202
+  - media_id: 0052b279-87c692aa
+    path: /datasets/campaign/0052b279-87c692aa.mov
+    sha256: e26864e58d9715220f26ab850fbce57a6d6c3570ecc88065ed99974a6c166f04
+    source_frames: 1209
+  - media_id: 02621ea2-399eaeb2
+    path: /datasets/campaign/02621ea2-399eaeb2.mov
+    sha256: 4a5f7406ab9c672f123cb9204b81a306d65476df46da07b0df9f6b2847b49fa2
+    source_frames: 1203
+  - media_id: 00091078-875c1f73
+    path: /datasets/campaign/00091078-875c1f73.mov
+    sha256: 6b0681d7bc6ce127b9fe2947dc98b4944ce6354f4353decae8fe9d44eee05a96
+    source_frames: 1208
+  - media_id: 01a8723d-89a1953a
+    path: /datasets/campaign/01a8723d-89a1953a.mov
+    sha256: 5a73295b4ee146a839cde0c39354b7a0d2c1e6607da530a3e9a8cf45df4a80cd
+    source_frames: 1208
+  - media_id: 029fd987-078c287a
+    path: /datasets/campaign/029fd987-078c287a.mov
+    sha256: a7257d4930af33c41cad85edc91fee466d7e5daffdad6e799a6628d7161e4527
+    source_frames: 1209
+  - media_id: 00e5e793-22614772
+    path: /datasets/campaign/00e5e793-22614772.mov
+    sha256: 7a9dc540885e028251a77be38c7c7821642b0ea2646e0144a7cc30271ed5665f
+    source_frames: 1209
+  - media_id: 01981fe5-b484769f
+    path: /datasets/campaign/01981fe5-b484769f.mov
+    sha256: 732a3d1f9b9b0f0f13bf05c4e090c25082a36c7b815efdfab05b70f919eb4faa
+    source_frames: 1209
+  - media_id: 02494b7b-589045ab
+    path: /datasets/campaign/02494b7b-589045ab.mov
+    sha256: db8a7fa52d798501e673791fff4e09d9418ca0952362bfe83ad4cd59d06d4665
+    source_frames: 1205
+  - media_id: 0166faa5-5fbc53c5
+    path: /datasets/campaign/0166faa5-5fbc53c5.mov
+    sha256: 02201f9c38854bb9afe8ec1fb43fb4c15721801e774321e017fd701c89be95aa
+    source_frames: 1203
+  - media_id: 01dd5d9a-4501cd3a
+    path: /datasets/campaign/01dd5d9a-4501cd3a.mov
+    sha256: b975587344f5ee4cd9f9dd10322825e249a275162b0b86284e7841d12531c45e
+    source_frames: 1202
+  - media_id: 0071d9c5-be7394cc
+    path: /datasets/campaign/0071d9c5-be7394cc.mov
+    sha256: c406f5ba2c283cd3a71b5682570bf62c563d64292ffe41feb273b7d02b26d4a8
+    source_frames: 1207
+  - media_id: 0081e3ea-cc69a1c4
+    path: /datasets/campaign/0081e3ea-cc69a1c4.mov
+    sha256: 09d56429ec51cae75c2020e0f839f46d2a3d1e802f6dfee49eb5ae8ea5c2498a
+    source_frames: 1205
+  - media_id: 00a820ef-98a12e22
+    path: /datasets/campaign/00a820ef-98a12e22.mov
+    sha256: eac766c2048c966e0f2a77b60649ae7abe0edcd7aecbe33488e3dee5d474c663
+    source_frames: 1203
+  - media_id: 0081da60-5fa22cc6
+    path: /datasets/campaign/0081da60-5fa22cc6.mov
+    sha256: 624d89c865db1fb5e1f2d116815b7918ca9e2ff6ee95771ceda192719d1cd88e
+    source_frames: 1203
+  - media_id: 00a820ef-d655700e
+    path: /datasets/campaign/00a820ef-d655700e.mov
+    sha256: f62889580e48367250776c24ce4745175892c5751f55aa5a818ddda8e022b718
+    source_frames: 1210
+  - media_id: 010d75f8-91f41ad8
+    path: /datasets/campaign/010d75f8-91f41ad8.mov
+    sha256: 9fa21e5613439907973f09bd4d642af55ede163aba2f4d9343aa131b33399557
+    source_frames: 1201
+  - media_id: 019539db-cc36496e
+    path: /datasets/campaign/019539db-cc36496e.mov
+    sha256: a88c704128e889d540942b183e8aa032e0ca2fca6424adef2f2b2b1101c60e49
+    source_frames: 1207
+  - media_id: 00721168-56efa5c2
+    path: /datasets/campaign/00721168-56efa5c2.mov
+    sha256: 526347204f3d2ee42a56bbf87c7c832ab7ca01ca1a42cfe0c883c1bd298ca39d
+    source_frames: 1205
+  - media_id: 021c4a16-f4d18785
+    path: /datasets/campaign/021c4a16-f4d18785.mov
+    sha256: 87021467914a6b8dbf128e0fe4ecdb9b2a63517effecd8c30c59e456d2b41f70
+    source_frames: 1203
+  - media_id: 01746216-8d8edd01
+    path: /datasets/campaign/01746216-8d8edd01.mov
+    sha256: d15c85c4cfa3efb3bcfc64e5d0aa1d307ace980848f02aca0ba1ff6d9311cf36
+    source_frames: 1205
+  - media_id: 00ffeef4-b105ce4d
+    path: /datasets/campaign/00ffeef4-b105ce4d.mov
+    sha256: d40214029384f0c41ff69d33a3dffe8a477d8582840bec8c0de207ba3cf539ed
+    source_frames: 1207
+  - media_id: 0060b445-5acc00ed
+    path: /datasets/campaign/0060b445-5acc00ed.mov
+    sha256: 9a4d0d71f1779f922bac7d6291efadaec790699456d5fe1384aa04cb73c7b635
+    source_frames: 1210
+  - media_id: 0289eba3-3b2c545e
+    path: /datasets/campaign/0289eba3-3b2c545e.mov
+    sha256: e9a2eeb2a400540a71dff979244c42584e091a476dee11809f323173b1add385
+    source_frames: 1202
+  - media_id: 000f157f-dab3a407
+    path: /datasets/campaign/000f157f-dab3a407.mov
+    sha256: e30071c4d8bf1e2a40eed0e4cc0c833fe8e7a9df9eda47226f7b222ba6ad9051
+    source_frames: 1210
+  - media_id: 0088cf04-319858ad
+    path: /datasets/campaign/0088cf04-319858ad.mov
+    sha256: 9419866ffa5bb9fb08a274b3abe0fda368001f655adec7e4f83ed622b5382b60
+    source_frames: 1205
+  - media_id: 02982dfe-1dd674e5
+    path: /datasets/campaign/02982dfe-1dd674e5.mov
+    sha256: 737bc12bfa0c01dc583c1abf9b17e68a89b6d3ba7215a7b061c9f1c70253c9de
+    source_frames: 1216
+  - media_id: 003baca5-ad660439
+    path: /datasets/campaign/003baca5-ad660439.mov
+    sha256: b423110e774d63fb4d1a39caa00971fcdaed7f43c87bba5334122d5a1c8b570e
+    source_frames: 1206
+  - media_id: 01ed3f01-c4dd8d1d
+    path: /datasets/campaign/01ed3f01-c4dd8d1d.mov
+    sha256: e7e1b01db3d6e2d79c5ceb5fc2526e7460d0dbcf842da1de1086c8f84c4c2ed3
+    source_frames: 1207
+  - media_id: 02133057-fc70cc0e
+    path: /datasets/campaign/02133057-fc70cc0e.mov
+    sha256: 93739c6af7acfc998a0668bae743882ff120c58fceaf60eb3b4b081961ff3717
+    source_frames: 1212
+  - media_id: 015f02db-80d95c9f
+    path: /datasets/campaign/015f02db-80d95c9f.mov
+    sha256: b353b6a430acc734b81af5e768672b5ebb8dd0e0a5bbece07a7945d2bc964b05
+    source_frames: 1214
+  - media_id: 006676e5-624162a7
+    path: /datasets/campaign/006676e5-624162a7.mov
+    sha256: dc45ccbea2fefc83bdb84b1667dcd3e8026b63e0070be6ecc45dc59a31a7fd3a
+    source_frames: 1203
+  - media_id: 02669bf6-e34063e6
+    path: /datasets/campaign/02669bf6-e34063e6.mov
+    sha256: ea774f6619936820785728cde41d3edb915521765581840639a625ea4bd04b53
+    source_frames: 1211
+  - media_id: 00adbb3f-7757d4ea
+    path: /datasets/campaign/00adbb3f-7757d4ea.mov
+    sha256: f5263497609d0c9740d9e5fdbd6aac063fc5e0049f73c068c2b25a854721d7a0
+    source_frames: 1204
+  - media_id: 005ee183-bcfab89f
+    path: /datasets/campaign/005ee183-bcfab89f.mov
+    sha256: dc51de8ac31279a2fc365360e4724c9730ffbb9f8a397b9cbdb0444e18a740d1
+    source_frames: 1205
+  - media_id: 002827ad-8748e2fb
+    path: /datasets/campaign/002827ad-8748e2fb.mov
+    sha256: bcc09f73080acc7118ebed75bb6de2a5c1352039be63e40cbc93e3b2a82263b7
+    source_frames: 1214
+  - media_id: 01a4deab-0f7d41cc
+    path: /datasets/campaign/01a4deab-0f7d41cc.mov
+    sha256: 9a22940fa456e8e0cff60460df1ea7c0151b7a425e24ff1a98beb6233ae650bf
+    source_frames: 1206

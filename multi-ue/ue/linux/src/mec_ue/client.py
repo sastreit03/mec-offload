@@ -614,6 +614,9 @@ class Client:
                                         if self.collection_mode:
                                             self.streamer = None
                                             self.start_request = None
+                                            # Aetheredge: wait for the next attempt's
+                                            # scenario_context instead of restarting.
+                                            self.assignment = None
                                             await asyncio.to_thread(
                                                 finished_streamer.thread.join, 3
                                             )

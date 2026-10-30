@@ -27,6 +27,10 @@ from channel_trace import validate_trace_folder
 TERMINAL = {"COMPLETED", "FAILED", "CANCELLED", "EXPIRED", "DENIED"}
 
 
+class RunnerStopped(Exception):
+    """Operator interruption; preserve the checkpoint without recovery."""
+
+
 def sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
@@ -251,11 +255,15 @@ class Runner:
                 unresolved=last["unresolved"],
             )
             time.sleep(self.args.poll_interval)
-        raise RuntimeError("scenario timed out" if not self.stop else "runner stopped")
+        if self.stop:
+            raise RunnerStopped("runner stopped")
+        raise RuntimeError("scenario timed out")
 
     def attempt(self, scenario, attempt_id):
         preflight_deadline = time.monotonic() + self.args.preflight_timeout
         while True:
+            if self.stop:
+                raise RunnerStopped("runner stopped")
             try:
                 before = self.preflight(scenario)
                 break
@@ -304,6 +312,16 @@ class Runner:
                 )
                 try:
                     evidence = self.attempt(scenario, attempt_id)
+                except RunnerStopped as error:
+                    self.state.finish(
+                        scenario["scenario_id"], "interrupted", str(error)
+                    )
+                    self.event(
+                        "runner_stopped",
+                        scenario_id=scenario["scenario_id"],
+                        attempt_id=attempt_id,
+                    )
+                    return
                 except Exception as error:
                     self.state.finish(scenario["scenario_id"], "retryable", str(error))
                     self.recover(str(error), scenario, attempt_id)
