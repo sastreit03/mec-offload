@@ -353,8 +353,17 @@ class Client:
                         if delay > 0:
                             time.sleep(delay)
 
-        await asyncio.to_thread(run)
-        self.record("association_probe", probe_id=m["probe_id"])
+        try:
+            await asyncio.to_thread(run)
+            self.record("association_probe", probe_id=m["probe_id"])
+        except OSError as error:
+            # MEC restarts can invalidate an in-progress UDP association probe;
+            # the control reconnect will request fresh probes after readiness.
+            self.record(
+                "association_probe_failed",
+                probe_id=m.get("probe_id"),
+                reason=repr(error),
+            )
 
     # Refresh clock/address evidence; an interface address change forces reconnect.
     async def synchronize(self):

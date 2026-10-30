@@ -49,6 +49,9 @@ def test_collection_lifecycle_requires_armed_exact_context(tmp_path):
             engine.validate_message_context(dict(CONTEXT, attempt_id="wrong"))
         _, hello = engine.hello(None, "12.1.1.2", lambda _: None)
         assert {key: hello[key] for key in CONTEXT} == CONTEXT
+        assert engine.disarm_scenario(CONTEXT)["status"] == "disarmed"
+        assert engine.scenario is None
+        assert engine.disarm_scenario(CONTEXT)["status"] == "already_disarmed"
     finally:
         engine.record.close()
 

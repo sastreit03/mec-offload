@@ -189,6 +189,45 @@ class Runner:
             raise RuntimeError(f"EdgeRIC radio report is stale: {age}")
         return status
 
+    def await_preflight(self, scenario):
+        """Wait for infrastructure and UEs without consuming a data attempt."""
+        deadline = time.monotonic() + self.args.preflight_timeout
+        last_error = None
+        reported = None
+        while not self.stop:
+            try:
+                status = self.preflight(scenario)
+                if reported is not None:
+                    print("Campaign preflight ready", flush=True)
+                return status
+            except Exception as error:
+                last_error = error
+                if str(error) != reported:
+                    reported = str(error)
+                    print(f"Waiting for campaign preflight: {error}", flush=True)
+                    self.event(
+                        "preflight_wait",
+                        scenario_id=scenario["scenario_id"],
+                        reason=str(error),
+                    )
+                if time.monotonic() >= deadline:
+                    self.recover(
+                        f"preflight unavailable: {error}", scenario, "preflight"
+                    )
+                    deadline = time.monotonic() + self.args.preflight_timeout
+                time.sleep(self.args.poll_interval)
+        raise RunnerStopped(str(last_error or "runner stopped"))
+
+    def disarm(self, scenario, attempt_id):
+        payload = {
+            "campaign_id": scenario["campaign_id"],
+            "scenario_id": scenario["scenario_id"],
+            "attempt_id": attempt_id,
+        }
+        response = http_json(self.args.mec, "/api/scenario/disarm", payload)
+        if response.get("status") not in ("disarmed", "already_disarmed"):
+            raise RuntimeError(f"scenario disarm failed: {response}")
+
     def select_channel(self, scenario):
         condition = scenario["channel"]["condition_id"]
         record = validate_trace_folder(
@@ -236,6 +275,16 @@ class Runner:
                 "attempt_id": attempt_id,
             }:
                 raise RuntimeError("MEC scenario context changed")
+            connected = {
+                value.get("alias")
+                for value in last.get("ues", {}).values()
+                if value.get("connected") and value.get("alias")
+            }
+            missing = set(expected) - connected
+            if missing:
+                raise RuntimeError(
+                    f"UE disconnected during scenario: {sorted(missing)}"
+                )
             videos = {
                 value.get("ue_alias"): value for value in last["videos"].values()
                 if value.get("ue_alias") in expected
@@ -301,18 +350,7 @@ class Runner:
             raise RunnerStopped("runner stopped")
         raise RuntimeError("scenario timed out")
 
-    def attempt(self, scenario, attempt_id):
-        preflight_deadline = time.monotonic() + self.args.preflight_timeout
-        while True:
-            if self.stop:
-                raise RunnerStopped("runner stopped")
-            try:
-                before = self.preflight(scenario)
-                break
-            except Exception:
-                if time.monotonic() >= preflight_deadline:
-                    raise
-                time.sleep(self.args.poll_interval)
+    def attempt(self, scenario, attempt_id, before):
         channel = self.select_channel(scenario)
         payload = {
             key: scenario[key]
@@ -336,6 +374,7 @@ class Runner:
         )
 
     def run(self):
+        last_attempt = None
         for scenario in self.scenarios:
             self.state.register(scenario)
         for scenario in self.scenarios:
@@ -345,7 +384,12 @@ class Runner:
             if status == "valid":
                 continue
             while attempts < self.args.max_attempts and not self.stop:
+                try:
+                    before = self.await_preflight(scenario)
+                except RunnerStopped:
+                    return
                 attempt_id = "attempt-" + uuid.uuid4().hex
+                last_attempt = (scenario, attempt_id)
                 self.state.start(scenario, attempt_id)
                 attempts += 1
                 self.event(
@@ -353,7 +397,7 @@ class Runner:
                     attempt_id=attempt_id, attempt_number=attempts,
                 )
                 try:
-                    evidence = self.attempt(scenario, attempt_id)
+                    evidence = self.attempt(scenario, attempt_id, before)
                 except RunnerStopped as error:
                     self.state.finish(
                         scenario["scenario_id"], "interrupted", str(error)
@@ -385,6 +429,26 @@ class Runner:
                     scenario["scenario_id"], "failed", "maximum attempts exhausted"
                 )
                 self.event("scenario_failed", scenario_id=scenario["scenario_id"])
+        if self.scenarios and not self.stop:
+            # A pilot invoked with --scenario-id otherwise leaves its final
+            # assignment armed, causing a UE that reconnects later to restart it.
+            scenario, attempt_id = last_attempt or (
+                self.scenarios[-1], "no-active-attempt"
+            )
+            self.event(
+                "runner_completed",
+                scenario_id=scenario["scenario_id"],
+                attempt_id=attempt_id,
+            )
+            try:
+                self.disarm(scenario, attempt_id)
+            except Exception as error:
+                # Fall back to restart only when the lightweight cleanup fails.
+                self.recover(
+                    f"runner completed cleanup failed: {error}",
+                    scenario,
+                    attempt_id,
+                )
 
 
 def main():

@@ -17,7 +17,10 @@ docker inspect oai-gnb >"$recovery_dir/oai-gnb-inspect.json" 2>&1 || true
 docker logs --since 15m oai-gnb >"$recovery_dir/oai-gnb.log" 2>&1 || true
 
 gnb_running="$(docker inspect -f '{{.State.Running}}' oai-gnb 2>/dev/null || true)"
-if [[ "$gnb_running" != true || "$reason" == *"gNB channel controller"* ]]; then
+if [[ "$gnb_running" != true \
+  || "$reason" == *"gNB channel controller"* \
+  || "$reason" == *"UE disconnected during scenario"* \
+  || "$reason" == *"scenario stalled"* ]]; then
   # The CIR loader resets to pass-through. The runner selects and verifies the
   # manifest trace again before it arms the retry.
   (
@@ -56,6 +59,7 @@ elif [[ "$reason" == *"scenario timed out"* \
   || "$reason" == *"scenario context"* \
   || "$reason" == *"scenario arm"* \
   || "$reason" == *"runner stopped"* \
+  || "$reason" == *"runner completed"* \
   || "$reason" == *"MEC must be idle"* \
   || "$reason" == *"collection"* ]]; then
   # A failed active attempt may not be idle enough to arm its retry.

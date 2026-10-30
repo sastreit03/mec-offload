@@ -45,6 +45,7 @@ def test_operator_stop_checkpoints_and_clears_armed_attempt(tmp_path):
     runner.attempt = lambda *_: (_ for _ in ()).throw(
         MODULE.RunnerStopped("runner stopped")
     )
+    runner.await_preflight = lambda *_: {}
     recovered = []
     runner.recover = lambda *args: recovered.append(args)
 
@@ -56,6 +57,28 @@ def test_operator_stop_checkpoints_and_clears_armed_attempt(tmp_path):
     assert recovered[0][2].startswith("attempt-")
 
 
+def test_completed_pilot_clears_final_assignment(tmp_path):
+    state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
+    scenario = {"scenario_id": "scenario-a", "execution_index": 0}
+    runner = MODULE.Runner(
+        SimpleNamespace(output=str(tmp_path), max_attempts=3), [scenario], state
+    )
+    runner.attempt = lambda *_: {"frames": 150}
+    runner.await_preflight = lambda *_: {}
+    disarmed = []
+    runner.disarm = lambda *args: disarmed.append(args)
+    recovered = []
+    runner.recover = lambda *args: recovered.append(args)
+
+    runner.run()
+
+    assert state.row("scenario-a") == ("valid", 1)
+    assert recovered == []
+    assert len(disarmed) == 1
+    assert disarmed[0][0] == scenario
+    assert disarmed[0][1].startswith("attempt-")
+
+
 def test_wait_fails_after_media_progress_stalls(tmp_path, monkeypatch):
     context = {
         "campaign_id": "campaign-a",
@@ -64,6 +87,9 @@ def test_wait_fails_after_media_progress_stalls(tmp_path, monkeypatch):
     }
     status = {
         "scenario": context,
+        "ues": {
+            "ue-a": {"alias": "pixel1", "connected": True},
+        },
         "videos": {
             "video-a": {
                 "ue_alias": "pixel1",
@@ -132,3 +158,46 @@ def test_wait_detects_lost_gnb_channel_controller(tmp_path, monkeypatch):
 
     with pytest.raises(RuntimeError, match="gNB channel controller unavailable"):
         runner.wait(scenario, "attempt-a", {"condition_id": "awgn-sinr20"})
+
+
+def test_wait_detects_required_ue_disconnect(tmp_path, monkeypatch):
+    context = {
+        "campaign_id": "campaign-a",
+        "scenario_id": "scenario-a",
+        "attempt_id": "attempt-a",
+    }
+    monkeypatch.setattr(
+        MODULE,
+        "http_json",
+        lambda *_: {
+            "scenario": context,
+            "ues": {},
+            "videos": {},
+            "unresolved": 0,
+        },
+    )
+    state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
+    runner = MODULE.Runner(
+        SimpleNamespace(
+            output=str(tmp_path),
+            mec="http://mec.test",
+            scenario_timeout=10,
+            stall_timeout=5,
+            poll_interval=0,
+        ),
+        [],
+        state,
+    )
+    scenario = {
+        **context,
+        "ues": [
+            {
+                "ue_alias": "linux1",
+                "candidate_id": "candidate-a",
+                "frame_count": 150,
+            }
+        ],
+    }
+
+    with pytest.raises(RuntimeError, match="linux1"):
+        runner.wait(scenario, "attempt-a")

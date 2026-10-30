@@ -132,6 +132,13 @@ def create_app(engine):
         except ValueError as error:
             return JSONResponse({"error": str(error)}, status_code=409)
 
+    @app.post("/api/scenario/disarm")
+    async def disarm_scenario(value: dict):
+        try:
+            return engine.disarm_scenario(value)
+        except ValueError as error:
+            return JSONResponse({"error": str(error)}, status_code=409)
+
     @app.get("/")
     def dashboard():
         return HTMLResponse("""<!doctype html><html><meta charset="utf-8"><title>Streaming MEC</title>

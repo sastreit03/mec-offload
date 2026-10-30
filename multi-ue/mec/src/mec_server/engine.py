@@ -329,6 +329,25 @@ class Engine:
             self.send_scenario_context(ue)
         return dict(status="armed", assignments=len(assignments), **context)
 
+    def disarm_scenario(self, value):
+        """Clear one fully drained attempt without restarting resident workers."""
+        context = self.validated_context(value)
+        if self.scenario is None:
+            return dict(status="already_disarmed", **context)
+        if self.scenario != context:
+            raise ValueError("scenario_context_mismatch")
+        if not self.idle():
+            raise ValueError("MEC must be idle before disarming a scenario")
+        # Record under the attempt being retired, then remove its authority so
+        # a UE reconnect cannot receive and restart the completed assignment.
+        self.record.event("scenario_disarmed")
+        self.scenario = None
+        self.scenario_assignments.clear()
+        self.scenario_videos.clear()
+        for ue in self.ues.values():
+            ue.scenario_notice = None
+        return dict(status="disarmed", **context)
+
     def send_scenario_context(self, ue):
         """Send one assignment per attempt and control-connection generation."""
         if not self.scenario:
@@ -1265,6 +1284,11 @@ class Engine:
             v.final_id = integer(m["final_frame_id"])
             v.state = "DRAINING"
             v.input_close_at = time.monotonic() + self.cfg.final_arrival_s
+            if self.collection_mode:
+                # The sender can finish while completely received access units
+                # remain queued in GStreamer. Bound that decoder drain without
+                # converting valid buffered frames into immediate failures.
+                v.drain_until = time.monotonic() + self.cfg.drain_s
             # Stop future radio predictions immediately while accepting late UDP packets.
             self.close_demand(v)
             if u.prepared_video:
@@ -1999,7 +2023,17 @@ class Engine:
                     and now >= v.input_close_at
                     and not v.input_closed
                 ):
-                    self.close_input(v, "video_end")
+                    receiving = any(
+                        f.vid == v.vid and f.state == "RECEIVING"
+                        for f in self.frames.values()
+                    )
+                    if not (
+                        self.collection_mode
+                        and receiving
+                        and v.drain_until is not None
+                        and now < v.drain_until
+                    ):
+                        self.close_input(v, "video_end")
                 if v.input_closed:
                     if v.final_id is not None:
                         for fid in range(
@@ -2154,7 +2188,8 @@ class Engine:
         if v.input_closed:
             return
         v.input_closed = True
-        v.drain_until = time.monotonic() + self.cfg.drain_s
+        if v.drain_until is None:
+            v.drain_until = time.monotonic() + self.cfg.drain_s
         if v.receiver:
             self.task(asyncio.to_thread(v.receiver.close))
         self.close_demand(v)

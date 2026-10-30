@@ -164,8 +164,11 @@ receive a new attempt ID. `scripts/campaign_recover.sh` restarts an unavailable
 local EdgeRIC and, when passwordless SSH is configured, the remote MEC.
 `--scenario-id` and `--limit` support pilots without creating a second manifest
 or a separate checkpoint; a later full invocation skips pilot rows already valid.
-An operator interrupt records the active attempt as interrupted and exits
-without invoking automatic recovery.
+An operator interrupt records the active attempt as interrupted, preserves
+recovery evidence, and restarts the MEC so reconnecting UEs cannot receive the
+abandoned assignment. Resuming the runner gives that scenario a new attempt ID.
+A normally completed runner invocation disarms its final attempt through the
+MEC control API, keeping resident workers warm and avoiding a restart.
 
 MEC awareness messages now include a process generation UUID. EdgeRIC accepts
 a reset revision counter only from a new generation, replaces associations
