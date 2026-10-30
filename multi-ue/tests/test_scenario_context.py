@@ -63,6 +63,7 @@ def test_edgeric_sync_stamps_events_with_context(tmp_path):
                 schema_version=1,
                 type="sync",
                 run_id="run-a",
+                awareness_generation="mec-process-a",
                 awareness_revision=1,
                 associations=[],
                 sessions=[],
@@ -77,6 +78,7 @@ def test_edgeric_sync_stamps_events_with_context(tmp_path):
                 schema_version=1,
                 type="sync",
                 run_id="run-a",
+                awareness_generation="mec-process-a",
                 awareness_revision=0,
                 associations=[],
                 sessions=[],
@@ -85,5 +87,63 @@ def test_edgeric_sync_stamps_events_with_context(tmp_path):
         )
         assert stale["status"] == "stale"
         assert runtime.attempt_id == CONTEXT["attempt_id"]
+
+    asyncio.run(exercise())
+
+
+def test_edgeric_accepts_revision_reset_from_restarted_mec(tmp_path):
+    async def exercise():
+        config = yaml.safe_load((ROOT / "config/edgeric.shadow.yaml").read_text())
+        config["runs_dir"] = str(tmp_path)
+        runtime = Runtime(config)
+        common = dict(
+            schema_version=1,
+            type="sync",
+            run_id="fixed-run-id",
+            sessions=[],
+            **CONTEXT,
+        )
+        await runtime.exchange(
+            dict(
+                common,
+                awareness_generation="old-process",
+                awareness_revision=99,
+                associations=[dict(ue_id="old", connection_id="a", ip="12.1.1.2")],
+            )
+        )
+        response = await runtime.exchange(
+            dict(
+                common,
+                awareness_generation="new-process",
+                awareness_revision=0,
+                associations=[dict(ue_id="new", connection_id="b", ip="12.1.1.3")],
+            )
+        )
+        assert response["status"] == "synced"
+        assert set(runtime.associations.bindings) == {"new"}
+        assert runtime.sync_revision == 0
+        runtime.associations.bindings["new"].rnti = 1234
+        runtime.associations.bindings["new"].valid_until = 999999999.0
+        await runtime.exchange(
+            dict(
+                common,
+                awareness_generation="new-process",
+                awareness_revision=1,
+                associations=[
+                    dict(ue_id="new", connection_id="b", ip="12.1.1.3")
+                ],
+            )
+        )
+        assert runtime.associations.bindings["new"].rnti == 1234
+        delayed = await runtime.exchange(
+            dict(
+                common,
+                awareness_generation="old-process",
+                awareness_revision=100,
+                associations=[],
+            )
+        )
+        assert delayed["status"] == "stale_generation"
+        assert set(runtime.associations.bindings) == {"new"}
 
     asyncio.run(exercise())

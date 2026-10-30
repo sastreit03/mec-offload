@@ -61,13 +61,25 @@ class Encoder:
 
 # A dedicated thread owns capture, encoding, pacing, and UDP transmission.
 class Streamer:
-    def __init__(self, response, source, source_ip, clock, event, prepare_s=0):
+    def __init__(
+        self,
+        response,
+        source,
+        source_ip,
+        clock,
+        event,
+        prepare_s=0,
+        source_start_frame=0,
+        frame_count=None,
+    ):
         self.response = response
         self.source = source
         self.source_ip = source_ip
         self.clock = clock
         self.event = event
         self.prepare_s = prepare_s
+        self.source_start_frame = source_start_frame
+        self.frame_count = frame_count
         self.current = dict(response["config"])
         self.pending = []
         self.lock = threading.Lock()
@@ -145,6 +157,15 @@ class Streamer:
             )
             if not cap.isOpened():
                 raise RuntimeError("camera/video could not be opened")
+            if self.source_start_frame:
+                # Aetheredge: prerecorded campaign segments begin at the exact
+                # manifest frame instead of depending on playlist history.
+                cap.set(cv2.CAP_PROP_POS_FRAMES, self.source_start_frame)
+                actual = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+                if actual != self.source_start_frame:
+                    raise RuntimeError(
+                        f"source seek mismatch: {actual} != {self.source_start_frame}"
+                    )
             total_frames = 0
             if self.prepare_s > 0 and not self.source.isdecimal():
                 total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -164,6 +185,8 @@ class Streamer:
             release = max(cfg["boundary_unix_ns"], self.clock.unix_ns())
             force = True
             while not self.stopped.is_set():
+                if self.frame_count is not None and self.frame_id >= self.frame_count:
+                    break
                 if (
                     self.prepare_s > 0
                     and total_frames > 0

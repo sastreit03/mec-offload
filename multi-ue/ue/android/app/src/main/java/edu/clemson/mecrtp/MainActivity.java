@@ -30,6 +30,7 @@ public final class MainActivity extends Activity {
   private volatile Network network;
   private volatile WebSocket ws;
   private EditText host;
+  private EditText ueAlias;
   private Spinner application;
   private TextView status;
   private Uri file;
@@ -49,6 +50,7 @@ public final class MainActivity extends Activity {
   private JSONObject successorRequest;
   private boolean awaitingSuccessor;
   private boolean collectionMode;
+  private JSONObject assignment;
   private double successorPrepareS;
   private volatile boolean enabled;
   private int generation;
@@ -71,6 +73,11 @@ public final class MainActivity extends Activity {
     host.setSingleLine(true);
     host.setText(prefs.getString("host", "192.168.72.136"));
     root.addView(host);
+    ueAlias = new EditText(this);
+    ueAlias.setSingleLine(true);
+    ueAlias.setHint("Campaign UE alias (pixel1, pixel2, or pixel3)");
+    ueAlias.setText(prefs.getString("ue_alias", "pixel1"));
+    root.addView(ueAlias);
     application = new Spinner(this);
     application.setAdapter(
         new ArrayAdapter<String>(
@@ -110,7 +117,10 @@ public final class MainActivity extends Activity {
             requestPermissions(new String[] {Manifest.permission.CAMERA}, 9);
             return;
           }
-          prefs.edit().putString("host", host.getText().toString().trim()).apply();
+          prefs.edit()
+              .putString("host", host.getText().toString().trim())
+              .putString("ue_alias", ueAlias.getText().toString().trim())
+              .apply();
           enabled = true;
           show("Requesting cellular network");
           requestCellular();
@@ -203,7 +213,7 @@ public final class MainActivity extends Activity {
           });
       if (type.equals("media_end") && session != null)
         ui.post(() -> mediaEnded(value));
-      if (type.equals("successor_needed") && playlist != null)
+      if (type.equals("successor_needed") && playlist != null && !collectionMode)
         ui.post(() -> prepareSuccessor(value));
       if (type.equals("plan_unapplied")) send(new JSONObject(value.toString()).put("type", type));
       if (type.equals("sender_error")) show(value.toString());
@@ -361,8 +371,13 @@ public final class MainActivity extends Activity {
                             this,
                             admitted,
                             this::event,
-                            playlist == null ? 0 : successorPrepareS);
-                    media.start(source);
+                            playlist == null || collectionMode ? 0 : successorPrepareS);
+                    if (collectionMode && assignment != null)
+                      media.start(
+                          source,
+                          assignment.getInt("source_start_frame"),
+                          assignment.getInt("frame_count"));
+                    else media.start(source);
                     show("Streaming " + admitted.video());
                   } catch (Exception e) {
                     event("sender_error", object("reason", e.toString()));
@@ -457,6 +472,7 @@ public final class MainActivity extends Activity {
         send(
             new JSONObject()
                 .put("type", "association_update")
+                .put("ue_alias", prefs.getString("ue_alias", "pixel1"))
                 .put("ue_ip", a.getAddress().getHostAddress())
                 .put("clock_uncertainty_ns", clock.valid() ? clock.uncertainty() : JSONObject.NULL)
                 .put(
@@ -508,6 +524,11 @@ public final class MainActivity extends Activity {
         if (session != null || preparedSession != null)
           throw new IllegalStateException("scenario context changed during active media");
         setContext(m);
+        assignment = m.optBoolean("active", false) ? m.optJSONObject("assignment") : null;
+        if (assignment != null) {
+          selection = playlist.find(new File(assignment.getString("media_path")).getName());
+          file = selection.uri;
+        }
         startRequest = null;
         successorRequest = null;
         event("scenario_context", new JSONObject());
@@ -525,6 +546,7 @@ public final class MainActivity extends Activity {
         break;
       case "association_status":
         if (collectionMode && !contextReady()) break;
+        if (collectionMode && assignment == null) break;
         if (m.getBoolean("valid") && successorRequest != null) send(successorRequest);
         if (enabled && m.getBoolean("valid") && session == null) {
           if (startRequest == null)
@@ -543,6 +565,10 @@ public final class MainActivity extends Activity {
                             .put("width", inputWidth)
                             .put("height", inputHeight)
                             .put("fps", inputFps));
+          if (assignment != null)
+            for (String key :
+                new String[] {"candidate_id", "media_id", "source_start_frame", "frame_count"})
+              startRequest.put(key, assignment.get(key));
           send(startRequest);
         }
         break;
@@ -612,9 +638,9 @@ public final class MainActivity extends Activity {
             retire(session);
             session = null;
             startRequest = null;
-            if (playlist != null && preparedSession != null) {
+            if (!collectionMode && playlist != null && preparedSession != null) {
               startPreparedSuccessor();
-            } else if (playlist != null) {
+            } else if (!collectionMode && playlist != null) {
               // A failed early preparation retries through ordinary admission.
               if (successorSelection == null) {
                 successorSelection = playlist.next();
@@ -729,7 +755,7 @@ public final class MainActivity extends Activity {
               .put("video_id", session.video())
               .put("client_seq", seq())
               .put("final_frame_id", value.getLong("final_frame_id")));
-      awaitingSuccessor = playlist != null;
+      awaitingSuccessor = !collectionMode && playlist != null;
       if (preparedSession != null && preparedSessionReady) startPreparedSuccessor();
       else if (playlist != null)
         event("successor_response_pending", object("reason", "response_pending_at_eof"));

@@ -59,6 +59,8 @@ class UE:
     network: object = None
     clock_uncertainty_ns: int | None = None
     clock_mapping: dict = field(default_factory=dict)
+    alias: str | None = None
+    scenario_notice: tuple | None = None
 
 
 @dataclass
@@ -93,6 +95,7 @@ class Video:
     finalized: bool = False
     deliveries: int = 0
     collection_error: str | None = None
+    requested_candidate_id: str | None = None
     # A prerecorded successor has transport/configuration ready before its handoff.
     predecessor_id: str | None = None
     expected_start: float | None = None
@@ -146,6 +149,10 @@ class Engine:
         }
         self.root = Path(cfg.runs_dir) / cfg.run_id / "mec"
         self.scenario = None
+        self.scenario_assignments = {}
+        # Aetheredge: revisions restart at zero with every MEC process. This
+        # generation lets EdgeRIC distinguish a restart from delayed messages.
+        self.awareness_generation = str(uuid.uuid4())
         self.record = Recorder(self.root, self.join_context)
         self.gpu = DeviceGpuSampler()
         self.replay = ReplayStore(self.root / "replay.sqlite3")
@@ -268,11 +275,31 @@ class Engine:
 
     def arm_scenario(self, value):
         context = self.validated_context(value)
-        if self.scenario == context:
+        assignments = {}
+        for item in value.get("ues", []):
+            alias = item.get("ue_alias")
+            candidate = item.get("candidate_id")
+            if not isinstance(alias, str) or not alias or alias in assignments:
+                raise ValueError("invalid or duplicate ue_alias")
+            if candidate not in self.candidates:
+                raise ValueError(f"unknown candidate for {alias}")
+            if self.candidates[candidate]["application"] != item.get("application"):
+                raise ValueError(f"candidate application mismatch for {alias}")
+            if int(self.candidates[candidate]["bitrate_bps"]) != int(
+                item.get("bitrate_bps", -1)
+            ):
+                raise ValueError(f"candidate bitrate mismatch for {alias}")
+            frame_count = integer(item.get("frame_count"), 1)
+            source_start = integer(item.get("source_start_frame"), 0)
+            assignments[alias] = dict(
+                item, frame_count=frame_count, source_start_frame=source_start
+            )
+        if self.scenario == context and self.scenario_assignments == assignments:
             return dict(status="already_armed", **context)
         if not self.idle():
             raise ValueError("MEC must be idle before arming a scenario")
         self.scenario = context
+        self.scenario_assignments = assignments
         self.videos.clear()
         self.progress.clear()
         self.last_progress.clear()
@@ -287,6 +314,7 @@ class Engine:
             envelope(
                 "scenario_fence",
                 self.cfg.run_id,
+                awareness_generation=self.awareness_generation,
                 awareness_revision=self.awareness_seq,
             )
         )
@@ -295,12 +323,28 @@ class Engine:
         except asyncio.QueueFull:
             pass
         self.record.event("scenario_armed")
-        message = self.contextual(
-            envelope("scenario_context", self.cfg.run_id, **context)
+        for ue in tuple(self.ues.values()):
+            self.send_scenario_context(ue)
+        return dict(status="armed", assignments=len(assignments), **context)
+
+    def send_scenario_context(self, ue):
+        """Send one assignment per attempt and control-connection generation."""
+        if not self.scenario:
+            return
+        notice = (self.scenario["attempt_id"], ue.generation, ue.alias)
+        if ue.scenario_notice == notice:
+            return
+        assignment = self.scenario_assignments.get(ue.alias)
+        self.send(
+            ue.uid,
+            envelope(
+                "scenario_context",
+                self.cfg.run_id,
+                active=assignment is not None,
+                assignment=assignment,
+            ),
         )
-        for uid in tuple(self.ues):
-            self.send(uid, dict(message))
-        return dict(status="armed", **context)
+        ue.scenario_notice = notice
 
     def validate_message_context(self, message):
         if not self.scenario:
@@ -362,6 +406,7 @@ class Engine:
         msg = envelope(
             kind,
             self.cfg.run_id,
+            awareness_generation=self.awareness_generation,
             awareness_revision=self.awareness_seq,
             **value,
         )
@@ -442,6 +487,11 @@ class Engine:
             prepared_video_id=u.prepared_video,
             successor_prepare_s=self.cfg.successor_prepare_s,
             collection_mode=self.collection_mode,
+            scenario_active=(
+                bool(self.scenario)
+                and u.alias in self.scenario_assignments
+            ),
+            assignment=self.scenario_assignments.get(u.alias),
             server_unix_ns=time.time_ns(),
             schema_version_control=1,
         ))
@@ -470,9 +520,18 @@ class Engine:
             import ipaddress
 
             u.ip = str(ipaddress.ip_address(m["ue_ip"]))
+            alias = m.get("ue_alias")
+            if alias is not None:
+                if not isinstance(alias, str) or not alias.strip() or len(alias) > 64:
+                    raise ValueError("invalid ue_alias")
+                if any(x.uid != u.uid and x.alias == alias for x in self.ues.values()):
+                    raise ValueError("ue_alias already connected")
+                u.alias = alias
             self.association(u)
             u.clock_uncertainty_ns = m.get("clock_uncertainty_ns")
             u.clock_mapping = m.get("clock_mapping", {})
+            if self.scenario:
+                self.send_scenario_context(u)
             return envelope("association_pending", self.cfg.run_id, ue_id=u.uid)
         if kind == "probe_report":
             self.record.event("ue_probe_report", ue_id=u.uid, report=m)
@@ -599,7 +658,11 @@ class Engine:
         decision_start = time.monotonic_ns()
         if self.collection_mode:
             proposal = {
-                video.uid: self.cfg.fixed_candidates[video.app] for video in videos
+                video.uid: (
+                    video.requested_candidate_id
+                    or self.cfg.fixed_candidates[video.app]
+                )
+                for video in videos
             }
             valid = all(
                 candidate_id in self.candidates
@@ -746,6 +809,20 @@ class Engine:
                 return denied("usable_telemetry_required")
             if m["application"] not in self.cfg.applications:
                 return denied("unsupported_application")
+            assignment = None
+            if self.collection_mode and self.scenario_assignments:
+                assignment = self.scenario_assignments.get(u.alias)
+                if assignment is None:
+                    return denied("ue_not_active_in_scenario")
+                for field in (
+                    "application",
+                    "candidate_id",
+                    "media_id",
+                    "source_start_frame",
+                    "frame_count",
+                ):
+                    if m.get(field) != assignment.get(field):
+                        return denied(f"scenario_assignment_mismatch:{field}")
             if (
                 # Prepared successors and draining predecessors replace, rather than add,
                 # sustained workloads; the independent port check bounds receivers.
@@ -780,6 +857,9 @@ class Engine:
                 slo=slo,
                 can_drop=bool(m.get("can_drop", False)),
                 can_drop_frames=bool(m.get("can_drop_frames", False)),
+                requested_candidate_id=(
+                    assignment["candidate_id"] if assignment else None
+                ),
             )
             self.videos[vid] = v
             u.active_video = vid
@@ -2254,6 +2334,7 @@ class Engine:
                     message = envelope(
                         "sync",
                         self.cfg.run_id,
+                        awareness_generation=self.awareness_generation,
                         # The snapshot includes every state change created through this revision.
                         awareness_revision=snapshot_revision,
                         associations=[
@@ -2263,6 +2344,7 @@ class Engine:
                                 ip=u.ip,
                                 connection_generation=u.generation,
                                 association_revision=u.association_revision,
+                                ue_alias=u.alias,
                             )
                             for u in self.ues.values()
                         ],

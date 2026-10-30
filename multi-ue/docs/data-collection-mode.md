@@ -136,6 +136,12 @@ carry the same key. Collection-mode video lifecycle commands are rejected when
 the MEC is unarmed or the supplied key differs. Records created before arming
 retain null scenario fields; an attempt is never inferred from timestamps.
 
+The arm payload also carries the complete per-UE assignment. Each UE registers
+a stable alias (`pixel1` through `pixel3`, or `linux1`), resolves the exact
+manifest media file, seeks to `source_start_frame`, selects the assigned
+application/DNN/bitrate, and stops after 150 submitted frames. Normal camera
+and shuffled prerecorded operation remain unchanged outside collection mode.
+
 `tools/prepare_campaign_media.py` deterministically selects 42 videos from a
 BDD100K archive or directory, verifies video metadata, optionally decodes each
 file fully, calculates SHA-256 values, and writes both `SHA256SUMS` and the
@@ -147,6 +153,20 @@ Campaign-wide preflight runs at initial start and after runner resumption.
 A lightweight readiness and channel-application check runs before every
 scenario. Post-run completeness validation runs for every scenario; the final
 campaign check verifies that all 2,664 scenarios have one valid attempt.
+`tools/run_campaign.py` stores attempt state in SQLite using WAL mode, marks a
+running attempt interrupted after process death, and skips every scenario
+already marked valid. It verifies MEC readiness, fresh EdgeRIC reports and UE
+associations, selects and hashes the CIR trace, monitors terminal frame counts,
+and confirms that the channel generation did not change. Transient failures
+receive a new attempt ID. `scripts/campaign_recover.sh` restarts an unavailable
+local EdgeRIC and, when passwordless SSH is configured, the remote MEC.
+`--scenario-id` and `--limit` support pilots without creating a second manifest
+or a separate checkpoint; a later full invocation skips pilot rows already valid.
+
+MEC awareness messages now include a process generation UUID. EdgeRIC accepts
+a reset revision counter only from a new generation, replaces associations
+from its authoritative snapshot, and rejects delayed messages from retired
+generations. This allows MEC restart recovery even when `run_id` is fixed.
 
 ## Implemented collection controls
 
@@ -180,11 +200,8 @@ utilization does not measure individual CUDA-stream or kernel residency.
 
 1. Keep EdgeRIC in shadow mode and verify at startup that no weight publisher
    controls OAI.
-2. Add a post-run completeness check. A valid run has one
-   terminal result for every transmitted frame and no queue-bound, worker,
-   transport, decoder, or logging failure.
-3. Add the checkpointed scenario runner and joined dataset exporter. Channel
-   selection and trace-bank preflight are available, but the runner must invoke
-   selection and verify its generation before arming each scenario.
-4. Calibrate requested emulator SINR against measured PUSCH/PUCCH SNR and BLER
+2. Add the joined dataset exporter across UE, MEC, EdgeRIC, and OAI evidence.
+3. Calibrate requested emulator SINR against measured PUSCH/PUCCH SNR and BLER
    with pass-through and AWGN pilots.
+4. Run a one-UE and four-UE pilot through the scenario runner, including one
+   forced runner termination and resume, before starting all 2,664 scenarios.

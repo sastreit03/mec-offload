@@ -154,6 +154,7 @@ def test_authoritative_sync_retires_stale_frames_and_sessions():
             dict(
                 schema_version=1,
                 type="sync",
+                awareness_generation="test-process",
                 run_id="run",
                 awareness_revision=1,
                 associations=[],
@@ -167,6 +168,7 @@ def test_authoritative_sync_retires_stale_frames_and_sessions():
             dict(
                 schema_version=1,
                 type="sync",
+                awareness_generation="test-process",
                 run_id="run",
                 awareness_revision=3,
                 associations=[],
@@ -181,6 +183,7 @@ def test_authoritative_sync_retires_stale_frames_and_sessions():
                 schema_version=1,
                 type="descriptor",
                 run_id="run",
+                    awareness_generation="test-process",
                 awareness_revision=2,
                 ue_id="ue",
                 video_id="video",
@@ -199,6 +202,7 @@ def test_authoritative_sync_retires_stale_frames_and_sessions():
             dict(
                 schema_version=1,
                 type="sync",
+                awareness_generation="test-process",
                 run_id="run",
                 awareness_revision=4,
                 associations=[],
@@ -272,6 +276,7 @@ def test_closed_sessions_release_capacity_and_reject_delayed_updates():
             dict(
                 schema_version=1,
                 type="sync",
+                awareness_generation="test-process",
                 run_id="run",
                 awareness_revision=revision + 2,
                 associations=[],

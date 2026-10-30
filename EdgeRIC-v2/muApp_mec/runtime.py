@@ -28,6 +28,8 @@ class Runtime:
         self.sessions = {}
         self.retired_sessions = {}
         self.sync_revision = -1
+        self.awareness_generation = None
+        self.retired_awareness_generations = set()
         self.metrics = {}
         # Aetheredge: RAN capacity and grant accounting now arrive over ZMQ.
         self.radio_generation = None
@@ -93,9 +95,9 @@ class Runtime:
 
     def join_context(self):
         return {
-            "campaign_id": self.campaign_id,
-            "scenario_id": self.scenario_id,
-            "attempt_id": self.attempt_id,
+            "campaign_id": getattr(self, "campaign_id", None),
+            "scenario_id": getattr(self, "scenario_id", None),
+            "attempt_id": getattr(self, "attempt_id", None),
         }
 
     @staticmethod
@@ -119,11 +121,25 @@ class Runtime:
         kind = m["type"]
         if kind == "sync":
             context = self.message_context(m)
-            if self.run_id != run:
+            generation = m.get("awareness_generation")
+            if not isinstance(generation, str) or not generation:
+                raise ValueError("missing awareness generation")
+            retired_generations = getattr(
+                self, "retired_awareness_generations", set()
+            )
+            self.retired_awareness_generations = retired_generations
+            if generation in retired_generations:
+                return {"source_generation": self.source, "status": "stale_generation"}
+            current_generation = getattr(self, "awareness_generation", None)
+            generation_changed = self.run_id != run or current_generation != generation
+            if generation_changed:
+                if current_generation is not None:
+                    retired_generations.add(current_generation)
                 self.sessions.clear()
                 self.retired_sessions.clear()
                 self.associations = Associations(self.cfg["association"])
                 self.run_id = run
+                self.awareness_generation = generation
                 self.sync_revision = -1
             revision = m.get("awareness_revision")
             if revision is not None:
@@ -147,7 +163,22 @@ class Runtime:
                 self.latest_metric = 0.0
                 self.probe_commands.clear()
             # A full sync is authoritative for current sessions and actual radio demand.
-            for a in m.get("associations", []):
+            # Aetheredge: absence is authoritative, but an ordinary scenario
+            # sync preserves valid RNTI leases for identities still present.
+            snapshot_associations = m.get("associations", [])
+            current_uids = {a["ue_id"] for a in snapshot_associations}
+            for uid in set(self.associations.bindings) - current_uids:
+                del self.associations.bindings[uid]
+                self.associations.last_result.pop(uid, None)
+            self.associations.pending = [
+                uid for uid in self.associations.pending if uid in current_uids
+            ]
+            if (
+                self.associations.probe
+                and self.associations.probe["ue_id"] not in current_uids
+            ):
+                self.associations.probe = None
+            for a in snapshot_associations:
                 self.associations.register(
                     a["ue_id"],
                     a["connection_id"],
@@ -172,6 +203,9 @@ class Runtime:
             return {"source_generation": self.source, "status": "synced"}
         if run != self.run_id:
             raise ValueError("sync required for run")
+        current_generation = getattr(self, "awareness_generation", None)
+        if m.get("awareness_generation") != current_generation:
+            raise ValueError("sync required for awareness generation")
         if self.message_context(m) != self.join_context():
             raise ValueError("scenario context mismatch")
         revision = m.get("awareness_revision")

@@ -79,9 +79,31 @@ def create_app(engine):
             readiness=engine.readiness(),
             run_id=engine.cfg.run_id,
             scenario=engine.scenario,
+            awareness_generation=engine.awareness_generation,
+            ues={
+                u.uid: dict(
+                    alias=u.alias,
+                    connected=u.connected,
+                    ip=u.ip,
+                    association_valid=bool(
+                        (engine.last_report or {})
+                        .get("ues", {})
+                        .get(u.uid, {})
+                        .get("association_valid")
+                    ),
+                )
+                for u in engine.ues.values()
+            },
             videos={
                 v.vid: dict(
-                    ue_id=v.uid, application=v.app, state=v.state, counters=v.counters
+                    ue_id=v.uid,
+                    ue_alias=engine.ues[v.uid].alias,
+                    application=v.app,
+                    candidate_id=v.requested_candidate_id,
+                    state=v.state,
+                    counters=v.counters,
+                    final_frame_id=v.final_id,
+                    collection_error=v.collection_error,
                 )
                 for v in engine.videos.values()
             },

@@ -30,6 +30,10 @@ public final class AvcSource {
   private final long prepareNs;
   private long durationUs = -1;
   private boolean preparationSent;
+  private long sourceStartUs;
+  private int sourceStartFrame;
+  private int frameLimit = -1, submittedFrames;
+  private long segmentFinishDeadline;
 
   public AvcSource(Context c, StreamSession s, StreamSession.Events e, double prepareS)
       throws Exception {
@@ -42,10 +46,18 @@ public final class AvcSource {
   }
 
   public void start(Uri file) {
+    start(file, 0, -1);
+  }
+
+  /** Start one deterministic prerecorded segment selected by the campaign manifest. */
+  public void start(Uri file, int sourceStartFrame, int frameCount) {
     handler.post(
         () -> {
           try {
+            this.sourceStartFrame = sourceStartFrame;
+            frameLimit = frameCount;
             JSONObjectConfig();
+            sourceStartUs = Math.round(this.sourceStartFrame * 1_000_000.0 / fps);
             if (file == null) camera();
             else dataset(file);
             pump();
@@ -166,6 +178,8 @@ public final class AvcSource {
     if (track < 0) throw new Exception("No video track");
     if (f.containsKey(MediaFormat.KEY_DURATION)) durationUs = f.getLong(MediaFormat.KEY_DURATION);
     extractor.selectTrack(track);
+    if (sourceStartUs > 0)
+      extractor.seekTo(sourceStartUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
     f.setInteger(
         MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
     decoder = MediaCodec.createDecoderByType(f.getString(MediaFormat.KEY_MIME));
@@ -175,15 +189,15 @@ public final class AvcSource {
   }
 
   // Camera and dataset frames share bitrate changes, keyframe requests, and YUV scaling.
-  private void submit(Image source, long pts) throws Exception {
-    if (!active) return;
+  private boolean submit(Image source, long pts) throws Exception {
+    if (!active) return false;
     int index = encoder.dequeueInputBuffer(0);
-    if (index < 0) return;
+    if (index < 0) return false;
     Image target = encoder.getInputImage(index);
     if (target == null) throw new Exception("Encoder lacks flexible YUV input");
     if (!session.prepare(pts, System.nanoTime())) {
       encoder.queueInputBuffer(index, 0, 0, pts, 0);
-      return;
+      return false;
     }
     int nextBitrate = session.config().getInt("bitrate_bps");
     Bundle b = new Bundle();
@@ -214,6 +228,25 @@ public final class AvcSource {
     ByteBuffer raw = encoder.getInputBuffer(index);
     encoder.queueInputBuffer(
         index, 0, raw == null ? width * height * 3 / 2 : raw.capacity(), pts, 0);
+    return true;
+  }
+
+  private void finishSegment() {
+    try {
+      drain();
+      if (session.lastFrame() < frameLimit - 1 && System.nanoTime() < segmentFinishDeadline) {
+        handler.postDelayed(this::finishSegment, 2);
+        return;
+      }
+      events.event(
+          "media_end",
+          new org.json.JSONObject()
+              .put("video_id", session.video())
+              .put("final_frame_id", session.lastFrame()));
+      close();
+    } catch (Exception e) {
+      fail(e);
+    }
   }
 
   // Pace prerecorded frames by playback time rather than their original recording date.
@@ -239,6 +272,11 @@ public final class AvcSource {
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
         int i = decoder.dequeueOutputBuffer(info, 0);
         if (i >= 0) {
+          if (info.presentationTimeUs < sourceStartUs) {
+            decoder.releaseOutputBuffer(i, false);
+            handler.post(this::pump);
+            return;
+          }
           if (firstPts < 0) firstPts = info.presentationTimeUs;
           long release = fileStart + (info.presentationTimeUs - firstPts) * 1000;
           if (!preparationSent
@@ -264,7 +302,7 @@ public final class AvcSource {
                     try {
                       Image a = decoder.getOutputImage(ix);
                       if (a != null) {
-                        submit(a, pts);
+                        if (submit(a, pts)) submittedFrames++;
                         a.close();
                       }
                       decoder.releaseOutputBuffer(ix, false);
@@ -277,10 +315,16 @@ public final class AvcSource {
               drain();
               return;
             }
-            submit(image, info.presentationTimeUs);
+            if (submit(image, info.presentationTimeUs)) submittedFrames++;
             image.close();
           }
           decoder.releaseOutputBuffer(i, false);
+          if (frameLimit > 0 && submittedFrames >= frameLimit) {
+            drain();
+            segmentFinishDeadline = System.nanoTime() + 2_000_000_000L;
+            handler.post(this::finishSegment);
+            return;
+          }
           if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
             drain();
             events.event(

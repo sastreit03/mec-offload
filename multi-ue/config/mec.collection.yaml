@@ -1,5 +1,5 @@
-# Fixed-policy dataset collection. Replace the three candidate IDs together
-# for each DNN/bitrate tier before starting a scenario block.
+# Fixed-policy dataset collection. These defaults support manual runs; the
+# campaign arm contract selects and validates each UE's manifest candidate.
 run_id: collection-replace-me
 mode: collection
 catalog: tasks.yaml

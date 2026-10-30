@@ -38,6 +38,13 @@ public final class VideoPlaylist {
     return files.size();
   }
 
+  /** Resolve a manifest media filename without changing the normal shuffle order. */
+  public Selection find(String name) {
+    for (Selection file : files)
+      if (file.name.equals(name)) return new Selection(file.uri, file.name, -1, -1);
+    throw new IllegalArgumentException("Campaign video is not staged: " + name);
+  }
+
   public Selection next() {
     if (index >= order.size()) {
       order = new ArrayList<>(files);

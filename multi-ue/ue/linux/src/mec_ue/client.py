@@ -50,6 +50,7 @@ class Client:
         self.campaign_id = None
         self.scenario_id = None
         self.attempt_id = None
+        self.assignment = None
         self.connection = None
         self.root = Path(args.logs)
         self.root.mkdir(parents=True, exist_ok=True)
@@ -236,7 +237,7 @@ class Client:
             task = asyncio.create_task(self.expiry(key, value["tx_mono_ns"]))
             self.expiry_tasks.add(task)
             task.add_done_callback(self.expiry_tasks.discard)
-        elif kind == "successor_needed" and self.playlist:
+        elif kind == "successor_needed" and self.playlist and not self.collection_mode:
             if (
                 self.streamer
                 and value.get("video_id") == self.streamer.response["video_id"]
@@ -273,7 +274,7 @@ class Client:
                     final_frame_id=value["final_frame_id"],
                 )
             )
-            self.awaiting_successor = bool(self.playlist)
+            self.awaiting_successor = bool(self.playlist) and not self.collection_mode
             if self.prepared:
                 self.start_prepared()
             elif self.playlist:
@@ -375,6 +376,7 @@ class Client:
             await self.send(
                 dict(
                     type="association_update",
+                    ue_alias=self.args.ue_alias,
                     ue_ip=self.args.source_ip,
                     clock_uncertainty_ns=self.clock.uncertainty,
                     clock_mapping=dict(
@@ -467,6 +469,12 @@ class Client:
                                             "scenario context changed during active media"
                                         )
                                     self.set_context(m)
+                                    self.assignment = (
+                                        m.get("assignment") if m.get("active") else None
+                                    )
+                                    if self.assignment:
+                                        self.args.application = self.assignment["application"]
+                                        self.args.source = self.assignment["media_path"]
                                     self.start_request = None
                                     self.successor_request = None
                                     self.record("scenario_context")
@@ -481,6 +489,8 @@ class Client:
                                     asyncio.create_task(self.probe(m))
                                 elif kind == "association_status" and m["valid"]:
                                     if self.collection_mode and not self.context_ready():
+                                        continue
+                                    if self.collection_mode and not self.assignment:
                                         continue
                                     if self.successor_request is not None:
                                         # Deduplicated resend covers a control reconnect during preparation.
@@ -497,6 +507,18 @@ class Client:
                                                 can_drop_frames=False,
                                                 input=dict(self.input_profile),
                                             )
+                                            if self.assignment:
+                                                self.start_request.update(
+                                                    {
+                                                        key: self.assignment[key]
+                                                        for key in (
+                                                            "candidate_id",
+                                                            "media_id",
+                                                            "source_start_frame",
+                                                            "frame_count",
+                                                        )
+                                                    }
+                                                )
                                         await self.send(self.start_request)
                                 elif kind == "video_response":
                                     if (
@@ -541,8 +563,14 @@ class Client:
                                             self.clock,
                                             self.media_event,
                                             self.successor_prepare_s
-                                            if self.playlist
+                                            if self.playlist and not self.collection_mode
                                             else 0,
+                                            source_start_frame=(
+                                                self.assignment or {}
+                                            ).get("source_start_frame", 0),
+                                            frame_count=(self.assignment or {}).get(
+                                                "frame_count"
+                                            ),
                                         )
                                         if self.successor_selection:
                                             self.selection = self.successor_selection
@@ -581,8 +609,15 @@ class Client:
                                         "EXPIRED",
                                         "CANCELLED",
                                     ):
-                                        self.streamer.stop()
-                                        if not self.playlist:
+                                        finished_streamer = self.streamer
+                                        finished_streamer.stop()
+                                        if self.collection_mode:
+                                            self.streamer = None
+                                            self.start_request = None
+                                            await asyncio.to_thread(
+                                                finished_streamer.thread.join, 3
+                                            )
+                                        elif not self.playlist:
                                             asyncio.create_task(self.finish())
                                         else:
                                             # Admission failure falls back to the normal post-terminal path.
@@ -692,6 +727,11 @@ def main():
     p.add_argument("--source", default="0", help="camera index or dataset video path")
     p.add_argument("--source-dir", help="directory of prerecorded videos to shuffle")
     p.add_argument("--shuffle-seed", type=int, help="reproducible playlist seed")
+    p.add_argument(
+        "--ue-alias",
+        default="linux1",
+        help="stable campaign identity assigned in the manifest",
+    )
     p.add_argument(
         "--application",
         choices=["tracking", "detection", "segmentation"],
