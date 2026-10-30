@@ -22,6 +22,7 @@ public final class MainActivity extends Activity {
   private final ClockMap clock = new ClockMap();
   private final ScheduledExecutorService timer = Executors.newScheduledThreadPool(2);
   private final ExecutorService probes = Executors.newSingleThreadExecutor();
+  private final ExecutorService networkIo = Executors.newSingleThreadExecutor();
   private final ThreadPoolExecutor log =
       new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(4096));
   private ConnectivityManager connectivity;
@@ -38,6 +39,7 @@ public final class MainActivity extends Activity {
   private android.database.sqlite.SQLiteDatabase receiptIds;
   private StreamSession session;
   private StreamSession preparedSession;
+  private boolean preparedSessionReady;
   private AvcSource media;
   private String uid, connection, run;
   private String campaignId, scenarioId, attemptId;
@@ -220,12 +222,7 @@ public final class MainActivity extends Activity {
             ui.post(
                 () -> {
                   network = n;
-                  try {
-                    if (session != null) session.network(n);
-                    if (preparedSession != null) preparedSession.network(n);
-                  } catch (Exception e) {
-                    event("media_rebind_error", object("reason", e.toString()));
-                  }
+                  rebindMedia(n);
                   connect();
                 });
           }
@@ -245,12 +242,7 @@ public final class MainActivity extends Activity {
                     cellularIp = ip;
                     if (changed) {
                       Log.i(TAG, "Cellular IPv4 address ready: " + ip);
-                      try {
-                        if (session != null) session.network(n);
-                        if (preparedSession != null) preparedSession.network(n);
-                      } catch (Exception e) {
-                        event("media_rebind_error", object("reason", e.toString()));
-                      }
+                      rebindMedia(n);
                       connect();
                     }
                   }
@@ -335,6 +327,76 @@ public final class MainActivity extends Activity {
                 retry(g);
               }
             });
+  }
+
+  // Socket creation and connect may perform network I/O; keep both off Android's UI thread.
+  private void rebindMedia(Network n) {
+    StreamSession active = session;
+    StreamSession prepared = preparedSession;
+    if (active == null && prepared == null) return;
+    networkIo.execute(
+        () -> {
+          try {
+            if (active != null) active.network(n);
+            if (prepared != null) prepared.network(n);
+          } catch (Exception e) {
+            event("media_rebind_error", object("reason", e.toString()));
+          }
+        });
+  }
+
+  // Start media only after its cellular-bound UDP socket is ready.
+  private void startAdmittedSession(StreamSession admitted, Uri source) {
+    Network n = network;
+    networkIo.execute(
+        () -> {
+          try {
+            admitted.network(n);
+            ui.post(
+                () -> {
+                  if (session != admitted) return;
+                  try {
+                    media =
+                        new AvcSource(
+                            this,
+                            admitted,
+                            this::event,
+                            playlist == null ? 0 : successorPrepareS);
+                    media.start(source);
+                    show("Streaming " + admitted.video());
+                  } catch (Exception e) {
+                    event("sender_error", object("reason", e.toString()));
+                  }
+                });
+          } catch (Exception e) {
+            event("media_setup_error", object("reason", e.toString()));
+          }
+        });
+  }
+
+  // Prepare a successor's socket without interrupting the active video's socket.
+  private void prepareAdmittedSession(StreamSession prepared) {
+    Network n = network;
+    networkIo.execute(
+        () -> {
+          try {
+            prepared.network(n);
+            ui.post(
+                () -> {
+                  if (preparedSession != prepared) return;
+                  preparedSessionReady = true;
+                  if (awaitingSuccessor) {
+                    try {
+                      startPreparedSuccessor();
+                    } catch (Exception e) {
+                      event("successor_start_error", object("reason", e.toString()));
+                    }
+                  }
+                });
+          } catch (Exception e) {
+            event("media_setup_error", object("reason", e.toString()));
+          }
+        });
   }
 
   private void retry(int g) {
@@ -495,8 +557,8 @@ public final class MainActivity extends Activity {
                     .put("accepted", true)
                     .put("reason", JSONObject.NULL));
             preparedSession = new StreamSession(m, clock, this::event, getExternalFilesDir(null));
-            preparedSession.network(network);
-            if (awaitingSuccessor) startPreparedSuccessor();
+            preparedSessionReady = false;
+            prepareAdmittedSession(preparedSession);
           } else {
             event(
                 "admission_decision",
@@ -520,10 +582,7 @@ public final class MainActivity extends Activity {
                   .put("accepted", true)
                   .put("reason", JSONObject.NULL));
           session = new StreamSession(m, clock, this::event, getExternalFilesDir(null));
-          session.network(network);
-          media = new AvcSource(this, session, this::event, playlist == null ? 0 : successorPrepareS);
-          media.start(file);
-          show("Streaming " + session.video());
+          startAdmittedSession(session, file);
         } else if (!m.getBoolean("accepted")) {
           event(
               "admission_decision",
@@ -579,6 +638,7 @@ public final class MainActivity extends Activity {
                 .contains(m.getString("status"))) {
           preparedSession.close();
           preparedSession = null;
+          preparedSessionReady = false;
           successorRequest = null;
           event("successor_not_prepared", object("reason", m.getString("status")));
         }
@@ -670,7 +730,7 @@ public final class MainActivity extends Activity {
               .put("client_seq", seq())
               .put("final_frame_id", value.getLong("final_frame_id")));
       awaitingSuccessor = playlist != null;
-      if (preparedSession != null) startPreparedSuccessor();
+      if (preparedSession != null && preparedSessionReady) startPreparedSuccessor();
       else if (playlist != null)
         event("successor_response_pending", object("reason", "response_pending_at_eof"));
     } catch (Exception e) {
@@ -679,12 +739,13 @@ public final class MainActivity extends Activity {
   }
 
   private void startPreparedSuccessor() throws Exception {
-    if (preparedSession == null || successorSelection == null) return;
+    if (preparedSession == null || !preparedSessionReady || successorSelection == null) return;
     if (session != null) retire(session);
     session = preparedSession;
     selection = successorSelection;
     file = selection.uri;
     preparedSession = null;
+    preparedSessionReady = false;
     successorSelection = null;
     successorRequest = null;
     awaitingSuccessor = false;
@@ -787,6 +848,7 @@ public final class MainActivity extends Activity {
       awaitingSuccessor = false;
       if (preparedSession != null) preparedSession.close();
       preparedSession = null;
+      preparedSessionReady = false;
       if (media != null) media.close();
       if (session != null && session.lastFrame() >= 0)
         send(
@@ -841,6 +903,7 @@ public final class MainActivity extends Activity {
     if (callback != null) connectivity.unregisterNetworkCallback(callback);
     timer.shutdownNow();
     probes.shutdownNow();
+    networkIo.shutdownNow();
     log.shutdown();
     super.onDestroy();
   }
