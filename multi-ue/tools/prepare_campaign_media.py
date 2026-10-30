@@ -25,7 +25,38 @@ def sha256(path):
     return value.hexdigest()
 
 
+def probe_opencv(path):
+    import cv2
+
+    capture = cv2.VideoCapture(str(path))
+    try:
+        if not capture.isOpened():
+            raise RuntimeError(f"no video stream in {path}")
+        frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = float(capture.get(cv2.CAP_PROP_FPS))
+        width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        if frames <= 0 or fps <= 0 or width <= 0 or height <= 0:
+            raise RuntimeError(f"invalid video metadata in {path}")
+        fourcc_value = int(capture.get(cv2.CAP_PROP_FOURCC))
+        fourcc = "".join(
+            chr((fourcc_value >> (8 * offset)) & 0xFF) for offset in range(4)
+        ).rstrip("\x00")
+        return {
+            "codec_name": fourcc or "unknown",
+            "width": width,
+            "height": height,
+            "r_frame_rate": f"{fps:.9g}",
+            "duration": frames / fps,
+            "source_frames": frames,
+        }
+    finally:
+        capture.release()
+
+
 def probe(path):
+    if shutil.which("ffprobe") is None:
+        return probe_opencv(path)
     command = [
         "ffprobe",
         "-v",
@@ -73,6 +104,24 @@ def probe(path):
 
 
 def decode(path):
+    if shutil.which("ffmpeg") is None:
+        import cv2
+
+        capture = cv2.VideoCapture(str(path))
+        try:
+            if not capture.isOpened():
+                raise RuntimeError(f"cannot open {path}")
+            decoded = 0
+            while True:
+                ok, _frame = capture.read()
+                if not ok:
+                    break
+                decoded += 1
+            if decoded <= 0:
+                raise RuntimeError(f"no frames decoded from {path}")
+        finally:
+            capture.release()
+        return
     subprocess.run(
         ["ffmpeg", "-v", "error", "-i", str(path), "-f", "null", "-"],
         check=True,
