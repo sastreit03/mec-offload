@@ -208,13 +208,27 @@ class Runner:
             raise RuntimeError("channel loader trace hash mismatch")
         return response
 
-    def wait(self, scenario, attempt_id):
+    def wait(self, scenario, attempt_id, expected_channel=None):
         expected = {item["ue_alias"]: item for item in scenario["ues"]}
         deadline = time.monotonic() + self.args.scenario_timeout
         progress_at = time.monotonic()
         progress = None
         last = None
+        channel_check_at = time.monotonic()
         while time.monotonic() < deadline and not self.stop:
+            if expected_channel is not None and time.monotonic() >= channel_check_at:
+                try:
+                    current_channel = channel_request(
+                        self.args.channel_endpoint, {"msg_type": "trace_status"}
+                    )
+                except Exception as error:
+                    raise RuntimeError(
+                        f"gNB channel controller unavailable: {error}"
+                    ) from error
+                for key in ("condition_id", "trace_sha256", "generation"):
+                    if current_channel.get(key) != expected_channel.get(key):
+                        raise RuntimeError(f"channel {key} changed during scenario")
+                channel_check_at = time.monotonic() + 5
             last = http_json(self.args.mec, "/api/status")
             if last.get("scenario") != {
                 "campaign_id": scenario["campaign_id"],
@@ -308,7 +322,7 @@ class Runner:
         armed = http_json(self.args.mec, "/api/scenario/arm", payload)
         if armed.get("status") not in ("armed", "already_armed"):
             raise RuntimeError(f"scenario arm failed: {armed}")
-        after = self.wait(scenario, attempt_id)
+        after = self.wait(scenario, attempt_id, channel)
         channel_after = channel_request(
             self.args.channel_endpoint, {"msg_type": "trace_status"}
         )
@@ -349,6 +363,10 @@ class Runner:
                         scenario_id=scenario["scenario_id"],
                         attempt_id=attempt_id,
                     )
+                    # An armed MEC keeps advertising this assignment to UEs that
+                    # reconnect after Ctrl-C. Recovery clears that stale attempt
+                    # while the checkpoint remains interrupted and resumable.
+                    self.recover(str(error), scenario, attempt_id)
                     return
                 except Exception as error:
                     self.state.finish(scenario["scenario_id"], "retryable", str(error))

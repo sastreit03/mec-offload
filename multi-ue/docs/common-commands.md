@@ -93,6 +93,26 @@ unresolved: 0
 radio_report_age_s: less than 1 second
 ```
 
+## Start the Linux campaign UE client
+
+Run on the **Orin** after the softUE has attached. Leave this command running
+for the campaign; the runner supplies the application, model, bitrate, media,
+and source-frame range for each active scenario.
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+
+./scripts/softue-client.sh \
+  --source-dir /datasets/campaign \
+  --ue-alias linux1 \
+  --application detection \
+  --logs /multi-ue/runs/campaign-linux1
+```
+
+The initial `detection` value is only a placeholder before the first campaign
+assignment. Confirm `linux1` reports `connected=True` and
+`association_valid=True` with the association check above.
+
 ## Check whether scenario media has started or stalled
 
 Run on the **MEC Spark**. This is a one-shot check and does not wait for a

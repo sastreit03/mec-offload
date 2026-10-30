@@ -36,7 +36,7 @@ def test_checkpoint_marks_only_running_attempt_interrupted(tmp_path):
     assert reopened.row("scenario-a") == ("interrupted", 1)
 
 
-def test_operator_stop_does_not_run_recovery(tmp_path):
+def test_operator_stop_checkpoints_and_clears_armed_attempt(tmp_path):
     state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
     scenario = {"scenario_id": "scenario-a", "execution_index": 0}
     runner = MODULE.Runner(
@@ -51,7 +51,9 @@ def test_operator_stop_does_not_run_recovery(tmp_path):
     runner.run()
 
     assert state.row("scenario-a") == ("interrupted", 1)
-    assert recovered == []
+    assert len(recovered) == 1
+    assert recovered[0][:2] == ("runner stopped", scenario)
+    assert recovered[0][2].startswith("attempt-")
 
 
 def test_wait_fails_after_media_progress_stalls(tmp_path, monkeypatch):
@@ -101,3 +103,32 @@ def test_wait_fails_after_media_progress_stalls(tmp_path, monkeypatch):
 
     with pytest.raises(RuntimeError, match="scenario stalled"):
         runner.wait(scenario, "attempt-a")
+
+
+def test_wait_detects_lost_gnb_channel_controller(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        MODULE,
+        "channel_request",
+        lambda *_: (_ for _ in ()).throw(RuntimeError("controller unavailable")),
+    )
+    state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
+    runner = MODULE.Runner(
+        SimpleNamespace(
+            output=str(tmp_path),
+            mec="http://mec.test",
+            channel_endpoint="tcp://gnb.test:5560",
+            scenario_timeout=10,
+            stall_timeout=5,
+            poll_interval=0,
+        ),
+        [],
+        state,
+    )
+    scenario = {
+        "campaign_id": "campaign-a",
+        "scenario_id": "scenario-a",
+        "ues": [],
+    }
+
+    with pytest.raises(RuntimeError, match="gNB channel controller unavailable"):
+        runner.wait(scenario, "attempt-a", {"condition_id": "awgn-sinr20"})

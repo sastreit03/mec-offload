@@ -7,6 +7,37 @@ repo_root="${AETHEREDGE_REPO_ROOT:-$HOME/mec-offload-ad}"
 mec_host="${AETHEREDGE_MEC_HOST:-sstreit@192.168.71.130}"
 
 reason="${1:-unknown}"
+scenario_id="${2:-unknown-scenario}"
+attempt_id="${3:-unknown-attempt}"
+
+# Preserve RAN evidence before Compose can restart or recreate the gNB.
+recovery_dir="$repo_root/multi-ue/runs/campaigns/aetheredge-fixed-policy-v1/recovery/$scenario_id/$attempt_id"
+mkdir -p "$recovery_dir"
+docker inspect oai-gnb >"$recovery_dir/oai-gnb-inspect.json" 2>&1 || true
+docker logs --since 15m oai-gnb >"$recovery_dir/oai-gnb.log" 2>&1 || true
+
+gnb_running="$(docker inspect -f '{{.State.Running}}' oai-gnb 2>/dev/null || true)"
+if [[ "$gnb_running" != true || "$reason" == *"gNB channel controller"* ]]; then
+  # The CIR loader resets to pass-through. The runner selects and verifies the
+  # manifest trace again before it arms the retry.
+  (
+    cd "$repo_root/gnb-core/config/common" || exit 1
+    if [[ "$gnb_running" == true ]]; then
+      docker restart oai-gnb
+    else
+      USER_ID="$(id -u)" GROUP_ID="$(id -g)" \
+        docker compose --env-file ../b200/.env up -d oai-gnb
+    fi
+  ) || true
+
+  # Do not let a broken RAN recovery block the campaign indefinitely.
+  for _ in $(seq 1 90); do
+    health="$(docker inspect -f '{{.State.Health.Status}}' oai-gnb 2>/dev/null || true)"
+    [[ "$health" == healthy ]] && break
+    sleep 1
+  done
+fi
+
 if ! docker inspect -f '{{.State.Running}}' edgeric-mec 2>/dev/null | grep -qx true \
   || [[ "$reason" == *"EdgeRIC"* ]]; then
   "$repo_root/multi-ue/scripts/containers.sh" stop-edgeric || true
@@ -24,6 +55,7 @@ elif [[ "$reason" == *"scenario timed out"* \
   || "$reason" == *"candidate mismatch"* \
   || "$reason" == *"scenario context"* \
   || "$reason" == *"scenario arm"* \
+  || "$reason" == *"runner stopped"* \
   || "$reason" == *"MEC must be idle"* \
   || "$reason" == *"collection"* ]]; then
   # A failed active attempt may not be idle enough to arm its retry.
