@@ -55,6 +55,10 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
     return current;
   }
 
+  public boolean collectionMode() {
+    return collectionMode;
+  }
+
   // Retain future commands for the media path; arrival alone does not apply them.
   public synchronized void command(JSONObject c) throws Exception {
     if (c.optLong("control_version", 0) <= controlVersion) return;

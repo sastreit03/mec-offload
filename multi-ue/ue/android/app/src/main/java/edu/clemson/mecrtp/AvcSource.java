@@ -234,9 +234,16 @@ public final class AvcSource {
   private void finishSegment() {
     try {
       drain();
-      if (session.lastFrame() < frameLimit - 1 && System.nanoTime() < segmentFinishDeadline) {
-        handler.postDelayed(this::finishSegment, 2);
-        return;
+      if (session.lastFrame() < frameLimit - 1) {
+        if (System.nanoTime() < segmentFinishDeadline) {
+          handler.postDelayed(this::finishSegment, 2);
+          return;
+        }
+        throw new Exception(
+            "Encoder produced frame "
+                + session.lastFrame()
+                + " but collection requires frame "
+                + (frameLimit - 1));
       }
       events.event(
           "media_end",
@@ -244,6 +251,59 @@ public final class AvcSource {
               .put("video_id", session.video())
               .put("final_frame_id", session.lastFrame()));
       close();
+    } catch (Exception e) {
+      fail(e);
+    }
+  }
+
+  /** Submit one decoded frame without consuming it during collection backpressure. */
+  private void submitDecoded(int index, long pts, int flags) {
+    if (!active) return;
+    try {
+      Image image = decoder.getOutputImage(index);
+      boolean submitted = false;
+      boolean hasImage = image != null;
+      if (image != null) {
+        try {
+          submitted = submit(image, pts);
+        } finally {
+          image.close();
+        }
+      }
+
+      if (!submitted && hasImage && session.collectionMode()) {
+        // Preserve this source frame until the encoder and preceding AU are ready.
+        drain();
+        handler.postDelayed(() -> submitDecoded(index, pts, flags), 2);
+        return;
+      }
+
+      decoder.releaseOutputBuffer(index, false);
+      if (submitted) submittedFrames++;
+      if (frameLimit > 0 && submittedFrames >= frameLimit) {
+        drain();
+        segmentFinishDeadline = System.nanoTime() + 2_000_000_000L;
+        handler.post(this::finishSegment);
+        return;
+      }
+      if ((flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+        if (session.collectionMode() && frameLimit > 0)
+          throw new Exception(
+              "Collection source ended after "
+                  + submittedFrames
+                  + " of "
+                  + frameLimit
+                  + " frames");
+        drain();
+        events.event(
+            "media_end",
+            new org.json.JSONObject()
+                .put("video_id", session.video())
+                .put("final_frame_id", session.lastFrame()));
+        close();
+        return;
+      }
+      pump();
     } catch (Exception e) {
       fail(e);
     }
@@ -291,50 +351,14 @@ public final class AvcSource {
                     .put("expected_start_unix_ns", release + remainingUs * 1000));
             preparationSent = true;
           }
-          Image image = decoder.getOutputImage(i);
-          if (image != null) {
-            long wait = Math.max(0, (release - sessionClock()) / 1_000_000);
-            if (wait > 0) {
-              final int ix = i;
-              final long pts = info.presentationTimeUs;
-              handler.postDelayed(
-                  () -> {
-                    try {
-                      Image a = decoder.getOutputImage(ix);
-                      if (a != null) {
-                        if (submit(a, pts)) submittedFrames++;
-                        a.close();
-                      }
-                      decoder.releaseOutputBuffer(ix, false);
-                      pump();
-                    } catch (Exception e) {
-                      fail(e);
-                    }
-                  },
-                  wait);
-              drain();
-              return;
-            }
-            if (submit(image, info.presentationTimeUs)) submittedFrames++;
-            image.close();
-          }
-          decoder.releaseOutputBuffer(i, false);
-          if (frameLimit > 0 && submittedFrames >= frameLimit) {
-            drain();
-            segmentFinishDeadline = System.nanoTime() + 2_000_000_000L;
-            handler.post(this::finishSegment);
-            return;
-          }
-          if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-            drain();
-            events.event(
-                "media_end",
-                new org.json.JSONObject()
-                    .put("video_id", session.video())
-                    .put("final_frame_id", session.lastFrame()));
-            close();
-            return;
-          }
+          long wait = Math.max(0, (release - sessionClock()) / 1_000_000);
+          final int index = i;
+          final long pts = info.presentationTimeUs;
+          final int flags = info.flags;
+          if (wait > 0) handler.postDelayed(() -> submitDecoded(index, pts, flags), wait);
+          else handler.post(() -> submitDecoded(index, pts, flags));
+          drain();
+          return;
         }
       }
       drain();
