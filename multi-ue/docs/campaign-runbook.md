@@ -425,3 +425,28 @@ enough for this single interruption. If prior failures have already exhausted
 the limit, use the higher cumulative `--max-attempts` procedure in the recovery
 section.
 
+# Campaign retry behavior
+
+The runner allows a connected UE ten seconds to restore its control WebSocket
+before declaring the attempt failed. This avoids discarding a complete radio
+and compute record because of one missed one-second status poll. A longer
+disconnect remains an attempt failure.
+
+Before retrying any failed attempt, the runner asks the MEC to disarm it. A
+drained attempt is cleared without restarting resident workers. If active
+video or delivery state prevents disarming, the HTTP 409 response body is
+preserved and the recovery hook restarts the MEC before the next arm request.
+This prevents repeated `HTTP Error 409: Conflict` failures against stale MEC
+scenario state.
+
+After repairing a runner or system fault, a scenario whose checkpoint already
+reached `failed` can be deliberately reopened with `--retry-failed` together
+with `--scenario-id`. Valid scenarios are never reset or regenerated.
+
+Collection clients retain `video_end` until the MEC acknowledges its original
+`client_seq`, and resend it after a control reconnect. The collection MEC keeps
+an active media lifecycle for 30 seconds after a control disconnect, longer
+than the runner's default ten-second reconnect grace. This lets transient radio
+re-establishment finish the same attempt while preserving strict 150-outcome
+validation.
+

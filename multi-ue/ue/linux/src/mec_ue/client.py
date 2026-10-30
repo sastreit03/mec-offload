@@ -69,6 +69,9 @@ class Client:
             self.args.source = str(self.selection.path)
         self.prepared = None
         self.successor_request = None
+        # Keep the final lifecycle command until the MEC acknowledges it so a
+        # control reconnect cannot leave an otherwise finished video ACTIVE.
+        self.pending_end = None
         self.successor_selection = None
         self.awaiting_successor = False
         self.successor_prepare_s = 0.0
@@ -267,15 +270,19 @@ class Client:
             and value.get("video_id") == self.streamer.response["video_id"]
             and value["final_frame_id"] >= 0
         ):
-            await self.send(
-                dict(
+            if (
+                self.pending_end is None
+                or self.pending_end.get("video_id")
+                != self.streamer.response["video_id"]
+            ):
+                self.pending_end = dict(
                     type="video_end",
                     ue_id=self.uid,
                     video_id=self.streamer.response["video_id"],
                     client_seq=self.next_seq(),
                     final_frame_id=value["final_frame_id"],
                 )
-            )
+            await self.send(self.pending_end)
             self.awaiting_successor = bool(self.playlist) and not self.collection_mode
             if self.prepared:
                 self.start_prepared()
@@ -495,6 +502,7 @@ class Client:
                                             self.streamer.stop()
                                             self.streamer = None
                                         self.start_request = None
+                                        self.pending_end = None
                                     self.uid = m["ue_id"]
                                     self.run_id = m["run_id"]
                                     self.set_context(m)
@@ -511,6 +519,8 @@ class Client:
                                     )
                                     self.state["resume_token"] = m["resume_token"]
                                     self.save_state()
+                                    if self.pending_end is not None:
+                                        await self.send(self.pending_end)
                                     sync = asyncio.create_task(self.synchronize())
                                 elif kind == "scenario_context":
                                     if self.streamer or self.prepared:
@@ -679,6 +689,7 @@ class Client:
                                     if m["status"] == "SUSPENDED":
                                         self.streamer.suspend(m)
                                     elif m["status"] == "EXPIRED":
+                                        self.pending_end = None
                                         self.streamer.stop()
                                         self.streamer = None
                                         self.start_request = None
@@ -688,6 +699,7 @@ class Client:
                                         "EXPIRED",
                                         "CANCELLED",
                                     ):
+                                        self.pending_end = None
                                         finished_streamer = self.streamer
                                         finished_streamer.stop()
                                         if self.collection_mode:
@@ -711,6 +723,13 @@ class Client:
                                                 self.args.source = str(
                                                     self.successor_selection.path
                                                 )
+                                elif kind == "video_end_ack":
+                                    if (
+                                        self.pending_end
+                                        and m.get("client_seq")
+                                        == self.pending_end.get("client_seq")
+                                    ):
+                                        self.pending_end = None
                                 elif (
                                     kind == "video_status"
                                     and self.prepared

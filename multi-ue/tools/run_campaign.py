@@ -43,8 +43,21 @@ def http_json(base, path, value=None, timeout=5):
         headers={"content-type": "application/json"},
         method="GET" if data is None else "POST",
     )
-    with urllib.request.urlopen(req, timeout=timeout) as response:
-        return json.load(response)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            return json.load(response)
+    except urllib.error.HTTPError as error:
+        # Preserve the server's actionable conflict reason. A bare
+        # "HTTP Error 409" prevents the recovery hook from distinguishing an
+        # active stale attempt from a candidate or context error.
+        body = error.read().decode(errors="replace")
+        try:
+            detail = json.loads(body).get("error", body)
+        except json.JSONDecodeError:
+            detail = body
+        raise RuntimeError(
+            f"{req.method} {path} failed ({error.code}): {detail}"
+        ) from error
 
 
 class State:
@@ -113,6 +126,16 @@ class State:
         )
         self.db.commit()
 
+    def retry_failed(self, scenario_id):
+        """Explicitly reopen a scenario after a repaired runner/system fault."""
+        self.db.execute(
+            "UPDATE scenarios SET status='pending',attempts=0,attempt_id=NULL,"
+            "started_unix_ns=NULL,finished_unix_ns=NULL,error=NULL,evidence_json=NULL "
+            "WHERE scenario_id=? AND status='failed'",
+            (scenario_id,),
+        )
+        self.db.commit()
+
     def counts(self):
         return dict(self.db.execute("SELECT status,count(*) FROM scenarios GROUP BY status"))
 
@@ -154,6 +177,19 @@ class Runner:
             except (OSError, subprocess.TimeoutExpired) as error:
                 self.event("recovery_hook_failed", hook=hook, reason=str(error))
         time.sleep(self.args.retry_delay)
+
+    def retire_failed_attempt(self, reason, scenario, attempt_id):
+        """Clear an attempt before retrying, or make recovery reset the MEC.
+
+        A drained attempt can be disarmed without disturbing resident workers.
+        An active failed attempt cannot be disarmed; its 409 reason is appended
+        so the recovery hook restarts the MEC before the next arm request.
+        """
+        try:
+            self.disarm(scenario, attempt_id)
+        except Exception as error:
+            reason = f"{reason}; failed-attempt cleanup failed: {error}"
+        self.recover(reason, scenario, attempt_id)
 
     def preflight(self, scenario):
         status = http_json(self.args.mec, "/api/status")
@@ -286,10 +322,12 @@ class Runner:
 
     def wait(self, scenario, attempt_id, expected_channel=None):
         expected = {item["ue_alias"]: item for item in scenario["ues"]}
+        disconnect_grace = getattr(self.args, "disconnect_grace", 10)
         deadline = time.monotonic() + self.args.scenario_timeout
         progress_at = time.monotonic()
         progress = None
         last = None
+        disconnected_at = {}
         channel_check_at = time.monotonic()
         while time.monotonic() < deadline and not self.stop:
             if expected_channel is not None and time.monotonic() >= channel_check_at:
@@ -318,9 +356,20 @@ class Runner:
                 if value.get("connected") and value.get("alias")
             }
             missing = set(expected) - connected
-            if missing:
+            now = time.monotonic()
+            for alias in missing:
+                disconnected_at.setdefault(alias, now)
+            for alias in set(disconnected_at) - missing:
+                disconnected_at.pop(alias, None)
+            expired = {
+                alias
+                for alias, started in disconnected_at.items()
+                if now - started >= disconnect_grace
+            }
+            if expired:
                 raise RuntimeError(
-                    f"UE disconnected during scenario: {sorted(missing)}"
+                    f"UE disconnected during scenario for at least "
+                    f"{disconnect_grace:g}s: {sorted(expired)}"
                 )
             videos = {
                 value.get("ue_alias"): value for value in last["videos"].values()
@@ -381,6 +430,7 @@ class Runner:
                     for alias, value in videos.items()
                 },
                 unresolved=last["unresolved"],
+                disconnected=sorted(missing),
             )
             time.sleep(self.args.poll_interval)
         if self.stop:
@@ -434,6 +484,8 @@ class Runner:
         last_attempt = None
         for scenario in self.scenarios:
             self.state.register(scenario)
+            if getattr(self.args, "retry_failed", False):
+                self.state.retry_failed(scenario["scenario_id"])
         for scenario in self.scenarios:
             if self.stop:
                 break
@@ -471,7 +523,7 @@ class Runner:
                     return
                 except Exception as error:
                     self.state.finish(scenario["scenario_id"], "retryable", str(error))
-                    self.recover(str(error), scenario, attempt_id)
+                    self.retire_failed_attempt(str(error), scenario, attempt_id)
                     continue
                 self.state.finish(scenario["scenario_id"], "valid", evidence=evidence)
                 self.event(
@@ -532,11 +584,19 @@ def main():
         "--stall-timeout", type=float, default=30,
         help="recover after this many seconds without media or drain progress",
     )
+    parser.add_argument(
+        "--disconnect-grace", type=float, default=10,
+        help="allow a UE control connection this many seconds to reconnect",
+    )
     parser.add_argument("--preflight-timeout", type=float, default=180)
     parser.add_argument("--max-radio-age", type=float, default=1.0)
     parser.add_argument("--poll-interval", type=float, default=1)
     parser.add_argument("--retry-delay", type=float, default=5)
     parser.add_argument("--recovery-timeout", type=float, default=120)
+    parser.add_argument(
+        "--retry-failed", action="store_true",
+        help="reset selected failed checkpoint rows after an operator fixes the cause",
+    )
     default_hook = str(Path(__file__).resolve().parents[1] / "scripts/campaign_recover.sh")
     parser.add_argument(
         "--recovery-hook", action="append", default=[default_hook],

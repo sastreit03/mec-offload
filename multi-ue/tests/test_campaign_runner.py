@@ -145,6 +145,7 @@ def test_wait_detects_lost_gnb_channel_controller(tmp_path, monkeypatch):
             channel_endpoint="tcp://gnb.test:5560",
             scenario_timeout=10,
             stall_timeout=5,
+            disconnect_grace=0,
             poll_interval=0,
         ),
         [],
@@ -201,6 +202,66 @@ def test_wait_detects_required_ue_disconnect(tmp_path, monkeypatch):
 
     with pytest.raises(RuntimeError, match="linux1"):
         runner.wait(scenario, "attempt-a")
+
+
+def test_wait_allows_transient_ue_reconnect(tmp_path, monkeypatch):
+    context = {
+        "campaign_id": "campaign-a",
+        "scenario_id": "scenario-a",
+        "attempt_id": "attempt-a",
+    }
+    statuses = iter([
+        {"scenario": context, "ues": {}, "videos": {}, "unresolved": 0},
+        {
+            "scenario": context,
+            "ues": {"ue-a": {"alias": "pixel1", "connected": True}},
+            "videos": {"video-a": {
+                "ue_alias": "pixel1", "state": "COMPLETED",
+                "candidate_id": "candidate-a", "final_frame_id": 0,
+                "counters": {"completed": 1, "dropped": 0, "failed": 0},
+                "collection_error": None,
+            }},
+            "unresolved": 0,
+        },
+    ])
+    monkeypatch.setattr(MODULE, "http_json", lambda *_: next(statuses))
+    monkeypatch.setattr(MODULE.time, "sleep", lambda *_: None)
+    state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
+    runner = MODULE.Runner(
+        SimpleNamespace(
+            output=str(tmp_path), mec="http://mec.test", scenario_timeout=10,
+            stall_timeout=5, disconnect_grace=10, poll_interval=0,
+        ),
+        [], state,
+    )
+    scenario = {
+        **context,
+        "ues": [{
+            "ue_alias": "pixel1", "candidate_id": "candidate-a",
+            "frame_count": 1,
+        }],
+    }
+
+    result = runner.wait(scenario, "attempt-a")
+    assert result["videos"]["video-a"]["state"] == "COMPLETED"
+
+
+def test_failed_attempt_cleanup_reason_requests_mec_reset(tmp_path):
+    state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
+    runner = MODULE.Runner(
+        SimpleNamespace(output=str(tmp_path), retry_delay=0), [], state
+    )
+    runner.disarm = lambda *_: (_ for _ in ()).throw(
+        RuntimeError("POST /api/scenario/disarm failed (409): MEC must be idle")
+    )
+    recovered = []
+    runner.recover = lambda *args: recovered.append(args)
+    scenario = {"scenario_id": "scenario-a"}
+
+    runner.retire_failed_attempt("UE disconnected", scenario, "attempt-a")
+
+    assert len(recovered) == 1
+    assert "MEC must be idle" in recovered[0][0]
 
 
 def test_assignment_ack_requires_every_expected_ue(tmp_path, monkeypatch):

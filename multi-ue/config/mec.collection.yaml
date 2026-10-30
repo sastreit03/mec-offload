@@ -33,6 +33,9 @@ tracker_buffer: 192
 decoder_drain_s: 2.0
 # Lateness never drops GPU work; this watchdog marks a genuinely stuck run failed.
 drain_s: 120.0
+# Radio re-establishment can interrupt a UE control socket for several seconds.
+# Keep its active media lifecycle alive longer than the runner's reconnect grace.
+disconnect_s: 30.0
 jitter_ms: 100
 ran_telemetry:
   aggregation_window_ms: 100

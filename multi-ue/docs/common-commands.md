@@ -210,6 +210,28 @@ for row in db.execute("""
 PY
 ```
 
+To retry one scenario that reached `failed` after its cause has been repaired,
+run on the **gNB Spark**:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+
+SCENARIO_ID="scn-replace-me"
+
+../gnb-core/env/bin/python tools/run_campaign.py \
+  --campaign-dir runs/campaigns/aetheredge-fixed-policy-v1 \
+  --trace-bank ../gnb-core/plugins/channel_emulation/data/trace_bank \
+  --scenario-id "$SCENARIO_ID" \
+  --retry-failed
+```
+
+`--retry-failed` only reopens a selected checkpoint whose status is `failed`.
+It does not repeat a scenario already marked `valid`.
+
+The collection MEC allows 30 seconds for a control reconnect; the runner's
+default disconnect grace is ten seconds. Keep the MEC value larger so the
+runner, rather than the MEC lifecycle timer, decides whether to retry.
+
 ## Follow runner monitoring events
 
 Run on the **gNB Spark** from `~/mec-offload-ad/multi-ue`:

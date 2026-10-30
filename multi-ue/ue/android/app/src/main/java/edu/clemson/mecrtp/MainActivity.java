@@ -50,6 +50,9 @@ public final class MainActivity extends Activity {
   private String cellularIp = "";
   private JSONObject startRequest;
   private JSONObject successorRequest;
+  // Retain video_end until the MEC acknowledges it. A cellular reattach can
+  // interrupt the WebSocket after the final RTP packet but before this command.
+  private JSONObject pendingEnd;
   private boolean awaitingSuccessor;
   private boolean collectionMode;
   private JSONObject assignment;
@@ -619,6 +622,7 @@ public final class MainActivity extends Activity {
           session = null;
           media = null;
           startRequest = null;
+          pendingEnd = null;
         }
         run = m.getString("run_id");
         uid = m.getString("ue_id");
@@ -642,6 +646,9 @@ public final class MainActivity extends Activity {
           ui.postDelayed(() -> timeSync(), wait);
         }
         association();
+        // Lifecycle commands are idempotent by client_seq on the MEC. Reusing
+        // the original command closes a video whose first video_end was lost.
+        if (pendingEnd != null) send(pendingEnd);
         break;
       case "scenario_context":
         if (session != null || preparedSession != null)
@@ -778,6 +785,9 @@ public final class MainActivity extends Activity {
             session.suspend(m);
           else if (java.util.Arrays.asList("COMPLETED", "FAILED", "EXPIRED", "CANCELLED")
               .contains(m.getString("status"))) {
+            if (pendingEnd != null
+                && pendingEnd.optString("video_id").equals(m.getString("video_id")))
+              pendingEnd = null;
             show(m.toString());
             if (media != null) media.close();
             retire(session);
@@ -819,6 +829,11 @@ public final class MainActivity extends Activity {
           successorRequest = null;
           event("successor_not_prepared", object("reason", m.getString("status")));
         }
+        break;
+      case "video_end_ack":
+        if (pendingEnd != null
+            && pendingEnd.optLong("client_seq", -1) == m.optLong("client_seq", -2))
+          pendingEnd = null;
         break;
       // Stable result IDs deduplicate reconnect replay before recording a receipt.
       case "frame_result":
@@ -899,13 +914,16 @@ public final class MainActivity extends Activity {
   private void mediaEnded(JSONObject value) {
     try {
       if (session == null || !session.video().equals(value.getString("video_id"))) return;
-      send(
-          new JSONObject()
+      if (pendingEnd == null
+          || !pendingEnd.optString("video_id").equals(session.video()))
+        pendingEnd =
+            new JSONObject()
               .put("type", "video_end")
               .put("ue_id", uid)
               .put("video_id", session.video())
               .put("client_seq", seq())
-              .put("final_frame_id", value.getLong("final_frame_id")));
+              .put("final_frame_id", value.getLong("final_frame_id"));
+      send(pendingEnd);
       awaitingSuccessor = !collectionMode && playlist != null;
       if (preparedSession != null && preparedSessionReady) startPreparedSuccessor();
       else if (playlist != null)
@@ -1027,15 +1045,16 @@ public final class MainActivity extends Activity {
       preparedSession = null;
       preparedSessionReady = false;
       if (media != null) media.close();
-      if (session != null && session.lastFrame() >= 0)
-        send(
+      if (session != null && session.lastFrame() >= 0) {
+        pendingEnd =
             new JSONObject()
                 .put("type", "video_end")
                 .put("ue_id", uid)
                 .put("video_id", session.video())
                 .put("client_seq", seq())
-                .put("final_frame_id", session.lastFrame()));
-      else {
+                .put("final_frame_id", session.lastFrame());
+        send(pendingEnd);
+      } else {
         enabled = false;
         if (ws != null) ws.close(1000, "stopped");
       }

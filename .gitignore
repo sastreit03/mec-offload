@@ -19,6 +19,11 @@
 # Runtime output can be large and may contain per-frame data
 /multi-ue/runs/
 /gnb-core/plugins/channel_emulation/data/trace_bank/
+/gnb-core/plugins/channel_emulation/data/trace_bank-106prb/
+/gnb-core/plugins/channel_emulation/data/trace_bank-51prb/
+/gnb-core/plugins/channel_emulation/data/trace_bank-24prb/
+
+
 
 # Python-generated files
 /multi-ue/**/__pycache__/
