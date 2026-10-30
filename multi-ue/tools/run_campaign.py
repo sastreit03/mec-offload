@@ -430,6 +430,14 @@ class Runner:
                     outcomes = sum(video["counters"].values())
                     if video["candidate_id"] != assignment["candidate_id"]:
                         errors.append(f"{alias}: candidate mismatch")
+                    if outcomes == 0:
+                        # The UE acknowledged the assignment, but its media
+                        # path never delivered a frame. Keep this distinct
+                        # from a partially processed video so recovery can
+                        # repair the cellular session instead of only
+                        # recycling the MEC workers.
+                        errors.append(f"{alias}: media never started")
+                        continue
                     if video["final_frame_id"] != assignment["frame_count"] - 1:
                         errors.append(f"{alias}: final frame mismatch")
                     if outcomes != assignment["frame_count"]:

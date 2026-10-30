@@ -175,7 +175,8 @@ def test_pass_through_requires_direct_loader(tmp_path, monkeypatch):
     state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
     runner = MODULE.Runner(
         SimpleNamespace(
-            output=str(tmp_path), channel_endpoint="tcp://gnb.test:5560"
+            output=str(tmp_path), channel_endpoint="tcp://gnb.test:5560",
+            trace_bank=str(tmp_path),
         ),
         [],
         state,
@@ -271,6 +272,55 @@ def test_wait_allows_transient_ue_reconnect(tmp_path, monkeypatch):
 
     result = runner.wait(scenario, "attempt-a")
     assert result["videos"]["video-a"]["state"] == "COMPLETED"
+
+
+def test_wait_classifies_zero_frame_expiration_as_media_not_started(
+    tmp_path, monkeypatch
+):
+    context = {
+        "campaign_id": "campaign-a",
+        "scenario_id": "scenario-a",
+        "attempt_id": "attempt-a",
+    }
+    monkeypatch.setattr(
+        MODULE,
+        "http_json",
+        lambda *_: {
+            "scenario": context,
+            "ues": {
+                "ue-a": {"alias": "pixel1", "connected": True},
+            },
+            "videos": {
+                "video-a": {
+                    "ue_alias": "pixel1",
+                    "state": "EXPIRED",
+                    "candidate_id": "candidate-a",
+                    "final_frame_id": None,
+                    "counters": {"completed": 0, "dropped": 0, "failed": 0},
+                    "collection_error": None,
+                }
+            },
+            "unresolved": 0,
+        },
+    )
+    state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
+    runner = MODULE.Runner(
+        SimpleNamespace(
+            output=str(tmp_path), mec="http://mec.test", scenario_timeout=10,
+            stall_timeout=5, disconnect_grace=10, poll_interval=0,
+        ),
+        [], state,
+    )
+    scenario = {
+        **context,
+        "ues": [{
+            "ue_alias": "pixel1", "candidate_id": "candidate-a",
+            "frame_count": 150,
+        }],
+    }
+
+    with pytest.raises(RuntimeError, match="pixel1: media never started"):
+        runner.wait(scenario, "attempt-a")
 
 
 def test_failed_attempt_cleanup_reason_requests_mec_reset(tmp_path):

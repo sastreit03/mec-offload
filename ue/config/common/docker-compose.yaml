@@ -134,6 +134,9 @@ services:
     oai-nr-ue:
         image: ${UE_IMAGE:-oai-nr-ue-cuda}:${UE_TAG:-latest}
         container_name: oai-nr-ue
+        # Preserve long campaign operation across a softmodem process crash.
+        # An explicit docker/compose stop still suppresses automatic restart.
+        restart: unless-stopped
         runtime: nvidia
         cap_add:
             - NET_ADMIN  # for interface bringup

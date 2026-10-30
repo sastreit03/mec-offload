@@ -135,7 +135,7 @@ and source-frame range for each active scenario.
 ```bash
 cd ~/mec-offload-ad/multi-ue
 
-./scripts/softue-client.sh \
+./scripts/softue-client-supervisor.sh \
   --source-dir /datasets/campaign \
   --ue-alias linux1 \
   --application detection \
@@ -144,7 +144,9 @@ cd ~/mec-offload-ad/multi-ue
 
 The initial `detection` value is only a placeholder before the first campaign
 assignment. Confirm `linux1` reports `connected=True` and
-`association_valid=True` with the association check above.
+`association_valid=True` with the association check above. The supervisor
+relaunches the client after a softUE container restart or fatal local media
+sender error. Its lock prevents two Linux clients from using the same alias.
 
 ## Check whether scenario media has started or stalled
 
@@ -268,9 +270,13 @@ Confirm that the running gNB has no channel-emulator listener or options:
 docker exec oai-gnb sh -c \
   'ss -ltn 2>/dev/null | grep ":5560 " || true'
 
-docker logs oai-gnb 2>&1 | grep -Ei \
-  'Channel emulation enabled|CIR ZMQ initialized|--cir-(folder|zmq)' || true
+docker logs oai-gnb 2>&1 | grep -E \
+  'Channel emulation (enabled|disabled)|CIR ZMQ initialized' | tail -5
 ```
+
+The SRK plugin currently prints one preliminary `enabled` line even when its
+arguments are null. The authoritative result must include `Channel emulation
+disabled`; no `CIR ZMQ initialized` line or port 5560 listener may be present.
 
 ## Preserve Pixel application evidence
 

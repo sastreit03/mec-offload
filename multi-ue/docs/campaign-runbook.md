@@ -475,3 +475,9 @@ Each scenario records `channel.condition_id=physical-rf` and
 `channel.emulation_enabled=false`. EdgeRIC measurements describe observed
 radio conditions; they are not labels for a controlled synthetic channel.
 
+The SRK plugin prints a preliminary `CIR source=cir_file, folder=(null),
+num_taps=0` message before evaluating its enable conditions. This message does
+not mean that emulation is active. A no-emulator startup must subsequently log
+`Channel emulation disabled`, must not log `CIR ZMQ initialized`, and must not
+listen on TCP port 5560.
+

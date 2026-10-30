@@ -87,6 +87,9 @@ class Client:
         self.input_profile = dict(width=1280, height=720, fps=30, gop_frames=30)
         self.expiry_tasks = set()
         self.finishing = False
+        # A sender failure can leave control healthy while no media can ever
+        # arrive. Exit so the host supervisor recreates GStreamer/OpenCV state.
+        self.fatal_media_error = None
         self.receipts_db = sqlite3.connect(self.root / "receipts.sqlite3")
         self.receipts_db.execute(
             "CREATE TABLE IF NOT EXISTS seen (id TEXT PRIMARY KEY)"
@@ -236,7 +239,12 @@ class Client:
 
     async def on_media(self, kind, value):
         self.record(kind, **value)
-        if kind == "transmitted":
+        if kind == "sender_error":
+            self.fatal_media_error = value.get("reason", "unknown sender error")
+            self.stopped = True
+            if self.ws:
+                await self.ws.close(code=1011, reason="media sender failed")
+        elif kind == "transmitted":
             key = (value["video_id"], value["frame_id"])
             self.transmitted[key] = value
             task = asyncio.create_task(self.expiry(key, value["tx_mono_ns"]))
@@ -844,7 +852,10 @@ def main():
     args = p.parse_args()
     if not args.source_ip and not args.source_interface:
         p.error("use --source-interface (preferred) or --source-ip")
-    asyncio.run(Client(args).run())
+    client = Client(args)
+    asyncio.run(client.run())
+    if client.fatal_media_error:
+        raise SystemExit(f"media sender failed: {client.fatal_media_error}")
 
 
 if __name__ == "__main__":
