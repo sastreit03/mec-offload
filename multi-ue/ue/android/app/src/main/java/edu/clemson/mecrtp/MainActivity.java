@@ -355,6 +355,7 @@ public final class MainActivity extends Activity {
                     network = null;
                     if (ws != null) ws.cancel();
                     ws = null;
+                    resetFrameStatus();
                     showControl("Control: cellular lost; waiting for automatic recovery");
                   }
                 });
@@ -362,6 +363,7 @@ public final class MainActivity extends Activity {
 
           public void onUnavailable() {
             Log.e(TAG, "No cellular network satisfied the request");
+            resetFrameStatus();
             showControl("Control: cellular network unavailable");
           }
         };
@@ -416,12 +418,16 @@ public final class MainActivity extends Activity {
 
               public void onFailure(WebSocket socket, Throwable e, Response r) {
                 Log.e(TAG, "MEC control connection failed", e);
+                if (g != generation) return;
+                resetFrameStatus();
                 showControl("Control: MEC failed: " + e.getMessage());
                 retry(g);
               }
 
               public void onClosed(WebSocket socket, int c, String reason) {
                 Log.w(TAG, "MEC control connection closed: " + c + " " + reason);
+                if (g != generation) return;
+                resetFrameStatus();
                 retry(g);
               }
             });

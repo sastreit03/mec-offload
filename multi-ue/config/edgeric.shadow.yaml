@@ -21,6 +21,9 @@ association:
   min_margin: 0.15
   lease_s: 30.0
   revalidate_before_s: 10.0
+  # Aetheredge: four serialized probes take about 15.2 s; keep a verified
+  # mapping valid while its renewal waits, with a bounded hard expiry.
+  revalidation_grace_s: 30.0
   min_received_bytes: 20000
 ran_telemetry:
   aggregation_window_ms: 100

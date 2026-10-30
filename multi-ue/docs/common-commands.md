@@ -93,6 +93,31 @@ unresolved: 0
 radio_report_age_s: less than 1 second
 ```
 
+If a UE remains invalid or alternates between valid and invalid, inspect the
+latest probe result on the **gNB Spark**:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+paths = list(Path("runs/edgeric").glob("*/associations.json"))
+if not paths:
+    raise SystemExit("no EdgeRIC association snapshot found")
+
+path = max(paths, key=lambda value: value.stat().st_mtime_ns)
+data = json.loads(path.read_text())
+print("snapshot:", path)
+print(json.dumps(data, indent=2, sort_keys=True))
+PY
+```
+
+The probe result reports `received_bytes`, `best_rnti`, `best_correlation`,
+`margin`, and a specific failure `reason`. This distinguishes missing UE probe
+traffic from incomplete RAN samples and an ambiguous RNTI match.
+
 ## Start the Linux campaign UE client
 
 Run on the **Orin** after the softUE has attached. Leave this command running

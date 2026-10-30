@@ -11,6 +11,7 @@ def config():
         min_margin=0.15,
         lease_s=30,
         revalidate_before_s=10,
+        revalidation_grace_s=0,
         min_received_bytes=100,
     )
 
@@ -55,6 +56,23 @@ def test_ambiguous_signature_retries_without_guessing():
     a.register("u", "c", "ip")
     now = exercise(a, 1, True)
     assert a.valid("u", now) is None and "u" in a.pending
+
+
+def test_revalidation_grace_prevents_false_window_while_probe_is_queued():
+    cfg = config()
+    cfg["revalidation_grace_s"] = 30
+    a = Associations(cfg)
+    a.register("u", "c", "ip")
+    matched = exercise(a, 1)
+
+    # Revalidation is queued at the soft deadline, but the verified mapping
+    # remains usable until the bounded hard deadline.
+    a.tick(matched + 21, {100})
+    assert "u" in a.pending
+    assert a.valid("u", matched + 31).rnti == 100
+
+    a.tick(matched + 61, {100})
+    assert a.valid("u", matched + 61) is None
 
 
 def test_receipt_required_and_non_MEC_has_no_binding():
