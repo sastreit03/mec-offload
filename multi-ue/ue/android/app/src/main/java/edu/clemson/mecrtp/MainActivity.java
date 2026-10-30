@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.net.*;
 import android.os.*;
 import android.provider.DocumentsContract;
+import android.util.Log;
 import android.widget.*;
 import java.io.*;
 import java.net.*;
@@ -16,6 +17,7 @@ import org.json.*;
 
 /** Foreground research client: cellular-bound control, media, automatic probes and recovery. */
 public final class MainActivity extends Activity {
+  private static final String TAG = "AetheredgeUE";
   private final Handler ui = new Handler(Looper.getMainLooper());
   private final ClockMap clock = new ClockMap();
   private final ScheduledExecutorService timer = Executors.newScheduledThreadPool(2);
@@ -108,6 +110,7 @@ public final class MainActivity extends Activity {
           }
           prefs.edit().putString("host", host.getText().toString().trim()).apply();
           enabled = true;
+          show("Requesting cellular network");
           requestCellular();
         });
     root.addView(start);
@@ -213,6 +216,7 @@ public final class MainActivity extends Activity {
     callback =
         new ConnectivityManager.NetworkCallback() {
           public void onAvailable(Network n) {
+            Log.i(TAG, "Cellular network available: " + n);
             ui.post(
                 () -> {
                   network = n;
@@ -237,9 +241,10 @@ public final class MainActivity extends Activity {
             ui.post(
                 () -> {
                   if (n.equals(network) && !ip.isEmpty()) {
-                    boolean changed = !cellularIp.isEmpty() && !cellularIp.equals(ip);
+                    boolean changed = !ip.equals(cellularIp);
                     cellularIp = ip;
                     if (changed) {
+                      Log.i(TAG, "Cellular IPv4 address ready: " + ip);
                       try {
                         if (session != null) session.network(n);
                         if (preparedSession != null) preparedSession.network(n);
@@ -253,6 +258,7 @@ public final class MainActivity extends Activity {
           }
 
           public void onLost(Network n) {
+            Log.w(TAG, "Cellular network lost: " + n);
             ui.post(
                 () -> {
                   if (n.equals(network)) {
@@ -263,10 +269,16 @@ public final class MainActivity extends Activity {
                   }
                 });
           }
+
+          public void onUnavailable() {
+            Log.e(TAG, "No cellular network satisfied the request");
+            show("Cellular network unavailable");
+          }
         };
     connectivity.requestNetwork(
         new NetworkRequest.Builder()
             .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .build(),
         callback);
   }
@@ -275,6 +287,8 @@ public final class MainActivity extends Activity {
     if (!enabled || network == null) return;
     final int g = ++generation;
     String address = prefs.getString("host", "");
+    Log.i(TAG, "Opening MEC control connection to " + address + " from " + cellularIp);
+    show("Connecting to MEC " + address);
     OkHttpClient client =
         new OkHttpClient.Builder()
             .socketFactory(network.getSocketFactory())
@@ -291,6 +305,11 @@ public final class MainActivity extends Activity {
         client.newWebSocket(
             request.build(),
             new WebSocketListener() {
+              public void onOpen(WebSocket socket, Response response) {
+                Log.i(TAG, "MEC control connection open");
+                show("MEC control connected");
+              }
+
               public void onMessage(WebSocket socket, String raw) {
                 long receipt = System.nanoTime();
                 ui.post(
@@ -306,10 +325,13 @@ public final class MainActivity extends Activity {
               }
 
               public void onFailure(WebSocket socket, Throwable e, Response r) {
+                Log.e(TAG, "MEC control connection failed", e);
+                show("MEC control failed: " + e.getMessage());
                 retry(g);
               }
 
               public void onClosed(WebSocket socket, int c, String reason) {
+                Log.w(TAG, "MEC control connection closed: " + c + " " + reason);
                 retry(g);
               }
             });
