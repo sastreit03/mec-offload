@@ -3,6 +3,7 @@ import argparse
 import asyncio
 import json
 import time
+from collections import Counter
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse, HTMLResponse
@@ -75,6 +76,12 @@ def create_app(engine):
 
     @app.get("/api/status")
     def status():
+        # Aetheredge: expose ingestion separately from terminal outcomes. An
+        # ordered tracking stream can receive many frames while an incomplete
+        # predecessor temporarily holds all tracker completions.
+        pipeline = {}
+        for frame in engine.frames.values():
+            pipeline.setdefault(frame.vid, Counter())[frame.state] += 1
         return dict(
             readiness=engine.readiness(),
             run_id=engine.cfg.run_id,
@@ -102,6 +109,8 @@ def create_app(engine):
                     candidate_id=v.requested_candidate_id,
                     state=v.state,
                     counters=v.counters,
+                    received_frames=v.received,
+                    pipeline_states=dict(pipeline.get(v.vid, {})),
                     final_frame_id=v.final_id,
                     collection_error=v.collection_error,
                 )

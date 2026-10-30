@@ -225,6 +225,8 @@ for video_id, video in status.get("videos", {}).items():
     print(
         video_id,
         "state=" + str(video.get("state")),
+        "received_frames=" + str(video.get("received_frames")),
+        "pipeline_states=" + json.dumps(video.get("pipeline_states"), sort_keys=True),
         "counters=" + json.dumps(video.get("counters"), sort_keys=True),
         "final_frame_id=" + str(video.get("final_frame_id")),
         "collection_error=" + str(video.get("collection_error")),
@@ -376,4 +378,50 @@ not regenerate the scenario and does not rerun scenarios already marked
 
 If the mistake does not need the same scenario for testing, select a fresh
 pending scenario using normal step 5 instead.
+
+## Validate Pixel control reconnection
+
+Perform this test while no scenario is running and the Pixel still has
+**Connect and stream** enabled.
+
+1. On the **MEC Spark**, restart only the MEC. Leave MPS, the core, gNB, and
+   EdgeRIC running:
+
+   ```bash
+   cd ~/mec-offload-ad/multi-ue
+   ./scripts/containers.sh stop-mec
+   ./scripts/containers.sh start-mec
+   ```
+
+2. Wait for MEC readiness using normal step 1.
+3. Do not press **Connect and stream** again. The Pixel should report
+   `MEC control connected` automatically.
+4. Run the association check from normal step 4 until `pixel1` again reports
+   `connected=True` and `association_valid=True`.
+5. Run one fresh pending scenario using normal steps 5 through 8. Require 150
+   terminal frame outcomes and a `valid` checkpoint.
+
+This validates control reconnection and re-association after MEC replacement.
+It does not test runner checkpoint recovery.
+
+## Validate runner interruption and resume
+
+1. Select a fresh pending scenario and start it using normal steps 5 and 6.
+2. After the Pixel frame box shows an increasing `transmitted` frame, or the
+   MEC status shows increasing `received_frames`, press `Ctrl-C` once in the
+   runner terminal. Do not require `completed` to increase: ordered tracking
+   can hold detector results behind an incomplete earlier frame until input
+   closes.
+3. Confirm the runner exited. Do not restart the MEC or close the Pixel.
+4. Allow the already-armed Pixel session to transmit through frame 149. Then
+   use the MEC status check until the video is terminal and `unresolved=0`.
+   Do not restart the runner while the old video is still `ACTIVE` or draining.
+5. Run the same runner command again with the same `$SCENARIO_ID`.
+6. The runner creates a new attempt for that scenario. Confirm the second
+   attempt finishes and the checkpoint becomes `valid`.
+
+The first interruption consumes one attempt. The default limit of three is
+enough for this single interruption. If prior failures have already exhausted
+the limit, use the higher cumulative `--max-attempts` procedure in the recovery
+section.
 

@@ -121,6 +121,8 @@ for video_id, video in status.get("videos", {}).items():
         "ue_alias=" + str(video.get("ue_alias")),
         "application=" + str(video.get("application")),
         "state=" + str(video.get("state")),
+        "received_frames=" + str(video.get("received_frames")),
+        "pipeline_states=" + json.dumps(video.get("pipeline_states"), sort_keys=True),
         "counters=" + json.dumps(video.get("counters"), sort_keys=True),
         "final_frame_id=" + str(video.get("final_frame_id")),
         "collection_error=" + str(video.get("collection_error")),

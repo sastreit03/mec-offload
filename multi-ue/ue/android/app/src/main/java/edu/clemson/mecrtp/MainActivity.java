@@ -32,7 +32,9 @@ public final class MainActivity extends Activity {
   private EditText host;
   private EditText ueAlias;
   private Spinner application;
-  private TextView status;
+  private TextView datasetStatus, controlStatus, frameStatus, status;
+  private long lastTransmittedFrame = -1, lastResultFrame = -1;
+  private String lastResultOutcome = "none";
   private Uri file;
   private VideoPlaylist playlist;
   private VideoPlaylist.Selection selection, successorSelection;
@@ -96,6 +98,8 @@ public final class MainActivity extends Activity {
           startActivityForResult(i, 8);
         });
     root.addView(choose);
+    datasetStatus = statusBox("Dataset: not selected");
+    root.addView(datasetStatus);
     Button camera = new Button(this);
     camera.setText("Use rear camera");
     camera.setOnClickListener(
@@ -103,7 +107,7 @@ public final class MainActivity extends Activity {
           file = null;
           playlist = null;
           selection = null;
-          show("Rear camera selected");
+          showDataset("Dataset: rear camera");
         });
     root.addView(camera);
     Button start = new Button(this);
@@ -122,7 +126,7 @@ public final class MainActivity extends Activity {
               .putString("ue_alias", ueAlias.getText().toString().trim())
               .apply();
           enabled = true;
-          show("Requesting cellular network");
+          showControl("Control: requesting cellular network");
           requestCellular();
         });
     root.addView(start);
@@ -130,7 +134,11 @@ public final class MainActivity extends Activity {
     stop.setText("End video");
     stop.setOnClickListener(v -> end());
     root.addView(stop);
-    status = new TextView(this);
+    controlStatus = statusBox("Control: disconnected");
+    root.addView(controlStatus);
+    frameStatus = statusBox("Frames: transmitted=none, result=none");
+    root.addView(frameStatus);
+    status = statusBox("Status: idle");
     root.addView(status);
     // Aetheredge: keep controls and status reachable on smaller Pixel screens.
     ScrollView scroll = new ScrollView(this);
@@ -183,7 +191,68 @@ public final class MainActivity extends Activity {
   }
 
   private void show(String s) {
-    ui.post(() -> status.setText(s));
+    ui.post(() -> status.setText("Status: " + s));
+  }
+
+  private TextView statusBox(String text) {
+    TextView view = new TextView(this);
+    view.setText(text);
+    view.setPadding(16, 12, 16, 12);
+    view.setTextColor(android.graphics.Color.BLACK);
+    view.setBackgroundColor(android.graphics.Color.rgb(235, 238, 242));
+    LinearLayout.LayoutParams layout =
+        new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT);
+    layout.setMargins(0, 8, 0, 8);
+    view.setLayoutParams(layout);
+    return view;
+  }
+
+  private void showDataset(String s) {
+    ui.post(() -> datasetStatus.setText(s));
+  }
+
+  private void showControl(String s) {
+    ui.post(() -> controlStatus.setText(s));
+  }
+
+  private void resetFrameStatus() {
+    ui.post(
+        () -> {
+          lastTransmittedFrame = -1;
+          lastResultFrame = -1;
+          lastResultOutcome = "none";
+          renderFrameStatus();
+        });
+  }
+
+  private void showTransmittedFrame(long frameId) {
+    ui.post(
+        () -> {
+          lastTransmittedFrame = Math.max(lastTransmittedFrame, frameId);
+          renderFrameStatus();
+        });
+  }
+
+  private void showResultFrame(long frameId, String outcome) {
+    ui.post(
+        () -> {
+          if (frameId >= lastResultFrame) {
+            lastResultFrame = frameId;
+            lastResultOutcome = outcome;
+          }
+          renderFrameStatus();
+        });
+  }
+
+  private void renderFrameStatus() {
+    String transmitted = lastTransmittedFrame < 0 ? "none" : Long.toString(lastTransmittedFrame);
+    String result =
+        lastResultFrame < 0
+            ? "none"
+            : lastResultFrame + " (" + lastResultOutcome + ")";
+    frameStatus.setText("Frames: transmitted=" + transmitted + ", result=" + result);
   }
 
   // Persist lifecycle sequence numbers so retries/reconnects do not reuse command IDs.
@@ -220,6 +289,7 @@ public final class MainActivity extends Activity {
           });
       if (type.equals("media_end") && session != null)
         ui.post(() -> mediaEnded(value));
+      if (type.equals("transmitted")) showTransmittedFrame(value.getLong("frame_id"));
       if (type.equals("successor_needed") && playlist != null && !collectionMode)
         ui.post(() -> prepareSuccessor(value));
       if (type.equals("plan_unapplied")) send(new JSONObject(value.toString()).put("type", type));
@@ -285,14 +355,14 @@ public final class MainActivity extends Activity {
                     network = null;
                     if (ws != null) ws.cancel();
                     ws = null;
-                    show("Cellular lost; waiting for automatic recovery");
+                    showControl("Control: cellular lost; waiting for automatic recovery");
                   }
                 });
           }
 
           public void onUnavailable() {
             Log.e(TAG, "No cellular network satisfied the request");
-            show("Cellular network unavailable");
+            showControl("Control: cellular network unavailable");
           }
         };
     connectivity.requestNetwork(
@@ -308,7 +378,7 @@ public final class MainActivity extends Activity {
     final int g = ++generation;
     String address = prefs.getString("host", "");
     Log.i(TAG, "Opening MEC control connection to " + address + " from " + cellularIp);
-    show("Connecting to MEC " + address);
+    showControl("Control: connecting to MEC " + address);
     OkHttpClient client =
         new OkHttpClient.Builder()
             .socketFactory(network.getSocketFactory())
@@ -327,7 +397,7 @@ public final class MainActivity extends Activity {
             new WebSocketListener() {
               public void onOpen(WebSocket socket, Response response) {
                 Log.i(TAG, "MEC control connection open");
-                show("MEC control connected");
+                showControl("Control: MEC connected");
               }
 
               public void onMessage(WebSocket socket, String raw) {
@@ -346,7 +416,7 @@ public final class MainActivity extends Activity {
 
               public void onFailure(WebSocket socket, Throwable e, Response r) {
                 Log.e(TAG, "MEC control connection failed", e);
-                show("MEC control failed: " + e.getMessage());
+                showControl("Control: MEC failed: " + e.getMessage());
                 retry(g);
               }
 
@@ -437,7 +507,7 @@ public final class MainActivity extends Activity {
         () -> {
           if (g == generation && enabled) {
             ws = null;
-            show("Control reconnecting");
+            showControl("Control: reconnecting");
             connect();
           }
         },
@@ -558,6 +628,7 @@ public final class MainActivity extends Activity {
         }
         startRequest = null;
         successorRequest = null;
+        resetFrameStatus();
         event("scenario_context", new JSONObject());
         break;
       case "time_sync":
@@ -733,7 +804,7 @@ public final class MainActivity extends Activity {
                   .put("reason", m.isNull("reason") ? JSONObject.NULL : m.getString("reason"))
                   .put("latency_ns", JSONObject.NULL)
                   .put("slo_success", false));
-        show("Frame " + m.getLong("frame_id") + " · " + m.getString("outcome"));
+        showResultFrame(m.getLong("frame_id"), m.getString("outcome"));
         break;
       case "error":
         show(m.toString());
@@ -946,11 +1017,11 @@ public final class MainActivity extends Activity {
             "playlist_initialized",
             new JSONObject().put("seed", playlist.seed).put("videos", playlist.size()));
         recordSelection(selection);
-        show("Dataset directory: " + playlist.size() + " videos");
+        showDataset("Dataset directory: " + playlist.size() + " videos");
       } catch (Exception e) {
         playlist = null;
         file = null;
-        show("Dataset directory failed: " + e);
+        showDataset("Dataset directory failed: " + e);
       }
     }
   }
