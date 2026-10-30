@@ -291,6 +291,11 @@ def main():
         host=cfg.listen,
         port=cfg.control_port,
         workers=1,
+        # The legacy websockets protocol can concurrently drain an application
+        # result and an automatic pong under radio backpressure, tripping its
+        # single-waiter assertion.  Uvicorn's sans-I/O backend serializes the
+        # transport without that legacy FlowControlMixin path.
+        ws="websockets-sansio",
     )
 
 

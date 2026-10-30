@@ -390,7 +390,10 @@ public final class MainActivity extends Activity {
             .socketFactory(network.getSocketFactory())
             .dns(name -> java.util.Arrays.asList(network.getAllByName(name)))
             .proxy(java.net.Proxy.NO_PROXY)
-            .pingInterval(10, TimeUnit.SECONDS)
+            // Four concurrent result streams can delay a pong on the 51-PRB
+            // data path without breaking the socket.  Allow that transient
+            // backpressure to clear before OkHttp tears down healthy control.
+            .pingInterval(30, TimeUnit.SECONDS)
             .readTimeout(0, TimeUnit.SECONDS)
             .build();
     Request.Builder request = new Request.Builder().url("ws://" + address + ":8765/ws/ue");
