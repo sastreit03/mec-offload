@@ -9,6 +9,7 @@ mec_host="${AETHEREDGE_MEC_HOST:-sstreit@192.168.71.130}"
 reason="${1:-unknown}"
 scenario_id="${2:-unknown-scenario}"
 attempt_id="${3:-unknown-attempt}"
+echo "Campaign recovery: scenario=$scenario_id attempt=$attempt_id reason=$reason"
 
 # Preserve RAN evidence before Compose can restart or recreate the gNB.
 recovery_dir="$repo_root/multi-ue/runs/campaigns/aetheredge-fixed-policy-v1/recovery/$scenario_id/$attempt_id"
@@ -17,21 +18,20 @@ docker inspect oai-gnb >"$recovery_dir/oai-gnb-inspect.json" 2>&1 || true
 docker logs --since 15m oai-gnb >"$recovery_dir/oai-gnb.log" 2>&1 || true
 
 gnb_running="$(docker inspect -f '{{.State.Running}}' oai-gnb 2>/dev/null || true)"
+restart_gnb=false
 if [[ "$gnb_running" != true \
   || "$reason" == *"gNB channel controller"* \
   || "$reason" == *"assignment acknowledgement"* \
-  || "$reason" == *"UE disconnected during scenario"* \
-  || "$reason" == *"scenario stalled"* ]]; then
+  || "$reason" == *"UE disconnected during scenario"* ]]; then
+  restart_gnb=true
   # The CIR loader resets to pass-through. The runner selects and verifies the
   # manifest trace again before it arms the retry.
   (
     cd "$repo_root/gnb-core/config/common" || exit 1
-    if [[ "$gnb_running" == true ]]; then
-      docker restart oai-gnb
-    else
-      USER_ID="$(id -u)" GROUP_ID="$(id -g)" \
-        docker compose --env-file ../b200/.env up -d oai-gnb
-    fi
+    # Recreate the network namespace and OAI process state. A plain Docker
+    # restart has repeatedly left UEs cycling between attach and detach.
+    USER_ID="$(id -u)" GROUP_ID="$(id -g)" \
+      docker compose --env-file ../b200/.env up -d --force-recreate oai-gnb
   ) || true
 
   # Do not let a broken RAN recovery block the campaign indefinitely.
@@ -42,8 +42,11 @@ if [[ "$gnb_running" != true \
   done
 fi
 
-if ! docker inspect -f '{{.State.Running}}' edgeric-mec 2>/dev/null | grep -qx true \
+if $restart_gnb \
+  || ! docker inspect -f '{{.State.Running}}' edgeric-mec 2>/dev/null | grep -qx true \
   || [[ "$reason" == *"EdgeRIC"* ]]; then
+  # EdgeRIC's RNTI bindings and radio-source generation belong to one gNB
+  # process. Recreate both sides together instead of aging out stale state.
   "$repo_root/multi-ue/scripts/containers.sh" stop-edgeric || true
   "$repo_root/multi-ue/scripts/containers.sh" start-edgeric || true
 fi

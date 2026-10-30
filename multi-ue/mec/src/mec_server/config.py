@@ -64,6 +64,9 @@ class Settings(BaseModel):
     # Give prerecorded clients time to prepare the next receiver before EOF.
     successor_prepare_s: float = 5.0
     final_arrival_s: float = 0.5
+    # A complete encoded access unit can still fail to emerge from GStreamer
+    # after reference loss. Bound that wait separately from GPU/result drain.
+    decoder_drain_s: float = 2.0
     drain_s: float = 5.0
     disconnect_s: float = 5.0
     receive_loss_s: float = 1.0
@@ -140,6 +143,8 @@ class Settings(BaseModel):
             raise ValueError("positive FPS and GoP frame length required")
         if self.successor_prepare_s <= 0:
             raise ValueError("positive successor preparation time required")
+        if self.decoder_drain_s <= 0:
+            raise ValueError("positive decoder drain time required")
         if not self.applications or len(set(self.applications)) != len(
             self.applications
         ):

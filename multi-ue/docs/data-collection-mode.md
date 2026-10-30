@@ -165,8 +165,17 @@ running attempt interrupted after process death, and skips every scenario
 already marked valid. It verifies MEC readiness, fresh EdgeRIC reports and UE
 associations, selects and hashes the CIR trace, monitors terminal frame counts,
 and confirms that the channel generation did not change. Transient failures
-receive a new attempt ID. `scripts/campaign_recover.sh` restarts an unavailable
-local EdgeRIC and, when passwordless SSH is configured, the remote MEC.
+receive a new attempt ID. `scripts/campaign_recover.sh` restarts EdgeRIC
+whenever it restarts the gNB so stale RNTIs and radio-source generations are
+discarded together. It also restarts an independently unavailable EdgeRIC and,
+when passwordless SSH is configured, the remote MEC.
+MEC media/drain stalls restart the MEC attempt without restarting a healthy
+gNB. When RAN recovery is required, the hook recreates the gNB container rather
+than retaining process or network-namespace state with `docker restart`.
+At video end, completely received access units receive a short decoder grace
+period. Units that still produce no decoded frame become explicit
+`decode_incomplete_after_video_end` outcomes, allowing ordered tracking to
+advance while the longer GPU/result drain remains available.
 `--scenario-id` and `--limit` support pilots without creating a second manifest
 or a separate checkpoint; a later full invocation skips pilot rows already valid.
 An operator interrupt records the active attempt as interrupted, preserves

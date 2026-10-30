@@ -2049,8 +2049,10 @@ class Engine:
                     if not (
                         self.collection_mode
                         and receiving
-                        and v.drain_until is not None
-                        and now < v.drain_until
+                        # GStreamer may emit a short buffered tail. It cannot
+                        # recover missing reference continuity indefinitely,
+                        # so do not use the much longer GPU/result drain here.
+                        and now < v.input_close_at + self.cfg.decoder_drain_s
                     ):
                         self.close_input(v, "video_end")
                 if v.input_closed:

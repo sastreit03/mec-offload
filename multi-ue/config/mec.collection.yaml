@@ -28,7 +28,10 @@ profile_compatibility: measured-testbed-v1
 pending_frames: 192
 pending_bytes_per_video: 536870912
 tracker_buffer: 192
-# Lateness never drops a frame; this watchdog marks a genuinely stuck run failed.
+# A decoder that lost reference continuity cannot emit its buffered access
+# units. Resolve those explicit failures promptly so ordered tracking advances.
+decoder_drain_s: 2.0
+# Lateness never drops GPU work; this watchdog marks a genuinely stuck run failed.
 drain_s: 120.0
 jitter_ms: 100
 ran_telemetry:
