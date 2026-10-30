@@ -535,6 +535,15 @@ public final class MainActivity extends Activity {
         if (assignment != null) {
           selection = playlist.find(new File(assignment.getString("media_path")).getName());
           file = selection.uri;
+          String assignedApplication = assignment.getString("application");
+          ui.post(
+              () -> {
+                for (int i = 0; i < application.getCount(); i++)
+                  if (assignedApplication.equals(application.getItemAtPosition(i).toString())) {
+                    application.setSelection(i);
+                    break;
+                  }
+              });
         }
         startRequest = null;
         successorRequest = null;
@@ -562,7 +571,13 @@ public final class MainActivity extends Activity {
                     .put("type", "video_start")
                     .put("ue_id", uid)
                     .put("client_seq", seq())
-                    .put("application", application.getSelectedItem().toString())
+                    // Aetheredge: collection follows the immutable manifest;
+                    // the spinner remains the choice for ordinary operation.
+                    .put(
+                        "application",
+                        assignment == null
+                            ? application.getSelectedItem().toString()
+                            : assignment.getString("application"))
                     .put("slo_ms", 150)
                     .put("can_drop", false)
                     .put("can_drop_frames", false)
