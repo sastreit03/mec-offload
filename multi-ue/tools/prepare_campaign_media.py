@@ -117,6 +117,40 @@ def directory_candidates(source, count, seed):
     return files
 
 
+def validate_random_access(path, frames, segments):
+    """Exercise the exact seek-and-read pattern used by campaign UEs."""
+    import cv2
+
+    failures = []
+    for segment in range(segments):
+        start = segment * frames
+        capture = cv2.VideoCapture(str(path))
+        try:
+            if not capture.isOpened():
+                failures.append(f"start={start}:open_failed")
+                continue
+            accepted = capture.set(cv2.CAP_PROP_POS_FRAMES, start)
+            actual = int(capture.get(cv2.CAP_PROP_POS_FRAMES))
+            if not accepted:
+                failures.append(f"start={start}:seek_rejected")
+                continue
+            if actual != start:
+                failures.append(f"start={start}:seek_mismatch:{actual}")
+                continue
+            decoded = 0
+            for _ in range(frames):
+                ok, _frame = capture.read()
+                if not ok:
+                    break
+                decoded += 1
+            if decoded != frames:
+                failures.append(f"start={start}:decode_incomplete:{decoded}")
+        finally:
+            capture.release()
+    if failures:
+        raise RuntimeError("random access failed: " + ", ".join(failures))
+
+
 def stage_directory_member(source, output):
     target = output / source.name
     with tempfile.NamedTemporaryFile(dir=output, delete=False) as temporary:
@@ -160,12 +194,28 @@ def main():
     parser.add_argument("--seed", type=int, default=20261028)
     parser.add_argument("--minimum-frames", type=int, default=1200)
     parser.add_argument("--decode-check", action="store_true")
+    parser.add_argument(
+        "--exclude-media-id",
+        action="append",
+        default=[],
+        help="media stem to skip; may be supplied more than once",
+    )
+    parser.add_argument(
+        "--random-access-check",
+        action="store_true",
+        help="validate every campaign segment using OpenCV random access",
+    )
+    parser.add_argument("--segment-frames", type=int, default=150)
+    parser.add_argument("--segments-per-video", type=int, default=8)
     parser.add_argument("--inventory-output", required=True)
     parser.add_argument(
         "--android-prefix", default="/sdcard/Movies/AetheredgeCampaign"
     )
     parser.add_argument("--linux-prefix", default="/datasets/campaign")
     args = parser.parse_args()
+
+    if args.segment_frames <= 0 or args.segments_per_video <= 0:
+        parser.error("segment-frames and segments-per-video must be positive")
 
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)
@@ -180,7 +230,11 @@ def main():
 
     assets = []
     selected_sources = []
+    excluded_media_ids = set(args.exclude_media_id)
     for candidate_number, candidate in enumerate(candidates, 1):
+        if PurePosixPath(str(candidate)).stem in excluded_media_ids:
+            print(f"SKIP {candidate}: explicitly excluded", flush=True)
+            continue
         path = materialize(candidate)
         print(
             f"[{len(assets) + 1}/{args.count}] validating {path.name} "
@@ -196,6 +250,12 @@ def main():
                 )
             if args.decode_check:
                 decode(path)
+            if args.random_access_check:
+                validate_random_access(
+                    path,
+                    args.segment_frames,
+                    args.segments_per_video,
+                )
         except (RuntimeError, subprocess.CalledProcessError, ValueError) as error:
             print(f"SKIP {path.name}: {error}", flush=True)
             path.unlink(missing_ok=True)
@@ -239,6 +299,7 @@ def main():
         "selection": {
             "seed": args.seed,
             "count": args.count,
+            "excluded_media_ids": sorted(excluded_media_ids),
             **source,
         },
         "assets": assets,

@@ -159,8 +159,11 @@ second video start until a new `attempt_id` supplies a new scenario context.
 
 `tools/prepare_campaign_media.py` deterministically selects 42 videos from a
 BDD100K archive or directory, verifies video metadata, optionally decodes each
-file fully, calculates SHA-256 values, and writes both `SHA256SUMS` and the
-per-device media inventory. The same bytes are copied to every UE; Android
+file fully, and can validate all eight 150-frame random-access segments used by
+the campaign. Candidates that fail a segment seek or decode are skipped and
+replaced deterministically from the remaining source pool. It calculates
+SHA-256 values and writes both `SHA256SUMS` and the per-device media inventory.
+The same bytes are copied to every UE; Android
 resolves the manifest filename within its persisted document-tree directory,
 while the Linux softUE reads the `/datasets/campaign` mount.
 
