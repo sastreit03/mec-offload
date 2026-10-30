@@ -12,7 +12,8 @@ attempt_id="${3:-unknown-attempt}"
 echo "Campaign recovery: scenario=$scenario_id attempt=$attempt_id reason=$reason"
 
 # Preserve RAN evidence before Compose can restart or recreate the gNB.
-recovery_dir="$repo_root/multi-ue/runs/campaigns/aetheredge-fixed-policy-v1/recovery/$scenario_id/$attempt_id"
+campaign_dir="${AETHEREDGE_CAMPAIGN_DIR:-$repo_root/multi-ue/runs/campaigns/aetheredge-fixed-policy-v1}"
+recovery_dir="$campaign_dir/recovery/$scenario_id/$attempt_id"
 mkdir -p "$recovery_dir"
 docker inspect oai-gnb >"$recovery_dir/oai-gnb-inspect.json" 2>&1 || true
 docker logs --since 15m oai-gnb >"$recovery_dir/oai-gnb.log" 2>&1 || true

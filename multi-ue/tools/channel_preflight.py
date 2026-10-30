@@ -67,6 +67,20 @@ def main():
 
     bank = Path(args.trace_bank)
     bank_manifest = json.loads((bank / "manifest.json").read_text())
+    campaign_radio = campaign.get("radio")
+    if campaign_radio is not None:
+        bank_radio = bank_manifest["radio"]
+        comparisons = {
+            "fft_size": "fft_size",
+            "subcarrier_spacing_hz": "subcarrier_spacing_hz",
+            "center_frequency_hz": "carrier_frequency_hz",
+            "sample_rate_hz": "sample_rate_hz",
+        }
+        for campaign_field, bank_field in comparisons.items():
+            if abs(float(campaign_radio[campaign_field]) - float(bank_radio[bank_field])) > 1.0:
+                raise ValueError(
+                    f"campaign radio {campaign_field} differs from trace bank"
+                )
     records = {}
     for condition_id in sorted(expected):
         records[condition_id] = validate_trace_folder(

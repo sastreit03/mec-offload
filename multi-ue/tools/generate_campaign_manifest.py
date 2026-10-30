@@ -48,6 +48,19 @@ def channel_conditions(config):
         raise ValueError(
             "this campaign requires channels.scope=common_bidirectional"
         )
+    # Pass-through pilots exercise the complete campaign control path while
+    # leaving the loader in its initial noise-free direct mode.
+    if channels.get("pass_through_only"):
+        return [
+            dict(
+                condition_id="pass-through",
+                model="PASS_THROUGH",
+                sinr_db=None,
+                delay_spread_ns=None,
+                speed_mps=None,
+                scope=scope,
+            )
+        ]
     conditions = []
     if channels.get("include_awgn"):
         for sinr in channels["sinr_db"]:
@@ -167,6 +180,19 @@ def validate_config(config):
     for item in tiers:
         if not all(item.get(app) for app in APPLICATIONS):
             raise ValueError(f"tier {item.get('tier')} is incomplete")
+    radio = config.get("radio")
+    if radio is not None:
+        required = {
+            "profile_id", "carrier_prbs", "nominal_bandwidth_mhz",
+            "center_frequency_hz", "subcarrier_spacing_hz", "fft_size",
+            "sample_rate_hz", "threequarter_sampling",
+        }
+        missing = required - set(radio)
+        if missing:
+            raise ValueError(f"radio profile is missing: {sorted(missing)}")
+        expected_rate = int(radio["fft_size"]) * int(radio["subcarrier_spacing_hz"])
+        if int(radio["sample_rate_hz"]) != expected_rate:
+            raise ValueError("radio sample_rate_hz must equal fft_size * subcarrier_spacing_hz")
 
 
 def build(config, catalog, inventory):
@@ -210,6 +236,10 @@ def build(config, catalog, inventory):
             tier=tier["tier"],
             channel_condition_id=condition["condition_id"],
         )
+        radio = config.get("radio")
+        if radio is not None:
+            # Make otherwise identical campaigns produce distinct scenario IDs.
+            factors["radio_profile"] = radio["profile_id"]
         scenarios.append(
             dict(
                 schema_version=1,
@@ -220,6 +250,7 @@ def build(config, catalog, inventory):
                 fps=config["fps"],
                 gop_frames=config["gop_frames"],
                 policies=config["policies"],
+                **({"radio": dict(radio)} if radio is not None else {}),
                 channel=channel,
                 ues=ues,
             )
@@ -269,6 +300,7 @@ def main():
         "catalog_sha256": file_digest(args.catalog),
         "media_inventory_sha256": file_digest(args.media_inventory),
         "scenarios_sha256": file_digest(manifest),
+        **({"radio": config["radio"]} if config.get("radio") is not None else {}),
         "counts": {
             "ue_set": counts(scenarios, "ue_set"),
             "application_rotation": counts(scenarios, "application_rotation"),

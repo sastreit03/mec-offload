@@ -24,6 +24,16 @@ from mec_contracts.wire import envelope, result_id, integer, dumps
 TERMINAL = {"DENIED", "COMPLETED", "FAILED", "CANCELLED", "EXPIRED"}
 
 
+def monotonic_start(unix_ns):
+    """Map a future wall-clock release onto the local monotonic clock."""
+    return time.monotonic() + max(0.0, (unix_ns - time.time_ns()) / 1e9)
+
+
+def first_media_deadline(video, timeout_s):
+    """Return the first-media deadline, including any scheduled start wait."""
+    return max(video.admitted, video.expected_start or video.admitted) + timeout_s
+
+
 class Ranges:
     def __init__(self):
         self.ranges = []
@@ -965,6 +975,16 @@ class Engine:
                 can_drop_frames=bool(m.get("can_drop_frames", False)),
                 requested_candidate_id=(
                     assignment["candidate_id"] if assignment else None
+                ),
+                # Collection UEs receive their transport before the common
+                # release time.  Start the no-media watchdog at that release,
+                # rather than expiring a prepared receiver while every UE is
+                # still waiting for its synchronized start.
+                expected_start=(
+                    monotonic_start(self.scenario_start_unix_ns)
+                    if assignment is not None
+                    and self.scenario_start_unix_ns is not None
+                    else None
                 ),
             )
             self.videos[vid] = v
@@ -2081,7 +2101,7 @@ class Engine:
                     v.state = "EXPIRED"
                 if (
                     v.state == "AWAITING_DELIVERY"
-                    and now - v.admitted >= self.cfg.first_media_s
+                    and now >= first_media_deadline(v, self.cfg.first_media_s)
                 ):
                     self.close_input(v, "first_media_timeout")
                     v.state = "EXPIRED"

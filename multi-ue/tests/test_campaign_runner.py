@@ -161,6 +161,32 @@ def test_wait_detects_lost_gnb_channel_controller(tmp_path, monkeypatch):
         runner.wait(scenario, "attempt-a", {"condition_id": "awgn-sinr20"})
 
 
+def test_pass_through_requires_direct_loader(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        MODULE,
+        "channel_request",
+        lambda *_: {
+            "source": "direct",
+            "condition_id": "pass-through",
+            "trace_sha256": "",
+            "generation": 0,
+        },
+    )
+    state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
+    runner = MODULE.Runner(
+        SimpleNamespace(
+            output=str(tmp_path), channel_endpoint="tcp://gnb.test:5560"
+        ),
+        [],
+        state,
+    )
+
+    status = runner.select_channel(
+        {"channel": {"condition_id": "pass-through"}}
+    )
+    assert status["source"] == "direct"
+
+
 def test_wait_detects_required_ue_disconnect(tmp_path, monkeypatch):
     context = {
         "campaign_id": "campaign-a",
@@ -184,6 +210,7 @@ def test_wait_detects_required_ue_disconnect(tmp_path, monkeypatch):
             mec="http://mec.test",
             scenario_timeout=10,
             stall_timeout=5,
+            disconnect_grace=0,
             poll_interval=0,
         ),
         [],

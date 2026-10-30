@@ -139,7 +139,7 @@ cd ~/mec-offload-ad/multi-ue
   --source-dir /datasets/campaign \
   --ue-alias linux1 \
   --application detection \
-  --logs /multi-ue/runs/campaign-linux1
+  --logs /multi-ue/runs/campaign-linux1-51prb
 ```
 
 The initial `detection` value is only a placeholder before the first campaign

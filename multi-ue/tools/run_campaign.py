@@ -11,6 +11,7 @@ import argparse
 import fcntl
 import hashlib
 import json
+import os
 import signal
 import sqlite3
 import subprocess
@@ -169,10 +170,15 @@ class Runner:
         )
         for hook in self.args.recovery_hook:
             try:
+                environment = os.environ.copy()
+                environment["AETHEREDGE_CAMPAIGN_DIR"] = str(
+                    Path(self.args.output).resolve()
+                )
                 subprocess.run(
                     [hook, reason, scenario["scenario_id"], attempt_id],
                     check=False,
                     timeout=self.args.recovery_timeout,
+                    env=environment,
                 )
             except (OSError, subprocess.TimeoutExpired) as error:
                 self.event("recovery_hook_failed", hook=hook, reason=str(error))
@@ -266,6 +272,19 @@ class Runner:
 
     def select_channel(self, scenario):
         condition = scenario["channel"]["condition_id"]
+        if condition == "pass-through":
+            response = channel_request(
+                self.args.channel_endpoint, {"msg_type": "trace_status"}
+            )
+            if (
+                response.get("condition_id") != "pass-through"
+                or response.get("source") != "direct"
+                or response.get("trace_sha256")
+            ):
+                raise RuntimeError(
+                    "pass-through pilot requires a freshly started direct loader"
+                )
+            return response
         record = validate_trace_folder(
             Path(self.args.trace_bank) / condition, condition_id=condition
         )

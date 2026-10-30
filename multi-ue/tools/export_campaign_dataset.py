@@ -87,7 +87,11 @@ def create_database(path):
           campaign_id TEXT, scenario_id TEXT PRIMARY KEY, execution_index INTEGER,
           status TEXT, attempts INTEGER, attempt_id TEXT, started_unix_ns INTEGER,
           finished_unix_ns INTEGER, error TEXT, ue_set TEXT, application_rotation INTEGER,
-          tier INTEGER, channel_condition_id TEXT, channel_model TEXT, sinr_db REAL,
+          tier INTEGER, radio_profile TEXT, carrier_prbs INTEGER,
+          nominal_bandwidth_mhz REAL, center_frequency_hz REAL,
+          subcarrier_spacing_hz REAL, threequarter_sampling INTEGER,
+          fft_size INTEGER, sample_rate_hz REAL,
+          channel_condition_id TEXT, channel_model TEXT, sinr_db REAL,
           delay_spread_ns REAL, speed_mps REAL, duration_s REAL, fps INTEGER,
           gop_frames INTEGER, scenario_json TEXT, runner_evidence_json TEXT);
         CREATE TABLE videos (
@@ -167,6 +171,9 @@ def create_database(path):
           SELECT f.*, s.ue_set AS scenario_ue_set,
                  s.application_rotation AS scenario_application_rotation,
                  s.tier AS scenario_tier,
+                 s.radio_profile, s.carrier_prbs, s.nominal_bandwidth_mhz,
+                 s.center_frequency_hz, s.subcarrier_spacing_hz,
+                 s.threequarter_sampling, s.fft_size, s.sample_rate_hz,
                  s.channel_condition_id, s.channel_model, s.sinr_db,
                  s.delay_spread_ns, s.speed_mps,
                  b.overlap_ns AS ran_overlap_ns,
@@ -191,6 +198,9 @@ def create_database(path):
           SELECT f.*, s.ue_set AS scenario_ue_set,
                  s.application_rotation AS scenario_application_rotation,
                  s.tier AS scenario_tier,
+                 s.radio_profile, s.carrier_prbs, s.nominal_bandwidth_mhz,
+                 s.center_frequency_hz, s.subcarrier_spacing_hz,
+                 s.threequarter_sampling, s.fft_size, s.sample_rate_hz,
                  s.channel_condition_id, s.channel_model, s.sinr_db,
                  s.delay_spread_ns, s.speed_mps,
                  b.overlap_ns AS mec_overlap_ns,
@@ -231,11 +241,18 @@ def load_campaign(db, campaign_dir):
         )
         evidence = json.loads(evidence_text) if evidence_text else {}
         factors, channel = scenario["factors"], scenario["channel"]
+        radio = scenario.get("radio", {})
         rows.append(
             (
                 scenario["campaign_id"], sid, scenario["execution_index"], status,
                 attempts, aid, started, finished, error, factors["ue_set"],
                 factors["application_rotation"], factors["tier"],
+                radio.get("profile_id"), radio.get("carrier_prbs"),
+                radio.get("nominal_bandwidth_mhz"),
+                radio.get("center_frequency_hz"),
+                radio.get("subcarrier_spacing_hz"),
+                radio.get("threequarter_sampling"), radio.get("fft_size"),
+                radio.get("sample_rate_hz"),
                 channel["condition_id"], channel["model"], channel.get("sinr_db"),
                 channel.get("delay_spread_ns"), channel.get("speed_mps"),
                 scenario["duration_s"], scenario["fps"], scenario["gop_frames"],
@@ -264,7 +281,7 @@ def load_campaign(db, campaign_dir):
                     item.get("collection_error"),
                 ),
             )
-    db.executemany("INSERT INTO scenarios VALUES (" + ",".join("?" * 22) + ")", rows)
+    db.executemany("INSERT INTO scenarios VALUES (" + ",".join("?" * 30) + ")", rows)
     db.commit()
     return scenarios, states, video_map, assignments
 

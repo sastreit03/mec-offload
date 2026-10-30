@@ -2,9 +2,16 @@
 
 import asyncio
 from types import SimpleNamespace
-from unittest.mock import Mock, call
+from unittest.mock import Mock, call, patch
 
-from mec_server.engine import Engine, Frame, UE, Video
+from mec_server.engine import (
+    Engine,
+    Frame,
+    UE,
+    Video,
+    first_media_deadline,
+    monotonic_start,
+)
 
 
 def test_new_end_sequence_cannot_reopen_completed_video():
@@ -162,6 +169,21 @@ def test_collection_attempt_rejects_second_video_for_same_alias():
         assert result["reason"] == "scenario_already_started"
 
     asyncio.run(exercise())
+
+
+def test_collection_admission_defers_first_media_timeout_until_scenario_start():
+    """A synchronized release may be later than the ordinary media watchdog."""
+    with (
+        patch("mec_server.engine.time.monotonic", return_value=10.0),
+        patch("mec_server.engine.time.time_ns", return_value=100_000_000_000),
+    ):
+        expected_start = monotonic_start(106_000_000_000)
+
+    video = Video("video", "ue", "detection", 1, admitted=10.0)
+    video.expected_start = expected_start
+
+    assert expected_start == 16.0
+    assert first_media_deadline(video, 5.0) == 21.0
 
 
 def test_video_end_resolves_received_frames_that_decoder_cannot_emit():

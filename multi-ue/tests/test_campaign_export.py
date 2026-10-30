@@ -32,6 +32,16 @@ def test_frame_joins_every_overlapping_ran_and_mec_window(tmp_path):
             "application_rotation": 0,
             "tier": 0,
         },
+        "radio": {
+            "profile_id": "band78-51prb-threequarter",
+            "carrier_prbs": 51,
+            "nominal_bandwidth_mhz": 20,
+            "center_frequency_hz": 3_309_480_000,
+            "subcarrier_spacing_hz": 30_000,
+            "threequarter_sampling": True,
+            "fft_size": 768,
+            "sample_rate_hz": 23_040_000,
+        },
         "channel": {
             "condition_id": "awgn-sinr20",
             "model": "AWGN",
@@ -87,10 +97,12 @@ def test_frame_joins_every_overlapping_ran_and_mec_window(tmp_path):
 
     db = export.create_database(tmp_path / "dataset.sqlite3")
     db.execute(
-        "INSERT INTO scenarios VALUES (" + ",".join("?" * 22) + ")",
+        "INSERT INTO scenarios VALUES (" + ",".join("?" * 30) + ")",
         (
             campaign, scenario_id, 1, "valid", 1, attempt, 1, 2, None,
-            "one_ue", 0, 0, "awgn-sinr20", "AWGN", 20, None, None,
+            "one_ue", 0, 0, "band78-51prb-threequarter", 51, 20,
+            3_309_480_000, 30_000, True, 768, 23_040_000,
+            "awgn-sinr20", "AWGN", 20, None, None,
             5, 30, 30, json.dumps(scenario), "{}",
         ),
     )

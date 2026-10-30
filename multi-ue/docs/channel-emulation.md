@@ -74,3 +74,35 @@ Before campaign collection, run pass-through and AWGN 0/10/20 dB pilots.
 Compare requested SINR with OAI PUSCH/PUCCH SNR, BLER, MCS, retransmissions,
 and throughput. The SRK emulator normalizes CIRs and clips noise, so requested
 SINR must be reported separately from measured radio conditions.
+
+## 51-PRB three-quarter-sampling campaign
+
+The 51-PRB campaign uses a separate immutable trace bank and scenario space:
+
+```text
+campaign:   config/campaigns/aetheredge-fixed-policy-51prb-v1.yaml
+manifest:   runs/campaigns/aetheredge-fixed-policy-51prb-v1/
+trace bank: ../gnb-core/plugins/channel_emulation/data/trace_bank-51prb
+radio:      51 PRBs, FFT 768, 23.04 MHz, 3.30948 GHz, -E enabled
+```
+
+Set the following in `gnb-core/config/b200/.env` when activating this profile.
+The container destination stays constant so the loader command does not need a
+different trace-root path:
+
+```bash
+CHANNEL_TRACE_BANK=../../plugins/channel_emulation/data/trace_bank-51prb
+```
+
+After the 51-PRB gNB starts, online preflight must confirm that the loader and
+bank agree before running a scenario:
+
+```bash
+gnb-core/env/bin/python multi-ue/tools/channel_preflight.py \
+  --campaign multi-ue/config/campaigns/aetheredge-fixed-policy-51prb-v1.yaml \
+  --trace-bank gnb-core/plugins/channel_emulation/data/trace_bank-51prb \
+  --gnb-config gnb-core/config/common/gnb.sa.band78.51prbs.conf \
+  --compose gnb-core/config/common/docker-compose.yaml \
+  --endpoint tcp://192.168.73.140:5560 \
+  --select-condition awgn-sinr20
+```

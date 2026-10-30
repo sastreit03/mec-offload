@@ -90,3 +90,41 @@ def test_media_segments_are_unique_by_block_and_shared_by_ablation():
         }
         assert len(clips) == 333
 
+
+def test_51prb_radio_profile_changes_scenario_identity():
+    legacy = yaml.safe_load(
+        (ROOT / "config/campaigns/aetheredge-fixed-policy-v1.yaml").read_text()
+    )
+    narrow = yaml.safe_load(
+        (ROOT / "config/campaigns/aetheredge-fixed-policy-51prb-v1.yaml").read_text()
+    )
+    catalog = yaml.safe_load((ROOT / "config/tasks.yaml").read_text())
+    legacy_scenarios = MANIFEST.build(legacy, catalog, inventory(legacy))
+    narrow_scenarios = MANIFEST.build(narrow, catalog, inventory(narrow))
+
+    assert len(narrow_scenarios) == 2664
+    assert {item["radio"]["profile_id"] for item in narrow_scenarios} == {
+        "band78-51prb-threequarter"
+    }
+    assert all(item["factors"]["radio_profile"] for item in narrow_scenarios)
+    assert not (
+        {item["scenario_id"] for item in legacy_scenarios}
+        & {item["scenario_id"] for item in narrow_scenarios}
+    )
+
+
+def test_pass_through_pilot_has_one_channel_condition():
+    config = yaml.safe_load(
+        (ROOT / "config/campaigns/aetheredge-pass-through-51prb-pilot.yaml").read_text()
+    )
+    catalog = yaml.safe_load((ROOT / "config/tasks.yaml").read_text())
+    scenarios = MANIFEST.build(config, catalog, inventory(config))
+
+    assert len(scenarios) == 24
+    assert {item["channel"]["condition_id"] for item in scenarios} == {
+        "pass-through"
+    }
+    assert {item["channel"]["model"] for item in scenarios} == {
+        "PASS_THROUGH"
+    }
+
