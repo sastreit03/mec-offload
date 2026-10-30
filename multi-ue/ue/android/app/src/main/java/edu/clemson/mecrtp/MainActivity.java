@@ -132,7 +132,14 @@ public final class MainActivity extends Activity {
     root.addView(stop);
     status = new TextView(this);
     root.addView(status);
-    setContentView(root);
+    // Aetheredge: keep controls and status reachable on smaller Pixel screens.
+    ScrollView scroll = new ScrollView(this);
+    scroll.setFillViewport(true);
+    scroll.addView(
+        root,
+        new ScrollView.LayoutParams(
+            ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
+    setContentView(scroll);
     getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     timer.scheduleAtFixedRate(
         () -> {
