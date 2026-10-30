@@ -1,0 +1,90 @@
+schema_version: 1
+campaign_name: aetheredge-paired-per-ue-51prb-no-emulator-v1
+campaign_seed: 20261030
+
+duration_s: 5
+fps: 30
+gop_frames: 30
+
+# Deployed 51-PRB SRK/OAI radio. The gNB runs without a CIR receiver plugin.
+radio:
+  profile_id: band78-51prb-threequarter
+  carrier_prbs: 51
+  nominal_bandwidth_mhz: 20
+  center_frequency_hz: 3309480000
+  subcarrier_spacing_hz: 30000
+  fft_size: 768
+  sample_rate_hz: 23040000
+  threequarter_sampling: true
+
+policies:
+  ran_scheduler: proportional_fair
+  edgeric_mode: shadow
+  mec_mode: collection
+  mec_queue: fifo_per_application
+  cuda_priority: -3
+  drain_timeout_s: 120
+
+ues:
+  pixel1: {kind: android, hardware: Google Pixel 7}
+  pixel2: {kind: android, hardware: Google Pixel 7}
+  pixel3: {kind: android, hardware: Google Pixel 7}
+  linux1: {kind: linux, hardware: NVIDIA Jetson AGX Orin}
+
+ue_sets:
+  one_ue: [pixel1]
+  four_ue: [pixel1, pixel2, pixel3, linux1]
+
+application_rotations:
+  - pixel1: tracking
+    pixel2: detection
+    pixel3: segmentation
+    linux1: tracking
+  - pixel1: segmentation
+    pixel2: tracking
+    pixel3: detection
+    linux1: segmentation
+  - pixel1: detection
+    pixel2: segmentation
+    pixel3: tracking
+    linux1: detection
+
+# Each UE independently selects one of these four paired DNN/bitrate tiers.
+tier_assignment: per_ue
+tiers:
+  - tier: 0
+    bitrate_bps: 500000
+    detection: yolo26x
+    tracking: yolo26x
+    segmentation: segformer-b3
+  - tier: 1
+    bitrate_bps: 1000000
+    detection: yolo26l
+    tracking: yolo26l
+    segmentation: segformer-b2
+  - tier: 2
+    bitrate_bps: 2000000
+    detection: yolo26m
+    tracking: yolo26m
+    segmentation: segformer-b1
+  - tier: 3
+    bitrate_bps: 4000000
+    detection: yolo26n
+    tracking: yolo26n
+    segmentation: segformer-b0
+
+# Physical RF is observed through EdgeRIC reports. No synthetic CIR is loaded,
+# selected, or checked by the campaign runner.
+channels:
+  enabled: false
+
+media:
+  selection: deterministic_balanced_cycle_per_scenario_and_ue
+  videos_per_ue: 42
+  frames_per_scenario: 150
+  segments_per_video: 8
+
+execution:
+  randomize_order: true
+  expected_scenarios: 780
+  checkpoint_database: runs/campaigns/aetheredge-paired-per-ue-51prb-no-emulator-v1/state.sqlite3

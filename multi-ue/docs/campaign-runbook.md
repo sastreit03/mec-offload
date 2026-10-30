@@ -450,3 +450,28 @@ than the runner's default ten-second reconnect grace. This lets transient radio
 re-establishment finish the same attempt while preserving strict 150-outcome
 validation.
 
+# 51-PRB physical-RF campaign
+
+`aetheredge-paired-per-ue-51prb-no-emulator-v1` disables CIR emulation and
+crosses the four paired DNN/bitrate tiers independently across active UEs. It
+contains 12 one-UE scenarios and 768 four-UE scenarios. Generate and run it
+without a trace-bank argument:
+
+```bash
+CAMPAIGN=aetheredge-paired-per-ue-51prb-no-emulator-v1
+
+python3 tools/generate_campaign_manifest.py \
+  --campaign "config/campaigns/${CAMPAIGN}.yaml" \
+  --catalog config/tasks.yaml \
+  --media-inventory config/campaigns/media-inventory.yaml \
+  --output "runs/campaigns/${CAMPAIGN}"
+
+python3 tools/run_campaign.py \
+  --campaign-dir "runs/campaigns/${CAMPAIGN}" \
+  --disconnect-grace 10
+```
+
+Each scenario records `channel.condition_id=physical-rf` and
+`channel.emulation_enabled=false`. EdgeRIC measurements describe observed
+radio conditions; they are not labels for a controlled synthetic channel.
+

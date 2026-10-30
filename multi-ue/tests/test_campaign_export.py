@@ -97,10 +97,10 @@ def test_frame_joins_every_overlapping_ran_and_mec_window(tmp_path):
 
     db = export.create_database(tmp_path / "dataset.sqlite3")
     db.execute(
-        "INSERT INTO scenarios VALUES (" + ",".join("?" * 30) + ")",
+        "INSERT INTO scenarios VALUES (" + ",".join("?" * 31) + ")",
         (
             campaign, scenario_id, 1, "valid", 1, attempt, 1, 2, None,
-            "one_ue", 0, 0, "band78-51prb-threequarter", 51, 20,
+            "one_ue", 0, 0, "null", "band78-51prb-threequarter", 51, 20,
             3_309_480_000, 30_000, True, 768, 23_040_000,
             "awgn-sinr20", "AWGN", 20, None, None,
             5, 30, 30, json.dumps(scenario), "{}",

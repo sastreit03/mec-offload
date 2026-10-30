@@ -240,6 +240,38 @@ Run on the **gNB Spark** from `~/mec-offload-ad/multi-ue`:
 tail -f runs/campaigns/aetheredge-fixed-policy-v1/runner-events.jsonl
 ```
 
+## Generate and run the 51-PRB no-emulator campaign
+
+Run on the **gNB Spark** from `~/mec-offload-ad/multi-ue`:
+
+```bash
+CAMPAIGN=aetheredge-paired-per-ue-51prb-no-emulator-v1
+
+python3 tools/generate_campaign_manifest.py \
+  --campaign "config/campaigns/${CAMPAIGN}.yaml" \
+  --catalog config/tasks.yaml \
+  --media-inventory config/campaigns/media-inventory.yaml \
+  --output "runs/campaigns/${CAMPAIGN}"
+
+python3 tools/run_campaign.py \
+  --campaign-dir "runs/campaigns/${CAMPAIGN}" \
+  --disconnect-grace 10
+```
+
+This campaign has 780 scenarios: 12 one-UE and 768 four-UE scenarios. Each UE
+independently selects one of four paired DNN/bitrate tiers. The runner does not
+contact the CIR controller and does not require `--trace-bank`.
+
+Confirm that the running gNB has no channel-emulator listener or options:
+
+```bash
+docker exec oai-gnb sh -c \
+  'ss -ltn 2>/dev/null | grep ":5560 " || true'
+
+docker logs oai-gnb 2>&1 | grep -Ei \
+  'Channel emulation enabled|CIR ZMQ initialized|--cir-(folder|zmq)' || true
+```
+
 ## Preserve Pixel application evidence
 
 Run on the **MacBook** connected to the Pixel over USB:

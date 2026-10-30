@@ -271,6 +271,12 @@ class Runner:
             raise RuntimeError(f"scenario disarm failed: {response}")
 
     def select_channel(self, scenario):
+        if not scenario["channel"].get("emulation_enabled", True):
+            return None
+        if not self.args.trace_bank:
+            raise RuntimeError(
+                "--trace-bank is required when channel emulation is enabled"
+            )
         condition = scenario["channel"]["condition_id"]
         if condition == "pass-through":
             response = channel_request(
@@ -487,12 +493,15 @@ class Runner:
             release_delay_ns=started["release_delay_ns"],
         )
         after = self.wait(scenario, attempt_id, channel)
-        channel_after = channel_request(
-            self.args.channel_endpoint, {"msg_type": "trace_status"}
-        )
-        for key in ("condition_id", "trace_sha256", "generation"):
-            if channel_after.get(key) != channel.get(key):
-                raise RuntimeError(f"channel {key} changed during scenario")
+        if channel is None:
+            channel_after = scenario["channel"]
+        else:
+            channel_after = channel_request(
+                self.args.channel_endpoint, {"msg_type": "trace_status"}
+            )
+            for key in ("condition_id", "trace_sha256", "generation"):
+                if channel_after.get(key) != channel.get(key):
+                    raise RuntimeError(f"channel {key} changed during scenario")
         return dict(
             mec_generation=before["awareness_generation"],
             channel=channel_after,
@@ -586,7 +595,10 @@ def main():
     # 192.168.72.136 through the cellular user plane.
     parser.add_argument("--mec", default="http://192.168.71.142:8765")
     parser.add_argument("--channel-endpoint", default="tcp://192.168.73.140:5560")
-    parser.add_argument("--trace-bank", required=True)
+    parser.add_argument(
+        "--trace-bank",
+        help="required only by manifests with channel emulation enabled",
+    )
     parser.add_argument("--scenario-id", help="run only one immutable scenario")
     parser.add_argument("--limit", type=int, help="stop after this many manifest rows")
     parser.add_argument("--max-attempts", type=int, default=3)

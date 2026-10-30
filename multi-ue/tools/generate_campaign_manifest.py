@@ -43,6 +43,18 @@ def candidate_index(catalog):
 
 def channel_conditions(config):
     channels = config["channels"]
+    if not channels.get("enabled", True):
+        return [
+            dict(
+                condition_id="physical-rf",
+                model="PHYSICAL_RF",
+                sinr_db=None,
+                delay_spread_ns=None,
+                speed_mps=None,
+                scope="observed_bidirectional",
+                emulation_enabled=False,
+            )
+        ]
     scope = channels["scope"]
     if scope != "common_bidirectional":
         raise ValueError(
@@ -125,7 +137,7 @@ def load_media(path, config):
 
 
 def media_assignments(config, inventory, conditions):
-    """Assign 333 unique clips per UE, shared by tier and UE-count ablations."""
+    """Assign clips shared by tier and UE-count ablations (legacy campaigns)."""
     frames = int(config["media"]["frames_per_scenario"])
     segments = int(config["media"]["segments_per_video"])
     blocks = [
@@ -155,6 +167,30 @@ def media_assignments(config, inventory, conditions):
     return result
 
 
+def media_slots(config, inventory):
+    """Return a deterministic shuffled cycle of every staged clip per UE."""
+    frames = int(config["media"]["frames_per_scenario"])
+    segments = int(config["media"]["segments_per_video"])
+    result = {}
+    for ue in config["ues"]:
+        slots = [
+            dict(
+                media_id=asset["media_id"],
+                media_path=asset["path"],
+                media_sha256=asset["sha256"],
+                source_start_frame=segment * frames,
+                frame_count=frames,
+            )
+            for asset in inventory["pools"][ue]
+            for segment in range(segments)
+        ]
+        random.Random(
+            int(digest([config["campaign_seed"], "media-cycle", ue])[:16], 16)
+        ).shuffle(slots)
+        result[ue] = slots
+    return result
+
+
 def validate_config(config):
     if config.get("schema_version") != 1:
         raise ValueError("unsupported campaign schema_version")
@@ -180,6 +216,9 @@ def validate_config(config):
     for item in tiers:
         if not all(item.get(app) for app in APPLICATIONS):
             raise ValueError(f"tier {item.get('tier')} is incomplete")
+    tier_assignment = config.get("tier_assignment", "shared")
+    if tier_assignment not in {"shared", "per_ue"}:
+        raise ValueError("tier_assignment must be shared or per_ue")
     radio = config.get("radio")
     if radio is not None:
         required = {
@@ -199,62 +238,95 @@ def build(config, catalog, inventory):
     validate_config(config)
     candidates = candidate_index(catalog)
     conditions = channel_conditions(config)
-    media = media_assignments(config, inventory, conditions)
+    tier_assignment_mode = config.get("tier_assignment", "shared")
+    if tier_assignment_mode == "shared":
+        media = media_assignments(config, inventory, conditions)
+        slot_cycles = None
+    else:
+        media = None
+        slot_cycles = media_slots(config, inventory)
+    media_cursor = {ue: 0 for ue in config["ues"]}
     scenarios = []
-    for condition, rotation_number, tier, (ue_set, active_ues) in product(
+    for condition, rotation_number, (ue_set, active_ues) in product(
         conditions,
         range(len(config["application_rotations"])),
-        config["tiers"],
         config["ue_sets"].items(),
     ):
         rotation = config["application_rotations"][rotation_number]
-        channel = dict(condition)
-        # All ablations of one channel condition reuse its realization.
-        channel["realization_seed"] = int(
-            digest([config["campaign_seed"], condition["condition_id"]])[:8], 16
-        )
-        ues = []
-        for ue in active_ues:
-            app = rotation[ue]
-            bitrate = int(tier["bitrate_bps"])
-            key = (app, tier[app], bitrate)
-            if key not in candidates:
-                raise ValueError(f"catalog has no candidate {key}")
-            asset = media[(condition["condition_id"], rotation_number, ue)]
-            ues.append(
+        if tier_assignment_mode == "shared":
+            assignments = [
+                {ue: tier for ue in active_ues}
+                for tier in config["tiers"]
+            ]
+        else:
+            assignments = [
+                dict(zip(active_ues, selected))
+                for selected in product(config["tiers"], repeat=len(active_ues))
+            ]
+        for assignment in assignments:
+            channel = dict(condition)
+            # All ablations of one controlled channel condition reuse its
+            # realization. Physical RF has no synthetic realization seed.
+            if condition.get("emulation_enabled", True):
+                channel["realization_seed"] = int(
+                    digest([
+                        config["campaign_seed"], condition["condition_id"]
+                    ])[:8], 16
+                )
+            ues = []
+            tier_vector = {}
+            for ue in active_ues:
+                tier = assignment[ue]
+                tier_vector[ue] = tier["tier"]
+                app = rotation[ue]
+                bitrate = int(tier["bitrate_bps"])
+                key = (app, tier[app], bitrate)
+                if key not in candidates:
+                    raise ValueError(f"catalog has no candidate {key}")
+                if slot_cycles is None:
+                    asset = media[(condition["condition_id"], rotation_number, ue)]
+                else:
+                    slots = slot_cycles[ue]
+                    asset = slots[media_cursor[ue] % len(slots)]
+                    media_cursor[ue] += 1
+                ues.append(
+                    dict(
+                        ue_alias=ue,
+                        application=app,
+                        tier=tier["tier"],
+                        candidate_id=candidates[key],
+                        bitrate_bps=bitrate,
+                        **asset,
+                    )
+                )
+            factors = dict(
+                ue_set=ue_set,
+                application_rotation=rotation_number,
+                channel_condition_id=condition["condition_id"],
+            )
+            if tier_assignment_mode == "shared":
+                factors["tier"] = next(iter(tier_vector.values()))
+            else:
+                factors["tier_assignment"] = tier_vector
+            radio = config.get("radio")
+            if radio is not None:
+                # Make otherwise identical campaigns produce distinct scenario IDs.
+                factors["radio_profile"] = radio["profile_id"]
+            scenarios.append(
                 dict(
-                    ue_alias=ue,
-                    application=app,
-                    candidate_id=candidates[key],
-                    bitrate_bps=bitrate,
-                    **asset,
+                    schema_version=1,
+                    campaign_id=config["campaign_name"],
+                    scenario_id="scn-" + digest(factors)[:20],
+                    factors=factors,
+                    duration_s=config["duration_s"],
+                    fps=config["fps"],
+                    gop_frames=config["gop_frames"],
+                    policies=config["policies"],
+                    **({"radio": dict(radio)} if radio is not None else {}),
+                    channel=channel,
+                    ues=ues,
                 )
             )
-        factors = dict(
-            ue_set=ue_set,
-            application_rotation=rotation_number,
-            tier=tier["tier"],
-            channel_condition_id=condition["condition_id"],
-        )
-        radio = config.get("radio")
-        if radio is not None:
-            # Make otherwise identical campaigns produce distinct scenario IDs.
-            factors["radio_profile"] = radio["profile_id"]
-        scenarios.append(
-            dict(
-                schema_version=1,
-                campaign_id=config["campaign_name"],
-                scenario_id="scn-" + digest(factors)[:20],
-                factors=factors,
-                duration_s=config["duration_s"],
-                fps=config["fps"],
-                gop_frames=config["gop_frames"],
-                policies=config["policies"],
-                **({"radio": dict(radio)} if radio is not None else {}),
-                channel=channel,
-                ues=ues,
-            )
-        )
     if len({item["scenario_id"] for item in scenarios}) != len(scenarios):
         raise RuntimeError("scenario ID collision")
     expected = config["execution"].get("expected_scenarios")
@@ -304,7 +376,14 @@ def main():
         "counts": {
             "ue_set": counts(scenarios, "ue_set"),
             "application_rotation": counts(scenarios, "application_rotation"),
-            "tier": counts(scenarios, "tier"),
+            "tier_assignment_mode": {
+                config.get("tier_assignment", "shared"): len(scenarios)
+            },
+            **(
+                {"tier": counts(scenarios, "tier")}
+                if config.get("tier_assignment", "shared") == "shared"
+                else {}
+            ),
         },
     }
     (output / "manifest.lock.json").write_text(json.dumps(lock, indent=2) + "\n")

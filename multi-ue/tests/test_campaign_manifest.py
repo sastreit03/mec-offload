@@ -1,4 +1,5 @@
 import importlib.util
+from itertools import product
 from pathlib import Path
 
 import yaml
@@ -127,4 +128,39 @@ def test_pass_through_pilot_has_one_channel_condition():
     assert {item["channel"]["model"] for item in scenarios} == {
         "PASS_THROUGH"
     }
+
+
+def test_no_emulator_campaign_has_780_independent_paired_tier_scenarios():
+    config = yaml.safe_load(
+        (ROOT / "config/campaigns/aetheredge-paired-per-ue-51prb-no-emulator-v1.yaml").read_text()
+    )
+    catalog = yaml.safe_load((ROOT / "config/tasks.yaml").read_text())
+    scenarios = MANIFEST.build(config, catalog, inventory(config))
+
+    one_ue = [x for x in scenarios if x["factors"]["ue_set"] == "one_ue"]
+    four_ue = [x for x in scenarios if x["factors"]["ue_set"] == "four_ue"]
+    assert len(one_ue) == 12
+    assert len(four_ue) == 768
+    assert all(x["channel"]["emulation_enabled"] is False for x in scenarios)
+    assert {x["channel"]["condition_id"] for x in scenarios} == {"physical-rf"}
+    assert all("realization_seed" not in x["channel"] for x in scenarios)
+    assert all(len(x["factors"]["tier_assignment"]) == len(x["ues"]) for x in scenarios)
+    assert {
+        tuple(x["factors"]["tier_assignment"][ue] for ue in config["ue_sets"]["four_ue"])
+        for x in four_ue
+    } == set(product(range(4), repeat=4))
+    for scenario in scenarios:
+        assigned = scenario["factors"]["tier_assignment"]
+        assert all(item["tier"] == assigned[item["ue_alias"]] for item in scenario["ues"])
+    for ue in config["ues"]:
+        clips = [
+            (item["media_id"], item["source_start_frame"])
+            for scenario in scenarios
+            for item in scenario["ues"]
+            if item["ue_alias"] == ue
+        ]
+        assert len(set(clips)) == 336
+        uses = {clip: clips.count(clip) for clip in set(clips)}
+        assert min(uses.values()) == 2
+        assert max(uses.values()) == 3
 

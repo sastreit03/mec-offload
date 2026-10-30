@@ -87,7 +87,8 @@ def create_database(path):
           campaign_id TEXT, scenario_id TEXT PRIMARY KEY, execution_index INTEGER,
           status TEXT, attempts INTEGER, attempt_id TEXT, started_unix_ns INTEGER,
           finished_unix_ns INTEGER, error TEXT, ue_set TEXT, application_rotation INTEGER,
-          tier INTEGER, radio_profile TEXT, carrier_prbs INTEGER,
+          tier INTEGER, tier_assignment_json TEXT,
+          radio_profile TEXT, carrier_prbs INTEGER,
           nominal_bandwidth_mhz REAL, center_frequency_hz REAL,
           subcarrier_spacing_hz REAL, threequarter_sampling INTEGER,
           fft_size INTEGER, sample_rate_hz REAL,
@@ -246,7 +247,8 @@ def load_campaign(db, campaign_dir):
             (
                 scenario["campaign_id"], sid, scenario["execution_index"], status,
                 attempts, aid, started, finished, error, factors["ue_set"],
-                factors["application_rotation"], factors["tier"],
+                factors["application_rotation"], factors.get("tier"),
+                flat_json(factors.get("tier_assignment")),
                 radio.get("profile_id"), radio.get("carrier_prbs"),
                 radio.get("nominal_bandwidth_mhz"),
                 radio.get("center_frequency_hz"),
@@ -281,7 +283,7 @@ def load_campaign(db, campaign_dir):
                     item.get("collection_error"),
                 ),
             )
-    db.executemany("INSERT INTO scenarios VALUES (" + ",".join("?" * 30) + ")", rows)
+    db.executemany("INSERT INTO scenarios VALUES (" + ",".join("?" * 31) + ")", rows)
     db.commit()
     return scenarios, states, video_map, assignments
 
