@@ -95,6 +95,10 @@ def test_ue_acknowledges_exact_scenario_assignment(tmp_path):
         )
         assert response["type"] == "scenario_context_acknowledged"
         assert user.scenario_ack == (CONTEXT["attempt_id"], user.generation, "pixel1")
+        started = engine.start_scenario({**CONTEXT, "lead_s": 1.0})
+        assert started["status"] == "started"
+        assert started["start_unix_ns"] > 0
+        assert any(message["type"] == "scenario_start" for message in sent)
     finally:
         engine.record.close()
 

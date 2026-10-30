@@ -398,6 +398,24 @@ class Runner:
         if armed.get("status") not in ("armed", "already_armed"):
             raise RuntimeError(f"scenario arm failed: {armed}")
         self.await_assignment_ack(scenario, attempt_id)
+        started = http_json(
+            self.args.mec,
+            "/api/scenario/start",
+            {
+                "campaign_id": scenario["campaign_id"],
+                "scenario_id": scenario["scenario_id"],
+                "attempt_id": attempt_id,
+                "lead_s": self.args.start_lead_s,
+            },
+        )
+        if started.get("status") != "started":
+            raise RuntimeError(f"scenario start failed: {started}")
+        self.event(
+            "scenario_start_released",
+            scenario_id=scenario["scenario_id"],
+            attempt_id=attempt_id,
+            start_unix_ns=started["start_unix_ns"],
+        )
         after = self.wait(scenario, attempt_id, channel)
         channel_after = channel_request(
             self.args.channel_endpoint, {"msg_type": "trace_status"}
@@ -501,6 +519,10 @@ def main():
     parser.add_argument("--limit", type=int, help="stop after this many manifest rows")
     parser.add_argument("--max-attempts", type=int, default=3)
     parser.add_argument("--scenario-timeout", type=float, default=180)
+    parser.add_argument(
+        "--start-lead-s", type=float, default=2.0,
+        help="future shared UE start timestamp after all assignment acknowledgements",
+    )
     parser.add_argument(
         "--assignment-timeout", type=float, default=20,
         help="recover unless every assigned UE acknowledges its context",

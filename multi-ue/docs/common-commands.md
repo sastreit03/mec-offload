@@ -90,6 +90,8 @@ After the runner arms a scenario, every assigned UE must also report
 `scenario_acknowledged=True`. A missing acknowledgement means the assignment
 did not complete a bidirectional control round trip; the runner invalidates
 the attempt and invokes recovery instead of collecting a partial scenario.
+Once every acknowledgement is present, `scenario_start_unix_ns` in `/api/status`
+shows the shared start barrier released by the runner.
 
 Collection preflight also expects:
 

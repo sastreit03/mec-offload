@@ -86,6 +86,7 @@ def create_app(engine):
             readiness=engine.readiness(),
             run_id=engine.cfg.run_id,
             scenario=engine.scenario,
+            scenario_start_unix_ns=engine.scenario_start_unix_ns,
             awareness_generation=engine.awareness_generation,
             ues={
                 u.uid: dict(
@@ -145,6 +146,13 @@ def create_app(engine):
     async def disarm_scenario(value: dict):
         try:
             return engine.disarm_scenario(value)
+        except ValueError as error:
+            return JSONResponse({"error": str(error)}, status_code=409)
+
+    @app.post("/api/scenario/start")
+    async def start_scenario(value: dict):
+        try:
+            return engine.start_scenario(value)
         except ValueError as error:
             return JSONResponse({"error": str(error)}, status_code=409)
 

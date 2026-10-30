@@ -154,6 +154,7 @@ class Engine:
         self.scenario = None
         self.scenario_assignments = {}
         self.scenario_videos = {}
+        self.scenario_start_unix_ns = None
         # Aetheredge: revisions restart at zero with every MEC process. This
         # generation lets EdgeRIC distinguish a restart from delayed messages.
         self.awareness_generation = str(uuid.uuid4())
@@ -305,6 +306,7 @@ class Engine:
         self.scenario = context
         self.scenario_assignments = assignments
         self.scenario_videos.clear()
+        self.scenario_start_unix_ns = None
         self.videos.clear()
         self.progress.clear()
         self.last_progress.clear()
@@ -348,10 +350,57 @@ class Engine:
         self.scenario = None
         self.scenario_assignments.clear()
         self.scenario_videos.clear()
+        self.scenario_start_unix_ns = None
         for ue in self.ues.values():
             ue.scenario_notice = None
             ue.scenario_ack = None
         return dict(status="disarmed", **context)
+
+    def start_scenario(self, value):
+        """Release all acknowledged assignments at one future MEC timestamp."""
+        context = self.validated_context(value)
+        if self.scenario != context:
+            raise ValueError("scenario_context_mismatch")
+        assigned = set(self.scenario_assignments)
+        acknowledged = {
+            ue.alias
+            for ue in self.ues.values()
+            if ue.scenario_ack
+            == (self.scenario["attempt_id"], ue.generation, ue.alias)
+        }
+        missing = assigned - acknowledged
+        if missing:
+            raise ValueError(f"scenario assignments not acknowledged: {sorted(missing)}")
+        if self.scenario_start_unix_ns is None:
+            lead_s = float(value.get("lead_s", 2.0))
+            if not 0.5 <= lead_s <= 10.0:
+                raise ValueError("scenario start lead must be between 0.5 and 10 seconds")
+            self.scenario_start_unix_ns = time.time_ns() + round(lead_s * 1e9)
+            self.record.event(
+                "scenario_start_released",
+                start_unix_ns=self.scenario_start_unix_ns,
+                ue_aliases=sorted(assigned),
+            )
+            for ue in self.ues.values():
+                if ue.alias in assigned:
+                    self.send_scenario_start(ue)
+        return dict(
+            status="started",
+            start_unix_ns=self.scenario_start_unix_ns,
+            **context,
+        )
+
+    def send_scenario_start(self, ue):
+        if self.scenario_start_unix_ns is None:
+            return
+        self.send(
+            ue.uid,
+            envelope(
+                "scenario_start",
+                self.cfg.run_id,
+                start_unix_ns=self.scenario_start_unix_ns,
+            ),
+        )
 
     def send_scenario_context(self, ue):
         """Send one assignment per attempt and control-connection generation."""
@@ -570,6 +619,9 @@ class Engine:
                 ue_alias=u.alias,
                 connection_id=u.connection_id,
             )
+            # A reconnect after barrier release receives the same timestamp;
+            # video lifecycle deduplication prevents a second start.
+            self.send_scenario_start(u)
             return envelope(
                 "scenario_context_acknowledged", self.cfg.run_id, ue_id=u.uid
             )

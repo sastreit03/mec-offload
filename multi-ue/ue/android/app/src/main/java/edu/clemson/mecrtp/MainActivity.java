@@ -53,6 +53,7 @@ public final class MainActivity extends Activity {
   private boolean awaitingSuccessor;
   private boolean collectionMode;
   private JSONObject assignment;
+  private long scenarioStartUnixNs;
   private double successorPrepareS;
   private volatile boolean enabled;
   private int generation;
@@ -578,6 +579,34 @@ public final class MainActivity extends Activity {
       }
   }
 
+  private synchronized void requestStart() throws Exception {
+    if (!enabled || session != null || startRequest != null) return;
+    startRequest =
+        new JSONObject()
+            .put("type", "video_start")
+            .put("ue_id", uid)
+            .put("client_seq", seq())
+            .put(
+                "application",
+                assignment == null
+                    ? application.getSelectedItem().toString()
+                    : assignment.getString("application"))
+            .put("slo_ms", 150)
+            .put("can_drop", false)
+            .put("can_drop_frames", false)
+            .put(
+                "input",
+                new JSONObject()
+                    .put("width", inputWidth)
+                    .put("height", inputHeight)
+                    .put("fps", inputFps));
+    if (assignment != null)
+      for (String key :
+          new String[] {"candidate_id", "media_id", "source_start_frame", "frame_count"})
+        startRequest.put(key, assignment.get(key));
+    send(startRequest);
+  }
+
   private void message(JSONObject m, long receipt) throws Exception {
     String type = m.getString("type");
     switch (type) {
@@ -619,6 +648,7 @@ public final class MainActivity extends Activity {
           throw new IllegalStateException("scenario context changed during active media");
         setContext(m);
         assignment = m.optBoolean("active", false) ? m.optJSONObject("assignment") : null;
+        scenarioStartUnixNs = 0;
         if (assignment != null) {
           selection = playlist.find(new File(assignment.getString("media_path")).getName());
           file = selection.uri;
@@ -640,6 +670,31 @@ public final class MainActivity extends Activity {
         // queued before a radio/control-path failure.
         send(new JSONObject().put("type", "scenario_context_ack"));
         break;
+      case "scenario_start":
+        scenarioStartUnixNs = m.getLong("start_unix_ns");
+        final String scheduledAttempt = attemptId;
+        final long scheduledStart = scenarioStartUnixNs;
+        long delay = Math.max(0, scheduledStart - clock.now());
+        timer.schedule(
+            () -> {
+              try {
+                if (scheduledAttempt != null
+                    && scheduledAttempt.equals(attemptId)
+                    && assignment != null) {
+                  event(
+                      "scenario_start",
+                      new JSONObject()
+                          .put("scheduled_start_unix_ns", scheduledStart)
+                          .put("actual_request_unix_ns", clock.now()));
+                  requestStart();
+                }
+              } catch (Exception e) {
+                event("scenario_start_error", object("reason", e.toString()));
+              }
+            },
+            delay,
+            TimeUnit.NANOSECONDS);
+        break;
       case "time_sync":
         clock.observe(
             m.getLong("client_mono_ns"),
@@ -654,36 +709,9 @@ public final class MainActivity extends Activity {
       case "association_status":
         if (collectionMode && !contextReady()) break;
         if (collectionMode && assignment == null) break;
+        if (collectionMode) break;
         if (m.getBoolean("valid") && successorRequest != null) send(successorRequest);
-        if (enabled && m.getBoolean("valid") && session == null) {
-          if (startRequest == null)
-            startRequest =
-                new JSONObject()
-                    .put("type", "video_start")
-                    .put("ue_id", uid)
-                    .put("client_seq", seq())
-                    // Aetheredge: collection follows the immutable manifest;
-                    // the spinner remains the choice for ordinary operation.
-                    .put(
-                        "application",
-                        assignment == null
-                            ? application.getSelectedItem().toString()
-                            : assignment.getString("application"))
-                    .put("slo_ms", 150)
-                    .put("can_drop", false)
-                    .put("can_drop_frames", false)
-                    .put(
-                        "input",
-                        new JSONObject()
-                            .put("width", inputWidth)
-                            .put("height", inputHeight)
-                            .put("fps", inputFps));
-          if (assignment != null)
-            for (String key :
-                new String[] {"candidate_id", "media_id", "source_start_frame", "frame_count"})
-              startRequest.put(key, assignment.get(key));
-          send(startRequest);
-        }
+        if (m.getBoolean("valid")) requestStart();
         break;
       case "video_response":
         if (successorRequest != null
@@ -753,7 +781,10 @@ public final class MainActivity extends Activity {
             startRequest = null;
             // Aetheredge: a collection assignment is single-use. The next
             // attempt supplies a new assignment through scenario_context.
-            if (collectionMode) assignment = null;
+            if (collectionMode) {
+              assignment = null;
+              scenarioStartUnixNs = 0;
+            }
             if (!collectionMode && playlist != null && preparedSession != null) {
               startPreparedSuccessor();
             } else if (!collectionMode && playlist != null) {

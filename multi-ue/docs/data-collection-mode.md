@@ -141,6 +141,12 @@ requires a fresh acknowledgement from every expected alias before it trusts the
 attempt. This prevents an uplink-associated UE with a failed downlink bearer
 from silently omitting its video while the other UEs continue.
 
+After all acknowledgements, the runner releases a two-phase start barrier. The
+MEC broadcasts one future wall-clock timestamp and every UE maps it to its
+monotonic clock before issuing `video_start`. UE evidence records the scheduled
+timestamp and actual request timestamp; capture/transmission timestamps retain
+the measured residual skew from encoder setup and radio scheduling.
+
 The arm payload also carries the complete per-UE assignment. Each UE registers
 a stable alias (`pixel1` through `pixel3`, or `linux1`), resolves the exact
 manifest media file, seeks to `source_start_frame`, selects the assigned

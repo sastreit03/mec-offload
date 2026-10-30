@@ -51,6 +51,7 @@ class Client:
         self.scenario_id = None
         self.attempt_id = None
         self.assignment = None
+        self.scenario_start_unix_ns = None
         self.connection = None
         self.root = Path(args.logs)
         self.root.mkdir(parents=True, exist_ok=True)
@@ -396,6 +397,47 @@ class Client:
             await asyncio.sleep(1)
             await self.send(dict(type="time_sync", client_mono_ns=time.monotonic_ns()))
 
+    async def start_collection_at(self, start_unix_ns, attempt_id):
+        """Issue admission at the shared campaign timestamp for this attempt."""
+        delay = (start_unix_ns - self.clock.unix_ns()) / 1e9
+        if delay > 0:
+            await asyncio.sleep(delay)
+        if (
+            self.stopped
+            or self.attempt_id != attempt_id
+            or not self.assignment
+            or self.streamer is not None
+            or self.start_request is not None
+        ):
+            return
+        self.start_request = dict(
+            type="video_start",
+            ue_id=self.uid,
+            client_seq=self.next_seq(),
+            application=self.args.application,
+            slo_ms=150,
+            can_drop=False,
+            can_drop_frames=False,
+            input=dict(self.input_profile),
+        )
+        self.start_request.update(
+            {
+                key: self.assignment[key]
+                for key in (
+                    "candidate_id",
+                    "media_id",
+                    "source_start_frame",
+                    "frame_count",
+                )
+            }
+        )
+        self.record(
+            "scenario_start",
+            scheduled_start_unix_ns=start_unix_ns,
+            actual_request_unix_ns=self.clock.unix_ns(),
+        )
+        await self.send(self.start_request)
+
     # Reconnect with the saved identity while the media session can continue separately.
     async def run(self):
         import websockets
@@ -481,6 +523,7 @@ class Client:
                                     self.assignment = (
                                         m.get("assignment") if m.get("active") else None
                                     )
+                                    self.scenario_start_unix_ns = None
                                     if self.assignment:
                                         self.args.application = self.assignment["application"]
                                         self.args.source = self.assignment["media_path"]
@@ -490,6 +533,14 @@ class Client:
                                     # Confirm that this control generation received
                                     # the exact assignment before the runner trusts it.
                                     await self.send(dict(type="scenario_context_ack"))
+                                elif kind == "scenario_start":
+                                    self.scenario_start_unix_ns = int(m["start_unix_ns"])
+                                    asyncio.create_task(
+                                        self.start_collection_at(
+                                            self.scenario_start_unix_ns,
+                                            self.attempt_id,
+                                        )
+                                    )
                                 elif kind == "time_sync":
                                     self.clock.observe(
                                         m["client_mono_ns"],
@@ -503,6 +554,10 @@ class Client:
                                     if self.collection_mode and not self.context_ready():
                                         continue
                                     if self.collection_mode and not self.assignment:
+                                        continue
+                                    if self.collection_mode:
+                                        # Collection starts only after the runner's
+                                        # all-UE timestamp barrier is released.
                                         continue
                                     if self.successor_request is not None:
                                         # Deduplicated resend covers a control reconnect during preparation.
@@ -629,6 +684,7 @@ class Client:
                                             # Aetheredge: wait for the next attempt's
                                             # scenario_context instead of restarting.
                                             self.assignment = None
+                                            self.scenario_start_unix_ns = None
                                             await asyncio.to_thread(
                                                 finished_streamer.thread.join, 3
                                             )
