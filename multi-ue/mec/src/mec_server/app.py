@@ -92,6 +92,15 @@ def create_app(engine):
                     alias=u.alias,
                     connected=u.connected,
                     ip=u.ip,
+                    scenario_acknowledged=bool(
+                        engine.scenario
+                        and u.scenario_ack
+                        == (
+                            engine.scenario["attempt_id"],
+                            u.generation,
+                            u.alias,
+                        )
+                    ),
                     association_valid=bool(
                         (engine.last_report or {})
                         .get("ues", {})

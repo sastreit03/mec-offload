@@ -105,15 +105,19 @@ def test_aetheredge_zmq_capacity_and_cumulative_grant_deltas():
     ledger = Ledger()
     ledger.descriptor(1, 1, 10_000, 2000, True)
     runtime.sessions = {"video": {"ue_id": "ue", "ledger": ledger}}
+    invalidations = []
     runtime.associations = SimpleNamespace(
         bindings={},
-        invalidate=lambda *_: None,
+        invalidate=lambda *args: invalidations.append(args),
         valid=lambda *_: SimpleNamespace(rnti=7),
     )
     runtime.window = Window(0, 100, "oai_zmq_cumulative_v1")
     runtime.event = lambda *_args, **_kwargs: None
 
     runtime._consume_ran_sample(1.0)
+    # The first source generation establishes a baseline and must not reject an
+    # association probe that was already started by the awareness sync.
+    assert invalidations == []
     assert runtime.capacity[7][0] == 125.0
     assert runtime.window.record()["allocated_by_rnti"] == {}
 
@@ -140,6 +144,12 @@ def test_aetheredge_zmq_capacity_and_cumulative_grant_deltas():
     }
     # Aetheredge: Only 600 new-data bytes debit demand; retry bytes remain telemetry.
     assert ledger.frames[1].remaining == 1400
+
+    runtime.associations.bindings = {"ue": object()}
+    runtime.adapter.source_generation = 10
+    runtime.adapter.report_sequence = 1
+    runtime._consume_ran_sample(1.2)
+    assert invalidations == [("ue", "ran_source_generation")]
 
     binding = SimpleNamespace(connection_id="connection", generation=2, rnti=7)
     runtime.associations.bindings = {"ue": binding}

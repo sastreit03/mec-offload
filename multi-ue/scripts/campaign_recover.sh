@@ -19,6 +19,7 @@ docker logs --since 15m oai-gnb >"$recovery_dir/oai-gnb.log" 2>&1 || true
 gnb_running="$(docker inspect -f '{{.State.Running}}' oai-gnb 2>/dev/null || true)"
 if [[ "$gnb_running" != true \
   || "$reason" == *"gNB channel controller"* \
+  || "$reason" == *"assignment acknowledgement"* \
   || "$reason" == *"UE disconnected during scenario"* \
   || "$reason" == *"scenario stalled"* ]]; then
   # The CIR loader resets to pass-through. The runner selects and verifies the
@@ -58,6 +59,7 @@ elif [[ "$reason" == *"scenario timed out"* \
   || "$reason" == *"candidate mismatch"* \
   || "$reason" == *"scenario context"* \
   || "$reason" == *"scenario arm"* \
+  || "$reason" == *"assignment acknowledgement"* \
   || "$reason" == *"runner stopped"* \
   || "$reason" == *"runner completed"* \
   || "$reason" == *"MEC must be idle"* \

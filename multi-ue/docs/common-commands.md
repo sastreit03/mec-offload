@@ -74,6 +74,7 @@ for ue_id, ue in status["ues"].items():
         "alias=" + str(ue.get("alias")),
         "connected=" + str(ue.get("connected")),
         "association_valid=" + str(ue.get("association_valid")),
+        "scenario_acknowledged=" + str(ue.get("scenario_acknowledged")),
         "ip=" + str(ue.get("ip")),
     )
 PY
@@ -84,6 +85,11 @@ Before starting a scenario, every assigned UE should report:
 ```text
 connected=True association_valid=True
 ```
+
+After the runner arms a scenario, every assigned UE must also report
+`scenario_acknowledged=True`. A missing acknowledgement means the assignment
+did not complete a bidirectional control round trip; the runner invalidates
+the attempt and invokes recovery instead of collecting a partial scenario.
 
 Collection preflight also expects:
 

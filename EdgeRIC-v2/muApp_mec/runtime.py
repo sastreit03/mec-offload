@@ -481,14 +481,21 @@ class Runtime:
         generation = getattr(self.adapter, "source_generation", None)
         sequence = getattr(self.adapter, "report_sequence", None)
         if generation is not None and generation != self.radio_generation:
+            previous_generation = self.radio_generation
             self.radio_generation = generation
             self.radio_sequence = None
             self.radio_counters.clear()
             self.capacity_samples.clear()
             self.capacity.clear()
             self.radio_coverage_valid = False
-            for uid in list(self.associations.bindings):
-                self.associations.invalidate(uid, "ran_source_generation")
+            # Aetheredge: the first observed generation establishes the radio
+            # baseline; it does not replace any prior radio identity. Invalidating
+            # an in-progress first probe here changes its binding generation and
+            # rejects otherwise conclusive evidence. A later source replacement
+            # still invalidates every mapping immediately.
+            if previous_generation is not None:
+                for uid in list(self.associations.bindings):
+                    self.associations.invalidate(uid, "ran_source_generation")
             self.event("radio_source_generation", generation=generation)
         if sequence is not None:
             if self.radio_sequence is not None and sequence <= self.radio_sequence:

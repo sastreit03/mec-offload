@@ -487,6 +487,9 @@ class Client:
                                     self.start_request = None
                                     self.successor_request = None
                                     self.record("scenario_context")
+                                    # Confirm that this control generation received
+                                    # the exact assignment before the runner trusts it.
+                                    await self.send(dict(type="scenario_context_ack"))
                                 elif kind == "time_sync":
                                     self.clock.observe(
                                         m["client_mono_ns"],

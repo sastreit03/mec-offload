@@ -61,6 +61,9 @@ class UE:
     clock_mapping: dict = field(default_factory=dict)
     alias: str | None = None
     scenario_notice: tuple | None = None
+    # The control socket is only considered usable for an attempt after the UE
+    # confirms that it received that attempt's immutable assignment.
+    scenario_ack: tuple | None = None
 
 
 @dataclass
@@ -326,6 +329,7 @@ class Engine:
             pass
         self.record.event("scenario_armed")
         for ue in tuple(self.ues.values()):
+            ue.scenario_ack = None
             self.send_scenario_context(ue)
         return dict(status="armed", assignments=len(assignments), **context)
 
@@ -346,6 +350,7 @@ class Engine:
         self.scenario_videos.clear()
         for ue in self.ues.values():
             ue.scenario_notice = None
+            ue.scenario_ack = None
         return dict(status="disarmed", **context)
 
     def send_scenario_context(self, ue):
@@ -554,6 +559,20 @@ class Engine:
             if self.scenario:
                 self.send_scenario_context(u)
             return envelope("association_pending", self.cfg.run_id, ue_id=u.uid)
+        if kind == "scenario_context_ack":
+            self.validate_message_context(m)
+            if u.alias not in self.scenario_assignments:
+                raise ValueError("UE has no assignment in active scenario")
+            u.scenario_ack = (self.scenario["attempt_id"], u.generation, u.alias)
+            self.record.event(
+                "scenario_context_acknowledged",
+                ue_id=u.uid,
+                ue_alias=u.alias,
+                connection_id=u.connection_id,
+            )
+            return envelope(
+                "scenario_context_acknowledged", self.cfg.run_id, ue_id=u.uid
+            )
         if kind == "probe_report":
             self.record.event("ue_probe_report", ue_id=u.uid, report=m)
             return envelope("probe_report_recorded", self.cfg.run_id, ue_id=u.uid)

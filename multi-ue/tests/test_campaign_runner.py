@@ -201,3 +201,49 @@ def test_wait_detects_required_ue_disconnect(tmp_path, monkeypatch):
 
     with pytest.raises(RuntimeError, match="linux1"):
         runner.wait(scenario, "attempt-a")
+
+
+def test_assignment_ack_requires_every_expected_ue(tmp_path, monkeypatch):
+    context = {
+        "campaign_id": "campaign-a",
+        "scenario_id": "scenario-a",
+        "attempt_id": "attempt-a",
+    }
+    monkeypatch.setattr(
+        MODULE,
+        "http_json",
+        lambda *_: {
+            "scenario": context,
+            "ues": {
+                "ue-a": {
+                    "alias": "pixel1",
+                    "connected": True,
+                    "scenario_acknowledged": True,
+                },
+                "ue-b": {
+                    "alias": "linux1",
+                    "connected": True,
+                    "scenario_acknowledged": False,
+                },
+            },
+        },
+    )
+    state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
+    runner = MODULE.Runner(
+        SimpleNamespace(
+            output=str(tmp_path),
+            mec="http://mec.test",
+            assignment_timeout=-1,
+            poll_interval=0,
+        ),
+        [],
+        state,
+    )
+    scenario = {
+        "campaign_id": "campaign-a",
+        "scenario_id": "scenario-a",
+        "ues": [{"ue_alias": "pixel1"}, {"ue_alias": "linux1"}],
+    }
+
+    with pytest.raises(RuntimeError, match="linux1"):
+        runner.await_assignment_ack(scenario, "attempt-a")

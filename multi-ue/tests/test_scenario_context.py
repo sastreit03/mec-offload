@@ -56,6 +56,49 @@ def test_collection_lifecycle_requires_armed_exact_context(tmp_path):
         engine.record.close()
 
 
+def test_ue_acknowledges_exact_scenario_assignment(tmp_path):
+    cfg, catalog, profiles = load(ROOT / "config/mec.development.yaml")
+    cfg.mode = "collection"
+    cfg.runs_dir = str(tmp_path)
+    engine = Engine(cfg, catalog, profiles)
+    sent = []
+    try:
+        user, _ = engine.hello(None, "12.1.1.2", sent.append)
+        asyncio.run(
+            engine.command(
+                user,
+                {
+                    "type": "association_update",
+                    "ue_alias": "pixel1",
+                    "ue_ip": "12.1.1.2",
+                },
+            )
+        )
+        candidate_id, candidate = next(iter(engine.candidates.items()))
+        armed = dict(
+            CONTEXT,
+            ues=[
+                {
+                    "ue_alias": "pixel1",
+                    "application": candidate["application"],
+                    "candidate_id": candidate_id,
+                    "bitrate_bps": candidate["bitrate_bps"],
+                    "frame_count": 150,
+                    "source_start_frame": 0,
+                }
+            ],
+        )
+        engine.arm_scenario(armed)
+        assert user.scenario_ack is None
+        response = asyncio.run(
+            engine.command(user, {"type": "scenario_context_ack", **CONTEXT})
+        )
+        assert response["type"] == "scenario_context_acknowledged"
+        assert user.scenario_ack == (CONTEXT["attempt_id"], user.generation, "pixel1")
+    finally:
+        engine.record.close()
+
+
 def test_edgeric_sync_stamps_events_with_context(tmp_path):
     async def exercise():
         config = yaml.safe_load((ROOT / "config/edgeric.shadow.yaml").read_text())

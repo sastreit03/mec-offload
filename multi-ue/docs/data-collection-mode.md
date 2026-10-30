@@ -136,6 +136,11 @@ carry the same key. Collection-mode video lifecycle commands are rejected when
 the MEC is unarmed or the supplied key differs. Records created before arming
 retain null scenario fields; an attempt is never inferred from timestamps.
 
+Each assigned UE acknowledges the exact context after receiving it. The runner
+requires a fresh acknowledgement from every expected alias before it trusts the
+attempt. This prevents an uplink-associated UE with a failed downlink bearer
+from silently omitting its video while the other UEs continue.
+
 The arm payload also carries the complete per-UE assignment. Each UE registers
 a stable alias (`pixel1` through `pixel3`, or `linux1`), resolves the exact
 manifest media file, seeks to `source_start_frame`, selects the assigned

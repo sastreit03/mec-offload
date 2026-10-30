@@ -247,6 +247,43 @@ class Runner:
             raise RuntimeError("channel loader trace hash mismatch")
         return response
 
+    def await_assignment_ack(self, scenario, attempt_id):
+        """Require fresh bidirectional control proof for every assigned UE."""
+        expected = {item["ue_alias"] for item in scenario["ues"]}
+        context = {
+            "campaign_id": scenario["campaign_id"],
+            "scenario_id": scenario["scenario_id"],
+            "attempt_id": attempt_id,
+        }
+        deadline = time.monotonic() + self.args.assignment_timeout
+        missing = set(expected)
+        while time.monotonic() < deadline and not self.stop:
+            status = http_json(self.args.mec, "/api/status")
+            if status.get("scenario") != context:
+                raise RuntimeError("MEC scenario context changed before UE acknowledgement")
+            acknowledged = {
+                value.get("alias")
+                for value in status.get("ues", {}).values()
+                if value.get("connected")
+                and value.get("scenario_acknowledged")
+                and value.get("alias")
+            }
+            missing = expected - acknowledged
+            if not missing:
+                self.event(
+                    "assignments_acknowledged",
+                    scenario_id=scenario["scenario_id"],
+                    attempt_id=attempt_id,
+                    ue_aliases=sorted(acknowledged),
+                )
+                return status
+            time.sleep(self.args.poll_interval)
+        if self.stop:
+            raise RunnerStopped("runner stopped")
+        raise RuntimeError(
+            f"UE assignment acknowledgement timed out: {sorted(missing)}"
+        )
+
     def wait(self, scenario, attempt_id, expected_channel=None):
         expected = {item["ue_alias"]: item for item in scenario["ues"]}
         deadline = time.monotonic() + self.args.scenario_timeout
@@ -360,6 +397,7 @@ class Runner:
         armed = http_json(self.args.mec, "/api/scenario/arm", payload)
         if armed.get("status") not in ("armed", "already_armed"):
             raise RuntimeError(f"scenario arm failed: {armed}")
+        self.await_assignment_ack(scenario, attempt_id)
         after = self.wait(scenario, attempt_id, channel)
         channel_after = channel_request(
             self.args.channel_endpoint, {"msg_type": "trace_status"}
@@ -463,6 +501,10 @@ def main():
     parser.add_argument("--limit", type=int, help="stop after this many manifest rows")
     parser.add_argument("--max-attempts", type=int, default=3)
     parser.add_argument("--scenario-timeout", type=float, default=180)
+    parser.add_argument(
+        "--assignment-timeout", type=float, default=20,
+        help="recover unless every assigned UE acknowledges its context",
+    )
     parser.add_argument(
         "--stall-timeout", type=float, default=30,
         help="recover after this many seconds without media or drain progress",

@@ -636,6 +636,9 @@ public final class MainActivity extends Activity {
         successorRequest = null;
         resetFrameStatus();
         event("scenario_context", new JSONObject());
+        // Let the runner distinguish a delivered assignment from one merely
+        // queued before a radio/control-path failure.
+        send(new JSONObject().put("type", "scenario_context_ack"));
         break;
       case "time_sync":
         clock.observe(
