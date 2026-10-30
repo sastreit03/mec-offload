@@ -415,6 +415,7 @@ class Runner:
             scenario_id=scenario["scenario_id"],
             attempt_id=attempt_id,
             start_unix_ns=started["start_unix_ns"],
+            release_delay_ns=started["release_delay_ns"],
         )
         after = self.wait(scenario, attempt_id, channel)
         channel_after = channel_request(

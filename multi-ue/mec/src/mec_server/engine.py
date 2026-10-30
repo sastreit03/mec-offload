@@ -155,6 +155,7 @@ class Engine:
         self.scenario_assignments = {}
         self.scenario_videos = {}
         self.scenario_start_unix_ns = None
+        self.scenario_release_delay_ns = None
         # Aetheredge: revisions restart at zero with every MEC process. This
         # generation lets EdgeRIC distinguish a restart from delayed messages.
         self.awareness_generation = str(uuid.uuid4())
@@ -307,6 +308,7 @@ class Engine:
         self.scenario_assignments = assignments
         self.scenario_videos.clear()
         self.scenario_start_unix_ns = None
+        self.scenario_release_delay_ns = None
         self.videos.clear()
         self.progress.clear()
         self.last_progress.clear()
@@ -351,6 +353,7 @@ class Engine:
         self.scenario_assignments.clear()
         self.scenario_videos.clear()
         self.scenario_start_unix_ns = None
+        self.scenario_release_delay_ns = None
         for ue in self.ues.values():
             ue.scenario_notice = None
             ue.scenario_ack = None
@@ -375,7 +378,10 @@ class Engine:
             lead_s = float(value.get("lead_s", 2.0))
             if not 0.5 <= lead_s <= 10.0:
                 raise ValueError("scenario start lead must be between 0.5 and 10 seconds")
-            self.scenario_start_unix_ns = time.time_ns() + round(lead_s * 1e9)
+            self.scenario_release_delay_ns = round(lead_s * 1e9)
+            self.scenario_start_unix_ns = (
+                time.time_ns() + self.scenario_release_delay_ns
+            )
             self.record.event(
                 "scenario_start_released",
                 start_unix_ns=self.scenario_start_unix_ns,
@@ -387,6 +393,7 @@ class Engine:
         return dict(
             status="started",
             start_unix_ns=self.scenario_start_unix_ns,
+            release_delay_ns=self.scenario_release_delay_ns,
             **context,
         )
 
@@ -399,6 +406,9 @@ class Engine:
                 "scenario_start",
                 self.cfg.run_id,
                 start_unix_ns=self.scenario_start_unix_ns,
+                # UEs pace against this relative interval. Unlike an absolute
+                # wall timestamp, the interval is unaffected by clock-map offset.
+                release_delay_ns=self.scenario_release_delay_ns,
             ),
         )
 
@@ -1586,7 +1596,14 @@ class Engine:
             "descriptor",
             video_id=v.vid,
             frame_id=d.frame_id,
+            gop_id=d.gop_id,
+            frame_type=d.frame_type,
             encoded_bytes=d.encoded_bytes,
+            capture_unix_ns=d.capture_unix_ns if d.flags & 4 else None,
+            tx_unix_ns=d.tx_unix_ns if d.flags & 8 else None,
+            clock_flags=d.flags,
+            config_version=d.config_version,
+            plan_version=d.plan_version,
             network_deadline_unix_ns=deadline,
             nonpositive_network_budget=v.slo - res <= 0,
         )

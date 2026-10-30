@@ -142,10 +142,11 @@ attempt. This prevents an uplink-associated UE with a failed downlink bearer
 from silently omitting its video while the other UEs continue.
 
 After all acknowledgements, the runner releases a two-phase start barrier. The
-MEC broadcasts one future wall-clock timestamp. During the six-second lead,
-every UE requests admission and initializes its media pipeline, then holds its
-first frame until that shared timestamp. UE evidence records the scheduled
-timestamp and actual request timestamp; capture/transmission timestamps retain
+MEC broadcasts a six-second preparation interval and a reference wall-clock
+timestamp. Every UE requests admission and initializes its media pipeline, then
+measures the release interval on its local clock. This avoids start skew from
+absolute clock-map offsets. UE evidence retains the MEC timestamp and its local
+release timestamp; capture/transmission timestamps retain
 the measured residual skew from radio scheduling.
 
 The arm payload also carries the complete per-UE assignment. Each UE registers
@@ -229,12 +230,49 @@ write the selected candidate and bitrate directly, and 100-ms resource events
 include per-stream host queues plus whole-device NVML utilization. Device
 utilization does not measure individual CUDA-stream or kernel residency.
 
+## Joined campaign export
+
+`tools/export_campaign_dataset.py` builds a canonical SQLite dataset from the
+immutable campaign manifest/checkpoint plus MEC, EdgeRIC, and optional UE
+evidence. Only the latest attempt marked `valid` enters the canonical frame
+table; all rejected attempts remain in the raw logs. The export retains nested
+radio and resource evidence as JSON and writes convenient CSV tables.
+
+Frames have one-to-many bridge tables for RAN and MEC observation windows.
+`frame_ran_features.csv` contains one row per frame and overlapping 100-ms RAN
+window. `frame_mec_features.csv` contains one row per frame and overlapping MEC
+resource window. `overlap_ns` supports weighted aggregation without pretending
+that a frame maps to one slot or one utilization sample. When UE wall-clock
+transmit evidence is unavailable, `ran_join_basis` says
+`mec_descriptor_arrival_unix_ns` and the overlap is an arrival-instant sample.
+
+After copying the gNB EdgeRIC evidence and Pixel/Linux UE evidence under a
+local staging directory on the MEC Spark, run:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+
+python3 tools/export_campaign_dataset.py \
+  --campaign-dir runs/campaigns/aetheredge-fixed-policy-v1 \
+  --mec-root runs \
+  --edgeric-root runs/export-input/edgeric \
+  --ue-log pixel1=runs/export-input/ue/pixel1-events.jsonl \
+  --ue-log pixel2=runs/export-input/ue/pixel2-events.jsonl \
+  --ue-log pixel3=runs/export-input/ue/pixel3-events.jsonl \
+  --ue-log linux1=runs/export-input/ue/linux1-events.jsonl \
+  --output runs/campaigns/aetheredge-fixed-policy-v1/dataset \
+  --strict
+```
+
+`validation.json` records input hashes, counts, RAN join coverage, and any
+valid scenario/UE whose frame rows do not equal the manifest frame count.
+`dataset.sqlite3` is the canonical result; CSV files are derived views.
+
 ## Remaining work before collection
 
 1. Keep EdgeRIC in shadow mode and verify at startup that no weight publisher
    controls OAI.
-2. Add the joined dataset exporter across UE, MEC, EdgeRIC, and OAI evidence.
-3. Calibrate requested emulator SINR against measured PUSCH/PUCCH SNR and BLER
+2. Calibrate requested emulator SINR against measured PUSCH/PUCCH SNR and BLER
    with pass-through and AWGN pilots.
-4. Run a one-UE and four-UE pilot through the scenario runner, including one
+3. Run a one-UE and four-UE pilot through the scenario runner, including one
    forced runner termination and resume, before starting all 2,664 scenarios.

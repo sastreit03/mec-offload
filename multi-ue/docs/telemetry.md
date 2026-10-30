@@ -14,6 +14,21 @@ Only new-data TBS provisionally reduces the oldest outstanding frame demand. Ret
 
 EdgeRIC aggregates received counter deltas into non-overlapping 100-ms reports for the MEC. Total UL opportunity remains unavailable, so those reports do not claim full-cell utilization coverage. Capacity becomes stale after the configured maximum age. Association continues using legacy `rx_bytes` only as a time-varying signature together with probe receipts, correlation and margin checks.
 
+The 100-ms interval is an observation window, not the native RAN scheduling
+period. With 30-kHz subcarrier spacing the gNB schedules 2,000 slots per second.
+Persisting and transporting every slot for every UE would materially add work
+to the scheduler and control path. More importantly, an encoded video frame is
+fragmented across RTP packets, grants, and retransmissions, so there is no
+correct one-frame/one-slot relationship. OAI therefore preserves the latest
+frame/slot and UL/DL grant identity, while cumulative counters make every grant
+countable even if ZMQ replaces an intermediate latest-value snapshot. EdgeRIC
+differences those counters into the 100-ms windows used for analysis.
+
+The campaign exporter joins each frame to every radio window overlapping its
+UE-transmit-to-MEC-arrival interval. Historical evidence without a mapped UE
+transmit wall timestamp is explicitly labelled as an arrival-instant join.
+Neither case claims that the window belongs exclusively to that frame.
+
 MEC frame-result records now include run, UE, video/task, frame, GoP, selected candidate, model, bitrate, CUDA priority, terminal outcome, and stage timestamps. UE logs retain capture/transmission and result-receipt evidence. Every 100-ms `mec_resources` event records per-application/priority host queues and in-flight submissions plus NVML device utilization and memory usage. NVML values describe the whole GPU device; they are not per-stream utilization or GPU kernel-residency measurements.
 
 Strict slot-k to slot-k+1 targeting, late-target rejection and numerology-aligned deadline acceptance remain explicitly deferred. Current utility evaluation uses the local decision timestamp for remaining deadline time. Live validation must measure ZMQ serialization/transfer cost, scheduler cost of the reference TBS call, capacity prediction versus actual grants, report age, retransmission rate, and heuristic deadline outcomes.

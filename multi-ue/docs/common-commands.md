@@ -230,3 +230,27 @@ adb exec-out run-as edu.clemson.mecrtp \
 grep '"scenario_id":"scn-' pixel1-events.jsonl | tail -50
 ```
 
+## Export the joined campaign dataset
+
+Run on the **MEC Spark** after EdgeRIC and UE evidence has been copied under
+`runs/export-input`. The exporter includes only each scenario's latest attempt
+marked `valid`.
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+
+python3 tools/export_campaign_dataset.py \
+  --campaign-dir runs/campaigns/aetheredge-fixed-policy-v1 \
+  --mec-root runs \
+  --edgeric-root runs/export-input/edgeric \
+  --ue-log pixel1=runs/export-input/ue/pixel1-events.jsonl \
+  --ue-log pixel2=runs/export-input/ue/pixel2-events.jsonl \
+  --ue-log pixel3=runs/export-input/ue/pixel3-events.jsonl \
+  --ue-log linux1=runs/export-input/ue/linux1-events.jsonl \
+  --output runs/campaigns/aetheredge-fixed-policy-v1/dataset \
+  --strict
+
+python3 -m json.tool \
+  runs/campaigns/aetheredge-fixed-policy-v1/dataset/validation.json
+```
+

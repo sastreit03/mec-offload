@@ -98,7 +98,11 @@ def test_ue_acknowledges_exact_scenario_assignment(tmp_path):
         started = engine.start_scenario({**CONTEXT, "lead_s": 1.0})
         assert started["status"] == "started"
         assert started["start_unix_ns"] > 0
-        assert any(message["type"] == "scenario_start" for message in sent)
+        assert started["release_delay_ns"] == 1_000_000_000
+        start_message = next(
+            message for message in sent if message["type"] == "scenario_start"
+        )
+        assert start_message["release_delay_ns"] == 1_000_000_000
     finally:
         engine.record.close()
 

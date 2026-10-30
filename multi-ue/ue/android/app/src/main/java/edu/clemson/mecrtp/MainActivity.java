@@ -53,7 +53,7 @@ public final class MainActivity extends Activity {
   private boolean awaitingSuccessor;
   private boolean collectionMode;
   private JSONObject assignment;
-  private long scenarioStartUnixNs;
+  private long scenarioStartUnixNs, scenarioReleaseUnixNs;
   private double successorPrepareS;
   private volatile boolean enabled;
   private int generation;
@@ -649,6 +649,7 @@ public final class MainActivity extends Activity {
         setContext(m);
         assignment = m.optBoolean("active", false) ? m.optJSONObject("assignment") : null;
         scenarioStartUnixNs = 0;
+        scenarioReleaseUnixNs = 0;
         if (assignment != null) {
           selection = playlist.find(new File(assignment.getString("media_path")).getName());
           file = selection.uri;
@@ -672,6 +673,12 @@ public final class MainActivity extends Activity {
         break;
       case "scenario_start":
         scenarioStartUnixNs = m.getLong("start_unix_ns");
+        // Pace by a duration measured on this UE's clock. This cancels any
+        // absolute clock-map offset while preserving the MEC timestamp as evidence.
+        scenarioReleaseUnixNs =
+            m.has("release_delay_ns")
+                ? clock.now() + m.getLong("release_delay_ns")
+                : scenarioStartUnixNs;
         // Admission and codec setup happen during the lead interval. StreamSession
         // still holds the first encoded frame until this common timestamp.
         try {
@@ -679,6 +686,7 @@ public final class MainActivity extends Activity {
               "scenario_start",
               new JSONObject()
                   .put("scheduled_start_unix_ns", scenarioStartUnixNs)
+                  .put("local_release_unix_ns", scenarioReleaseUnixNs)
                   .put("actual_request_unix_ns", clock.now()));
           requestStart();
         } catch (Exception e) {
@@ -744,7 +752,7 @@ public final class MainActivity extends Activity {
                   clock,
                   this::event,
                   getExternalFilesDir(null),
-                  collectionMode ? scenarioStartUnixNs : 0);
+                  collectionMode ? scenarioReleaseUnixNs : 0);
           startAdmittedSession(session, file);
         } else if (!m.getBoolean("accepted")) {
           event(

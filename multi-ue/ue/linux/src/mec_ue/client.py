@@ -52,6 +52,7 @@ class Client:
         self.attempt_id = None
         self.assignment = None
         self.scenario_start_unix_ns = None
+        self.scenario_release_unix_ns = None
         self.connection = None
         self.root = Path(args.logs)
         self.root.mkdir(parents=True, exist_ok=True)
@@ -521,6 +522,7 @@ class Client:
                                         m.get("assignment") if m.get("active") else None
                                     )
                                     self.scenario_start_unix_ns = None
+                                    self.scenario_release_unix_ns = None
                                     if self.assignment:
                                         self.args.application = self.assignment["application"]
                                         self.args.source = self.assignment["media_path"]
@@ -532,6 +534,14 @@ class Client:
                                     await self.send(dict(type="scenario_context_ack"))
                                 elif kind == "scenario_start":
                                     self.scenario_start_unix_ns = int(m["start_unix_ns"])
+                                    # Use a relative delay on the UE clock so NTP/time-sync
+                                    # offset error cannot skew simultaneous media release.
+                                    self.scenario_release_unix_ns = (
+                                        self.clock.unix_ns()
+                                        + int(m["release_delay_ns"])
+                                        if "release_delay_ns" in m
+                                        else self.scenario_start_unix_ns
+                                    )
                                     asyncio.create_task(
                                         self.start_collection_at(
                                             self.scenario_start_unix_ns,
@@ -636,7 +646,7 @@ class Client:
                                                 "frame_count"
                                             ),
                                             release_unix_ns=(
-                                                self.scenario_start_unix_ns
+                                                self.scenario_release_unix_ns
                                                 if self.collection_mode
                                                 else None
                                             ),
@@ -687,6 +697,7 @@ class Client:
                                             # scenario_context instead of restarting.
                                             self.assignment = None
                                             self.scenario_start_unix_ns = None
+                                            self.scenario_release_unix_ns = None
                                             await asyncio.to_thread(
                                                 finished_streamer.thread.join, 3
                                             )
