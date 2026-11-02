@@ -271,6 +271,22 @@ python3 tools/export_campaign_dataset.py \
 valid scenario/UE whose frame rows do not equal the manifest frame count.
 `dataset.sqlite3` is the canonical result; CSV files are derived views.
 
+Summarize requested versus achieved encoded-payload throughput after export:
+
+```bash
+python3 tools/analyze_uplink_throughput.py \
+  --database runs/campaigns/aetheredge-paired-per-ue-51prb-no-emulator-v2/dataset/dataset.sqlite3 \
+  --output runs/campaigns/aetheredge-paired-per-ue-51prb-no-emulator-v2/dataset/uplink
+```
+
+The report uses the observed first-to-last frame interval. Per-stream evidence
+comes from UE transmission logs when available and otherwise from MEC frame
+descriptors. Aggregate scenario throughput uses the common MEC descriptor
+arrival interval so streams from different device clocks can be added. These
+are encoded application-payload rates and exclude RTP/UDP/IP and radio-layer
+overhead. `uplink-throughput.md` and the accompanying CSV files retain sample
+counts, percentiles, requested-rate deltas, and evidence coverage.
+
 ## Remaining work before collection
 
 1. Keep EdgeRIC in shadow mode and verify at startup that no weight publisher
