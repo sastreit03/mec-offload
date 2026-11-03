@@ -51,24 +51,30 @@ class ProbeReceiver(asyncio.DatagramProtocol):
 def create_app(engine):
     @asynccontextmanager
     async def lifespan(app):
+        # Initialize engine and UDP receiver for association probe
         await engine.start()
         transport, _ = await asyncio.get_running_loop().create_datagram_endpoint(
             lambda: ProbeReceiver(engine),
             local_addr=(engine.cfg.listen, engine.cfg.control_port + 1),
         )
+        # Return execution back to FastAPI
         try:
             yield
+        # Close the app
         finally:
             transport.close()
             await engine.close()
 
+    # FastAPI controls application logic of web API
     app = FastAPI(title="Streaming MEC", lifespan=lifespan)
     app.state.engine = engine
 
+    # GET whether the server is alive; heartbeat
     @app.get("/healthz")
     def health():
         return {"status": "alive"}
 
+    # GET whether the server is ready to run
     @app.get("/readyz")
     def ready():
         r = engine.readiness()
@@ -81,25 +87,27 @@ def create_app(engine):
         # predecessor temporarily holds all tracker completions.
         pipeline = {}
         for frame in engine.frames.values():
+            # Number of frames currently tracked by MEC, by video and by status.
+            # Current count of frames in memory
             pipeline.setdefault(frame.vid, Counter())[frame.state] += 1
         return dict(
-            readiness=engine.readiness(),
-            run_id=engine.cfg.run_id,
-            scenario=engine.scenario,
-            scenario_start_unix_ns=engine.scenario_start_unix_ns,
-            awareness_generation=engine.awareness_generation,
+            readiness=engine.readiness(), 
+            run_id=engine.cfg.run_id,  # Metadata identifier for an experimental run
+            scenario=engine.scenario,  # Scenarios for dataset collection
+            scenario_start_unix_ns=engine.scenario_start_unix_ns, # Scenarios for dataset collection
+            awareness_generation=engine.awareness_generation,     # Used for synchronizing MEC reports to EdgeRIC, increments when MEC restarts
             ues={
                 u.uid: dict(
-                    alias=u.alias,
-                    connected=u.connected,
-                    ip=u.ip,
+                    alias=u.alias,          # Used in dataset collection. e.g., pixel1, linux1
+                    connected=u.connected,  # whether the UE is connected to the MEC server via the control connection
+                    ip=u.ip,                # UE's IP address, used for EdgeRIC association
                     scenario_acknowledged=bool(
-                        engine.scenario
-                        and u.scenario_ack
+                        engine.scenario     # Scenario for dataset collection
+                        and u.scenario_ack  # Used in data set collection. Whether UE has acknowledged the scenario that is armed
                         == (
-                            engine.scenario["attempt_id"],
-                            u.generation,
-                            u.alias,
+                            engine.scenario["attempt_id"], # Scenario for dataset collection
+                            u.generation,  # Generation of UE connection, increments when UE's control channel reconnects
+                            u.alias,       # Used in dataset collection. e.g., pixel1, linux1
                         )
                     ),
                     association_valid=bool(
@@ -107,34 +115,35 @@ def create_app(engine):
                         .get("ues", {})
                         .get(u.uid, {})
                         .get("association_valid")
-                    ),
+                    ),  # Whether the EdgeRIC has an association between the UE's IP address and its RNTI
                 )
                 for u in engine.ues.values()
             },
             videos={
                 v.vid: dict(
-                    ue_id=v.uid,
-                    ue_alias=engine.ues[v.uid].alias,
-                    application=v.app,
-                    candidate_id=v.requested_candidate_id,
-                    state=v.state,
-                    counters=v.counters,
-                    received_frames=v.received,
-                    pipeline_states=dict(pipeline.get(v.vid, {})),
-                    final_frame_id=v.final_id,
-                    collection_error=v.collection_error,
+                    ue_id=v.uid,                            # Unique identifier for the video
+                    ue_alias=engine.ues[v.uid].alias,       # Used in dataset collection. e.g., pixel1, linux1
+                    application=v.app,                      # Inference task, e.g., detection or segmentation
+                    candidate_id=v.requested_candidate_id,  # Requested bitrate/DNN configuration
+                    state=v.state,                          # State of entire video (not just of a frame), e.g., COMPLETED, DENIED
+                    counters=v.counters,                    # The number of frames of the video by terminal outcome, e.g., completed, dropped
+                    received_frames=v.received,             # Number of valid frames received for a video
+                    pipeline_states=dict(pipeline.get(v.vid, {})),  # Counts the number of unresolved frames, e.g., queued, processing
+                    final_frame_id=v.final_id,              # Final frame ID of the video
+                    collection_error=v.collection_error,    # Used in dataset collection. Whether an error has occurred in a frame of the video
                 )
                 for v in engine.videos.values()
             },
-            unresolved=len(engine.frames),
+            unresolved=len(engine.frames),  # How many frames don't have terminal outcomes
             radio_report_age_s=(
                 time.time_ns() - engine.last_report["window_end_unix_ns"]
             )
-            / 1e9
+            / 1e9 # Age of last report
             if engine.last_report
             else None,
         )
 
+    # For dataset generation, load/arm a given scenario
     @app.post("/api/scenario/arm")
     async def arm_scenario(value: dict):
         try:
@@ -142,6 +151,7 @@ def create_app(engine):
         except ValueError as error:
             return JSONResponse({"error": str(error)}, status_code=409)
 
+    # For dataset generation, start a given scenario
     @app.post("/api/scenario/disarm")
     async def disarm_scenario(value: dict):
         try:
@@ -149,6 +159,7 @@ def create_app(engine):
         except ValueError as error:
             return JSONResponse({"error": str(error)}, status_code=409)
 
+    # For dataset generation, start a given scenario
     @app.post("/api/scenario/start")
     async def start_scenario(value: dict):
         try:
@@ -156,6 +167,7 @@ def create_app(engine):
         except ValueError as error:
             return JSONResponse({"error": str(error)}, status_code=409)
 
+    # Dashboard endpoint
     @app.get("/")
     def dashboard():
         return HTMLResponse("""<!doctype html><html><meta charset="utf-8"><title>Streaming MEC</title>
@@ -169,8 +181,8 @@ def create_app(engine):
         await ws.accept()
         # A five-second collection run can finish 150 frames in a burst while
         # the terminal status waits behind them.
-        out = asyncio.PriorityQueue(maxsize=1024 if engine.collection_mode else 128)
-        sequence = 0
+        out = asyncio.PriorityQueue(maxsize=1024 if engine.collection_mode else 128)  # Queue for outgoing websocket messages
+        sequence = 0  # Sequence of messages
 
         def enqueue(m):
             nonlocal sequence
@@ -182,10 +194,14 @@ def create_app(engine):
                 "CANCELLED",
                 "EXPIRED",
             )
+            # Lower priority number is actually higher priority
             priority = 2 if terminal else 1 if m["type"] == "frame_result" else 0
             try:
+                # Put messages into queue to send to UE
+                # Messages have priority, sequence, and the actual message
                 out.put_nowait((priority, sequence, m))
             except asyncio.QueueFull:
+                # Exception for the queue being full
                 engine.record.event(
                     "socket_queue_full",
                     message_type=m["type"],
@@ -280,17 +296,23 @@ def create_app(engine):
 
 
 def main():
+    # Uvicorn handles HTTP messaging, faces the network
     import uvicorn
 
+    # Parse the command line arguments
     p = argparse.ArgumentParser()
     p.add_argument("--config", required=True)
     a = p.parse_args()
+
+    # Load configuration, task model catalog, and profiled dataa
     cfg, catalog, profiles = load(a.config)
+
+    # Run uvicorn web API
     uvicorn.run(
         create_app(Engine(cfg, catalog, profiles)),
-        host=cfg.listen,
-        port=cfg.control_port,
-        workers=1,
+        host=cfg.listen,        # IP address for web API to listen on
+        port=cfg.control_port,  # Port for web API to listen on 
+        workers=1,              # One worker for same control context
         # The legacy websockets protocol can concurrently drain an application
         # result and an automatic pong under radio backpressure, tripping its
         # single-waiter assertion.  Uvicorn's sans-I/O backend serializes the
