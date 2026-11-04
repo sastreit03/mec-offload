@@ -5,45 +5,53 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
 
-
+# Hardcoded literal will need to be changed if applications are changed.
+# This literal is used to ensure that applications read from config yamls
+# are valid and expected.
 Application = Literal["detection", "tracking", "segmentation"]
 
 
 class Candidate(BaseModel):
+    """Defines the configuration for one model/bitrate candidate"""
     model_config = ConfigDict(extra="forbid")
-    id: str
-    application: Application
-    model: str
-    artifact: str
-    input_hw: tuple[int, int]
-    precision: Literal["fp16"]
-    bitrate_bps: int = Field(gt=0)
+    id: str                         # Unique ID of this config
+    application: Application        # application must be in Application literal
+    model: str                      # DNN model
+    artifact: str                   # File with saved model weights
+    input_hw: tuple[int, int]       # Height and width of model input
+    precision: Literal["fp16"]      # Numerical precision
+    bitrate_bps: int = Field(gt=0)  # Bitrate of configuration
+    # Confidence threshold for results to be valid
     confidence: float = Field(default=0.1, ge=0, le=1)
-    class_map_id: str
-    output_schema: str
+    class_map_id: str               # Used for mapping output classes
+    output_schema: str              # Inference output format
+    # Models are represented using TorchScript
     backend: Literal["torchscript"] = "torchscript"
 
 
 # Reject unknown catalog fields rather than silently accepting misspelled settings.
 class TaskCatalog(BaseModel):
+    """Defines the collection of candidate configurations supported by the MEC"""
     model_config = ConfigDict(extra="forbid")
-    version: str
-    codec: Literal["H264"] = "H264"
-    source_hw: tuple[int, int] = (720, 1280)
-    fps: int = Field(default=30, gt=0)
-    gop_frames: int = Field(default=30, gt=0)
+    version: str                                # Catalog version. Metadata
+    codec: Literal["H264"] = "H264"             # Coding/decoding format
+    source_hw: tuple[int, int] = (720, 1280)    # Video resolution, uses 720p
+    fps: int = Field(default=30, gt=0)          # Frame per second, default of 30
+    gop_frames: int = Field(default=30, gt=0)   # 1 s/30 frame group of picture
+    # List of candidate configuration defined in the class above
     configurations: list[Candidate]
 
 
 class KeyframeInterleaving(BaseModel):
+    """Validates keyframe interleaving"""
     model_config = ConfigDict(extra="forbid")
     enabled: bool = True
 
 
 class Settings(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    run_id: str
-    mode: str = "experimental"
+    run_id: str                 # Identifier for an experimental run
+    mode: str = "experimental"  # 
     catalog: str
     profiles: str
     listen: str = "0.0.0.0"
@@ -111,12 +119,15 @@ class Settings(BaseModel):
 
     # Experimental runs require explicit calibration and cannot use mock execution.
     def check(self):
+        # Proper operating mode
         if self.mode not in ("experimental", "development", "collection"):
             raise ValueError("mode")
+        # Proper model backend
         if self.backend not in ("torchscript", "mock"):
             raise ValueError("backend")
+        # Require actual model backends in experimental and collection modes
         if self.mode in ("experimental", "collection") and self.backend == "mock":
-            raise ValueError("mock forbidden in experimental mode")
+            raise ValueError("mock forbidden in experimental and collection modes")
         if self.mode != "collection" and (
             self.gop_policy != "heuristic" or self.priority_policy != "heuristic"
         ):

@@ -1,0 +1,98 @@
+schema_version: 2
+# Campaign name becomes campaign_id
+campaign_name: mec-review-pixel1-validation-v1
+# Make media selection reproducible
+campaign_seed: 20261104
+
+# Encoder settings
+fps: 30
+gop_frames: 30
+
+# Five seconds of actual elapsed time, followed by MEC draining.
+transmission:
+  duration_s: 5.0
+  # Pixel uses its monotonic clock for elapsed time
+  clock: monotonic
+  start_reference: local_scenario_release
+  stop_policy: stop_transmission_at_deadline
+
+radio:
+  profile_id: band78-51prb-threequarter
+  carrier_prbs: 51
+  nominal_bandwidth_mhz: 20
+  center_frequency_hz: 3309480000
+  subcarrier_spacing_hz: 30000
+  fft_size: 1024
+  sample_rate_hz: 30720000
+  threequarter_sampling: true
+
+channels:
+  enabled: false
+
+# RAN, edgeric, and MEC policies
+policies:
+  ran_scheduler: proportional_fair
+  edgeric_mode: shadow
+  mec_mode: collection
+  mec_queue: fifo_per_application
+  cuda_priority: -3
+  drain_timeout_s: 120
+
+# List UEs
+ues:
+  pixel1:
+    kind: android
+    hardware: Google Pixel 7
+
+ue_sets:
+  one_ue: [pixel1]
+
+# List application rotation
+application_rotations:
+  - pixel1: detection
+  - pixel1: tracking
+  - pixel1: segmentation
+
+# Each tier is a fixed model/bitrate pairing.
+tier_assignment: shared
+tiers:
+  - tier: 0
+    bitrate_bps: 500000
+    detection: yolo26x
+    tracking: yolo26x
+    segmentation: segformer-b3
+
+  - tier: 1
+    bitrate_bps: 1000000
+    detection: yolo26l
+    tracking: yolo26l
+    segmentation: segformer-b2
+
+  - tier: 2
+    bitrate_bps: 1500000
+    detection: yolo26m
+    tracking: yolo26m
+    segmentation: segformer-b1
+
+  - tier: 3
+    bitrate_bps: 2000000
+    detection: yolo26n
+    tracking: yolo26n
+    segmentation: segformer-b0
+
+repetitions:
+  trials_per_combination: 5
+
+media:
+  inventory: media-inventory-v2.yaml
+  videos_per_ue: 42
+  selection: seeded_distinct_videos
+  selected_videos_per_ue: 5
+  source_start_frame: 0
+  reuse_across_applications: true
+  reuse_across_tiers: true
+
+execution:
+  randomize_order: false
+  order: [application_rotation, tier, trial]
+  expected_scenarios: 60

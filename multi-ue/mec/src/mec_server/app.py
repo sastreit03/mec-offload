@@ -1,3 +1,17 @@
+"""
+The script is the entrypoint for the MEC server. It does the following:
+- Creates the web API for the server using uvicorn and fastapi
+- Loads configuration info from config.py
+- Starts the MEC engine
+- Defines and starts the receiver for the UDP association packets from UEs
+- Defines the MEC server's HTTP endpoints
+- Defines the websocket endpoint for UE control information including
+  the function to place messages to UEs in a priority queue and 
+  coroutines to receive new UE connections, send control messages
+  to UEs, and replay messages to UEs whose control websocket temporarily
+  disconnects.
+"""
+
 from __future__ import annotations
 import argparse
 import asyncio
@@ -13,27 +27,30 @@ from mec_contracts.wire import envelope, loads, dumps
 
 
 # Probe traffic supports radio association and is excluded from frame accounting.
-class ProbeReceiver(asyncio.DatagramProtocol):
+class ProbeReceiver(asyncio.DatagramProtocol): # DatagramProtocol allows the event loop to notify the app when a UDP packet arrives
     def __init__(self, engine):
-        self.engine = engine
-        self.counts = {}
-        self.last = 0
+        self.engine = engine    # Engine reference used by FastAPI
+        self.counts = {}        # Accumulated number of probe bytes
+        self.last = 0           # Monotonic time stamp of previous reporting event
 
-    def datagram_received(self, data, addr):
+
+    def datagram_received(self, data, addr):    # Data is bytes received in UDP packet, addr is sending IP address
         # Fixed probe header. Raw payload never enters inference or frame compliance.
         if not data.startswith(b"MECP1 "):
             return
         try:
-            header = data.split(b"\n", 1)[0].decode().split(" ")
-            _, uid, connection, probe, index = header
-            u = self.engine.ues.get(uid)
+            header = data.split(b"\n", 1)[0].decode().split(" ")    # Parse the header
+            _, uid, connection, probe, index = header               # Return fields from the header
+            u = self.engine.ues.get(uid)                            # Get UE object for the header's ue_id from engine
             if not u or u.connection_id != connection:
                 return
-            key = (uid, probe, int(index))
-            self.counts[key] = self.counts.get(key, 0) + len(data)
+            key = (uid, probe, int(index))                          # Key used for probe association. Index is interval index
+            self.counts[key] = self.counts.get(key, 0) + len(data)  # Increment the number of bytes for this UE, this probe, and this interval
+                                                                    # Probes are not deduplicated
             now = time.monotonic()
-            if now - self.last >= 0.1:
+            if now - self.last >= 0.1:   # Send aggregate report. Aggregation window is 0.1 s. Still collect bytes from UDP during aggregation window
                 for (uid, p, i), size in self.counts.items():
+                    # Submit the association into the engine's awareness queue
                     self.engine.aware(
                         "probe_receipt",
                         ue_id=uid,
@@ -42,6 +59,7 @@ class ProbeReceiver(asyncio.DatagramProtocol):
                         bytes=size,
                         measurement_unix_ns=time.time_ns(),
                     )
+                # Clean up
                 self.counts.clear()
                 self.last = now
         except (ValueError, UnicodeError):
@@ -184,6 +202,7 @@ def create_app(engine):
         out = asyncio.PriorityQueue(maxsize=1024 if engine.collection_mode else 128)  # Queue for outgoing websocket messages
         sequence = 0  # Sequence of messages
 
+        # Put messages with their priorities into a priority queue of outgoing messages
         def enqueue(m):
             nonlocal sequence
             sequence += 1
@@ -213,19 +232,26 @@ def create_app(engine):
                 if engine.collection_mode or m["type"] != "frame_result":
                     asyncio.create_task(ws.close(code=1013))
 
+        # u: engine's UE object
+        # hello: dict with initial message for UE
         u, hello = engine.hello(
-            ws.headers.get("x-mec-resume-token"),
-            ws.client.host if ws.client else "",
-            enqueue,
+            ws.headers.get("x-mec-resume-token"),   # Resume token for an existing UE that reconnects, part of the HTTP header
+            ws.client.host if ws.client else "",    # UE IP address from websocket. Engine stores it as u.peer_ip
+            enqueue,                                # Callback to enqueue message. Assigned for each UE object so engine can send messages to UE through the UE's websocket
         )
-        generation = u.generation
-        await ws.send_text(dumps(hello))
+        generation = u.generation           # The generation of the UE's connection. Increments when a UE reconnects
+        await ws.send_text(dumps(hello))    # Send the hello message through the websocket
 
         # One coroutine serializes socket writes; lifecycle control outranks frame results.
         async def sender():
             while True:
+                # Continuously read messages from the priority queue and send them over the websocket
                 _, _, m = await out.get()
+                # Because of await, execution of this coroutine halts here until a message is in the UE's priority queue
+                # Consecutive message sends are performed synchronously, one after the other
+                # to_thread moves the serialization of the JSON from dumps into a worker thread
                 await ws.send_text(await asyncio.to_thread(dumps, m))
+                # Record that a message was sent
                 engine.record.event(
                     "send_attempt",
                     ue_id=u.uid,
@@ -237,24 +263,29 @@ def create_app(engine):
                         for key in ("campaign_id", "scenario_id", "attempt_id")
                     },
                 )
+                # If a websocket connection is replaced due to a UE reconnecting, close the old websocket
                 if m["type"] == "connection_replaced":
                     await ws.close(code=1000)
                     return
 
+        # Handle the return of frame results to the UE while a UE's control websocket was disconnected
         async def replay():
             # Fixed reconnect snapshot ordered by video/frame, in bounded disk pages.
-            cutoff = await asyncio.to_thread(engine.replay.maximum, u.uid)
+            cutoff = await asyncio.to_thread(engine.replay.maximum, u.uid)  # Cutoff is when the results are no longer to be stored
             offset = 0
             while True:
+                # A page is a batch of 16 results that were saved
                 page = await asyncio.to_thread(
                     engine.replay.ordered_page, u.uid, cutoff, offset, 16
                 )
                 if not page:
                     return
                 for m in page:
+                    # handle a full queue
                     while out.full():
                         await asyncio.sleep(0.005)
                     enqueue(m)
+                    # Record the replay attempt
                     engine.record.event(
                         "replay_attempt",
                         ue_id=u.uid,
@@ -264,20 +295,27 @@ def create_app(engine):
                             for key in ("campaign_id", "scenario_id", "attempt_id")
                         },
                     )
+                # Offset to grab the next stored results
                 offset += len(page)
                 await asyncio.sleep(0)
 
+        # Create tasks for sending and replaying in the current control loop
         sending = asyncio.create_task(sender())
         replaying = asyncio.create_task(replay())
         try:
             while True:
+                # Asynchronously wait for message from UE
                 m = loads(await ws.receive_text())
+                # Check if UE's generation is the latest
                 if engine.ues[u.uid].generation != generation:
                     break
                 try:
+                    # Pass message from UE to engine and wait for engine's response
                     result = await engine.command(u, m)
+                    # queue result from engine
                     if result:
                         enqueue(engine.contextual(result))
+                # Error handling
                 except (ValueError, KeyError, TypeError) as ex:
                     enqueue(
                         engine.contextual(
@@ -287,8 +325,8 @@ def create_app(engine):
         except WebSocketDisconnect:
             pass
         finally:
-            engine.disconnect(u.uid, generation)
-            sending.cancel()
+            engine.disconnect(u.uid, generation)    # Disconnect UE of current generation in engine
+            sending.cancel()                        # Cancel tasks in event loop and wait for them to cancel in .gather
             replaying.cancel()
             await asyncio.gather(sending, replaying, return_exceptions=True)
 
