@@ -12,6 +12,7 @@ VIDEO_SUFFIXES = {".mp4", ".mov", ".mkv", ".avi"}
 
 
 def videos_in(directory):
+    """Searches directory for videos with suffixes in VIDEO_SUFFIXES"""
     return [
         path.resolve()
         for path in sorted(directory.rglob("*"))
@@ -20,6 +21,7 @@ def videos_in(directory):
 
 
 def main():
+    # Read command line arguments.
     parser = argparse.ArgumentParser()
     parser.add_argument("--video-dir", type=Path, required=True)
     parser.add_argument(
@@ -37,6 +39,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
 
+    # Validate command line arguments
     if min(args.bitrates) <= 0 or min(args.width, args.height, args.fps, args.gop_frames) <= 0:
         parser.error("bitrates and video parameters must be positive")
     videos = videos_in(args.video_dir)
@@ -62,6 +65,7 @@ def main():
     }
     (args.output / "profile.json").write_text(json.dumps(metadata, indent=2))
 
+    # CSV Header fields
     fields = [
         "video",
         "bitrate_bps",
@@ -72,22 +76,27 @@ def main():
         "encoded_bytes",
     ]
     with (args.output / "frame-sizes.csv").open("w", newline="") as output:
-        writer = csv.DictWriter(output, fieldnames=fields)
-        writer.writeheader()
+        writer = csv.DictWriter(output, fieldnames=fields) # Create CSV writer
+        writer.writeheader()  # Write header
+        # Encode first by bitrate, then by video
         for bitrate in sorted(set(args.bitrates)):
             for video in videos:
+                # Read and decode the video into raw images
                 capture = cv2.VideoCapture(str(video))
                 if not capture.isOpened():
                     raise RuntimeError(f"unreadable input video: {video}")
+                # Create the encoder object with the proper fps and bitrate
                 encoder = Encoder(args.width, args.height, args.fps, bitrate)
                 try:
                     frame_id = 0
                     while True:
+                        # bgr is decoded image
                         ok, bgr = capture.read()
                         if not ok:
                             break
-                        bgr = cv2.resize(bgr, (args.width, args.height))
-                        gop_frame = frame_id % args.gop_frames
+                        bgr = cv2.resize(bgr, (args.width, args.height)) # Resize the frame
+                        gop_frame = frame_id % args.gop_frames  # Determine if frame is a GOP boundary frame
+                        # Encode the frame
                         nals = encoder.frame(
                             bgr,
                             frame_id,
@@ -95,6 +104,7 @@ def main():
                             keyframe=gop_frame == 0,
                             bitrate=bitrate,
                         )
+                        # Determine the frame type
                         frame_type = "I" if any(nal[0] & 31 == 5 for nal in nals) else "P"
                         if gop_frame == 0 and frame_type != "I":
                             raise RuntimeError(
@@ -108,6 +118,7 @@ def main():
                                 "gop_id": frame_id // args.gop_frames,
                                 "gop_frame": gop_frame,
                                 "frame_type": frame_type,
+                                # Record the number of bytes, including the NAL header
                                 "encoded_bytes": len(canonical_au(nals)),
                             }
                         )
