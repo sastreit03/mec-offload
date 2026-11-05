@@ -59,7 +59,7 @@ the only step that connects to the MEC Spark:
 
 ```bash
 rsync -av \
-  sstreit@192.168.71.130:~/mec-offload-ad/multi-ue/datasets/profile-videos/ \
+  sstreit@130.127.199.125:~/mec-offload-ad/multi-ue/datasets/profile-videos/ \
   datasets/profile-videos/
 ```
 

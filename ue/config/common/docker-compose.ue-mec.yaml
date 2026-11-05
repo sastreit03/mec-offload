@@ -1,0 +1,6 @@
+services:
+  oai-nr-ue:
+    volumes:
+      - ../../../multi-ue:/multi-ue:ro
+      - ../../../multi-ue/datasets:/datasets:ro
+      - ../../../multi-ue/runs:/multi-ue/runs
