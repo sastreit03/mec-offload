@@ -45,8 +45,8 @@ Otherwise, using `adb` from Android SDK Platform Tools on the Mac:
 adb devices
 PIXEL_SERIAL='<serial from adb devices>'
 SOURCE_DIR='<directory containing the eight original videos on the Mac>'
-adb -s "$PIXEL_SERIAL" shell mkdir -p /sdcard/Movies/AetheredgeEncoderProfiling
-adb -s "$PIXEL_SERIAL" push "$SOURCE_DIR/." /sdcard/Movies/AetheredgeEncoderProfiling/
+adb -s "$PIXEL_SERIAL" shell mkdir -p /sdcard/Movies/EncoderProfiling
+adb -s "$PIXEL_SERIAL" push "$SOURCE_DIR/." /sdcard/Movies/EncoderProfiling/
 ```
 
 Use original videos, not pre-encoded campaign variants. `profile.json` records

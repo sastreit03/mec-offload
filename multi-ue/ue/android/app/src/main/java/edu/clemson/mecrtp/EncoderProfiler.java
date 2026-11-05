@@ -108,7 +108,8 @@ public final class EncoderProfiler {
         .put("build_fingerprint", Build.FINGERPRINT)
         .put("timestamp_policy", "retain_all_frames_retime_frame_index_over_fps")
         .put("byte_accounting", "production_canonical_annexb_with_sps_pps_on_idr")
-        .put("bitrate_mode", "production_default_not_explicitly_selected")
+        .put("bitrate_mode", "CBR")
+        .put("bitrate_mode_requested", MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)
         .put("videos", new JSONArray()).put("source_sha256", new JSONObject());
     for (Video v : videos) meta.getJSONArray("videos").put(v.name);
     metadata(root, meta);
@@ -171,6 +172,13 @@ public final class EncoderProfiler {
       decoder.start(); decoderStarted = true;
       MediaFormat requested = H264Encoding.format(width, height, fps, rate);
       encoder = MediaCodec.createEncoderByType("video/avc");
+      int mode = MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR;
+      boolean supported = encoder.getCodecInfo()
+          .getCapabilitiesForType("video/avc")
+          .getEncoderCapabilities()
+          .isBitrateModeSupported(mode);
+      if (!supported) throw new IOException("Selected encoder does not support CBR");
+      requested.setInteger(MediaFormat.KEY_BITRATE_MODE, mode);
       encoder.configure(requested, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
       encoder.start(); encoderStarted = true;
       while (!outputEos) {
