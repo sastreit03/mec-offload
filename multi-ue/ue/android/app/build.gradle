@@ -8,6 +8,13 @@ android {
         targetSdk 35
         versionCode 2
         versionName '2.0'
+        // Optional side-by-side install keeps campaign app data and signing untouched.
+        if (project.hasProperty('encoderProfiling')) {
+            applicationIdSuffix '.profiling'
+            versionNameSuffix '-profiling'
+        }
+        manifestPlaceholders = [appLabel: project.hasProperty('encoderProfiling')
+            ? 'Pixel Encoder Profiler' : 'Pixel RTP MEC']
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

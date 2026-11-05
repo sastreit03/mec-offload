@@ -101,3 +101,73 @@ def test_all_intra_gop(tmp_path):
         summary = list(csv.DictReader(stream))
     assert len(summary) == 2
     assert all(row["frame_type"] == "I" for row in summary)
+
+
+def pixel_artifacts(tmp_path):
+    rows, args = artifacts(tmp_path)
+    meta_path = tmp_path / "profile.json"
+    meta = json.loads(meta_path.read_text())
+    meta.update(encoder="android_mediacodec_offline_v1", status="complete")
+    meta_path.write_text(json.dumps(meta))
+    for row in rows:
+        row["pts_us"] = row["frame_id"] * 100000
+    write_rows(tmp_path, rows)
+    streams = [dict(video=v, bitrate_bps=r, submitted_frames=4, encoded_frames=4, encoder_eos=True)
+               for r in (500000, 1500000) for v in ("a.mov", "b.mov")]
+    (tmp_path / "streams.jsonl").write_text("".join(json.dumps(s) + "\n" for s in streams))
+    return rows, args
+
+
+def test_pixel_profile_and_extra_idrs(tmp_path):
+    rows, args = pixel_artifacts(tmp_path)
+    rows[1]["frame_type"] = "I"
+    write_rows(tmp_path, rows)
+    main(args)
+    with (tmp_path / "keyframe_summary.csv").open() as stream:
+        keyframes = list(csv.DictReader(stream))
+    assert keyframes[0]["extra_idr_frames"] == "1"
+    assert keyframes[0]["idr_positions"] == "[0, 1, 2]"
+    with (tmp_path / "bitrate_windows.csv").open() as stream:
+        windows = list(csv.DictReader(stream))
+    assert len(windows) == 4
+    assert windows[0]["partial_window"] == "True"
+    assert float(windows[0]["produced_bps"]) == 8000
+
+
+def test_full_and_partial_bitrate_windows(tmp_path):
+    _, args = artifacts(tmp_path, gop=10)
+    rows = [dict(video=v, bitrate_bps=r, frame_id=f, gop_id=f // 10,
+                 gop_frame=f % 10, frame_type="I" if f % 10 == 0 else "P",
+                 encoded_bytes=100 if f < 50 else 200)
+            for r in (500000, 1500000) for v in ("a.mov", "b.mov")
+            for f in range(60)]
+    write_rows(tmp_path, rows)
+    main(args)
+    with (tmp_path / "bitrate_windows.csv").open() as stream:
+        windows = list(csv.DictReader(stream))
+    assert len(windows) == 8
+    assert [(r["frames"], r["partial_window"], float(r["produced_bps"]))
+            for r in windows[:2]] == [("50", "False", 8000), ("10", "True", 16000)]
+
+
+@pytest.mark.parametrize("problem", ["timestamp", "running", "missing_drain", "drain_count", "eos"])
+def test_pixel_rejects_incomplete_evidence(tmp_path, problem):
+    rows, args = pixel_artifacts(tmp_path)
+    if problem == "timestamp":
+        rows[1]["pts_us"] = 33333
+        write_rows(tmp_path, rows)
+    elif problem == "running":
+        p = tmp_path / "profile.json"
+        m = json.loads(p.read_text()); m["status"] = "running"
+        p.write_text(json.dumps(m))
+    elif problem == "missing_drain":
+        (tmp_path / "streams.jsonl").write_text("")
+    else:
+        p = tmp_path / "streams.jsonl"
+        streams = [json.loads(line) for line in p.read_text().splitlines()]
+        streams[0]["encoded_frames" if problem == "drain_count" else "encoder_eos"] = (
+            3 if problem == "drain_count" else False)
+        p.write_text("".join(json.dumps(s) + "\n" for s in streams))
+    with pytest.raises(SystemExit) as error:
+        main(args)
+    assert error.value.code == 1

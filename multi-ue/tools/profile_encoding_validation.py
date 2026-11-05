@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Linux encoder profiling artifacts and summarize each bitrate."""
+"""Validate Linux or Pixel encoder profiling artifacts and summarize each bitrate."""
 
 import argparse
 import csv
@@ -21,6 +21,9 @@ def percentile(values, probability):
 def validate(args):
     # Read profile.json, which has the profiling settings/metadata used
     metadata = json.loads((args.profile_dir / "profile.json").read_text())
+    pixel = metadata.get("encoder") == "android_mediacodec_offline_v1"
+    if pixel and metadata.get("status") != "complete":
+        raise ValueError(f"Pixel profile did not complete: {metadata.get('status')}")
     bitrates = sorted(set(args.bitrates))
     for key, expected in {
         "bitrates_bps": bitrates,
@@ -41,6 +44,7 @@ def validate(args):
 
     by_video = defaultdict(list)    # For video bitrate/frame count calculations
     by_type = defaultdict(list)     # For frame type statistics
+    idrs = defaultdict(list)
     # Read the CSV with the byte counts by frame
     with (args.profile_dir / "frame-sizes.csv").open(newline="") as source:
         # Create CSV reader
@@ -49,6 +53,8 @@ def validate(args):
             "video", "bitrate_bps", "frame_id", "gop_id", "gop_frame",
             "frame_type", "encoded_bytes",
         }
+        if pixel:
+            required.add("pts_us")
         # Check header fields
         if not required <= set(reader.fieldnames or []):
             raise ValueError("frame-sizes.csv is missing required columns")
@@ -74,6 +80,10 @@ def validate(args):
                 raise ValueError(f"row {number}: GOP position does not match --gop-frames")
             if fid % args.gop_frames == 0 and frame_type != "I":
                 raise ValueError(f"row {number}: GOP boundary is not I")
+            if pixel and int(row["pts_us"]) != math.floor(fid * 1_000_000 / args.fps + 0.5):
+                raise ValueError(f"row {number}: unexpected retimed presentation timestamp")
+            if frame_type == "I":
+                idrs[(bitrate, video)].append(fid)
 
             # Add frame data to dictionaries
             by_video[(bitrate, video)].append(size)
@@ -86,6 +96,24 @@ def validate(args):
             raise ValueError(f"missing frame rows for one or more bitrates: {video}")
         if len(set(counts)) != 1:
             raise ValueError(f"frame counts differ across bitrates for {video}: {counts}")
+
+    if pixel:
+        streams = {}
+        with (args.profile_dir / "streams.jsonl").open() as source:
+            for line in source:
+                stream = json.loads(line)
+                key = (stream["bitrate_bps"], stream["video"])
+                if key in streams:
+                    raise ValueError(f"duplicate drain record: {key}")
+                streams[key] = stream
+        if set(streams) != set(by_video):
+            raise ValueError("Pixel drain records do not cover exactly the profiled streams")
+        for key, sizes in by_video.items():
+            stream = streams[key]
+            if (stream.get("encoder_eos") is not True
+                    or stream.get("submitted_frames") != len(sizes)
+                    or stream.get("encoded_frames") != len(sizes)):
+                raise ValueError(f"incomplete Pixel encoder drain: {key}")
 
     summary = []
     # Process results first by bitrate, then by frame type
@@ -106,7 +134,41 @@ def validate(args):
                 "p95_bytes": percentile(values, 0.95),
                 "p99_bytes": percentile(values, 0.99),
             })
-    return summary, by_video
+    return summary, by_video, idrs
+
+
+def write_csv(path, rows):
+    with path.open("w", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def detailed_reports(args, by_video, idrs):
+    """Report non-overlapping five-second media windows and extra IDRs."""
+    windows, keyframes = [], []
+    window_frames = 5 * args.fps
+    for (rate, video), sizes in sorted(by_video.items()):
+        for start in range(0, len(sizes), window_frames):
+            chunk = sizes[start:start + window_frames]
+            duration = len(chunk) / args.fps
+            produced = sum(chunk) * 8 / duration
+            windows.append(dict(
+                video=video, requested_bps=rate, start_frame=start,
+                start_media_s=start / args.fps, frames=len(chunk), media_duration_s=duration,
+                partial_window=len(chunk) != window_frames, encoded_bytes=sum(chunk),
+                produced_bps=produced, produced_requested_ratio=produced / rate,
+            ))
+        positions = idrs[(rate, video)]
+        keyframes.append(dict(
+            video=video, requested_bps=rate, frames=len(sizes), idr_frames=len(positions),
+            non_idr_frames=len(sizes) - len(positions),
+            requested_idr_frames=(len(sizes) + args.gop_frames - 1) // args.gop_frames,
+            extra_idr_frames=sum(fid % args.gop_frames != 0 for fid in positions),
+            idr_positions=json.dumps(positions),
+        ))
+    write_csv(args.profile_dir / "bitrate_windows.csv", windows)
+    write_csv(args.profile_dir / "keyframe_summary.csv", keyframes)
 
 
 def main(argv=None):
@@ -126,7 +188,7 @@ def main(argv=None):
            args.height, args.expected_videos) <= 0:
         parser.error("bitrates, video parameters, and expected video count must be positive")
     try:
-        summary, by_video = validate(args)
+        summary, by_video, idrs = validate(args)
     except (OSError, ValueError, KeyError, TypeError, csv.Error) as error:
         parser.exit(1, f"Encoding profile validation: FAIL: {error}\n")
 
@@ -190,6 +252,8 @@ def main(argv=None):
         writer.writeheader()
         writer.writerows(comparisons)
     print(f"Bitrate comparison: {comparison_output}")
+    detailed_reports(args, by_video, idrs)
+    print(f"Window and IDR reports: {args.profile_dir}")
     print(f"Summary: {output}")
     print("Encoding profile validation: PASS")
 

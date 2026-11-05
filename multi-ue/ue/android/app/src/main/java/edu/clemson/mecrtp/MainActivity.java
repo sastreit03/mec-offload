@@ -138,6 +138,17 @@ public final class MainActivity extends Activity {
     stop.setText("End video");
     stop.setOnClickListener(v -> end());
     root.addView(stop);
+    Button profile = new Button(this);
+    profile.setText("Offline encoder profiling");
+    profile.setOnClickListener(v -> {
+      if (enabled || media != null || session != null) {
+        Toast.makeText(this, "Restart the app before offline profiling; streaming is active.",
+            Toast.LENGTH_LONG).show();
+        return;
+      }
+      startActivity(new Intent(this, EncoderProfileActivity.class));
+    });
+    root.addView(profile);
     controlStatus = statusBox("Control: disconnected");
     root.addView(controlStatus);
     frameStatus = statusBox("Frames: transmitted=none, result=none");

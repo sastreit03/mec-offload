@@ -73,14 +73,7 @@ public final class AvcSource {
     height = c.getInt("height");
     fps = c.getInt("fps");
     bitrate = c.getInt("bitrate_bps");
-    MediaFormat f = MediaFormat.createVideoFormat("video/avc", width, height);
-    f.setInteger(
-        MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
-    f.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
-    f.setInteger(MediaFormat.KEY_FRAME_RATE, fps);
-    f.setFloat(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
-    f.setInteger(MediaFormat.KEY_PROFILE, MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline);
-    f.setInteger(MediaFormat.KEY_MAX_B_FRAMES, 0);
+    MediaFormat f = H264Encoding.format(width, height, fps, bitrate);
     encoder = MediaCodec.createEncoderByType("video/avc");
     encoder.configure(f, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
     encoder.start();
@@ -207,24 +200,7 @@ public final class AvcSource {
     }
     if (session.keyframe()) b.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
     if (!b.isEmpty()) encoder.setParameters(b);
-    android.graphics.Rect crop = source.getCropRect();
-    for (int p = 0; p < 3; p++) {
-      int scale = p == 0 ? 1 : 2;
-      Image.Plane s = source.getPlanes()[p], d = target.getPlanes()[p];
-      YuvScaler.plane(
-          s.getBuffer(),
-          s.getRowStride(),
-          s.getPixelStride(),
-          d.getBuffer(),
-          d.getRowStride(),
-          d.getPixelStride(),
-          crop.left / scale,
-          crop.top / scale,
-          crop.width() / scale,
-          crop.height() / scale,
-          width / scale,
-          height / scale);
-    }
+    H264Encoding.copy(source, target, width, height);
     ByteBuffer raw = encoder.getInputBuffer(index);
     encoder.queueInputBuffer(
         index, 0, raw == null ? width * height * 3 / 2 : raw.capacity(), pts, 0);

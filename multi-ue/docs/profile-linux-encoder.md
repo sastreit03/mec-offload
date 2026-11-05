@@ -114,8 +114,8 @@ variables in the same shell for the remaining steps:
 ```bash
 GOP=<GOP_IN_FRAMES, e.g., 30>
 FPS=<FRAMES_PER_SECOND, e.g., 30>
-WIDTH=<WIDTH_IN_PIXELS, e.g., 720>
-HEIGHT=<HEIGHT_IN_PIXELS, e.g., 1280>
+WIDTH=<WIDTH_IN_PIXELS, e.g., 1280>
+HEIGHT=<HEIGHT_IN_PIXELS, e.g., 720>
 
 # Replace with with desired bitrates
 BITRATES=(500000 1000000 1500000 2000000 4000000)
@@ -209,7 +209,8 @@ The `mean_bytes` values are the values that correspond to
 ```bash
 (
   cd "$PROFILE_DIR"
-  sha256sum profile.json frame-sizes.csv summary.csv > SHA256SUMS
+  sha256sum profile.json frame-sizes.csv summary.csv bitrate_comparison.csv \
+    > SHA256SUMS
   sha256sum -c SHA256SUMS
 )
 
@@ -217,9 +218,10 @@ echo "Profile directory: $PROFILE_DIR"
 du -sh "$PROFILE_DIR"
 ```
 
-Keep all four files together:
+Keep all five files together:
 
 ```text
+bitrate_comparison.csv
 profile.json
 frame-sizes.csv
 summary.csv

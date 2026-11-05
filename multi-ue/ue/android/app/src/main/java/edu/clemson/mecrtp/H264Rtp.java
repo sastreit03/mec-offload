@@ -73,7 +73,8 @@ public final class H264Rtp {
     }
   }
 
-  public void accessUnit(byte[] encoded, long pts) throws IOException {
+  /** Production payload NALs, also used by offline profiling without sending packets. */
+  public List<byte[]> accessUnitNals(byte[] encoded) {
     List<byte[]> nals = split(encoded);
     boolean idr = nals.stream().anyMatch(n -> (n[0] & 31) == 5);
     configure(encoded);
@@ -83,6 +84,12 @@ public final class H264Rtp {
       for (byte[] n : nals) if ((n[0] & 31) != 7 && (n[0] & 31) != 8) all.add(n);
       nals = all;
     }
+    return nals;
+  }
+
+  public void accessUnit(byte[] encoded, long pts) throws IOException {
+    List<byte[]> nals = accessUnitNals(encoded);
+    boolean idr = nals.stream().anyMatch(n -> (n[0] & 31) == 5);
     long size = 0;
     for (byte[] n : nals) size += n.length + 4;
     // Canonical size includes four-byte Annex-B prefixes, but excludes transport headers.
