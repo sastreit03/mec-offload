@@ -139,6 +139,7 @@ def main(argv=None):
         writer.writerows(summary)
 
 
+    comparisons = []
     for bitrate in sorted(set(args.bitrates)):
         print(f"requested_bps={bitrate}")
         all_sizes = []
@@ -146,8 +147,19 @@ def main(argv=None):
             if rate != bitrate:
                 continue
             all_sizes.extend(sizes)
-            produced = sum(sizes) * 8 / (len(sizes) / args.fps) # Produced bps
-            print(f"  video={video} frames={len(sizes)} produced_bps={produced:.0f} "
+            total_bytes = sum(sizes)
+            produced = total_bytes * 8 / (len(sizes) / args.fps) # Produced bps
+            comparisons.append({
+                "scope": "video",
+                "video": video,
+                "requested_bps": bitrate,
+                "encoded_bytes": total_bytes,
+                "frames": len(sizes),
+                "media_duration_s": len(sizes) / args.fps,
+                "produced_bps": produced,
+                "produced_requested_ratio": produced / bitrate,
+            })
+            print(f"  video={video} encoded_bytes={total_bytes} frames={len(sizes)} produced_bps={produced:.0f} "
                   f"produced/requested={produced / bitrate:.4f}")
         for item in summary:
             if item["bitrate_bps"] == bitrate:
@@ -158,9 +170,26 @@ def main(argv=None):
                       f"p99_bytes={item['p99_bytes']:.3f}")
         # Calculate produced bps across all frame sizes at this bitrate
         duration = len(all_sizes) / args.fps
-        produced = sum(all_sizes) * 8 / duration
-        print(f"  aggregate frames={len(all_sizes)} media_duration_s={duration:.3f} "
+        total_bytes = sum(all_sizes)
+        produced = total_bytes * 8 / duration
+        comparisons.append({
+            "scope": "aggregate",
+            "video": "",
+            "requested_bps": bitrate,
+            "encoded_bytes": total_bytes,
+            "frames": len(all_sizes),
+            "media_duration_s": duration,
+            "produced_bps": produced,
+            "produced_requested_ratio": produced / bitrate,
+        })
+        print(f"  aggregate encoded_bytes={total_bytes} frames={len(all_sizes)} media_duration_s={duration:.3f} "
               f"produced_bps={produced:.0f} produced/requested={produced / bitrate:.4f}")
+    comparison_output = args.profile_dir / "bitrate_comparison.csv"
+    with comparison_output.open("w", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(comparisons[0]))
+        writer.writeheader()
+        writer.writerows(comparisons)
+    print(f"Bitrate comparison: {comparison_output}")
     print(f"Summary: {output}")
     print("Encoding profile validation: PASS")
 

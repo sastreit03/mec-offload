@@ -46,8 +46,30 @@ def test_multiple_bitrates_and_ten_fps(tmp_path, capsys):
         ("1500000", "I", "4", "300"), ("1500000", "P", "4", "300"),
     ]
     output = capsys.readouterr().out
+    for video in ("a.mov", "b.mov"):
+        assert (f"video={video} encoded_bytes=400 frames=4 produced_bps=8000 "
+                "produced/requested=0.0160") in output
+        assert (f"video={video} encoded_bytes=1200 frames=4 produced_bps=24000 "
+                "produced/requested=0.0160") in output
+    assert "aggregate encoded_bytes=800 frames=8" in output
+    assert "aggregate encoded_bytes=2400 frames=8" in output
     assert "media_duration_s=0.800 produced_bps=8000" in output
     assert "media_duration_s=0.800 produced_bps=24000" in output
+    with (tmp_path / "bitrate_comparison.csv").open() as stream:
+        comparisons = list(csv.DictReader(stream))
+    assert len(comparisons) == 6
+    for rate, size, produced in ((500000, 400, 8000), (1500000, 1200, 24000)):
+        rows = [r for r in comparisons if int(r["requested_bps"]) == rate]
+        assert [(r["scope"], r["video"]) for r in rows] == [
+            ("video", "a.mov"), ("video", "b.mov"), ("aggregate", ""),
+        ]
+        for row in rows:
+            factor = 2 if row["scope"] == "aggregate" else 1
+            assert int(row["encoded_bytes"]) == size * factor
+            assert int(row["frames"]) == 4 * factor
+            assert float(row["media_duration_s"]) == 0.4 * factor
+            assert float(row["produced_bps"]) == produced
+            assert float(row["produced_requested_ratio"]) == produced / rate
 
 
 @pytest.mark.parametrize("problem", ["missing_video", "duplicate", "gop", "idr", "resolution", "truncated"])
