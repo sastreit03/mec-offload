@@ -104,7 +104,7 @@ for bitrate in "${BITRATES[@]}"; do
 done
 python3 tools/profile_encoding_validation.py \
   --profile-dir "$PROFILE_DIR" "${BITRATE_ARGS[@]}" \
-  --fps "$FPS" --gop-frames "$GOP_FRAMES" \
+  --fps "$FPS" --gop-frames "$GOP" \
   --width "$WIDTH" --height "$HEIGHT" --expected-videos 8
 ```
 
