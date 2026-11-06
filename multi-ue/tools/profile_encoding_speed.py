@@ -36,6 +36,7 @@ def measure_stream(video, bitrate, args, cv2, encoder_class, canonical_au,
     Results stay in memory until the stream ends, excluding CSV I/O from timing.
     The measured encoder call includes BGR copying, videoconvert, x264, and parsing.
     """
+    # Setup start captures time before opening the video and constructing the encoder
     setup_start = clock()
     capture = cv2.VideoCapture(str(video))
     encoder = None
@@ -43,23 +44,30 @@ def measure_stream(video, bitrate, args, cv2, encoder_class, canonical_au,
         if not capture.isOpened():
             raise RuntimeError(f"unreadable input video: {video}")
         encoder = encoder_class(args.width, args.height, args.fps, bitrate)
+        # Capture time when frame schedule begins
         origin = clock()
         rows = []
         frame_id = 0
         while True:
+            # When to begin encoding
             release = origin + round(frame_id * 1e9 / args.fps)
+            # Deadline when encoding should be finished
             deadline = origin + round((frame_id + 1) * 1e9 / args.fps)
+            # Pause execution if the script is ahead of schedule
             remaining = release - clock()
             while remaining > 0:
                 sleep(remaining / 1e9)
                 remaining = release - clock()
+            # Capture how long reading the frame bytes takes
             read_start = clock()
             ok, bgr = capture.read()
             read_end = clock()
             if not ok:
                 break
+            # Resize the image
             bgr = cv2.resize(bgr, (args.width, args.height))
             resize_end = clock()
+            # Encode the image
             gop_frame = frame_id % args.gop_frames
             nals = encoder.frame(bgr, frame_id, args.fps,
                                  keyframe=gop_frame == 0, bitrate=bitrate)
@@ -70,6 +78,7 @@ def measure_stream(video, bitrate, args, cv2, encoder_class, canonical_au,
             if gop_frame == 0 and kind != "I":
                 raise RuntimeError(f"missing requested IDR: {video} frame {frame_id}")
             encoded_bytes = len(canonical_au(nals))
+            # capture when frame is ready and record timing
             ready = clock()
             rows.append(dict(
                 video=str(video), bitrate_bps=bitrate, frame_id=frame_id,
@@ -142,6 +151,7 @@ def sha256(path):
 
 
 def main(argv=None):
+    # Read command line arguments
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--video-dir", type=Path, required=True)
     parser.add_argument("--bitrate", type=int, action="append", dest="bitrates", required=True)
@@ -152,6 +162,8 @@ def main(argv=None):
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--expected-videos", type=int, default=8)
     args = parser.parse_args(argv)
+
+    # Validate command line arguments
     if min(*args.bitrates, args.width, args.height, args.fps, args.gop_frames, args.expected_videos) <= 0:
         parser.error("bitrates, dimensions, FPS, GOP, and expected videos must be positive")
     if args.width % 2 or args.height % 2:
@@ -162,6 +174,7 @@ def main(argv=None):
     if args.output.exists() and any(args.output.iterdir()):
         parser.error("output directory must be empty or new")
 
+    # Import the production encoder
     root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(root / "ue/linux/src"))
     sys.path.insert(0, str(root / "contracts/python"))
@@ -169,6 +182,7 @@ def main(argv=None):
     from mec_contracts.rtp import canonical_au
     import cv2
 
+    # Create profile.json to contain the profiling metadata
     args.output.mkdir(parents=True, exist_ok=True)
     metadata = dict(status="running", videos=list(map(str, videos)),
                     bitrates_bps=sorted(set(args.bitrates)), fps=args.fps,
@@ -193,17 +207,21 @@ def main(argv=None):
         save_metadata()
         with (args.output / "frame-timings.csv").open("w", newline="") as stream:
             writer = None
+            # Profile for each rate and each video
             for rate in metadata["bitrates_bps"]:
                 for video in videos:
                     print(f"Profiling {video.name} at {rate} bps, {args.fps} FPS", flush=True)
+                    # Open the video and start timing frame encoding
                     rows, setup_ns = measure_stream(video, rate, args, cv2, Encoder, canonical_au)
                     if expected_counts.setdefault(video, len(rows)) != len(rows):
                         raise RuntimeError(f"frame count changed across bitrates: {video}")
                     if writer is None:
+                        # Create CSV writer and write header
                         writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
                         writer.writeheader()
                     writer.writerows(rows)
                     stream.flush()
+                    # Summarize frame timing and writ to summary.csv
                     summary = summarize(rows, args.fps, setup_ns)
                     summaries.append(summary)
                     write_csv(args.output / "summary.csv", summaries)
