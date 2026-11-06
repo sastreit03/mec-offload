@@ -161,6 +161,21 @@ public final class LocalSubmissionProfiler {
   private Map<String, Object> summary;
   private boolean timingHeaderWritten;
 
+  private static void logImageLayout(String label, Image image) {
+    android.util.Log.i("PixelImageLayout", label + " format=" + image.getFormat()
+        + " dimensions=" + image.getWidth() + "x" + image.getHeight()
+        + " crop=" + image.getCropRect());
+    Image.Plane[] planes = image.getPlanes();
+    for (int i = 0; i < planes.length; i++) {
+      ByteBuffer buffer = planes[i].getBuffer();
+      android.util.Log.i("PixelImageLayout", label + " plane=" + i
+          + " rowStride=" + planes[i].getRowStride()
+          + " pixelStride=" + planes[i].getPixelStride()
+          + " position=" + buffer.position() + " limit=" + buffer.limit()
+          + " capacity=" + buffer.capacity() + " direct=" + buffer.isDirect());
+    }
+  }
+
   private static void writeRow(BufferedWriter out, Map<String, Object> row, boolean header) throws IOException {
     if (header) { out.write(String.join(",", row.keySet())); out.newLine(); }
     List<String> values = new ArrayList<>();
@@ -337,6 +352,12 @@ public final class LocalSubmissionProfiler {
           if (in >= 0) {
             try (Image raw = decoder.getOutputImage(pending); Image target = encoder.getInputImage(in)) {
               if (raw == null || target == null) throw new IOException("Codec lacks flexible YUV images");
+              if (submitted == 0) {
+                android.util.Log.i("PixelImageLayout", "video=" + video.name
+                    + " bitrate=" + rate + " fps=" + fps + " source=" + sourceFormat);
+                logImageLayout("decoder", raw);
+                logImageLayout("encoder-input", target);
+              }
               long prepareStart = System.nanoTime();
               H264Encoding.copy(raw, target, width, height);
               long copyEnd = System.nanoTime();
