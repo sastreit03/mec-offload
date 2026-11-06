@@ -108,6 +108,46 @@ agree on a one-second interval; arbitrary GOP changes may allow extra IDRs.
 
 ## 4. Pull the results
 
+### Optional orientation diagnostic
+
+To inspect the existing conversion before changing it, check **Orientation
+diagnostic: save 30 frames; run first video at lowest bitrate only**, then press
+**Start paced local UDP profile**. The eight-video directory is still required,
+but this option runs only its first alphabetical video at the lowest selected
+bitrate. It processes that entire video and saves its first 30 encoded frames.
+At 10 FPS, allow about two minutes for the first approximately 1200-frame video.
+
+The sample includes SPS/PPS and starts with an IDR. It is buffered in memory and
+written after the stream ends as `orientation-check.h264`; `orientation-check.json`
+records the source, FPS, dimensions, and captured frame range. Capture work occurs
+after timed submission but can affect later releases. `profile.json` therefore
+marks `orientation_diagnostic=true` and `timing_results_for_benchmark=false`.
+Uncheck the option for normal timing runs. This diagnostic does not correct or
+otherwise change image rotation, scaling, or encoding settings.
+
+Both app screens now support portrait and landscape device orientations. Rotation
+is handled without recreating the activities, preserving active profiling work.
+This changes the UI orientation only, not video pixels or encoder dimensions.
+Leaving the profiling screen still cancels the run.
+
+After pulling the result directory, extract its first frame on a machine with
+FFmpeg installed:
+
+```bash
+PROFILE_DIR='runs/profiling/<actual diagnostic directory>'
+ffmpeg -i "$PROFILE_DIR/orientation-check.h264" -frames:v 1 \
+  "$PROFILE_DIR/pixel-first-frame.png"
+
+# FFmpeg's default autorotation applies the original video's display rotation.
+ffmpeg -i datasets/profile-videos/00cea101-06f21d5e.mov -frames:v 1 \
+  "$PROFILE_DIR/source-first-frame.png"
+```
+
+Compare the two images for orientation, stretching, and cropping. The elementary
+H.264 sample has no container rotation tag; inspect its pixels as encoded. The
+sidecar records the intended playback FPS (30 captured frames are three seconds
+at 10 FPS or one second at 30 FPS).
+
 The app displays the output directory:
 
 ```text

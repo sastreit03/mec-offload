@@ -13,6 +13,7 @@ public final class EncoderProfileActivity extends Activity {
   private Uri directory;
   private EditText bitrates, fps, gop, width, height;
   private TextView status;
+  private CheckBox orientationSample;
   private Button start, choose, submission;
   private final AtomicBoolean cancelled = new AtomicBoolean();
   private volatile boolean running;
@@ -42,6 +43,9 @@ public final class EncoderProfileActivity extends Activity {
     height = field(root, "Height (pixels)", "720");
     start = new Button(this); start.setText("Start offline profile");
     start.setOnClickListener(v -> startProfile(false)); root.addView(start);
+    orientationSample = new CheckBox(this);
+    orientationSample.setText("Orientation diagnostic: save 30 frames; run first video at lowest bitrate only");
+    root.addView(orientationSample);
     submission = new Button(this); submission.setText("Start paced local UDP profile");
     submission.setOnClickListener(v -> startProfile(true)); root.addView(submission);
     Button stop = new Button(this); stop.setText("Cancel profile");
@@ -62,6 +66,8 @@ public final class EncoderProfileActivity extends Activity {
       int w = Integer.parseInt(width.getText().toString().trim());
       int h = Integer.parseInt(height.getText().toString().trim());
       cancelled.set(false); running = true; start.setEnabled(false); choose.setEnabled(false); submission.setEnabled(false);
+      final boolean diagnostic = localSubmission && orientationSample.isChecked();
+      orientationSample.setEnabled(false);
       Uri selected = directory;
       new Thread(() -> {
         String result;
@@ -70,21 +76,22 @@ public final class EncoderProfileActivity extends Activity {
               message -> runOnUiThread(() -> status.setText(message));
           java.io.File output;
           if (localSubmission) {
-            output = new LocalSubmissionProfiler(getApplicationContext(), cancelled, progress)
+            output = new LocalSubmissionProfiler(getApplicationContext(), cancelled, progress, diagnostic)
                 .run(selected, rates, f, g, w, h);
           } else {
             output = new EncoderProfiler(getApplicationContext(), cancelled, progress)
                 .run(selected, rates, f, g, w, h);
           }
           result = "Complete. Pull results from:\n" + output + (localSubmission
-              ? "\nReview summary.csv for deadlines and receipt verification."
+              ? (diagnostic ? "\nInspect orientation-check.h264; these are diagnostic timings."
+                  : "\nReview summary.csv for deadlines and receipt verification.")
               : "\nThen run the Python validator on your PC.");
         } catch (Exception error) {
           result = "Profile did not complete: " + error;
         }
         final String message = result;
         running = false;
-        runOnUiThread(() -> { status.setText(message); start.setEnabled(true); choose.setEnabled(true); submission.setEnabled(true); });
+        runOnUiThread(() -> { status.setText(message); start.setEnabled(true); choose.setEnabled(true); submission.setEnabled(true); orientationSample.setEnabled(true); });
       }, "offline-encoder-profile").start();
     } catch (NumberFormatException error) {
       status.setText("Enter integer values for all settings.");

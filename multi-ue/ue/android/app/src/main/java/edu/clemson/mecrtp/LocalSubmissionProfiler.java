@@ -22,11 +22,14 @@ public final class LocalSubmissionProfiler {
   private final Context context;
   private final AtomicBoolean cancelled;
   private final Consumer<String> progress;
+  private final boolean captureOrientation;
+  private OrientationSample orientationSample;
 
-  public LocalSubmissionProfiler(Context context, AtomicBoolean cancelled, Consumer<String> progress) {
+  public LocalSubmissionProfiler(Context context, AtomicBoolean cancelled, Consumer<String> progress, boolean captureOrientation) {
     this.context = context;
     this.cancelled = cancelled;
     this.progress = progress;
+    this.captureOrientation = captureOrientation;
   }
 
   private void checkCancelled() throws InterruptedException {
@@ -93,6 +96,11 @@ public final class LocalSubmissionProfiler {
       sortedRates.add(rate);
     }
     List<Video> videos = videos(tree);
+    if (captureOrientation) {
+      videos = Collections.singletonList(videos.get(0));
+      int lowestRate = sortedRates.first(); sortedRates.clear(); sortedRates.add(lowestRate);
+      orientationSample = new OrientationSample();
+    }
     File parent = context.getExternalFilesDir("profiling");
     if (parent == null) throw new IOException("External app storage unavailable");
     File root = new File(parent, "video-submission-pixel-" + fps + "fps-" + gop + "gop-"
@@ -101,6 +109,8 @@ public final class LocalSubmissionProfiler {
     if (!root.mkdirs()) throw new IOException("Cannot create " + root);
     JSONObject meta = new JSONObject()
         .put("encoder", "android_local_submission_v1")
+        .put("orientation_diagnostic", captureOrientation)
+        .put("timing_results_for_benchmark", !captureOrientation)
         .put("destination", "127.0.0.1").put("mtu", 1200)
         .put("schedule", "absolute frame-index/FPS releases; retain all frames")
         .put("deadline", "last socket send return before next scheduled release")
@@ -118,7 +128,7 @@ public final class LocalSubmissionProfiler {
         .put("videos", new JSONArray()).put("source_sha256", new JSONObject());
     for (Video v : videos) meta.getJSONArray("videos").put(v.name);
     metadata(root, meta);
-    progress.accept("Output: " + root + "\nHashing eight source videos…");
+    progress.accept("Output: " + root + "\nHashing selected source videos…");
     try {
       for (Video v : videos) meta.getJSONObject("source_sha256").put(v.name, hash(v));
       metadata(root, meta);
@@ -133,6 +143,17 @@ public final class LocalSubmissionProfiler {
           progress.accept("Encoding " + (++done) + "/" + (videos.size() * sortedRates.size())
               + ": " + v.name + " at " + rate + " bit/s");
           JSONObject result = encode(v, rate, fps, gop, width, height, csv);
+          if (captureOrientation) {
+            orientationSample.save(new File(root, "orientation-check.h264"));
+            JSONObject sampleInfo = new JSONObject().put("source_video", v.name)
+                .put("source_format", result.getString("source_format"))
+                .put("first_frame_id", 0).put("frames", orientationSample.frames())
+                .put("fps", fps).put("width", width).put("height", height)
+                .put("bitrate_bps", rate).put("rotation_applied_by_profiler", false);
+            try (Writer out = writer(new File(root, "orientation-check.json"))) {
+              out.write(sampleInfo.toString(2));
+            }
+          }
           int count = result.getInt("encoded_frames");
           Integer previous = counts.put(v.name, count);
           if (previous != null && previous != count) throw new IOException("Frame count changed across bitrates");
@@ -305,6 +326,9 @@ public final class LocalSubmissionProfiler {
                     "submitted_packets", loopback.packets, "submitted_udp_bytes", loopback.bytes,
                     "codec_output_bytes", encInfo.size);
                 rows.add(current); hashes.add(loopback.sentHash()); current = null;
+                // Capture after timed submission; extra work can still affect the next release.
+                if (captureOrientation && produced < OrientationSample.FRAME_LIMIT)
+                  orientationSample.add(payload.accessUnitNals(data));
                 produced++;
               }
             }
