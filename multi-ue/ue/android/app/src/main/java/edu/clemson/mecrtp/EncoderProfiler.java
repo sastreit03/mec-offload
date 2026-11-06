@@ -180,6 +180,8 @@ public final class EncoderProfiler {
       if (!supported) throw new IOException("Selected encoder does not support CBR");
       requested.setInteger(MediaFormat.KEY_BITRATE_MODE, mode);
       encoder.configure(requested, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+      MediaFormat acceptedInput = encoder.getInputFormat();
+      android.util.Log.i("EncoderProfiler", "Accepted input format: " + acceptedInput);
       encoder.start(); encoderStarted = true;
       while (!outputEos) {
         checkCancelled();
