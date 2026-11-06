@@ -24,7 +24,7 @@ public final class AvcSource {
   private ImageReader reader;
   private H264Rtp rtp;
   private boolean active = true;
-  private int width, height, fps, bitrate;
+  private int width, height, fps, bitrate, sourceRotation;
   private long fileStart, firstPts = -1;
   private boolean inputEos;
   private final long prepareNs;
@@ -73,6 +73,7 @@ public final class AvcSource {
     height = c.getInt("height");
     fps = c.getInt("fps");
     bitrate = c.getInt("bitrate_bps");
+    sourceRotation = 0;
     MediaFormat f = H264Encoding.format(width, height, fps, bitrate);
     encoder = MediaCodec.createEncoderByType("video/avc");
     encoder.configure(f, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
@@ -169,6 +170,8 @@ public final class AvcSource {
       }
     }
     if (track < 0) throw new Exception("No video track");
+    sourceRotation = H264Encoding.rotationDegrees(f);
+    f.setInteger(MediaFormat.KEY_ROTATION, 0);
     if (f.containsKey(MediaFormat.KEY_DURATION)) durationUs = f.getLong(MediaFormat.KEY_DURATION);
     extractor.selectTrack(track);
     if (sourceStartUs > 0)
@@ -200,7 +203,7 @@ public final class AvcSource {
     }
     if (session.keyframe()) b.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
     if (!b.isEmpty()) encoder.setParameters(b);
-    H264Encoding.copy(source, target, width, height);
+    H264Encoding.copy(source, target, width, height, sourceRotation);
     ByteBuffer raw = encoder.getInputBuffer(index);
     encoder.queueInputBuffer(
         index, 0, raw == null ? width * height * 3 / 2 : raw.capacity(), pts, 0);

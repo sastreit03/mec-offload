@@ -31,6 +31,15 @@ Copy the updated repository source to the Mac, including the new Java files.
 Open `multi-ue/ue/android` in Android Studio. Install Android SDK 35 if prompted
 and use a compatible Gradle JDK (Java 17 is supported by this project).
 
+The app now builds a native CPU YUV library. In **Tools → SDK Manager → SDK
+Tools**, enable **Show Package Details** and install **NDK (Side by side)
+27.0.12077973** and **CMake 3.22.1**, then sync Gradle. Copy the updated
+`app/build.gradle`, the complete `app/src/main/cpp/` directory, and the Java
+sources to the Mac; copying Java files alone is no longer sufficient. Android
+Studio packages `libmec_yuv.so` in the APK. No GPU or external native dependency
+is used.
+
+
 For a separate installation alongside the campaign app, add this line to the
 project's local `gradle.properties` on the Mac, then sync Gradle:
 
@@ -110,7 +119,7 @@ agree on a one-second interval; arbitrary GOP changes may allow extra IDRs.
 
 ### Optional orientation diagnostic
 
-To inspect the existing conversion before changing it, check **Orientation
+To verify the current native conversion visually, check **Orientation
 diagnostic: save 30 frames; run first video at lowest bitrate only**, then press
 **Start paced local UDP profile**. The eight-video directory is still required,
 but this option runs only its first alphabetical video at the lowest selected
@@ -122,8 +131,8 @@ written after the stream ends as `orientation-check.h264`; `orientation-check.js
 records the source, FPS, dimensions, and captured frame range. Capture work occurs
 after timed submission but can affect later releases. `profile.json` therefore
 marks `orientation_diagnostic=true` and `timing_results_for_benchmark=false`.
-Uncheck the option for normal timing runs. This diagnostic does not correct or
-otherwise change image rotation, scaling, or encoding settings.
+Uncheck the option for normal timing runs. The diagnostic uses the same corrected native rotation/conversion as normal
+profiling; enabling capture does not select a different image transform.
 
 Both app screens now support portrait and landscape device orientations. Rotation
 is handled without recreating the activities, preserving active profiling work.
@@ -275,3 +284,34 @@ On the PC:
 Keep all five files and the APK/source revision used to build the app. Local
 Java compilation and loopback tests do not replace an actual Pixel smoke test;
 MediaCodec behavior and timings must be verified on the phone after rebuilding.
+
+## Native CPU image conversion
+
+Prerecorded streaming and both Pixel profilers now read each source track's
+clockwise rotation metadata (0/90/180/270 degrees), save it, and configure the
+buffer-mode decoder with rotation zero. The shared native conversion applies the
+saved rotation exactly once. Screen rotation does not determine video rotation.
+Camera input uses the existing zero-rotation policy.
+
+The converter processes Y, U, and V directly from the Android image buffers,
+respecting crop rectangles, buffer positions/limits, row padding, and planar or
+interleaved chroma strides. It uses bulk row copies for compatible unrotated
+images, tiled rotation when rotated dimensions match, and fused rotation plus
+nearest-neighbor scaling otherwise. Scaling fills the requested dimensions, as
+before; it does not introduce letterboxing. It does not convert through RGB or
+allocate a full-frame scratch image. Scaling coordinate arrays are reused by the
+codec thread. Chroma samples remain YUV420, with even crop/output dimensions
+required. Unsupported geometry fails explicitly instead of corrupting buffers.
+
+For the eight current sources, 720×1280 rotated by their individual 90° or 270°
+metadata becomes 1280×720, so the normal test requires rotation/layout conversion
+only. `image_conversion=native_cpu_rotate_scale_v1` identifies the new profiles;
+`streams.jsonl` also records `source_rotation_degrees`. The orientation diagnostic
+sidecar records the applied rotation too.
+
+After rebuilding, inspect a new diagnostic sample before running full timing and
+bitrate tests. Keep earlier results as the old conversion baseline: corrected
+orientation changes encoder input, so previous bitrate measurements should not
+be treated as measurements of the corrected implementation. Host correctness
+checks do not establish the Pixel speedup; compare new `copy_ns` and deadline
+measurements on the actual phone.

@@ -107,6 +107,7 @@ public final class EncoderProfiler {
         .put("android_release", Build.VERSION.RELEASE).put("android_sdk", Build.VERSION.SDK_INT)
         .put("build_fingerprint", Build.FINGERPRINT)
         .put("timestamp_policy", "retain_all_frames_retime_frame_index_over_fps")
+        .put("image_conversion", "native_cpu_rotate_scale_v1")
         .put("byte_accounting", "production_canonical_annexb_with_sps_pps_on_idr")
         .put("bitrate_mode", "CBR")
         .put("bitrate_mode_requested", MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)
@@ -165,6 +166,9 @@ public final class EncoderProfiler {
       }
       if (source == null) throw new IOException("No video track: " + video.name);
       String sourceFormat = source.toString();
+      int sourceRotation = H264Encoding.rotationDegrees(source);
+      // Native conversion applies the track rotation exactly once.
+      source.setInteger(MediaFormat.KEY_ROTATION, 0);
       source.setInteger(MediaFormat.KEY_COLOR_FORMAT,
           MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
       decoder = MediaCodec.createDecoderByType(source.getString(MediaFormat.KEY_MIME));
@@ -256,7 +260,7 @@ public final class EncoderProfiler {
           if (in >= 0) {
             try (Image raw = decoder.getOutputImage(pending); Image target = encoder.getInputImage(in)) {
               if (raw == null || target == null) throw new IOException("Codec lacks flexible YUV images");
-              H264Encoding.copy(raw, target, width, height);
+              H264Encoding.copy(raw, target, width, height, sourceRotation);
               if (submitted % gop == 0) {
                 Bundle params = new Bundle();
                 params.putInt(MediaCodec.PARAMETER_KEY_REQUEST_SYNC_FRAME, 0);
@@ -292,7 +296,8 @@ public final class EncoderProfiler {
           .put("submitted_frames", submitted).put("encoded_frames", produced).put("encoder_eos", true)
           .put("encoder_name", encoder.getName()).put("decoder_name", decoder.getName())
           .put("requested_format", requested.toString()).put("output_format", outputFormat)
-          .put("source_format", sourceFormat).put("elapsed_ns", System.nanoTime() - started);
+          .put("source_rotation_degrees", sourceRotation)
+          .put("image_conversion", "native_cpu_rotate_scale_v1").put("source_format", sourceFormat).put("elapsed_ns", System.nanoTime() - started);
     } finally {
       try {
         if (encoder != null) { try { if (encoderStarted) encoder.stop(); } finally { encoder.release(); } }

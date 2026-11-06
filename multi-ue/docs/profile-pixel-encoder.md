@@ -18,6 +18,15 @@ Copy the updated repository source to the Mac, including the new Java files.
 Open `multi-ue/ue/android` in Android Studio. Install Android SDK 35 if prompted
 and use a compatible Gradle JDK (Java 17 is supported by this project).
 
+The app now builds a native CPU YUV library. In **Tools → SDK Manager → SDK
+Tools**, enable **Show Package Details** and install **NDK (Side by side)
+27.0.12077973** and **CMake 3.22.1**, then sync Gradle. Copy the updated
+`app/build.gradle`, the complete `app/src/main/cpp/` directory, and the Java
+sources to the Mac; copying Java files alone is no longer sufficient. Android
+Studio packages `libmec_yuv.so` in the APK. No GPU or external native dependency
+is used.
+
+
 For a separate installation alongside the campaign app, add this line to the
 project's local `gradle.properties` on the Mac, then sync Gradle:
 
@@ -146,3 +155,34 @@ close to one: inspect the measurements before deciding on campaign settings.
 
 Local source checks cannot establish hardware behavior. The Mac APK build and
 the first completed Pixel run are still required to validate the device pipeline.
+
+## Native CPU image conversion
+
+Prerecorded streaming and both Pixel profilers now read each source track's
+clockwise rotation metadata (0/90/180/270 degrees), save it, and configure the
+buffer-mode decoder with rotation zero. The shared native conversion applies the
+saved rotation exactly once. Screen rotation does not determine video rotation.
+Camera input uses the existing zero-rotation policy.
+
+The converter processes Y, U, and V directly from the Android image buffers,
+respecting crop rectangles, buffer positions/limits, row padding, and planar or
+interleaved chroma strides. It uses bulk row copies for compatible unrotated
+images, tiled rotation when rotated dimensions match, and fused rotation plus
+nearest-neighbor scaling otherwise. Scaling fills the requested dimensions, as
+before; it does not introduce letterboxing. It does not convert through RGB or
+allocate a full-frame scratch image. Scaling coordinate arrays are reused by the
+codec thread. Chroma samples remain YUV420, with even crop/output dimensions
+required. Unsupported geometry fails explicitly instead of corrupting buffers.
+
+For the eight current sources, 720×1280 rotated by their individual 90° or 270°
+metadata becomes 1280×720, so the normal test requires rotation/layout conversion
+only. `image_conversion=native_cpu_rotate_scale_v1` identifies the new profiles;
+`streams.jsonl` also records `source_rotation_degrees`. The orientation diagnostic
+sidecar records the applied rotation too.
+
+After rebuilding, inspect a new diagnostic sample before running full timing and
+bitrate tests. Keep earlier results as the old conversion baseline: corrected
+orientation changes encoder input, so previous bitrate measurements should not
+be treated as measurements of the corrected implementation. Host correctness
+checks do not establish the Pixel speedup; compare new `copy_ns` and deadline
+measurements on the actual phone.

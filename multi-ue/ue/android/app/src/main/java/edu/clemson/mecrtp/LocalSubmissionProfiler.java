@@ -122,6 +122,7 @@ public final class LocalSubmissionProfiler {
         .put("android_release", Build.VERSION.RELEASE).put("android_sdk", Build.VERSION.SDK_INT)
         .put("build_fingerprint", Build.FINGERPRINT)
         .put("timestamp_policy", "retain_all_frames_retime_frame_index_over_fps")
+        .put("image_conversion", "native_cpu_rotate_scale_v1")
         .put("byte_accounting", "production_canonical_annexb_with_sps_pps_on_idr")
         .put("bitrate_mode", "CBR")
         .put("bitrate_mode_requested", MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)
@@ -149,7 +150,9 @@ public final class LocalSubmissionProfiler {
                 .put("source_format", result.getString("source_format"))
                 .put("first_frame_id", 0).put("frames", orientationSample.frames())
                 .put("fps", fps).put("width", width).put("height", height)
-                .put("bitrate_bps", rate).put("rotation_applied_by_profiler", false);
+                .put("bitrate_bps", rate).put("rotation_applied_by_profiler", result.getInt("source_rotation_degrees") != 0)
+                .put("rotation_degrees", result.getInt("source_rotation_degrees"))
+                .put("image_conversion", "native_cpu_rotate_scale_v1");
             try (Writer out = writer(new File(root, "orientation-check.json"))) {
               out.write(sampleInfo.toString(2));
             }
@@ -251,6 +254,9 @@ public final class LocalSubmissionProfiler {
       }
       if (source == null) throw new IOException("No video track: " + video.name);
       String sourceFormat = source.toString();
+      int sourceRotation = H264Encoding.rotationDegrees(source);
+      // Native conversion applies the track rotation exactly once.
+      source.setInteger(MediaFormat.KEY_ROTATION, 0);
       source.setInteger(MediaFormat.KEY_COLOR_FORMAT,
           MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
       decoder = MediaCodec.createDecoderByType(source.getString(MediaFormat.KEY_MIME));
@@ -383,7 +389,7 @@ public final class LocalSubmissionProfiler {
                 logImageLayout("encoder-input", target);
               }
               long prepareStart = System.nanoTime();
-              H264Encoding.copy(raw, target, width, height);
+              H264Encoding.copy(raw, target, width, height, sourceRotation);
               long copyEnd = System.nanoTime();
               if (submitted % gop == 0) {
                 Bundle params = new Bundle();
@@ -471,7 +477,8 @@ public final class LocalSubmissionProfiler {
           .put("requested_format", requested.toString()).put("accepted_input_format", acceptedInput.toString())
           .put("receive_buffer_bytes", loopback.receiveBufferBytes()).put("send_buffer_bytes", loopback.sendBufferBytes())
           .put("output_format", outputFormat)
-          .put("source_format", sourceFormat).put("elapsed_ns", System.nanoTime() - started);
+          .put("source_rotation_degrees", sourceRotation)
+          .put("image_conversion", "native_cpu_rotate_scale_v1").put("source_format", sourceFormat).put("elapsed_ns", System.nanoTime() - started);
     } finally {
       loopback.close();
       try {
