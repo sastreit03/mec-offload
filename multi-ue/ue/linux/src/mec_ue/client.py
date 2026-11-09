@@ -879,7 +879,7 @@ def main():
         default="detection",
     )
     p.add_argument("--preview-host", default="127.0.0.1", help="local preview HTTP bind address")
-    p.add_argument("--preview-port", type=int, default=8767, help="local preview HTTP port; 0 disables")
+    p.add_argument("--preview-port", type=int, default=0, help="local preview HTTP port; default 0 disables; use 8767 to enable")
     p.add_argument("--logs", default="ue-run")
     args = p.parse_args()
     if not args.source_ip and not args.source_interface:

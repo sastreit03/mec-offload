@@ -15,7 +15,8 @@ For a camera use `--source 0`. `--source-ip` must be the softUE interface addres
 
 ### Local outgoing-video preview
 
-The client serves a dashboard at **http://127.0.0.1:8767/** by default. It shows
+The preview is disabled by default (`--preview-port 0`). Enable it with
+`--preview-port 8767` to serve a dashboard at **http://127.0.0.1:8767/**. It shows
 frames passed to the encoder, before H.264 compression or transmission; it does
 not confirm reception at the MEC. The page also shows the UE alias, source,
 video ID, frame ID, encoder configuration, and preview errors.
@@ -28,14 +29,14 @@ Hidden tabs disconnect their preview. Stream changes clear the previous image.
 Preview CPU work can still affect timing measurements; use `--preview-port 0`
 to disable the server entirely for benchmark runs.
 
-Optional client flags:
+To enable the local preview:
 
 ```bash
 --preview-host 127.0.0.1 --preview-port 8767
 ```
 
 The address is in the **client's network namespace**. If the client runs directly
-on the Orin, or in a host-networked container, open the default URL in the Orin's
+on the Orin, or in a host-networked container, open the URL above in the Orin's
 browser. For a container with its own network namespace, bind with
 `--preview-host 0.0.0.0` and publish TCP port 8767 when creating that container,
 or use its reachable container IP. Do not change the RTP/control `--source-ip`

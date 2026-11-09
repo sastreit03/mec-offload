@@ -2,6 +2,7 @@ from __future__ import annotations
 import asyncio
 import json
 import math
+import os
 import time
 import uuid
 from pathlib import Path
@@ -45,6 +46,7 @@ class Runtime:
         self.root.mkdir(parents=True, exist_ok=True)
         self.log_queue = asyncio.Queue(maxsize=16384)
         self.log_errors = 0
+        self.console_logs = os.environ.get("EDGERIC_CONSOLE_LOGS", "0").lower() in ("1", "true", "yes")
         self.last_index = 0
         telemetry = config.get("ran_telemetry", {})
         window_ms = telemetry.get("aggregation_window_ms", 100)
@@ -85,8 +87,12 @@ class Runtime:
                 self.log_queue.task_done()
 
     def _append(self, data):
+        line = json.dumps(data, allow_nan=False)
         with (self.root / "events.jsonl").open("a") as f:
-            f.write(json.dumps(data, allow_nan=False) + "\n")
+            f.write(line + "\n")
+        # Mirror from the logging worker, outside the scheduling event loop.
+        if self.console_logs:
+            print(line, flush=True)
 
     def _snapshot(self, data):
         temp = self.root / "associations.tmp"

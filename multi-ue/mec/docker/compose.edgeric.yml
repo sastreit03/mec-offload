@@ -7,6 +7,8 @@ services:
     # Share gNB localhost for ZMQ while exposing gRPC through its reachable namespace.
     network_mode: container:${GNB_CONTAINER:-oai-gnb}
     restart: "no"
+    environment:
+      EDGERIC_CONSOLE_LOGS: ${EDGERIC_CONSOLE_LOGS:-0}
     volumes:
       - ../../config:/work/multi-ue/config:ro
       - ../../runs:/work/multi-ue/runs

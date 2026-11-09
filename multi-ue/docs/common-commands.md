@@ -46,6 +46,20 @@ docker inspect multi-ue-mec \
 docker logs --tail 200 multi-ue-mec
 ```
 
+## View videos being streamed to MEC via dashboards
+
+On a web browser on the MEC server, enter this website:
+
+```
+http://192.168.72.136:8765/
+```
+
+On a web browser on the linux UE's PC:
+
+```
+http://192.168.71.150:8767/
+```
+
 ## Check UE connection and EdgeRIC association
 
 Run on the **MEC Spark** from any directory while `multi-ue-mec` is running:
