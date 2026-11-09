@@ -8,6 +8,7 @@ import sqlite3
 import subprocess
 from pathlib import Path
 from .media import Streamer
+from .preview import Preview
 from .playlist import Playlist
 
 
@@ -43,6 +44,7 @@ class Clock:
 class Client:
     def __init__(self, args):
         self.args = args
+        self.preview = None
         self.clock = Clock()
         self.ws = None
         self.uid = None
@@ -312,6 +314,7 @@ class Client:
             self.clock,
             self.media_event,
             self.successor_prepare_s,
+            preview=self.preview,
         )
         self.selection = selection
         self.args.source = str(selection.path)
@@ -458,6 +461,14 @@ class Client:
         self.loop = asyncio.get_running_loop()
         writer = asyncio.create_task(self.writer())
         try:
+            if getattr(self.args, "preview_port", 0):
+                self.preview = Preview(self.args.ue_alias, self.args.preview_host, self.args.preview_port)
+                try:
+                    self.preview.start()
+                    print(f"Local UE preview: http://{self.args.preview_host}:{self.args.preview_port}/", flush=True)
+                except OSError as exc:
+                    self.record("preview_error", reason=str(exc))
+                    self.preview = None
             while not self.stopped:
                 try:
                     self.args.source_ip = await asyncio.to_thread(self.source_ip)
@@ -657,6 +668,7 @@ class Client:
                                             self.successor_prepare_s
                                             if self.playlist and not self.collection_mode
                                             else 0,
+                                            preview=self.preview,
                                             source_start_frame=(
                                                 self.assignment or {}
                                             ).get("source_start_frame", 0),
@@ -814,6 +826,8 @@ class Client:
                     self.ws = None
                     await asyncio.sleep(0.5)
         finally:
+            if self.preview:
+                await asyncio.to_thread(self.preview.close)
             if self.streamer:
                 self.streamer.stop()
             if self.streamer:
@@ -848,6 +862,8 @@ def main():
         choices=["tracking", "detection", "segmentation"],
         default="detection",
     )
+    p.add_argument("--preview-host", default="127.0.0.1", help="local preview HTTP bind address")
+    p.add_argument("--preview-port", type=int, default=8767, help="local preview HTTP port; 0 disables")
     p.add_argument("--logs", default="ue-run")
     args = p.parse_args()
     if not args.source_ip and not args.source_interface:

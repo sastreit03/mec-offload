@@ -74,8 +74,10 @@ class Streamer:
         source_start_frame=0,
         frame_count=None,
         release_unix_ns=None,
+        preview=None,
     ):
         self.response = response
+        self.preview = preview
         self.source = source
         self.source_ip = source_ip
         self.clock = clock
@@ -156,6 +158,8 @@ class Streamer:
         encoder = None
         sock = None
         try:
+            if self.preview:
+                self.preview.begin(self.response["video_id"], self.source, cfg)
             cap = cv2.VideoCapture(
                 int(self.source) if self.source.isdecimal() else self.source
             )
@@ -262,6 +266,8 @@ class Streamer:
                     break
                 capture = time.monotonic_ns()
                 bgr = cv2.resize(bgr, (cfg["width"], cfg["height"]))
+                if self.preview:
+                    self.preview.offer(self.response["video_id"], self.frame_id, bgr, cfg)
                 nals = encoder.frame(
                     bgr,
                     self.frame_id,
@@ -349,6 +355,8 @@ class Streamer:
         except Exception as ex:
             self.event("sender_error", dict(reason=repr(ex)))
         finally:
+            if self.preview:
+                self.preview.end(self.response["video_id"])
             if encoder:
                 encoder.close()
             if sock:

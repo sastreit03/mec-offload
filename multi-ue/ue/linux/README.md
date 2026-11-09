@@ -12,3 +12,33 @@ to reproduce an order. Each file is used once per cycle, and the next MEC sessio
 is prepared before EOF. Camera sources remain single continuous sessions.
 
 For a camera use `--source 0`. `--source-ip` must be the softUE interface address, not the host management address. `scripts/softue-client.sh` obtains the current IPv4 address automatically from an existing softUE container; use that wrapper for normal runs. Android obtains its cellular address itself. No RNTI is supplied by either client.
+
+### Local outgoing-video preview
+
+The client serves a dashboard at **http://127.0.0.1:8767/** by default. It shows
+frames passed to the encoder, before H.264 compression or transmission; it does
+not confirm reception at the MEC. The page also shows the UE alias, source,
+video ID, frame ID, encoder configuration, and preview errors.
+
+JPEG encoding runs on a separate thread, at most 5 FPS and 960 pixels wide.
+Only the latest pending frame is retained. Multiple browsers share the JPEG
+encoder. Encoding starts only while an MJPEG viewer is connected and stops
+when the last viewer disconnects (an already-running encode may finish).
+Hidden tabs disconnect their preview. Stream changes clear the previous image.
+Preview CPU work can still affect timing measurements; use `--preview-port 0`
+to disable the server entirely for benchmark runs.
+
+Optional client flags:
+
+```bash
+--preview-host 127.0.0.1 --preview-port 8767
+```
+
+The address is in the **client's network namespace**. If the client runs directly
+on the Orin, or in a host-networked container, open the default URL in the Orin's
+browser. For a container with its own network namespace, bind with
+`--preview-host 0.0.0.0` and publish TCP port 8767 when creating that container,
+or use its reachable container IP. Do not change the RTP/control `--source-ip`
+to enable dashboard access. Binding to `0.0.0.0` exposes this unauthenticated
+preview on reachable interfaces; use it only on your trusted lab network.
+The `softue-client.sh` wrapper forwards these preview flags to the client.
