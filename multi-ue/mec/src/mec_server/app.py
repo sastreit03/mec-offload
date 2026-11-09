@@ -19,8 +19,10 @@ import json
 import time
 from collections import Counter
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException
+from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse
+from .preview import Preview
+from .dashboard import HTML as DASHBOARD_HTML
 from .config import load
 from .engine import Engine
 from mec_contracts.wire import envelope, loads, dumps
@@ -67,6 +69,8 @@ class ProbeReceiver(asyncio.DatagramProtocol): # DatagramProtocol allows the eve
 
 
 def create_app(engine):
+    preview = Preview(engine)
+    engine.preview = preview
     @asynccontextmanager
     async def lifespan(app):
         # Initialize engine and UDP receiver for association probe
@@ -81,6 +85,7 @@ def create_app(engine):
         # Close the app
         finally:
             transport.close()
+            await preview.close()
             await engine.close()
 
     # FastAPI controls application logic of web API
@@ -99,7 +104,7 @@ def create_app(engine):
         return JSONResponse(r, status_code=200 if r["ready"] else 503)
 
     @app.get("/api/status")
-    def status():
+    async def status():
         # Aetheredge: expose ingestion separately from terminal outcomes. An
         # ordered tracking stream can receive many frames while an incomplete
         # predecessor temporarily holds all tracker completions.
@@ -109,13 +114,15 @@ def create_app(engine):
             # Current count of frames in memory
             pipeline.setdefault(frame.vid, Counter())[frame.state] += 1
         return dict(
-            readiness=engine.readiness(), 
+            readiness=engine.readiness(),
+            preview=preview.snapshot(),
             run_id=engine.cfg.run_id,  # Metadata identifier for an experimental run
             scenario=engine.scenario,  # Scenarios for dataset collection
             scenario_start_unix_ns=engine.scenario_start_unix_ns, # Scenarios for dataset collection
             awareness_generation=engine.awareness_generation,     # Used for synchronizing MEC reports to EdgeRIC, increments when MEC restarts
             ues={
                 u.uid: dict(
+                    active_video=u.active_video,
                     alias=u.alias,          # Used in dataset collection. e.g., pixel1, linux1
                     connected=u.connected,  # whether the UE is connected to the MEC server via the control connection
                     ip=u.ip,                # UE's IP address, used for EdgeRIC association
@@ -188,10 +195,33 @@ def create_app(engine):
     # Dashboard endpoint
     @app.get("/")
     def dashboard():
-        return HTMLResponse("""<!doctype html><html><meta charset="utf-8"><title>Streaming MEC</title>
-        <style>body{font:16px system-ui;background:#101820;color:#e9eff4;max-width:1000px;margin:40px auto}pre{white-space:pre-wrap}</style>
-        <h1>Streaming MEC</h1><pre id="state">Connecting…</pre><script>
-        async function refresh(){try{const r=await fetch('/api/status');document.getElementById('state').textContent=JSON.stringify(await r.json(),null,2)}catch(e){document.getElementById('state').textContent='Connection unavailable'}}setInterval(refresh,1000);refresh();</script></html>""")
+        return HTMLResponse(DASHBOARD_HTML)
+
+    @app.get("/preview.mjpg")
+    async def preview_stream(request: Request, ue_alias: str):
+        if not any(u.connected and u.alias == ue_alias for u in engine.ues.values()):
+            raise HTTPException(404, "No connected UE with this alias")
+
+        async def generate():
+            channel = preview.watch(ue_alias)
+            sequence = -1
+            try:
+                while not await request.is_disconnected():
+                    if not any(u.connected and u.alias == ue_alias for u in engine.ues.values()):
+                        return
+                    if (channel.jpeg is not None and channel.sequence != sequence
+                            and channel.video_id == preview.video(ue_alias)):
+                        sequence = channel.sequence
+                        jpeg = channel.jpeg
+                        yield (b"--frame\r\nContent-Type: image/jpeg\r\n" +
+                               f"Content-Length: {len(jpeg)}\r\n\r\n".encode() + jpeg + b"\r\n")
+                    await asyncio.sleep(0.05)
+            finally:
+                await preview.unwatch(ue_alias, channel)
+
+        return StreamingResponse(generate(),
+            media_type="multipart/x-mixed-replace; boundary=frame",
+            headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
 
     @app.websocket("/ws/ue")
     # Each connection has its own outgoing queue and generation fence.

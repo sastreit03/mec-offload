@@ -1711,6 +1711,9 @@ class Engine:
         f.state = "PRIORITY_PENDING"
         f.decoded_ns = decoded_ns
         f.rgb = rgb
+        preview = getattr(self, "preview", None)
+        if preview is not None:
+            preview.offer(v.uid, v.vid, d.frame_id, rgb)
         f.times["decoded_monotonic_ns"] = decoded_ns
         f.times["decode_s"] = (decoded_ns - f.complete_ns) / 1e9
         # Collection uses one configured stream; deadlines remain evidence only.
