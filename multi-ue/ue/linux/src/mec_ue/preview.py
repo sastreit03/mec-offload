@@ -5,11 +5,21 @@ import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-HTML = b'''<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Linux UE preview</title><style>body{font:16px system-ui;background:#101820;color:#e9eff4;margin:24px}
-img{width:100%;max-width:960px;aspect-ratio:16/9;object-fit:contain;background:black}pre{white-space:pre-wrap}</style></head>
-<body><h1>Linux UE outgoing video</h1><p>Frames passed to the encoder, before compression and transmission. Preview is limited to 5 FPS.</p>
-<img id="video" alt="Waiting for outgoing frames"><pre id="status"></pre><script>
+HTML = b'''<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Linux UE preview</title><style>
+body{font:16px system-ui;background:#101820;color:#e9eff4;margin:24px}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:20px;align-items:start}
+.card{background:#192631;border:1px solid #344451;border-radius:12px;padding:18px;min-width:0}
+h2{margin-top:0}img{display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#000;border-radius:8px}
+img[hidden]{display:none}pre{white-space:pre-wrap;overflow-wrap:anywhere;margin-bottom:0}
+small{color:#afc1ce}@media(max-width:850px){.grid{grid-template-columns:1fr}}
+</style></head><body><h1>Linux UE outgoing video</h1>
+<div class="grid"><section class="card"><h2>Outgoing video</h2>
+<img id="video" alt="Waiting for outgoing frames">
+<p><small>Frames passed to the encoder, before compression and transmission. Preview is limited to 5 FPS.</small></p>
+</section><section class="card"><h2>UE and stream status</h2>
+<pre id="status">Connecting...</pre></section></div><script>
 const video=document.getElementById('video');
 function watch(){video.removeAttribute('src');if(!document.hidden)video.src='/preview.mjpg';}
 document.addEventListener('visibilitychange',watch);window.addEventListener('pagehide',()=>video.removeAttribute('src'));watch();
