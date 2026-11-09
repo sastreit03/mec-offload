@@ -19,6 +19,7 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
   private final int port;
   private final boolean collectionMode;
   private DatagramSocket socket;
+  private final DatagramPacket datagram = new DatagramPacket(new byte[0], 0);
   private Network network;
   private JSONObject current;
   private final List<JSONObject> pending = new ArrayList<>();
@@ -60,6 +61,7 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
     socket = new DatagramSocket();
     if (n != null) n.bindSocket(socket);
     socket.connect(InetAddress.getByName(host), port);
+    datagram.setSocketAddress(socket.getRemoteSocketAddress());
   }
 
   public synchronized JSONObject config() {
@@ -188,9 +190,10 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
   }
 
   @Override
-  public synchronized void send(byte[] packet) throws java.io.IOException {
+  public synchronized void send(byte[] packet, int length) throws java.io.IOException {
     if (socket == null) throw new java.io.IOException("Network unavailable");
-    socket.send(new DatagramPacket(packet, packet.length));
+    datagram.setData(packet, 0, length);
+    socket.send(datagram);
   }
 
   // SLO evidence ends at complete UE receipt, using the same clock as transmission.

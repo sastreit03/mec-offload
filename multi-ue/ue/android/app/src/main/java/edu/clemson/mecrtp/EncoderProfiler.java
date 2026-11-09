@@ -152,7 +152,7 @@ public final class EncoderProfiler {
     int submitted = 0, produced = 0, pending = -1;
     long pendingSourcePts = 0, sourcePts = 0;
     boolean inputEos = false, decoderEos = false, encoderEosSent = false, outputEos = false;
-    H264Rtp payload = new H264Rtp(p -> {}, 96, 1200, (pts, size, idr) -> new byte[96]);
+    H264Rtp payload = new H264Rtp((p, length) -> {}, 96, 1200, (pts, size, idr) -> new byte[96]);
     MediaCodec.BufferInfo decInfo = new MediaCodec.BufferInfo(), encInfo = new MediaCodec.BufferInfo();
     String outputFormat = "";
     try {

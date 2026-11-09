@@ -13,9 +13,9 @@ public class LocalSubmissionGolden {
     try (ProfilingLoopback loop = new ProfilingLoopback()) {
       // Drop one fragment of frame 1 to prove incomplete receipt is detected.
       int[] packetIndex = {0};
-      H264Rtp rtp = new H264Rtp(p -> {
+      H264Rtp rtp = new H264Rtp((p, length) -> {
         if (fid[0] == 1 && packetIndex[0]++ == 3) return;
-        loop.send(p);
+        loop.send(p, length);
       }, 96, 1200, (pts, bytes, idr) -> FrameDescriptor.encode(
           video, 1, fid[0], 0, 1, 1, idr ? 1 : 3, bytes, 0, 0, 0, 0, 0));
       rtp.configure(new byte[] {0,0,0,1,0x67,42,0,0,0,1,0x68,43});

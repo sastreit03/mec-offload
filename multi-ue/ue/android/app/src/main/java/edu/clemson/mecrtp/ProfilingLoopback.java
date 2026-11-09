@@ -16,6 +16,7 @@ public final class ProfilingLoopback implements AutoCloseable {
   }
   private final DatagramSocket receiver, sender;
   private final Thread thread;
+  private final DatagramPacket datagram = new DatagramPacket(new byte[0], 0);
   private final Map<Long, Receipt> received = new HashMap<>();
   private volatile boolean stopped;
   private volatile long receivedPackets;
@@ -38,6 +39,7 @@ public final class ProfilingLoopback implements AutoCloseable {
       created = new DatagramSocket(new InetSocketAddress(loopback, 0));
       created.connect(loopback, receiver.getLocalPort());
       sender = created;
+      datagram.setSocketAddress(sender.getRemoteSocketAddress());
     } catch (IOException e) {
       receiver.close(); if (created != null) created.close(); throw e;
     }
@@ -53,16 +55,16 @@ public final class ProfilingLoopback implements AutoCloseable {
     sentDigest = digest();
   }
 
-  public void send(byte[] packet) throws IOException {
-    DatagramPacket datagram = new DatagramPacket(packet, packet.length);
+  public void send(byte[] packet, int length) throws IOException {
+    datagram.setData(packet, 0, length);
     long start = System.nanoTime();
     if (firstSendNs == 0) firstSendNs = start;
     sender.send(datagram);
     lastSendNs = System.nanoTime();
     socketNs += lastSendNs - start;
     long hashStart = System.nanoTime();
-    sentDigest.update(packet);
-    packets++; bytes += packet.length;
+    sentDigest.update(packet, 0, length);
+    packets++; bytes += length;
     verificationNs += System.nanoTime() - hashStart;
   }
 

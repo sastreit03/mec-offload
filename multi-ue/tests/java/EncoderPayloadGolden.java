@@ -9,7 +9,7 @@ public class EncoderPayloadGolden {
     byte[] predicted = {0,0,0,1,0x41,46};
     long[] metadata = {-1};
     int[] packets = {0};
-    H264Rtp rtp = new H264Rtp(p -> packets[0]++, 96, 1200,
+    H264Rtp rtp = new H264Rtp((p, length) -> packets[0]++, 96, 1200,
         (pts, size, keyframe) -> { metadata[0] = size; return new byte[96]; });
     rtp.configure(config);
     List<byte[]> nals = rtp.accessUnitNals(idr);
@@ -24,6 +24,14 @@ public class EncoderPayloadGolden {
     if (size != 6 || nals.size() != 1) throw new AssertionError("P-frame has extra parameter sets");
     rtp.accessUnit(predicted, 100000);
     if (metadata[0] != size) throw new AssertionError("P-frame size mismatch");
+    // In-band parameter updates must replace the cache without duplicating SPS/PPS.
+    byte[] updated = {0,0,0,1,0x67,50,0,0,0,1,0x68,51,0,0,0,1,0x65,52};
+    nals = rtp.accessUnitNals(updated);
+    if (nals.size() != 3 || nals.get(0)[1] != 50 || nals.get(1)[1] != 51)
+      throw new AssertionError("In-band parameter update changed payload order");
+    nals = rtp.accessUnitNals(idr);
+    if (nals.size() != 3 || nals.get(0)[1] != 50 || nals.get(1)[1] != 51)
+      throw new AssertionError("Updated parameters were not retained for the next IDR");
     System.out.println("Encoder payload accounting: PASS");
   }
 }

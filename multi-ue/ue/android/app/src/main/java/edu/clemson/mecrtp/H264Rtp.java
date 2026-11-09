@@ -7,7 +7,8 @@ import java.util.*;
 /** RFC6184 single NAL/FU-A and RFC8285 two-byte extension on EVERY packet. */
 public final class H264Rtp {
   public interface Sink {
-    void send(byte[] p) throws IOException;
+    // Consume synchronously; the buffer is reused immediately after return.
+    void send(byte[] p, int length) throws IOException;
   }
 
   public interface Metadata {
@@ -23,6 +24,8 @@ public final class H264Rtp {
   private int sequence = new Random().nextInt(65536);
   private long firstPts = -1;
   private byte[] descriptor;
+  private final byte[] packetBuffer;
+  private final ByteBuffer packetWriter;
   private final List<byte[]> parameters = new ArrayList<>();
   public long bytes, packets, accessUnits;
 
@@ -32,6 +35,8 @@ public final class H264Rtp {
     pt = payloadType;
     maxPayload = mtu - 116;
     this.metadata = metadata;
+    packetBuffer = new byte[mtu];
+    packetWriter = ByteBuffer.wrap(packetBuffer);
   }
 
   public static List<byte[]> split(byte[] a) {
@@ -64,7 +69,11 @@ public final class H264Rtp {
   }
 
   public void configure(byte[] a) {
-    for (byte[] n : split(a)) {
+    cacheParameters(split(a));
+  }
+
+  private void cacheParameters(List<byte[]> nals) {
+    for (byte[] n : nals) {
       int t = n[0] & 31;
       if (t == 7 || t == 8) {
         parameters.removeIf(p -> (p[0] & 31) == t);
@@ -77,7 +86,7 @@ public final class H264Rtp {
   public List<byte[]> accessUnitNals(byte[] encoded) {
     List<byte[]> nals = split(encoded);
     boolean idr = nals.stream().anyMatch(n -> (n[0] & 31) == 5);
-    configure(encoded);
+    cacheParameters(nals);
     // Repeat cached SPS/PPS with IDRs so a receiver can start decoding at a keyframe.
     if (idr) {
       List<byte[]> all = new ArrayList<>(parameters);
@@ -103,26 +112,27 @@ public final class H264Rtp {
 
   private void nal(byte[] n, long ts, boolean marker) throws IOException {
     if (n.length <= maxPayload) {
-      packet(n, ts, marker);
+      writeHeader(ts, marker);
+      packetWriter.put(n);
+      sendPacket();
       return;
     }
     for (int o = 1; o < n.length; ) {
       int count = Math.min(maxPayload - 2, n.length - o);
       boolean first = o == 1, last = o + count == n.length;
-      byte[] p = new byte[count + 2];
-      p[0] = (byte) ((n[0] & 0xe0) | 28);
-      p[1] = (byte) ((n[0] & 31) | (first ? 128 : 0) | (last ? 64 : 0));
-      System.arraycopy(n, o, p, 2, count);
-      packet(p, ts, marker && last);
+      writeHeader(ts, marker && last);
+      packetWriter.put((byte) ((n[0] & 0xe0) | 28));
+      packetWriter.put((byte) ((n[0] & 31) | (first ? 128 : 0) | (last ? 64 : 0)));
+      packetWriter.put(n, o, count);
+      sendPacket();
       o += count;
     }
   }
 
   // Every fragment carries the same 96-byte descriptor and a distinct RTP sequence.
-  private void packet(byte[] payload, long ts, boolean marker) throws IOException {
-    byte[] p = new byte[payload.length + 116];
-    ByteBuffer b = ByteBuffer.wrap(p);
-    b.put((byte) 0x90)
+  private void writeHeader(long ts, boolean marker) {
+    packetWriter.clear();
+    packetWriter.put((byte) 0x90)
         .put((byte) (pt | (marker ? 128 : 0)))
         .putShort((short) sequence)
         .putInt((int) ts)
@@ -132,11 +142,14 @@ public final class H264Rtp {
         .put((byte) 1)
         .put((byte) 96)
         .put(descriptor)
-        .putShort((short) 0)
-        .put(payload);
-    sink.send(p);
+        .putShort((short) 0);
+  }
+
+  private void sendPacket() throws IOException {
+    int length = packetWriter.position();
+    sink.send(packetBuffer, length);
     sequence = (sequence + 1) & 65535;
-    bytes += p.length;
+    bytes += length;
     packets++;
   }
 }
