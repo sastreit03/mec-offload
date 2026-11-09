@@ -42,3 +42,15 @@ or use its reachable container IP. Do not change the RTP/control `--source-ip`
 to enable dashboard access. Binding to `0.0.0.0` exposes this unauthenticated
 preview on reachable interfaces; use it only on your trusted lab network.
 The `softue-client.sh` wrapper forwards these preview flags to the client.
+
+### Temporary streaming without radio association
+
+With `mec.calibration.yaml` (development mode, real TorchScript inference), the
+MEC advertises `association_required_for_admission: false`. The Linux client
+then requests video admission after the MEC acknowledges its IP/alias update,
+without waiting for radio association. That acknowledgement does not mark radio
+association valid. Periodic acknowledgements also allow retry/reconnection and
+playlist progression without EdgeRIC. Real cellular attachment and routes are
+still required. Experimental and collection modes retain their existing gates;
+older MEC servers that omit the field also retain the association requirement.
+Update both the MEC image and the Linux client to enable this behavior.

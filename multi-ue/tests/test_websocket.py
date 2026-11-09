@@ -22,6 +22,7 @@ def test_control_socket_identity_admission_retry_and_resume(tmp_path):
         with client.websocket_connect("/ws/ue") as socket:
             hello = socket.receive_json()
             assert hello["type"] == "mec_hello"
+            assert hello["association_required_for_admission"] is False
             uid = hello["ue_id"]
             socket.send_json(dict(type="time_sync", client_mono_ns=1))
             sync = socket.receive_json()

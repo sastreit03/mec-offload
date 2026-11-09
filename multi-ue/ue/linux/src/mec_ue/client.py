@@ -86,6 +86,7 @@ class Client:
         self.loop = None
         self.slo_ns = 150_000_000
         self.collection_mode = False
+        self.association_required_for_admission = True
         self.input_profile = dict(width=1280, height=720, fps=30, gop_frames=30)
         self.expiry_tasks = set()
         self.finishing = False
@@ -416,6 +417,15 @@ class Client:
             await asyncio.sleep(1)
             await self.send(dict(type="time_sync", client_mono_ns=time.monotonic_ns()))
 
+    def admission_trigger(self, message):
+        """Development bypass waits for IP/alias registration, not radio validation."""
+        if self.collection_mode:
+            return False
+        if message.get("type") == "association_status":
+            return message.get("valid") is True
+        return (message.get("type") == "association_pending"
+                and not self.association_required_for_admission)
+
     async def start_collection_at(self, start_unix_ns, attempt_id):
         """Prepare admission now; the media thread holds until the shared timestamp."""
         if (
@@ -536,6 +546,12 @@ class Client:
                                     self.collection_mode = bool(
                                         m.get("collection_mode", False)
                                     )
+                                    # Only an explicit server opt-out permits startup without
+                                    # radio association; older servers remain strict.
+                                    self.association_required_for_admission = (
+                                        self.collection_mode
+                                        or m.get("association_required_for_admission", True) is not False
+                                    )
                                     self.state["resume_token"] = m["resume_token"]
                                     self.save_state()
                                     if self.pending_end is not None:
@@ -586,7 +602,7 @@ class Client:
                                     )
                                 elif kind == "association_probe":
                                     asyncio.create_task(self.probe(m))
-                                elif kind == "association_status" and m["valid"]:
+                                elif self.admission_trigger(m):
                                     if self.collection_mode and not self.context_ready():
                                         continue
                                     if self.collection_mode and not self.assignment:

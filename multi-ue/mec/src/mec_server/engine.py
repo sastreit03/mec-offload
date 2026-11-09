@@ -582,6 +582,7 @@ class Engine:
             prepared_video_id=u.prepared_video,
             successor_prepare_s=self.cfg.successor_prepare_s,
             collection_mode=self.collection_mode,
+            association_required_for_admission=self.cfg.mode != "development",
             scenario_active=(
                 bool(self.scenario)
                 and u.alias in self.scenario_assignments
