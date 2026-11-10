@@ -26,6 +26,12 @@
 
 
 # Python-generated files
+# Local Python virtual environments
+/EdgeRIC-v2/.venv-proto/
+/EdgeRIC-v2/edgeric/
+/demo1/ue-client/.venv/
+/demo1-1/ue-client/.venv/
+
 /multi-ue/**/__pycache__/
 /multi-ue/**/*.py[cod]
 /multi-ue/.pytest_cache/
