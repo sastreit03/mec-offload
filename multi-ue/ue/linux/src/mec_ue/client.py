@@ -53,8 +53,8 @@ class Client:
         self.scenario_id = None
         self.attempt_id = None
         self.assignment = None
-        self.scenario_start_unix_ns = None
-        self.scenario_release_unix_ns = None
+        self.aborted_attempt_id = None
+        self.started_attempt_id = None
         self.connection = None
         self.root = Path(args.logs)
         self.root.mkdir(parents=True, exist_ok=True)
@@ -242,7 +242,12 @@ class Client:
 
     async def on_media(self, kind, value):
         self.record(kind, **value)
-        if kind == "sender_error":
+        if kind == "media_prepared":
+            if (self.collection_mode and self.streamer
+                    and value["video_id"] == self.streamer.response["video_id"]
+                    and self.attempt_id != self.aborted_attempt_id):
+                await self.send(dict(type="scenario_context_ack", video_id=value["video_id"]))
+        elif kind == "sender_error":
             self.fatal_media_error = value.get("reason", "unknown sender error")
             self.stopped = True
             if self.ws:
@@ -426,10 +431,39 @@ class Client:
         return (message.get("type") == "association_pending"
                 and not self.association_required_for_admission)
 
-    async def start_collection_at(self, start_unix_ns, attempt_id):
-        """Prepare admission now; the media thread holds until the shared timestamp."""
+    def abort_collection(self, message):
+        if not self.collection_mode or any(
+            message.get(key) != getattr(self, key)
+            for key in ("campaign_id", "scenario_id", "attempt_id")
+        ) or self.attempt_id is None:
+            return
+        self.aborted_attempt_id = self.attempt_id
+        self.assignment = None
+        self.start_request = None
+        self.successor_request = None
+        self.pending_end = None
+        self.prepared = None
+        if self.streamer:
+            self.streamer.stop()
+            self.streamer = None
+        self.record("scenario_aborted", error=message.get("error"))
+
+    def release_collection(self, message):
+        if (not self.collection_mode or not self.context_ready()
+                or any(message.get(k) != v for k, v in self.join_context().items())
+                or self.attempt_id == self.aborted_attempt_id
+                or self.attempt_id == self.started_attempt_id
+                or not self.streamer or not self.streamer.prepared):
+            return
+        self.started_attempt_id = self.attempt_id
+        self.streamer.release()
+        self.record("scenario_start", release_monotonic_ns=time.monotonic_ns())
+
+    async def prepare_collection(self, attempt_id):
+        """Admit and prepare media before acknowledging readiness."""
         if (
             self.stopped
+            or self.aborted_attempt_id == attempt_id
             or self.attempt_id != attempt_id
             or not self.assignment
             or self.streamer is not None
@@ -458,8 +492,7 @@ class Client:
             }
         )
         self.record(
-            "scenario_start",
-            scheduled_start_unix_ns=start_unix_ns,
+            "scenario_preparing",
             actual_request_unix_ns=self.clock.unix_ns(),
         )
         await self.send(self.start_request)
@@ -557,7 +590,19 @@ class Client:
                                     if self.pending_end is not None:
                                         await self.send(self.pending_end)
                                     sync = asyncio.create_task(self.synchronize())
+                                elif kind == "scenario_abort":
+                                    self.abort_collection(m)
                                 elif kind == "scenario_context":
+                                    if m.get("attempt_id") == self.aborted_attempt_id:
+                                        continue
+                                    if m.get("attempt_id") == self.attempt_id and self.streamer:
+                                        if self.streamer.prepared:
+                                            await self.send(dict(type="scenario_context_ack",
+                                                                 video_id=self.streamer.response["video_id"]))
+                                        continue
+                                    if m.get("attempt_id") == self.attempt_id and self.start_request:
+                                        await self.send(self.start_request)
+                                        continue
                                     if self.streamer or self.prepared:
                                         raise RuntimeError(
                                             "scenario context changed during active media"
@@ -566,33 +611,16 @@ class Client:
                                     self.assignment = (
                                         m.get("assignment") if m.get("active") else None
                                     )
-                                    self.scenario_start_unix_ns = None
-                                    self.scenario_release_unix_ns = None
                                     if self.assignment:
                                         self.args.application = self.assignment["application"]
                                         self.args.source = self.assignment["media_path"]
                                     self.start_request = None
                                     self.successor_request = None
                                     self.record("scenario_context")
-                                    # Confirm that this control generation received
-                                    # the exact assignment before the runner trusts it.
-                                    await self.send(dict(type="scenario_context_ack"))
+                                    if self.assignment:
+                                        await self.prepare_collection(self.attempt_id)
                                 elif kind == "scenario_start":
-                                    self.scenario_start_unix_ns = int(m["start_unix_ns"])
-                                    # Use a relative delay on the UE clock so NTP/time-sync
-                                    # offset error cannot skew simultaneous media release.
-                                    self.scenario_release_unix_ns = (
-                                        self.clock.unix_ns()
-                                        + int(m["release_delay_ns"])
-                                        if "release_delay_ns" in m
-                                        else self.scenario_start_unix_ns
-                                    )
-                                    asyncio.create_task(
-                                        self.start_collection_at(
-                                            self.scenario_start_unix_ns,
-                                            self.attempt_id,
-                                        )
-                                    )
+                                    self.release_collection(m)
                                 elif kind == "time_sync":
                                     self.clock.observe(
                                         m["client_mono_ns"],
@@ -609,7 +637,7 @@ class Client:
                                         continue
                                     if self.collection_mode:
                                         # Collection starts only after the runner's
-                                        # all-UE timestamp barrier is released.
+                                        # all-UE readiness barrier is released.
                                         continue
                                     if self.successor_request is not None:
                                         # Deduplicated resend covers a control reconnect during preparation.
@@ -640,6 +668,11 @@ class Client:
                                                 )
                                         await self.send(self.start_request)
                                 elif kind == "video_response":
+                                    if self.collection_mode and (
+                                        m.get("attempt_id") != self.attempt_id
+                                        or self.attempt_id == self.aborted_attempt_id
+                                    ):
+                                        continue
                                     if (
                                         self.successor_request
                                         and m.get("client_seq")
@@ -685,16 +718,12 @@ class Client:
                                             if self.playlist and not self.collection_mode
                                             else 0,
                                             preview=self.preview,
+                                            hold_for_start=self.collection_mode,
                                             source_start_frame=(
                                                 self.assignment or {}
                                             ).get("source_start_frame", 0),
                                             frame_count=(self.assignment or {}).get(
                                                 "frame_count"
-                                            ),
-                                            release_unix_ns=(
-                                                self.scenario_release_unix_ns
-                                                if self.collection_mode
-                                                else None
                                             ),
                                         )
                                         if self.successor_selection:
@@ -744,8 +773,6 @@ class Client:
                                             # Aetheredge: wait for the next attempt's
                                             # scenario_context instead of restarting.
                                             self.assignment = None
-                                            self.scenario_start_unix_ns = None
-                                            self.scenario_release_unix_ns = None
                                             await asyncio.to_thread(
                                                 finished_streamer.thread.join, 3
                                             )

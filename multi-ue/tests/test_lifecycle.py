@@ -18,6 +18,7 @@ def test_new_end_sequence_cannot_reopen_completed_video():
     engine = Engine.__new__(Engine)
     engine.cfg = SimpleNamespace(run_id="run", final_arrival_s=1.0)
     engine.dedup = {}
+    engine.scenario = None
     engine.record = Mock()
     user = UE("ue", "token", active_video=None)
     video = Video("video", user.uid, "detection", 1, 0)
@@ -133,6 +134,8 @@ def test_first_successor_packet_can_promote_before_video_end_control():
 def test_collection_attempt_rejects_second_video_for_same_alias():
     async def exercise():
         engine = Engine.__new__(Engine)
+        engine.scenario_error = None
+        engine.scenario_finalization = None
         engine.cfg = SimpleNamespace(
             run_id="run", mode="collection", applications=("detection",)
         )

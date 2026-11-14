@@ -198,9 +198,9 @@ the encoder produced the required last frame.
 
 - Android binds each application socket to the acquired cellular `Network`;
   it does not rely on Android's default route.
-- The relative `release_delay_ns` controls synchronized launch. Absolute wall
-  timestamps remain evidence and descriptor metadata but do not introduce
-  clock-offset skew into release pacing.
+- Collection preparation retains the first decoded frame and then acknowledges
+  readiness. `scenario_start` releases it immediately; duplicate starts are
+  ignored. Absolute wall timestamps remain evidence and descriptor metadata.
 - `encoded_bytes` is canonical H.264 access-unit size. It excludes RTP/UDP/IP
   and radio-layer overhead.
 - The app measures result latency on the UE monotonic clock. Clock mapping is

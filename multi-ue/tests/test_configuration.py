@@ -203,6 +203,7 @@ def test_collection_load_does_not_require_network_filter_calibration(tmp_path):
 
 def test_collection_uses_fixed_candidate_and_fifo_priority():
     engine = Engine.__new__(Engine)
+    engine.scenario_error = None
     engine.cfg = SimpleNamespace(
         mode="collection",
         fixed_candidates={"detection": "fixed"},

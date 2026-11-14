@@ -124,8 +124,9 @@ into an immutable `scenarios.jsonl` and a hash-locked manifest. The runner is
 the campaign orchestrator, but it does not directly configure a UE. It sends a
 scenario assignment to the MEC's public-side HTTP endpoint. The MEC sends the
 assignment to each already-connected UE over its WebSocket, waits for a fresh
-acknowledgement tied to that connection generation, and releases all assigned
-UEs against one future start interval. The runner polls MEC status, validates
+readiness acknowledgement tied to that connection generation and admitted video,
+and queues immediate-start commands for all assigned UEs before checking their
+local write results. The runner polls MEC status, validates
 150 terminal outcomes per assigned UE, checkpoints the attempt, and does not
 regenerate a valid scenario.
 

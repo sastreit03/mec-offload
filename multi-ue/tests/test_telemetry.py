@@ -93,6 +93,7 @@ def test_aetheredge_zmq_capacity_and_cumulative_grant_deltas():
     assert decoded.ue_metrics[0].reference_tbs_bits == 4000
 
     runtime = Runtime.__new__(Runtime)
+    runtime.association_losses = {}
     runtime.cfg = {"payload_fraction": 1.0}
     runtime.adapter = SimpleNamespace(source_generation=9, report_sequence=1)
     runtime.metrics = {7: {field.name: getattr(ue, field.name) for field in ue.DESCRIPTOR.fields}}

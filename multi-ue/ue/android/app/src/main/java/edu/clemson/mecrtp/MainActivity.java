@@ -46,6 +46,8 @@ public final class MainActivity extends Activity {
   private AvcSource media;
   private String uid, connection, run;
   private String campaignId, scenarioId, attemptId;
+  private String abortedAttemptId;
+  private String startedAttemptId, preparedVideoId;
   private int inputWidth = 1280, inputHeight = 720, inputFps = 30;
   private String cellularIp = "";
   private JSONObject startRequest;
@@ -56,7 +58,6 @@ public final class MainActivity extends Activity {
   private boolean awaitingSuccessor;
   private boolean collectionMode;
   private JSONObject assignment;
-  private long scenarioStartUnixNs, scenarioReleaseUnixNs;
   private double successorPrepareS;
   private volatile boolean enabled;
   private int generation;
@@ -304,6 +305,7 @@ public final class MainActivity extends Activity {
           });
       if (type.equals("media_end") && session != null)
         ui.post(() -> mediaEnded(value));
+      if (type.equals("media_prepared")) ui.post(() -> mediaPrepared(value));
       if (type.equals("transmitted")) showTransmittedFrame(value.getLong("frame_id"));
       if (type.equals("successor_needed") && playlist != null && !collectionMode)
         ui.post(() -> prepareSuccessor(value));
@@ -597,6 +599,8 @@ public final class MainActivity extends Activity {
   }
 
   private synchronized void requestStart() throws Exception {
+    if (collectionMode && (assignment == null || attemptId == null
+        || attemptId.equals(abortedAttemptId))) return;
     if (!enabled || session != null || startRequest != null) return;
     startRequest =
         new JSONObject()
@@ -622,6 +626,38 @@ public final class MainActivity extends Activity {
           new String[] {"candidate_id", "media_id", "source_start_frame", "frame_count"})
         startRequest.put(key, assignment.get(key));
     send(startRequest);
+  }
+
+  private void mediaPrepared(JSONObject value) {
+    try {
+      if (!collectionMode || session == null || !contextReady()
+          || attemptId.equals(abortedAttemptId)
+          || !session.video().equals(value.getString("video_id"))) return;
+      preparedVideoId = session.video();
+      send(new JSONObject().put("type", "scenario_context_ack").put("video_id", preparedVideoId));
+    } catch (Exception e) {
+      event("scenario_prepare_error", object("reason", e.toString()));
+    }
+  }
+
+  private void abortCollection(JSONObject m) throws Exception {
+    if (!collectionMode || !contextReady()
+        || !campaignId.equals(m.optString("campaign_id"))
+        || !scenarioId.equals(m.optString("scenario_id"))
+        || !attemptId.equals(m.optString("attempt_id"))) return;
+    abortedAttemptId = attemptId;
+    if (media != null) media.close();
+    if (session != null) session.close();
+    if (preparedSession != null) preparedSession.close();
+    media = null;
+    session = null;
+    preparedSession = null;
+    assignment = null;
+    preparedVideoId = null;
+    startRequest = null;
+    successorRequest = null;
+    pendingEnd = null;
+    event("scenario_aborted", object("error", m.opt("error")));
   }
 
   private void message(JSONObject m, long receipt) throws Exception {
@@ -664,13 +700,25 @@ public final class MainActivity extends Activity {
         // the original command closes a video whose first video_end was lost.
         if (pendingEnd != null) send(pendingEnd);
         break;
+      case "scenario_abort":
+        abortCollection(m);
+        break;
       case "scenario_context":
+        if (m.optString("attempt_id").equals(abortedAttemptId)) break;
+        if (m.optString("attempt_id").equals(attemptId) && session != null) {
+          if (session.video().equals(preparedVideoId))
+            mediaPrepared(new JSONObject().put("video_id", preparedVideoId));
+          break;
+        }
+        if (m.optString("attempt_id").equals(attemptId) && startRequest != null) {
+          send(startRequest);
+          break;
+        }
         if (session != null || preparedSession != null)
           throw new IllegalStateException("scenario context changed during active media");
         setContext(m);
         assignment = m.optBoolean("active", false) ? m.optJSONObject("assignment") : null;
-        scenarioStartUnixNs = 0;
-        scenarioReleaseUnixNs = 0;
+        preparedVideoId = null;
         if (assignment != null) {
           selection = playlist.find(new File(assignment.getString("media_path")).getName());
           file = selection.uri;
@@ -688,31 +736,17 @@ public final class MainActivity extends Activity {
         successorRequest = null;
         resetFrameStatus();
         event("scenario_context", new JSONObject());
-        // Let the runner distinguish a delivered assignment from one merely
-        // queued before a radio/control-path failure.
-        send(new JSONObject().put("type", "scenario_context_ack"));
+        if (assignment != null) requestStart();
         break;
       case "scenario_start":
-        scenarioStartUnixNs = m.getLong("start_unix_ns");
-        // Pace by a duration measured on this UE's clock. This cancels any
-        // absolute clock-map offset while preserving the MEC timestamp as evidence.
-        scenarioReleaseUnixNs =
-            m.has("release_delay_ns")
-                ? clock.now() + m.getLong("release_delay_ns")
-                : scenarioStartUnixNs;
-        // Admission and codec setup happen during the lead interval. StreamSession
-        // still holds the first encoded frame until this common timestamp.
-        try {
-          event(
-              "scenario_start",
-              new JSONObject()
-                  .put("scheduled_start_unix_ns", scenarioStartUnixNs)
-                  .put("local_release_unix_ns", scenarioReleaseUnixNs)
-                  .put("actual_request_unix_ns", clock.now()));
-          requestStart();
-        } catch (Exception e) {
-          event("scenario_start_error", object("reason", e.toString()));
-        }
+        if (!contextReady() || !campaignId.equals(m.optString("campaign_id"))
+            || !scenarioId.equals(m.optString("scenario_id"))
+            || !attemptId.equals(m.optString("attempt_id"))
+            || attemptId.equals(abortedAttemptId) || attemptId.equals(startedAttemptId)
+            || session == null || media == null || !session.video().equals(preparedVideoId)) break;
+        startedAttemptId = attemptId;
+        media.release();
+        event("scenario_start", object("release_monotonic_ns", System.nanoTime()));
         break;
       case "time_sync":
         clock.observe(
@@ -733,6 +767,9 @@ public final class MainActivity extends Activity {
         if (m.getBoolean("valid")) requestStart();
         break;
       case "video_response":
+        if (collectionMode && (!contextReady()
+            || !attemptId.equals(m.optString("attempt_id"))
+            || attemptId.equals(abortedAttemptId))) break;
         if (successorRequest != null
             && m.getLong("client_seq") == successorRequest.getLong("client_seq")) {
           if (m.getBoolean("accepted")) {
@@ -772,8 +809,7 @@ public final class MainActivity extends Activity {
                   m,
                   clock,
                   this::event,
-                  getExternalFilesDir(null),
-                  collectionMode ? scenarioReleaseUnixNs : 0);
+                  getExternalFilesDir(null));
           startAdmittedSession(session, file);
         } else if (!m.getBoolean("accepted")) {
           event(
@@ -811,7 +847,6 @@ public final class MainActivity extends Activity {
             // attempt supplies a new assignment through scenario_context.
             if (collectionMode) {
               assignment = null;
-              scenarioStartUnixNs = 0;
             }
             if (!collectionMode && playlist != null && preparedSession != null) {
               startPreparedSuccessor();

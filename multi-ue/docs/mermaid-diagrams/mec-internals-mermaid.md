@@ -157,20 +157,22 @@ sequenceDiagram
   E->>E: require idle; reset attempt state
   E->>X: authoritative sync requested
   E-->>U: scenario_context with alias assignment
-  U->>W: scenario_context_ack
-  W->>E: validate context and connection generation
-  E-->>U: scenario_context_acknowledged
-
-  R->>A: POST /api/scenario/start
-  A->>E: start_scenario(context, lead_s)
-  E->>E: require every assigned alias ACKed
-  E-->>U: scenario_start with common future release
-
   U->>W: video_start(client_seq, assignment IDs)
   W->>E: command() with client-sequence dedup
   E->>E: start_video; validate assignment/candidate
   E->>X: session and demand expectation
   E-->>U: admission response and RTP port
+  U->>U: prepare media and hold first frame
+  U->>W: scenario_context_ack(video_id)
+  W->>E: validate context, admitted video and connection generation
+  E-->>U: scenario_context_acknowledged
+
+  R->>A: POST /api/scenario/start
+  A->>E: await start_scenario(context)
+  E->>E: require every assigned alias ready
+  E-->>U: queue scenario_start for all participants
+  E->>E: check local writes; 0.2 s then one retry stage
+  U->>U: release immediately without a start ACK
 
   U->>W: video_end(final_frame_id)
   W->>E: end_video

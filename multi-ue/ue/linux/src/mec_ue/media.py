@@ -75,6 +75,7 @@ class Streamer:
         frame_count=None,
         release_unix_ns=None,
         preview=None,
+        hold_for_start=False,
     ):
         self.response = response
         self.preview = preview
@@ -86,6 +87,9 @@ class Streamer:
         self.source_start_frame = source_start_frame
         self.frame_count = frame_count
         self.release_unix_ns = release_unix_ns
+        self.hold_for_start = hold_for_start
+        self.release_event = threading.Event()
+        self.prepared = False
         self.current = dict(response["config"])
         self.pending = []
         self.lock = threading.Lock()
@@ -150,6 +154,10 @@ class Streamer:
 
     def stop(self):
         self.stopped.set()
+        self.release_event.set()
+
+    def release(self):
+        self.release_event.set()
 
     def run(self):
         import cv2
@@ -189,12 +197,24 @@ class Streamer:
             ssrc = secrets.randbits(32)
             seq = secrets.randbits(16)
             rtp_base = secrets.randbits(32)
+            first_frame = None
+            if self.hold_for_start:
+                ok, first_frame = cap.read()
+                if not ok:
+                    raise RuntimeError("scenario first frame could not be decoded")
+                self.prepared = True
+                self.event("media_prepared", dict(video_id=self.response["video_id"]))
+                self.release_event.wait()
+                if self.stopped.is_set():
+                    return
             # Local setup may finish after a prepared boundary; do not burst to catch up.
             release = max(
                 cfg["boundary_unix_ns"],
                 self.release_unix_ns or 0,
                 self.clock.unix_ns(),
             )
+            if self.hold_for_start:
+                release = self.clock.unix_ns()
             force = True
             while not self.stopped.is_set():
                 if self.frame_count is not None and self.frame_id >= self.frame_count:
@@ -261,7 +281,11 @@ class Streamer:
                             self.response["endpoint"]["port"],
                         )
                     )
-                ok, bgr = cap.read()
+                if first_frame is not None:
+                    ok, bgr = True, first_frame
+                    first_frame = None
+                else:
+                    ok, bgr = cap.read()
                 if not ok:
                     break
                 capture = time.monotonic_ns()

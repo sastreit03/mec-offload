@@ -25,7 +25,11 @@ class Runtime:
         self.scenario_id = None
         self.attempt_id = None
         self.source = str(uuid.uuid4())
-        self.associations = Associations(config["association"])
+        self.association_losses = {}
+        self.association_finalization = None
+        self.associations = Associations(
+            config["association"], on_loss=self.record_association_loss
+        )
         self.sessions = {}
         self.retired_sessions = {}
         self.sync_revision = -1
@@ -59,6 +63,18 @@ class Runtime:
         self.window_ns = window_ms * 1_000_000
         self.probe_commands = []
         # Aetheredge: Capacity tables and realized-ratio proxies are replaced by OAI TBS output.
+
+    def record_association_loss(self, uid, reason, generation):
+        """Retain the first loss per UE until the attempt context changes."""
+        if self.attempt_id is None or uid in self.association_losses:
+            return
+        loss = dict(
+            reason=reason,
+            detected_unix_ns=time.time_ns(),
+            mapping_generation=generation,
+        )
+        self.association_losses[uid] = loss
+        self.event("association_lost", ue_id=uid, **loss)
 
     def event(self, kind, **data):
         try:
@@ -139,11 +155,14 @@ class Runtime:
             current_generation = getattr(self, "awareness_generation", None)
             generation_changed = self.run_id != run or current_generation != generation
             if generation_changed:
+                self.association_finalization = None
                 if current_generation is not None:
                     retired_generations.add(current_generation)
                 self.sessions.clear()
                 self.retired_sessions.clear()
-                self.associations = Associations(self.cfg["association"])
+                self.associations = Associations(
+                    self.cfg["association"], on_loss=self.record_association_loss
+                )
                 self.run_id = run
                 self.awareness_generation = generation
                 self.sync_revision = -1
@@ -159,6 +178,8 @@ class Runtime:
             self.scenario_id = context["scenario_id"]
             self.attempt_id = context["attempt_id"]
             if context_changed:
+                self.association_losses.clear()
+                self.association_finalization = None
                 # Begin with a fresh radio window. Reacquire cumulative-counter
                 # baselines instead of charging prior traffic to this attempt.
                 self.radio_counters.clear()
@@ -214,6 +235,35 @@ class Runtime:
             raise ValueError("sync required for awareness generation")
         if self.message_context(m) != self.join_context():
             raise ValueError("scenario context mismatch")
+        if kind == "association_finalize":
+            if self.attempt_id is None:
+                raise ValueError("scenario not armed")
+            if self.association_finalization is None:
+                now = time.monotonic()
+                # Apply expiry/missing-context checks even between report windows.
+                self.associations.tick(
+                    now, set(self.metrics) if now - self.latest_metric < 0.3 else set()
+                )
+                self.association_finalization = dict(
+                    status="association_finalized", run_id=self.run_id,
+                    **self.join_context(), source_generation=self.source,
+                    window_end_unix_ns=time.time_ns(),
+                    metric_age_s=now - self.latest_metric,
+                    association_losses={
+                        uid: dict(loss) for uid, loss in self.association_losses.items()
+                    },
+                    ues={
+                        uid: dict(
+                            association_valid=bool(self.associations.valid(uid, now)),
+                            connection_id=b.connection_id,
+                        )
+                        for uid, b in self.associations.bindings.items()
+                    },
+                )
+                self.event("association_finalized", snapshot=self.association_finalization)
+            # This immutable snapshot defines the end of association monitoring
+            # for the attempt; retries of this request return the same evidence.
+            return self.association_finalization
         revision = m.get("awareness_revision")
         if revision is not None:
             revision = integer(revision)
@@ -890,6 +940,9 @@ class Runtime:
             ran_index=self.last_index,
             **record,
             ues=per,
+            association_losses={
+                uid: dict(loss) for uid, loss in self.association_losses.items()
+            },
             trace_coverage_valid=self.radio_coverage_valid,
             metric_age_s=now - self.latest_metric,
         )

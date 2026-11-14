@@ -86,6 +86,8 @@ def test_sending_control_does_not_reset_telemetry_grace():
     from mec_server.engine import Engine
 
     e = Engine.__new__(Engine)
+    e.cfg = SimpleNamespace(run_id="run")
+    e.scenario = None
     out = []
     e.ues = {"u": SimpleNamespace(connected=True, sender=out.append)}
     e.last_usable = {"u": 123}

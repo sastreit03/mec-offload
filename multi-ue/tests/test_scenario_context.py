@@ -6,9 +6,11 @@ import pytest
 import yaml
 
 from mec_server.config import load
-from mec_server.engine import Engine
+from mec_server.engine import Engine, Video
+from mec_server.control import SendReceipt
 from mec_server.recording import Recorder
 from muApp_mec.runtime import Runtime
+from muApp_mec.telemetry import Window
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,6 +19,69 @@ CONTEXT = {
     "scenario_id": "scenario-001",
     "attempt_id": "attempt-001",
 }
+
+
+def test_edgeric_retains_loss_across_reassociation_reports_and_sync(tmp_path):
+    async def exercise():
+        config = yaml.safe_load((ROOT / "config/edgeric.shadow.yaml").read_text())
+        config["runs_dir"] = str(tmp_path)
+        runtime = Runtime(config)
+        runtime.record_association_loss("u", "outside_attempt", 1)
+        assert runtime.association_losses == {}
+        sync = dict(
+            schema_version=1, type="sync", run_id="run-a",
+            awareness_generation="mec-process-a", awareness_revision=1,
+            associations=[dict(ue_id="u", connection_id="c", ip="12.1.1.2")],
+            sessions=[], **CONTEXT,
+        )
+        await runtime.exchange(sync)
+        binding = runtime.associations.bindings["u"]
+        binding.rnti = 100
+        binding.valid_until = 1000
+        runtime.associations.invalidate("u", "context_missing_or_lease_expired")
+        loss = dict(runtime.association_losses["u"])
+        assert loss["reason"] == "context_missing_or_lease_expired"
+        assert loss["detected_unix_ns"] > 0
+
+        # Recovery before any report must not hide the invalidation.
+        binding.rnti = 100
+        binding.valid_until = 1000
+        for _ in range(2):
+            runtime.window = Window(0, 100_000_000)
+            runtime.publish(10)
+            assert runtime.latest_report["ues"]["u"]["association_valid"]
+            assert runtime.latest_report["association_losses"] == {"u": loss}
+        runtime.associations.invalidate("u", "another_loss")
+        assert runtime.association_losses == {"u": loss}
+        await runtime.exchange(dict(sync, awareness_revision=2))
+        assert runtime.association_losses == {"u": loss}
+
+        # Removed bindings and rejected old contexts cannot erase evidence.
+        await runtime.exchange(dict(sync, awareness_revision=3, associations=[]))
+        runtime.window = Window(0, 100_000_000)
+        runtime.publish(10)
+        old_report = runtime.latest_report
+        assert old_report["ues"] == {}
+        assert old_report["association_losses"] == {"u": loss}
+        await runtime.exchange(dict(sync, attempt_id="stale", awareness_revision=2))
+        assert runtime.association_losses == {"u": loss}
+
+        await runtime.exchange(dict(sync, attempt_id="attempt-002", awareness_revision=4))
+        assert runtime.association_losses == {}
+        assert old_report["association_losses"] == {"u": loss}
+        runtime.window = Window(0, 100_000_000)
+        runtime.publish(10)
+        assert runtime.latest_report["association_losses"] == {}
+
+        # A recreated Associations instance must retain its notification callback.
+        await runtime.exchange(dict(
+            sync, attempt_id="attempt-002", awareness_generation="mec-process-b",
+        ))
+        runtime.associations.bindings["u"].rnti = 100
+        runtime.associations.invalidate("u", "ran_source_generation")
+        assert runtime.association_losses["u"]["reason"] == "ran_source_generation"
+
+    asyncio.run(exercise())
 
 
 def test_recorder_freezes_context_when_record_is_enqueued(tmp_path):
@@ -90,19 +155,28 @@ def test_ue_acknowledges_exact_scenario_assignment(tmp_path):
         )
         engine.arm_scenario(armed)
         assert user.scenario_ack is None
+        engine.videos["prepared"] = Video("prepared", user.uid, "detection", 1, 0, state="AWAITING_DELIVERY")
+        engine.scenario_videos[user.alias] = "prepared"
         response = asyncio.run(
-            engine.command(user, {"type": "scenario_context_ack", **CONTEXT})
+            engine.command(user, {"type": "scenario_context_ack", "video_id": "prepared", **CONTEXT})
         )
         assert response["type"] == "scenario_context_acknowledged"
         assert user.scenario_ack == (CONTEXT["attempt_id"], user.generation, "pixel1")
-        started = engine.start_scenario({**CONTEXT, "lead_s": 1.0})
+        def sender(message):
+            sent.append(message)
+            if message["type"] == "scenario_start":
+                receipt = SendReceipt()
+                receipt.finish()
+                return receipt
+        user.sender = sender
+        started = asyncio.run(engine.start_scenario(CONTEXT))
         assert started["status"] == "started"
         assert started["start_unix_ns"] > 0
-        assert started["release_delay_ns"] == 1_000_000_000
+        assert started["queue_loop_ns"] >= 0
         start_message = next(
             message for message in sent if message["type"] == "scenario_start"
         )
-        assert start_message["release_delay_ns"] == 1_000_000_000
+        assert "release_delay_ns" not in start_message
     finally:
         engine.record.close()
 

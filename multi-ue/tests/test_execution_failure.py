@@ -36,6 +36,7 @@ def test_model_failure_quarantines_all_bitrate_candidates():
 
 def test_quarantined_candidate_rejects_newly_decoded_frame():
     engine = Engine.__new__(Engine)
+    engine.cfg = SimpleNamespace(mode="development")
     descriptor = SimpleNamespace(video_id="video", frame_id=3)
     config = candidate("failed", "model", 500_000)
     frame = Frame("video", 3, descriptor, 1, config, complete_ns=2)

@@ -101,3 +101,34 @@ def test_old_ip_revision_cannot_rollback_same_socket_update():
     a.register("u", "c", "ip2", 1, 3)
     a.register("u", "c", "ip1", 1, 2)
     assert a.bindings["u"].ip == "ip2"
+
+
+def test_loss_callback_preserves_reprobe_and_ignores_unmapped_invalidations():
+    losses = []
+    a = Associations(config(), on_loss=lambda *args: losses.append(args))
+    a.register("u", "c", "ip")
+    a.invalidate("u", "not_yet_associated")
+    assert losses == []
+    now = exercise(a, 1)
+    a.tick(now + 1, set())
+    assert losses == [("u", "context_missing_or_lease_expired", 3)]
+    assert "u" in a.pending
+    now = exercise(a, now + 2)
+    assert a.valid("u", now)
+    a.tick(now + 31, {100})
+    assert len(losses) == 2
+
+
+def test_loss_callback_on_accepted_identity_replacement_only():
+    losses = []
+    a = Associations(config(), on_loss=lambda *args: losses.append(args))
+    a.register("u", "c", "ip1", 1, 1)
+    now = exercise(a, 1)
+    a.register("u", "c", "ip2", 1, 3)
+    assert losses == [("u", "connection_or_ip_changed", 2)]
+    now = exercise(a, now + 1)
+    a.register("u", "c", "ip1", 1, 2)
+    assert len(losses) == 1
+    assert a.valid("u", now)
+    a.register("u", "new", "ip2", 2, 0)
+    assert losses[-1] == ("u", "connection_or_ip_changed", 3)

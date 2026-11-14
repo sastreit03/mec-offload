@@ -25,6 +25,7 @@ from .preview import Preview
 from .dashboard import HTML as DASHBOARD_HTML
 from .config import load
 from .engine import Engine
+from .control import SendReceipt
 from mec_contracts.wire import envelope, loads, dumps
 
 
@@ -118,6 +119,8 @@ def create_app(engine):
             preview=preview.snapshot(),
             run_id=engine.cfg.run_id,  # Metadata identifier for an experimental run
             scenario=engine.scenario,  # Scenarios for dataset collection
+            scenario_error=engine.scenario_error,
+            scenario_idle=engine.idle(),
             scenario_start_unix_ns=engine.scenario_start_unix_ns, # Scenarios for dataset collection
             awareness_generation=engine.awareness_generation,     # Used for synchronizing MEC reports to EdgeRIC, increments when MEC restarts
             ues={
@@ -140,6 +143,7 @@ def create_app(engine):
                         .get("ues", {})
                         .get(u.uid, {})
                         .get("association_valid")
+                        and (engine.last_report or {}).get("ues", {}).get(u.uid, {}).get("connection_id") == u.connection_id
                     ),  # Whether the EdgeRIC has an association between the UE's IP address and its RNTI
                 )
                 for u in engine.ues.values()
@@ -176,6 +180,13 @@ def create_app(engine):
         except ValueError as error:
             return JSONResponse({"error": str(error)}, status_code=409)
 
+    @app.post("/api/scenario/finalize")
+    async def finalize_scenario(value: dict):
+        try:
+            return await engine.finalize_scenario(value)
+        except ValueError as error:
+            return JSONResponse({"error": str(error)}, status_code=409)
+
     # For dataset generation, start a given scenario
     @app.post("/api/scenario/disarm")
     async def disarm_scenario(value: dict):
@@ -188,7 +199,7 @@ def create_app(engine):
     @app.post("/api/scenario/start")
     async def start_scenario(value: dict):
         try:
-            return engine.start_scenario(value)
+            return await engine.start_scenario(value)
         except ValueError as error:
             return JSONResponse({"error": str(error)}, status_code=409)
 
@@ -231,6 +242,7 @@ def create_app(engine):
         # the terminal status waits behind them.
         out = asyncio.PriorityQueue(maxsize=1024 if engine.collection_mode else 128)  # Queue for outgoing websocket messages
         sequence = 0  # Sequence of messages
+        receipts = set()
 
         # Put messages with their priorities into a priority queue of outgoing messages
         def enqueue(m):
@@ -245,11 +257,16 @@ def create_app(engine):
             )
             # Lower priority number is actually higher priority
             priority = 2 if terminal else 1 if m["type"] == "frame_result" else 0
+            receipt = SendReceipt() if m["type"] == "scenario_start" else None
             try:
                 # Put messages into queue to send to UE
                 # Messages have priority, sequence, and the actual message
-                out.put_nowait((priority, sequence, m))
+                out.put_nowait((priority, sequence, m, receipt))
+                if receipt is not None:
+                    receipts.add(receipt)
             except asyncio.QueueFull:
+                if receipt is not None:
+                    receipt.finish("socket_queue_full")
                 # Exception for the queue being full
                 engine.record.event(
                     "socket_queue_full",
@@ -261,6 +278,7 @@ def create_app(engine):
                 )
                 if engine.collection_mode or m["type"] != "frame_result":
                     asyncio.create_task(ws.close(code=1013))
+            return receipt
 
         # u: engine's UE object
         # hello: dict with initial message for UE
@@ -276,11 +294,36 @@ def create_app(engine):
         async def sender():
             while True:
                 # Continuously read messages from the priority queue and send them over the websocket
-                _, _, m = await out.get()
+                _, _, m, receipt = await out.get()
                 # Because of await, execution of this coroutine halts here until a message is in the UE's priority queue
                 # Consecutive message sends are performed synchronously, one after the other
                 # to_thread moves the serialization of the JSON from dumps into a worker thread
-                await ws.send_text(await asyncio.to_thread(dumps, m))
+                try:
+                    if receipt is not None:
+                        if receipt.done.cancelled():
+                            continue
+                        if (engine.scenario_error or engine.scenario_finalization
+                                or u.generation != generation or not u.connected
+                                or engine.scenario is None
+                                or any(m.get(k) != v for k, v in engine.scenario.items())):
+                            receipt.finish("obsolete_start")
+                            continue
+                        # Tiny control message: avoid a thread hop before timing its write.
+                        payload = dumps(m)
+                        receipt.started_ns = time.monotonic_ns()
+                        await ws.send_text(payload)
+                        receipt.finish()
+                    else:
+                        await ws.send_text(await asyncio.to_thread(dumps, m))
+                except Exception as error:
+                    if receipt is not None:
+                        receipt.finish(str(error))
+                    engine.disconnect(u.uid, generation)
+                    await ws.close(code=1011)
+                    return
+                finally:
+                    if receipt is not None:
+                        receipts.discard(receipt)
                 # Record that a message was sent
                 engine.record.event(
                     "send_attempt",
@@ -355,6 +398,8 @@ def create_app(engine):
         except WebSocketDisconnect:
             pass
         finally:
+            for receipt in receipts:
+                receipt.finish("connection_closed")
             engine.disconnect(u.uid, generation)    # Disconnect UE of current generation in engine
             sending.cancel()                        # Cancel tasks in event loop and wait for them to cancel in .gather
             replaying.cancel()

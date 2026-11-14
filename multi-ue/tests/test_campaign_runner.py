@@ -79,6 +79,54 @@ def test_completed_pilot_clears_final_assignment(tmp_path):
     assert disarmed[0][1].startswith("attempt-")
 
 
+def test_association_failure_rejects_attempt_and_drains_without_restart(tmp_path, monkeypatch):
+    context = dict(campaign_id="campaign", scenario_id="scenario", attempt_id="attempt")
+    status = dict(scenario=context, scenario_error=dict(reason="association_lost"), scenario_idle=True)
+    monkeypatch.setattr(MODULE, "http_json", lambda *_: status)
+    state = MODULE.State(tmp_path / "state.sqlite3", "manifest")
+    runner = MODULE.Runner(SimpleNamespace(
+        output=str(tmp_path), mec="http://mec", scenario_timeout=1, poll_interval=0,
+    ), [], state)
+    scenario = dict(campaign_id="campaign", scenario_id="scenario", ues=[])
+    with pytest.raises(RuntimeError, match="collection scenario invalid") as error:
+        runner.wait(scenario, "attempt")
+    disarmed = []
+    runner.disarm = lambda *args: disarmed.append(args)
+    runner.recover = lambda *_: pytest.fail("healthy drained attempt must not restart services")
+    runner.retire_failed_attempt(str(error.value), scenario, "attempt")
+    assert disarmed == [(scenario, "attempt")]
+
+
+@pytest.mark.parametrize("confirmed", [True, False])
+def test_attempt_requires_final_confirmation(tmp_path, monkeypatch, confirmed):
+    context = dict(campaign_id="campaign", scenario_id="scenario", attempt_id="attempt")
+    requests = []
+    def http(_base, path, value):
+        requests.append(path)
+        if path.endswith("/arm"):
+            return dict(status="armed")
+        if path.endswith("/start"):
+            assert "lead_s" not in value
+            return dict(status="started", start_unix_ns=1, queue_loop_ns=1)
+        assert path.endswith("/finalize")
+        return dict(context, status="finalized" if confirmed else "rejected")
+    monkeypatch.setattr(MODULE, "http_json", http)
+    runner = MODULE.Runner(SimpleNamespace(
+        output=str(tmp_path), mec="http://mec",
+    ), [], MODULE.State(tmp_path / "state.sqlite3", "manifest"))
+    runner.select_channel = lambda _: None
+    runner.await_assignment_ack = lambda *_: None
+    runner.wait = lambda *_: dict(videos={})
+    scenario = dict(campaign_id="campaign", scenario_id="scenario", ues=[], channel={})
+    if confirmed:
+        result = runner.attempt(scenario, "attempt", dict(awareness_generation="mec"))
+        assert result["confirmation"]["attempt_id"] == "attempt"
+    else:
+        with pytest.raises(RuntimeError, match="scenario finalization failed"):
+            runner.attempt(scenario, "attempt", dict(awareness_generation="mec"))
+    assert requests == ["/api/scenario/arm", "/api/scenario/start", "/api/scenario/finalize"]
+
+
 def test_wait_fails_after_media_progress_stalls(tmp_path, monkeypatch):
     context = {
         "campaign_id": "campaign-a",

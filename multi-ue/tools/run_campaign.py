@@ -192,6 +192,25 @@ class Runner:
         so the recovery hook restarts the MEC before the next arm request.
         """
         try:
+            # A latched radio failure has already stopped input. Let resident
+            # GPU work settle before disarming; restart only if cleanup fails.
+            if reason.startswith("collection scenario invalid:"):
+                deadline = time.monotonic() + self.args.scenario_timeout
+                while not self.stop:
+                    status = http_json(self.args.mec, "/api/status")
+                    if status.get("scenario") != {
+                        "campaign_id": scenario["campaign_id"],
+                        "scenario_id": scenario["scenario_id"],
+                        "attempt_id": attempt_id,
+                    }:
+                        raise RuntimeError("scenario context changed during abort")
+                    if status.get("scenario_idle"):
+                        self.disarm(scenario, attempt_id)
+                        return
+                    if time.monotonic() >= deadline:
+                        raise RuntimeError("collection abort drain timed out")
+                    time.sleep(self.args.poll_interval)
+                raise RunnerStopped("runner stopped during abort")
             self.disarm(scenario, attempt_id)
         except Exception as error:
             reason = f"{reason}; failed-attempt cleanup failed: {error}"
@@ -322,6 +341,8 @@ class Runner:
             status = http_json(self.args.mec, "/api/status")
             if status.get("scenario") != context:
                 raise RuntimeError("MEC scenario context changed before UE acknowledgement")
+            if status.get("scenario_error"):
+                raise RuntimeError(f"collection scenario invalid: {status['scenario_error']}")
             acknowledged = {
                 value.get("alias")
                 for value in status.get("ues", {}).values()
@@ -369,6 +390,10 @@ class Runner:
                         raise RuntimeError(f"channel {key} changed during scenario")
                 channel_check_at = time.monotonic() + 5
             last = http_json(self.args.mec, "/api/status")
+            if last.get("scenario_error"):
+                raise RuntimeError(
+                    f"collection scenario invalid: {json.dumps(last['scenario_error'], sort_keys=True)}"
+                )
             if last.get("scenario") != {
                 "campaign_id": scenario["campaign_id"],
                 "scenario_id": scenario["scenario_id"],
@@ -488,7 +513,6 @@ class Runner:
                 "campaign_id": scenario["campaign_id"],
                 "scenario_id": scenario["scenario_id"],
                 "attempt_id": attempt_id,
-                "lead_s": self.args.start_lead_s,
             },
         )
         if started.get("status") != "started":
@@ -498,7 +522,7 @@ class Runner:
             scenario_id=scenario["scenario_id"],
             attempt_id=attempt_id,
             start_unix_ns=started["start_unix_ns"],
-            release_delay_ns=started["release_delay_ns"],
+            release=started,
         )
         after = self.wait(scenario, attempt_id, channel)
         if channel is None:
@@ -510,7 +534,19 @@ class Runner:
             for key in ("condition_id", "trace_sha256", "generation"):
                 if channel_after.get(key) != channel.get(key):
                     raise RuntimeError(f"channel {key} changed during scenario")
+        confirmation = http_json(
+            self.args.mec, "/api/scenario/finalize",
+            dict(campaign_id=scenario["campaign_id"],
+                 scenario_id=scenario["scenario_id"], attempt_id=attempt_id),
+        )
+        if (confirmation.get("status") != "finalized"
+                or confirmation.get("campaign_id") != scenario["campaign_id"]
+                or confirmation.get("scenario_id") != scenario["scenario_id"]
+                or confirmation.get("attempt_id") != attempt_id):
+            raise RuntimeError("scenario finalization failed")
         return dict(
+            release=started,
+            confirmation=confirmation,
             mec_generation=before["awareness_generation"],
             channel=channel_after,
             videos=after["videos"],
@@ -611,10 +647,6 @@ def main():
     parser.add_argument("--limit", type=int, help="stop after this many manifest rows")
     parser.add_argument("--max-attempts", type=int, default=3)
     parser.add_argument("--scenario-timeout", type=float, default=180)
-    parser.add_argument(
-        "--start-lead-s", type=float, default=6.0,
-        help="admission/setup lead before the shared UE media release",
-    )
     parser.add_argument(
         "--assignment-timeout", type=float, default=20,
         help="recover unless every assigned UE acknowledges its context",

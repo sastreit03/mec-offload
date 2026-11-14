@@ -34,11 +34,14 @@ public final class AvcSource {
   private int sourceStartFrame;
   private int frameLimit = -1, submittedFrames;
   private long segmentFinishDeadline;
+  private boolean released;
+  private Runnable heldFirstFrame;
 
   public AvcSource(Context c, StreamSession s, StreamSession.Events e, double prepareS)
       throws Exception {
     context = c;
     session = s;
+    released = !s.collectionMode();
     events = e;
     prepareNs = Math.round(prepareS * 1e9);
     thread.start();
@@ -47,6 +50,24 @@ public final class AvcSource {
 
   public void start(Uri file) {
     start(file, 0, -1);
+  }
+
+  /** Release prepared collection media once, on its existing media thread. */
+  public void release() {
+    handler.post(() -> {
+      if (!active || released) return;
+      released = true;
+      fileStart = session.activate();
+      if (heldFirstFrame != null) {
+        Runnable first = heldFirstFrame;
+        heldFirstFrame = null;
+        first.run();
+      }
+    });
+  }
+
+  private void ready() throws Exception {
+    events.event("media_prepared", new org.json.JSONObject().put("video_id", session.video()));
   }
 
   /** Start one deterministic prerecorded segment selected by the campaign manifest. */
@@ -130,6 +151,7 @@ public final class AvcSource {
                             CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE,
                             new Range<Integer>(fps, fps));
                         s.setRepeatingRequest(b.build(), null, handler);
+                        if (!released) ready();
                       } catch (Exception e) {
                         fail(e);
                       }
@@ -186,7 +208,7 @@ public final class AvcSource {
 
   // Camera and dataset frames share bitrate changes, keyframe requests, and YUV scaling.
   private boolean submit(Image source, long pts) throws Exception {
-    if (!active) return false;
+    if (!active || !released) return false;
     int index = encoder.dequeueInputBuffer(0);
     if (index < 0) return false;
     Image target = encoder.getInputImage(index);
@@ -317,6 +339,14 @@ public final class AvcSource {
             return;
           }
           if (firstPts < 0) firstPts = info.presentationTimeUs;
+          if (!released) {
+            final int heldIndex = i;
+            final long heldPts = info.presentationTimeUs;
+            final int heldFlags = info.flags;
+            heldFirstFrame = () -> submitDecoded(heldIndex, heldPts, heldFlags);
+            ready();
+            return;
+          }
           long release = fileStart + (info.presentationTimeUs - firstPts) * 1000;
           if (!preparationSent
               && prepareNs > 0

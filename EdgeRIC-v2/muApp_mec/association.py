@@ -32,8 +32,9 @@ class Binding:
 
 
 class Associations:
-    def __init__(self, config):
+    def __init__(self, config, on_loss=None):
         self.config = config
+        self.on_loss = on_loss
         self.bindings = {}
         self.probe = None
         self.source_generation = None
@@ -67,6 +68,8 @@ class Associations:
         ):
             return old
         generation = old.generation + 1 if old else 1
+        if old and old.rnti is not None and self.on_loss is not None:
+            self.on_loss(uid, "connection_or_ip_changed", generation)
         self.bindings[uid] = Binding(uid, connection, ip, generation=generation)
         self.bindings[uid].connection_generation = (
             connection_generation
@@ -80,6 +83,7 @@ class Associations:
 
     def invalidate(self, uid, reason):
         b = self.bindings[uid]
+        had_mapping = b.rnti is not None
         b.rnti = None
         b.revalidate_at = 0
         b.valid_until = 0
@@ -87,6 +91,9 @@ class Associations:
         self.last_result[uid] = {"reason": reason, "valid": False}
         if uid not in self.pending:
             self.pending.append(uid)
+
+        if had_mapping and self.on_loss is not None:
+            self.on_loss(uid, reason, b.generation)
 
     def tick(self, now, rntis):
         for uid, b in self.bindings.items():

@@ -136,18 +136,26 @@ carry the same key. Collection-mode video lifecycle commands are rejected when
 the MEC is unarmed or the supplied key differs. Records created before arming
 retain null scenario fields; an attempt is never inferred from timestamps.
 
-Each assigned UE acknowledges the exact context after receiving it. The runner
+Each assigned UE acknowledges the exact context and admitted video only after
+preparing its source, encoder and media socket. Prerecorded clients retain the
+first decoded source frame while waiting for release. The runner
 requires a fresh acknowledgement from every expected alias before it trusts the
 attempt. This prevents an uplink-associated UE with a failed downlink bearer
 from silently omitting its video while the other UEs continue.
 
-After all acknowledgements, the runner releases a two-phase start barrier. The
-MEC broadcasts a six-second preparation interval and a reference wall-clock
-timestamp. Every UE requests admission and initializes its media pipeline, then
-measures the release interval on its local clock. This avoids start skew from
-absolute clock-map offsets. UE evidence retains the MEC timestamp and its local
-release timestamp; capture/transmission timestamps retain
-the measured residual skew from radio scheduling.
+After all readiness acknowledgements, the runner requests immediate release.
+The MEC queues `scenario_start` for every participating UE before waiting for
+local WebSocket write results. One 0.2-second wait covers the initial batch;
+one additional 0.2-second stage allows at most one replacement of an unsent or
+failed command. A write already in progress is awaited without overlapping it
+with another write. Unresolved sends invalidate the attempt. Queued withdrawn
+or obsolete starts are skipped, and UEs ignore duplicate starts for the same
+attempt. No application acknowledgment is sent for the start command.
+The existing readiness timeout bounds preparation, and first-media timeouts
+begin at release rather than admission. MEC evidence records queue-loop and
+write timing; UE evidence records local release time. Local write completion
+does not prove UE receipt or simultaneous transmission. No future timestamp or
+release-delay command is used, and `--start-lead-s` is no longer a runner option.
 
 The arm payload also carries the complete per-UE assignment. Each UE registers
 a stable alias (`pixel1` through `pixel3`, or `linux1`), resolves the exact
@@ -194,6 +202,20 @@ recovery evidence, and restarts the MEC so reconnecting UEs cannot receive the
 abandoned assignment. Resuming the runner gives that scenario a new attempt ID.
 A normally completed runner invocation disarms its final attempt through the
 MEC control API, keeping resident workers warm and avoiding a restart.
+
+Association loss invalidates the entire attempt, even if reassociation succeeds
+before the next radio report. EdgeRIC retains the first loss per UE in its
+existing reports; the MEC stops participating senders and drains outstanding
+work before the runner retries with a new attempt ID. A reporting-source change
+or prolonged reporting outage also invalidates an active attempt.
+
+Before accepting a drained attempt, the runner calls `/api/scenario/finalize`.
+The MEC requests one final association snapshot over the existing EdgeRIC RPC,
+checks its identity, freshness, current mappings and retained losses, and saves
+the confirmation with the attempt evidence. Snapshot creation at EdgeRIC defines
+the association-monitoring endpoint; repeated finalization requests reuse that
+snapshot. A failed confirmation cannot produce a valid attempt. This completion
+check depends on draining, not on a particular media duration or frame count.
 
 MEC awareness messages now include a process generation UUID. EdgeRIC accepts
 a reset revision counter only from a new generation, replaces associations
