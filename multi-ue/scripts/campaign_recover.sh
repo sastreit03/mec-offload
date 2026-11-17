@@ -34,6 +34,13 @@ if [[ "$gnb_running" != true || "$gnb_health" == unhealthy \
   || "$reason" == *"scheduling_counters_invalid"* \
   || "$reason" == *"control_unreachable"* ]]; then
   restart_gnb=true
+  # The Orin must be quiet throughout gNB startup, not restarted only afterward.
+  # Stop failure is fatal: proceeding could keep the gNB from stabilizing.
+  if ! timeout 90 ssh -o BatchMode=yes -o ConnectTimeout=5 "$orin_host" \
+    'python3 ~/mec-offload-ad/multi-ue/scripts/recover_orin.py --phase stop'; then
+    echo "Recovery aborted: could not stop the Orin softUE before restarting gNB" >&2
+    exit 1
+  fi
   # The CIR loader resets to pass-through. The runner selects and verifies the
   # manifest trace again before it arms the retry.
   (
@@ -42,7 +49,10 @@ if [[ "$gnb_running" != true || "$gnb_health" == unhealthy \
     # restart has repeatedly left UEs cycling between attach and detach.
     USER_ID="$(id -u)" GROUP_ID="$(id -g)" \
       docker compose --env-file ../b200/.env up -d --force-recreate oai-gnb
-  ) || failed=1
+  ) || {
+    echo "Recovery aborted: gNB recreation failed; Orin softUE remains stopped" >&2
+    exit 1
+  }
 
   # Do not let a broken RAN recovery block the campaign indefinitely.
   for _ in $(seq 1 90); do
@@ -50,10 +60,13 @@ if [[ "$gnb_running" != true || "$gnb_health" == unhealthy \
     [[ "$health" == healthy ]] && break
     sleep 1
   done
-  [[ "$health" == healthy ]] || failed=1
+  if [[ "$health" != healthy ]]; then
+    echo "Recovery aborted: gNB did not become healthy; Orin softUE remains stopped" >&2
+    exit 1
+  fi
   # The existing Orin supervisor's argv preserves run-specific source/log paths.
   timeout 180 ssh -o BatchMode=yes -o ConnectTimeout=5 "$orin_host" \
-    'python3 ~/mec-offload-ad/multi-ue/scripts/recover_orin.py' || failed=1
+    'python3 ~/mec-offload-ad/multi-ue/scripts/recover_orin.py --phase start' || failed=1
 fi
 
 if $restart_gnb \

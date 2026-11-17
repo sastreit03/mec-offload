@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Run on Orin: preserve the current client launch, restart softUE, then client."""
+"""Run on Orin: stop/start softUE around gNB recovery, preserving client arguments."""
+import argparse
 import json
 import os
 from pathlib import Path
@@ -43,7 +44,16 @@ def find_launch():
     raise RuntimeError("No client supervisor or saved launch; start the supervisor with this run's arguments first")
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--phase", choices=("stop", "start", "restart"), default="restart")
+    phase = parser.parse_args(argv).phase
+    if phase == "start":
+        # Starting after a separate stop must use the launch saved by that stop.
+        launch = json.loads(STATE.read_text())
+        env = dict(os.environ, **launch.get("env", {}))
+        start(launch, env, env.get("SOFTUE_CONTAINER", "oai-nr-ue"))
+        return
     pid, launch = find_launch()
     STATE.parent.mkdir(parents=True, exist_ok=True)
     STATE.write_text(json.dumps(launch, indent=2))
@@ -74,6 +84,13 @@ for p in Path('/proc').iterdir():
         else:
             os.kill(pid, signal.SIGKILL)
     subprocess.run(["docker", "stop", container], check=True, timeout=45)
+    if phase == "stop":
+        print("Orin softUE and client stopped; launch arguments saved", flush=True)
+        return
+    start(launch, env, container)
+
+
+def start(launch, env, container):
     subprocess.run(["docker", "start", container], check=True, timeout=45)
     # Existing route helper waits for the tunnel IP and verifies the cellular route.
     subprocess.run([str(ROOT / "scripts/softue-route.sh")], env=env, check=True, timeout=75)
