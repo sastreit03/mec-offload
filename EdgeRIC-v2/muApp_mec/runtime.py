@@ -97,15 +97,13 @@ class Runtime:
     def event(self, kind, **data):
         try:
             self.log_queue.put_nowait(
-                dict(
-                    type=kind,
-                    monotonic_ns=time.monotonic_ns(),
-                    run_id=self.run_id,
-                    campaign_id=self.campaign_id,
-                    scenario_id=self.scenario_id,
-                    attempt_id=self.attempt_id,
+                {
                     **data,
-                )
+                    "type": kind,
+                    "monotonic_ns": time.monotonic_ns(),
+                    "run_id": self.run_id,
+                    **self.join_context(),
+                }
             )
         except asyncio.QueueFull:
             self.log_errors += 1

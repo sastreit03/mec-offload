@@ -1377,16 +1377,35 @@ class Engine:
             receiver = (MockReceiver if self.cfg.backend == "mock" else Receiver)(
                 vid, v.epoch, port, self.cfg, self.post
             )
+            setup_context = self.join_context()
+            setup_stage = "receiver"
             try:
                 await asyncio.to_thread(receiver.start)
+                if v.app == "tracking":
+                    setup_stage = "tracker"
+                    # First-use imports and tracker construction must not stall
+                    # control traffic or the 300-ms radio freshness watchdog.
+                    v.tracker = await asyncio.to_thread(
+                        Tracker, self.cfg.fps, self.cfg.tracker_retention_s,
+                        self.cfg.backend == "mock",
+                    )
             except Exception as ex:
                 await asyncio.to_thread(receiver.close)
                 v.state = "DENIED"
                 u.active_video = None
                 self.record.event(
-                    "receiver_setup_failed", video_id=vid, reason=repr(ex)
+                    f"{setup_stage}_setup_failed", video_id=vid, reason=repr(ex)
                 )
                 return denied("setup_failed")
+            if self.collection_mode and (
+                self.scenario_error or self.scenario_finalization
+                or self.join_context() != setup_context
+            ):
+                await asyncio.to_thread(receiver.close)
+                v.state = "DENIED"
+                if u.active_video == vid:
+                    u.active_video = None
+                return denied("scenario_invalid")
             v.receiver = receiver
             v.state = "AWAITING_DELIVERY"
             v.admitted = time.monotonic()
@@ -1401,12 +1420,6 @@ class Engine:
                 v.state = "DENIED"
                 u.active_video = None
                 return denied("joint_budget_changed_during_setup")
-            if v.app == "tracking":
-                v.tracker = Tracker(
-                    self.cfg.fps,
-                    self.cfg.tracker_retention_s,
-                    self.cfg.backend == "mock",
-                )
             # Fixed collection preparation must not rephase already-prepared
             # UEs when another participant is admitted. Release opens their gates.
             self.plan([v] if self.collection_mode else participating, proposal)
@@ -1560,18 +1573,21 @@ class Engine:
         receiver = (MockReceiver if self.cfg.backend == "mock" else Receiver)(
             vid, v.epoch, port, self.cfg, self.post
         )
+        setup_stage = "receiver"
         try:
             await asyncio.to_thread(receiver.start)
+            if v.app == "tracking":
+                setup_stage = "tracker"
+                # Each successor owns a fresh tracker; initialize off-loop too.
+                v.tracker = await asyncio.to_thread(
+                    Tracker, self.cfg.fps, self.cfg.tracker_retention_s,
+                    self.cfg.backend == "mock",
+                )
         except Exception as ex:
             await asyncio.to_thread(receiver.close)
-            self.record.event("receiver_setup_failed", video_id=vid, reason=repr(ex))
+            self.record.event(f"{setup_stage}_setup_failed", video_id=vid, reason=repr(ex))
             return denied("setup_failed")
         v.receiver = receiver
-        if v.app == "tracking":
-            # Each video owns a fresh tracker, so state never crosses the handoff.
-            v.tracker = Tracker(
-                self.cfg.fps, self.cfg.tracker_retention_s, self.cfg.backend == "mock"
-            )
         self.videos[vid] = v
         u.prepared_video = vid
         self.aware(

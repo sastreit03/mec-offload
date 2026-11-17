@@ -140,6 +140,30 @@ def test_recorder_freezes_context_when_record_is_enqueued(tmp_path):
     assert events[1]["attempt_id"] == "attempt-002"
 
 
+def test_probe_receipt_with_campaign_context_is_logged(tmp_path):
+    async def exercise():
+        config = yaml.safe_load((ROOT / "config/edgeric.shadow.yaml").read_text())
+        config["runs_dir"] = str(tmp_path)
+        runtime = Runtime(config)
+        base = dict(schema_version=1, run_id="run-a",
+                    awareness_generation="mec-a", **CONTEXT)
+        await runtime.exchange(dict(base, type="sync", awareness_revision=1,
+                                    associations=[], sessions=[]))
+        result = await runtime.exchange(dict(
+            base, type="probe_receipt", ue_id="u", probe_id="probe",
+            interval_index=0, bytes=1000,
+        ))
+        assert result["status"] == "ok"
+        events = []
+        while not runtime.log_queue.empty():
+            events.append(runtime.log_queue.get_nowait())
+        receipt = next(e for e in events if e["type"] == "probe_receipt")
+        assert all(receipt[k] == v for k, v in CONTEXT.items())
+        assert receipt["bytes"] == 1000
+        assert runtime.log_errors == 0
+    asyncio.run(exercise())
+
+
 def test_collection_lifecycle_requires_armed_exact_context(tmp_path):
     cfg, catalog, profiles = load(ROOT / "config/mec.development.yaml")
     cfg.mode = "collection"
