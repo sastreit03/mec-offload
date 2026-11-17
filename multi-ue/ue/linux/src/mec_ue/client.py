@@ -55,6 +55,9 @@ class Client:
         self.assignment = None
         self.aborted_attempt_id = None
         self.started_attempt_id = None
+        self.control_disconnected_at = None
+        self.last_control_at = time.monotonic()
+        self.pending_failure = None
         self.connection = None
         self.root = Path(args.logs)
         self.root.mkdir(parents=True, exist_ok=True)
@@ -248,6 +251,12 @@ class Client:
                     and self.attempt_id != self.aborted_attempt_id):
                 await self.send(dict(type="scenario_context_ack", video_id=value["video_id"]))
         elif kind == "sender_error":
+            self.fail_collection_locally("media_sender_failed")
+            if self.pending_failure and self.ws:
+                try:
+                    await self.send(self.pending_failure)
+                except Exception:
+                    pass  # Local shutdown must not depend on a working socket.
             self.fatal_media_error = value.get("reason", "unknown sender error")
             self.stopped = True
             if self.ws:
@@ -284,7 +293,7 @@ class Client:
             kind == "media_end"
             and self.streamer
             and value.get("video_id") == self.streamer.response["video_id"]
-            and value["final_frame_id"] >= 0
+            and (self.collection_mode or value["final_frame_id"] >= 0)
         ):
             if (
                 self.pending_end is None
@@ -297,6 +306,8 @@ class Client:
                     video_id=self.streamer.response["video_id"],
                     client_seq=self.next_seq(),
                     final_frame_id=value["final_frame_id"],
+                    frames_fully_sent=value.get("frames_fully_sent"),
+                    end_reason=value.get("end_reason"),
                 )
             await self.send(self.pending_end)
             self.awaiting_successor = bool(self.playlist) and not self.collection_mode
@@ -448,6 +459,27 @@ class Client:
             self.streamer = None
         self.record("scenario_aborted", error=message.get("error"))
 
+    def fail_collection_locally(self, reason):
+        if not self.collection_mode or not self.context_ready() or self.attempt_id == self.aborted_attempt_id:
+            return
+        # Retain the failure across reconnect; the same attempt must not resume.
+        self.pending_failure = dict(self.join_context(), type="scenario_failure", reason=reason)
+        self.abort_collection(self.join_context())
+
+    async def control_watchdog(self):
+        while not self.stopped:
+            if self.collection_mode and self.assignment and self.context_ready():
+                now = time.monotonic()
+                if self.control_disconnected_at is not None:
+                    if now - self.control_disconnected_at >= 1.0:
+                        self.fail_collection_locally("control_disconnect_timeout")
+                elif now - self.last_control_at >= 2.0:
+                    # Reuse regular control replies instead of adding probes.
+                    self.fail_collection_locally("control_unreachable")
+                    if self.ws:
+                        await self.ws.close()
+            await asyncio.sleep(0.1)
+
     def release_collection(self, message):
         if (not self.collection_mode or not self.context_ready()
                 or any(message.get(k) != v for k, v in self.join_context().items())
@@ -503,6 +535,7 @@ class Client:
 
         self.loop = asyncio.get_running_loop()
         writer = asyncio.create_task(self.writer())
+        watchdog = asyncio.create_task(self.control_watchdog())
         try:
             if getattr(self.args, "preview_port", 0):
                 self.preview = Preview(self.args.ue_alias, self.args.preview_host, self.args.preview_port)
@@ -519,7 +552,10 @@ class Client:
                         self.refresh_server_route, self.args.source_ip
                     )
                     if self.streamer:
-                        self.streamer.source_ip = self.args.source_ip
+                        if self.collection_mode and self.streamer.source_ip != self.args.source_ip:
+                            self.fail_collection_locally("control_ip_changed")
+                        if self.streamer:
+                            self.streamer.source_ip = self.args.source_ip
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock.bind((self.args.source_ip, 0))
                     sock.setblocking(False)
@@ -553,7 +589,12 @@ class Client:
                             async for raw in ws:
                                 m = json.loads(raw)
                                 kind = m.get("type")
+                                self.last_control_at = time.monotonic()
                                 if kind == "mec_hello":
+                                    if (self.control_disconnected_at is not None
+                                            and time.monotonic() - self.control_disconnected_at >= 1.0):
+                                        self.fail_collection_locally("control_disconnect_timeout")
+                                    self.control_disconnected_at = None
                                     if self.streamer and (
                                         m.get("active_video_id")
                                         != self.streamer.response["video_id"]
@@ -568,6 +609,11 @@ class Client:
                                     self.uid = m["ue_id"]
                                     self.run_id = m["run_id"]
                                     self.set_context(m)
+                                    if self.pending_failure:
+                                        if all(self.pending_failure.get(k) == m.get(k) for k in
+                                               ("campaign_id", "scenario_id", "attempt_id")):
+                                            await self.send(self.pending_failure)
+                                        self.pending_failure = None
                                     self.connection = m["connection_id"]
                                     # Request the validated media profile advertised by this MEC.
                                     self.input_profile = m.get(
@@ -590,6 +636,13 @@ class Client:
                                     if self.pending_end is not None:
                                         await self.send(self.pending_end)
                                     sync = asyncio.create_task(self.synchronize())
+                                elif kind == "scenario_stop":
+                                    if (self.collection_mode and self.streamer
+                                            and all(m.get(k) == getattr(self, k) for k in
+                                                    ("campaign_id", "scenario_id", "attempt_id"))):
+                                        self.streamer.stop()
+                                        if self.pending_end is not None:
+                                            await self.send(self.pending_end)
                                 elif kind == "scenario_abort":
                                     self.abort_collection(m)
                                 elif kind == "scenario_context":
@@ -722,9 +775,8 @@ class Client:
                                             source_start_frame=(
                                                 self.assignment or {}
                                             ).get("source_start_frame", 0),
-                                            frame_count=(self.assignment or {}).get(
-                                                "frame_count"
-                                            ),
+                                            # Timed collection ends only on MEC's stop command.
+                                            frame_count=None,
                                         )
                                         if self.successor_selection:
                                             self.selection = self.successor_selection
@@ -859,6 +911,9 @@ class Client:
                                 if self.stopped:
                                     break
                         finally:
+                            if self.control_disconnected_at is None:
+                                self.control_disconnected_at = time.monotonic()
+                            self.ws = None
                             if sync:
                                 sync.cancel()
                                 await asyncio.gather(sync, return_exceptions=True)
@@ -869,6 +924,8 @@ class Client:
                     self.ws = None
                     await asyncio.sleep(0.5)
         finally:
+            watchdog.cancel()
+            await asyncio.gather(watchdog, return_exceptions=True)
             if self.preview:
                 await asyncio.to_thread(self.preview.close)
             if self.streamer:

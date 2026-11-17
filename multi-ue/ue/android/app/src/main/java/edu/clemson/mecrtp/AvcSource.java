@@ -24,6 +24,7 @@ public final class AvcSource {
   private ImageReader reader;
   private H264Rtp rtp;
   private boolean active = true;
+  private volatile boolean stopRequested;
   private int width, height, fps, bitrate, sourceRotation;
   private long fileStart, firstPts = -1;
   private boolean inputEos;
@@ -66,6 +67,23 @@ public final class AvcSource {
     });
   }
 
+  public void stopTransmission() {
+    if (stopRequested) return;
+    stopRequested = true;
+    session.stopTransmission();
+    handler.post(() -> {
+      try {
+        // The media thread has now left any interrupted packet loop.
+        events.event("media_end", new org.json.JSONObject()
+            .put("video_id", session.video())
+            .put("final_frame_id", session.lastFrame())
+            .put("frames_fully_sent", session.framesFullySent())
+            .put("end_reason", "scenario_stop"));
+      } catch (Exception e) { fail(e); }
+      close();
+    });
+  }
+
   private void ready() throws Exception {
     events.event("media_prepared", new org.json.JSONObject().put("video_id", session.video()));
   }
@@ -76,7 +94,8 @@ public final class AvcSource {
         () -> {
           try {
             this.sourceStartFrame = sourceStartFrame;
-            frameLimit = frameCount;
+            // MEC elapsed time, rather than a media-frame limit, ends collection.
+            frameLimit = session.collectionMode() ? -1 : frameCount;
             JSONObjectConfig();
             sourceStartUs = Math.round(this.sourceStartFrame * 1_000_000.0 / fps);
             if (file == null) camera();
@@ -208,7 +227,7 @@ public final class AvcSource {
 
   // Camera and dataset frames share bitrate changes, keyframe requests, and YUV scaling.
   private boolean submit(Image source, long pts) throws Exception {
-    if (!active || !released) return false;
+    if (!active || stopRequested || !released) return false;
     int index = encoder.dequeueInputBuffer(0);
     if (index < 0) return false;
     Image target = encoder.getInputImage(index);
@@ -259,7 +278,7 @@ public final class AvcSource {
 
   /** Submit one decoded frame without consuming it during collection backpressure. */
   private void submitDecoded(int index, long pts, int flags) {
-    if (!active) return;
+    if (!active || stopRequested) return;
     try {
       Image image = decoder.getOutputImage(index);
       boolean submitted = false;
@@ -288,13 +307,11 @@ public final class AvcSource {
         return;
       }
       if ((flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
-        if (session.collectionMode() && frameLimit > 0)
+        if (session.collectionMode())
           throw new Exception(
               "Collection source ended after "
                   + submittedFrames
-                  + " of "
-                  + frameLimit
-                  + " frames");
+                  + " frames before the MEC stop command");
         drain();
         events.event(
             "media_end",
@@ -312,7 +329,7 @@ public final class AvcSource {
 
   // Pace prerecorded frames by playback time rather than their original recording date.
   private void pump() {
-    if (!active) return;
+    if (!active || stopRequested) return;
     try {
       if (decoder != null) {
         if (!inputEos) {
@@ -413,6 +430,7 @@ public final class AvcSource {
   }
 
   private void fail(Exception e) {
+    if (stopRequested) return; // Expected interruption of the packet loop.
     try {
       events.event("sender_error", new org.json.JSONObject().put("reason", e.toString()));
     } catch (Exception ignored) {

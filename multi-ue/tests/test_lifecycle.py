@@ -192,6 +192,7 @@ def test_collection_admission_defers_first_media_timeout_until_scenario_start():
 def test_video_end_resolves_received_frames_that_decoder_cannot_emit():
     engine = Engine.__new__(Engine)
     engine.cfg = SimpleNamespace(run_id="run", mode="collection", drain_s=120.0)
+    engine.validate_frame_counts = Mock()
     engine.aware = Mock()
     engine.record = Mock()
     engine.task = Mock()

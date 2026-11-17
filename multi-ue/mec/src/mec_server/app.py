@@ -138,6 +138,7 @@ def create_app(engine):
                             u.alias,       # Used in dataset collection. e.g., pixel1, linux1
                         )
                     ),
+                    scheduling_counters_valid=(engine.last_report or {}).get("ues", {}).get(u.uid, {}).get("scheduling_counters_valid", False),
                     association_valid=bool(
                         (engine.last_report or {})
                         .get("ues", {})
@@ -158,12 +159,19 @@ def create_app(engine):
                     counters=v.counters,                    # The number of frames of the video by terminal outcome, e.g., completed, dropped
                     received_frames=v.received,             # Number of valid frames received for a video
                     pipeline_states=dict(pipeline.get(v.vid, {})),  # Counts the number of unresolved frames, e.g., queued, processing
+                    frames_fully_sent=v.frames_fully_sent,
+                    frames_fully_received=v.frames_fully_received,
+                    frame_counts_validated=v.frame_counts_validated,
+                    frame_count_difference=(abs(v.frames_fully_sent - v.frames_fully_received)
+                                            if v.frames_fully_sent is not None else None),
                     final_frame_id=v.final_id,              # Final frame ID of the video
                     collection_error=v.collection_error,    # Used in dataset collection. Whether an error has occurred in a frame of the video
                 )
                 for v in engine.videos.values()
             },
             unresolved=len(engine.frames),  # How many frames don't have terminal outcomes
+            edgeric_evidence_errors=(engine.last_report or {}).get("evidence_errors"),
+            gnb_metric_age_s=(engine.last_report or {}).get("metric_age_s"),
             radio_report_age_s=(
                 time.time_ns() - engine.last_report["window_end_unix_ns"]
             )
@@ -188,6 +196,16 @@ def create_app(engine):
             return JSONResponse({"error": str(error)}, status_code=409)
 
     # For dataset generation, start a given scenario
+    @app.post("/api/scenario/abort")
+    async def abort_scenario(value: dict):
+        try:
+            if engine.scenario != engine.validated_context(value):
+                raise ValueError("scenario_context_mismatch")
+            engine.invalidate_scenario("runner_failure", error=value.get("reason"))
+            return dict(status="aborted", **engine.scenario)
+        except ValueError as error:
+            return JSONResponse({"error": str(error)}, status_code=409)
+
     @app.post("/api/scenario/disarm")
     async def disarm_scenario(value: dict):
         try:

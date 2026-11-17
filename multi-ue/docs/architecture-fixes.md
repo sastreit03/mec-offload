@@ -154,3 +154,35 @@ requires a lower value.
   accepted exclusions.
 - Automatic failed-worker restart/unquarantine and the aggregate byte-budget
   admission extension remain deferred.
+
+## Collection telemetry integrity
+
+The MEC collection configuration allows one second without a fresh EdgeRIC
+report. Independently, EdgeRIC measures gNB freshness from an **advancing report
+sequence within a source generation**, not from receipt of repeated ZMQ messages.
+The first observation of a gap of at least 300 ms invalidates the active attempt;
+a repeated sample before that deadline does not. Missing identity, a sequence
+regression, or a source replacement cannot silently refresh telemetry. Existing
+association checks and retained association-loss history remain in use.
+
+The OAI `UeMetrics.scheduling_counters_valid` flag (field 66) explicitly declares
+that all eight cumulative UL/DL scheduling counters are available. Zero counters
+and zero increments are valid. Missing/invalid counters or decreasing counters
+within a generation are retained as failures for the affected UE until the
+attempt changes. Radio-state, link-quality, capacity and conditional grant
+measurements remain optional; their individual validity flags are preserved.
+The authoritative wire schema is `EdgeRIC-v2/muApp_mec/legacy_wire/metrics.proto`;
+its generated Python and gNB C++ bindings are updated together. Rebuild the gNB
+publisher and deploy the matching EdgeRIC/MEC versions before collecting data.
+An older publisher without the flag is deliberately rejected for collection.
+
+EdgeRIC includes telemetry failure history and its evidence error count in the
+existing reports and final association snapshot. Log queue overflow, event-write
+failure and queued association-snapshot failure increment a process-lifetime
+error count. Finalization waits for the evidence queue to finish, including the
+finalization event, and returns the resulting health status. MEC refuses a failed
+confirmation. This guarantees completed file writes, not an fsync/power-loss
+persistence guarantee. Recovery restarts EdgeRIC after evidence failures; gNB
+telemetry/counter failures use the existing gNB and Orin recovery path. The runner
+checks evidence health and advancing-sample age before another attempt starts.
+No extra periodic messages or packet probes are introduced.

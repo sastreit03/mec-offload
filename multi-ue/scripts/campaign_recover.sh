@@ -5,6 +5,8 @@ set -u
 
 repo_root="${AETHEREDGE_REPO_ROOT:-$HOME/mec-offload-ad}"
 mec_host="${AETHEREDGE_MEC_HOST:-sstreit@192.168.71.130}"
+orin_host="${AETHEREDGE_ORIN_HOST:-srk@130.127.199.100}"
+failed=0
 
 reason="${1:-unknown}"
 scenario_id="${2:-unknown-scenario}"
@@ -19,11 +21,18 @@ docker inspect oai-gnb >"$recovery_dir/oai-gnb-inspect.json" 2>&1 || true
 docker logs --since 15m oai-gnb >"$recovery_dir/oai-gnb.log" 2>&1 || true
 
 gnb_running="$(docker inspect -f '{{.State.Running}}' oai-gnb 2>/dev/null || true)"
+gnb_health="$(docker inspect -f '{{.State.Health.Status}}' oai-gnb 2>/dev/null || true)"
 restart_gnb=false
-if [[ "$gnb_running" != true \
+if [[ "$gnb_running" != true || "$gnb_health" == unhealthy \
   || "$reason" == *"gNB channel controller"* \
   || "$reason" == *"assignment acknowledgement"* \
-  || "$reason" == *"UE disconnected during scenario"* ]]; then
+  || "$reason" == *"UE disconnected during scenario"* \
+  || "$reason" == *"UE aliases unavailable"* \
+  || "$reason" == *"scenario_first_frame_timeout"* \
+  || "$reason" == *"media_arrival_timeout"* \
+  || "$reason" == *"gnb_telemetry_invalid"* \
+  || "$reason" == *"scheduling_counters_invalid"* \
+  || "$reason" == *"control_unreachable"* ]]; then
   restart_gnb=true
   # The CIR loader resets to pass-through. The runner selects and verifies the
   # manifest trace again before it arms the retry.
@@ -33,7 +42,7 @@ if [[ "$gnb_running" != true \
     # restart has repeatedly left UEs cycling between attach and detach.
     USER_ID="$(id -u)" GROUP_ID="$(id -g)" \
       docker compose --env-file ../b200/.env up -d --force-recreate oai-gnb
-  ) || true
+  ) || failed=1
 
   # Do not let a broken RAN recovery block the campaign indefinitely.
   for _ in $(seq 1 90); do
@@ -41,15 +50,19 @@ if [[ "$gnb_running" != true \
     [[ "$health" == healthy ]] && break
     sleep 1
   done
+  [[ "$health" == healthy ]] || failed=1
+  # The existing Orin supervisor's argv preserves run-specific source/log paths.
+  timeout 180 ssh -o BatchMode=yes -o ConnectTimeout=5 "$orin_host" \
+    'python3 ~/mec-offload-ad/multi-ue/scripts/recover_orin.py' || failed=1
 fi
 
 if $restart_gnb \
   || ! docker inspect -f '{{.State.Running}}' edgeric-mec 2>/dev/null | grep -qx true \
-  || [[ "$reason" == *"EdgeRIC"* ]]; then
+  || [[ "$reason" == *"EdgeRIC"* || "$reason" == *"edgeric_evidence_failed"* ]]; then
   # EdgeRIC's RNTI bindings and radio-source generation belong to one gNB
   # process. Recreate both sides together instead of aging out stale state.
-  "$repo_root/multi-ue/scripts/containers.sh" stop-edgeric || true
-  "$repo_root/multi-ue/scripts/containers.sh" start-edgeric || true
+  "$repo_root/multi-ue/scripts/containers.sh" stop-edgeric || failed=1
+  "$repo_root/multi-ue/scripts/containers.sh" start-edgeric || failed=1
 fi
 
 restart_mec=false
@@ -61,6 +74,7 @@ elif [[ "$reason" == *"scenario timed out"* \
   || "$reason" == *"terminal frame"* \
   || "$reason" == *"final frame"* \
   || "$reason" == *"candidate mismatch"* \
+  || "$reason" == *"candidate quarantined"* \
   || "$reason" == *"scenario context"* \
   || "$reason" == *"scenario arm"* \
   || "$reason" == *"assignment acknowledgement"* \
@@ -76,7 +90,7 @@ if $restart_mec; then
   # Batch mode prevents a campaign from blocking on an interactive password.
   timeout 90 ssh -o BatchMode=yes -o ConnectTimeout=5 "$mec_host" \
     "cd ~/mec-offload-ad/multi-ue && ./scripts/containers.sh stop-mec || true; ./scripts/containers.sh start-mec" \
-    || true
+    || failed=1
 fi
 
-exit 0
+exit "$failed"

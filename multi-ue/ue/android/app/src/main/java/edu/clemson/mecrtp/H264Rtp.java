@@ -13,6 +13,7 @@ public final class H264Rtp {
 
   public interface Metadata {
     byte[] begin(long pts, long size, boolean idr) throws IOException;
+    default void complete() throws IOException {}
   }
 
   private final Sink sink;
@@ -107,6 +108,7 @@ public final class H264Rtp {
     if (firstPts < 0) firstPts = pts;
     long ts = (Integer.toUnsignedLong(timestampBase) + (pts - firstPts) * 90 / 1000) & 0xffffffffL;
     for (int i = 0; i < nals.size(); i++) nal(nals.get(i), ts, i == nals.size() - 1);
+    metadata.complete();
     accessUnits++;
   }
 

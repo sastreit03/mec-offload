@@ -14,6 +14,8 @@ class Socket:
 def test_sender_error_stops_client_for_supervised_restart():
     client = Client.__new__(Client)
     client.record = lambda *_args, **_values: None
+    client.collection_mode = False
+    client.pending_failure = None
     client.fatal_media_error = None
     client.stopped = False
     client.ws = Socket()

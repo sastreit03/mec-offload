@@ -93,6 +93,7 @@ class Streamer:
         self.current = dict(response["config"])
         self.pending = []
         self.lock = threading.Lock()
+        self.frames_fully_sent = 0
         self.stopped = threading.Event()
         self.control_version = self.current.get("control_version", 0)
         self.pause_at = None
@@ -336,6 +337,9 @@ class Streamer:
                 # Timestamp sampled before transport submission. Packetization overhead is included in UE SLO.
                 try:
                     for p in packets:
+                        # Stop between packets; an interrupted frame is not counted.
+                        if self.stopped.is_set():
+                            return
                         sock.send(p)
                 except OSError as ex:
                     self.event(
@@ -344,6 +348,8 @@ class Streamer:
                             frame_id=self.frame_id, video_id=d.video_id, reason=repr(ex)
                         ),
                     )
+                    raise
+                self.frames_fully_sent += 1
                 seq = (seq + len(packets)) & 65535
                 self.last_frame = self.frame_id
                 self.event(
@@ -390,6 +396,8 @@ class Streamer:
             self.event(
                 "media_end",
                 dict(
+                    end_reason="scenario_stop" if self.stopped.is_set() else "source_ended",
+                    frames_fully_sent=self.frames_fully_sent,
                     final_frame_id=self.last_frame, video_id=self.response["video_id"]
                 ),
             )

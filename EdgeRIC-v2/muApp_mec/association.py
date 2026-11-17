@@ -57,6 +57,8 @@ class Associations:
         ):
             return old
         if old and old.connection_id == connection and old.ip == ip:
+            if connection_generation is not None:
+                old.connection_generation = connection_generation
             old.association_revision = max(
                 old.association_revision, association_revision
             )

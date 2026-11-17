@@ -28,6 +28,24 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
   private final Map<Long, long[]> sent = new LinkedHashMap<>();
   private long frame, gop, gopFrame, last = -1, nextRelease, pauseAt;
   private boolean force;
+  private volatile boolean transmissionStopped;
+  private long framesFullySent;
+  private JSONObject transmitting;
+
+  // Do not acquire the sender lock: stop must interrupt between UDP packets.
+  public void stopTransmission() { transmissionStopped = true; }
+  public synchronized long framesFullySent() { return framesFullySent; }
+
+  @Override
+  public synchronized void complete() throws java.io.IOException {
+    try {
+      framesFullySent++;
+      last = transmitting.getLong("frame_id");
+      events.event("transmitted", transmitting);
+    } catch (JSONException e) {
+      throw new java.io.IOException(e);
+    }
+  }
   private long controlVersion, pauseVersion;
 
   public StreamSession(JSONObject response, ClockMap clock, Events events, java.io.File data)
@@ -156,17 +174,14 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
       long fid = in[1];
       sent.put(fid, new long[] {tx, 0, 0});
       while (sent.size() > 4096) sent.remove(sent.keySet().iterator().next());
-      last = fid;
-      events.event(
-          "transmitted",
-          new JSONObject()
+      transmitting = new JSONObject()
               .put("video_id", video)
               .put("frame_id", fid)
               .put("tx_mono_ns", tx)
               .put("capture_mono_ns", in[0])
               .put("encoded_bytes", size)
               .put("config_version", current.getInt("config_version"))
-              .put("plan_version", current.getInt("plan_version")));
+              .put("plan_version", current.getInt("plan_version"));
       frame++;
       gopFrame = (gopFrame + 1) % current.getInt("gop_frames");
       if (gopFrame == 0) gop++;
@@ -191,6 +206,8 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
 
   @Override
   public synchronized void send(byte[] packet, int length) throws java.io.IOException {
+    // A partial frame exits without complete(), so it is excluded from the count.
+    if (transmissionStopped) throw new java.io.IOException("Scenario transmission stopped");
     if (socket == null) throw new java.io.IOException("Network unavailable");
     datagram.setData(packet, 0, length);
     socket.send(datagram);

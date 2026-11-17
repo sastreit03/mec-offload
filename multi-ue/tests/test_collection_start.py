@@ -143,7 +143,7 @@ def test_linux_ready_ack_and_release_are_separate_and_idempotent():
     asyncio.run(exercise())
 
 
-@pytest.mark.parametrize("abort", [False, True])
+@pytest.mark.parametrize("abort", [False, True, "partial", "send_error"])
 def test_linux_media_holds_first_frame_until_release_and_stop_wakes_it(monkeypatch, abort):
     from mec_ue import media
     prepared = threading.Event()
@@ -179,24 +179,36 @@ def test_linux_media_holds_first_frame_until_release_and_stop_wakes_it(monkeypat
         ),
     )
     clock = SimpleNamespace(unix_ns=time.time_ns, valid=lambda: True, to_unix=lambda _: time.time_ns())
+    endings = []
     def event(kind, value):
         events.append(kind)
+        if kind == "media_end": endings.append(value)
         if kind == "media_prepared": prepared.set()
     streamer = media.Streamer(response, "clip.mp4", "12.1.1.2", clock, event,
                               frame_count=1, hold_for_start=True)
+    if abort in ("partial", "send_error"):
+        monkeypatch.setattr(media, "packetize", lambda *a: [b"first", b"second"])
+        def send(packet):
+            packets.append(packet)
+            if abort == "send_error": raise OSError("send failed")
+            streamer.stop()
+        sock.send = send
     streamer.start()
     try:
         assert prepared.wait(1)
         assert reads == ["first"] and not encoded and not packets
-        if abort:
+        if abort is True:
             streamer.stop()
         else:
             streamer.release()
         streamer.thread.join(1)
         assert not streamer.thread.is_alive()
-        assert "sender_error" not in events
-        assert encoded == ([] if abort else ["first-frame"])
-        assert bool(packets) is not abort
+        assert ("sender_error" in events) == (abort == "send_error")
+        assert encoded == ([] if abort is True else ["first-frame"])
+        assert bool(packets) == (abort is not True)
+        assert endings[0]["frames_fully_sent"] == (1 if abort is False else 0)
+        assert endings[0]["final_frame_id"] == (0 if abort is False else -1)
+        if abort == "partial": assert packets == [b"first"]
         assert set(closed) == {"encoder", "socket", "capture"}
     finally:
         streamer.stop()

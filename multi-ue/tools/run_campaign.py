@@ -147,6 +147,8 @@ class Runner:
         self.scenarios = scenarios
         self.state = state
         self.stop = False
+        self.recovery_error = None
+        self.recoveries_without_start = 0
         self.events = Path(args.output) / "runner-events.jsonl"
         self.heartbeat = Path(args.output) / "runner-status.json"
         signal.signal(signal.SIGINT, self._stop)
@@ -157,6 +159,30 @@ class Runner:
 
     def event(self, kind, **value):
         item = dict(type=kind, unix_ns=time.time_ns(), **value)
+        # Print transitions immediately; frequent monitor samples stay in the files.
+        if kind != "monitor":
+            label = {
+                "attempt_started": "PREPARING",
+                "assignments_acknowledged": "UES READY",
+                "scenario_start_released": "STREAMING",
+                "attempt_invalid": "INVALID",
+                "attempt_cleanup": "STOPPING / DRAINING",
+                "scenario_finalizing": "FINALIZING",
+                "recovery": "RECOVERING",
+                "preflight_wait": "WAITING FOR READINESS",
+                "preflight_ready": "READY",
+                "scenario_valid": "VALID",
+            }.get(kind, kind.replace("_", " ").upper())
+            fields = [time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(item["unix_ns"] / 1e9))]
+            for key, name in (("scenario_id", "scenario"), ("attempt_id", "attempt"),
+                              ("attempt_number", "number")):
+                if key in value:
+                    fields.append(f"{name}={value[key]}")
+            fields.append(label)
+            if value.get("reason"):
+                # Keep even multiline errors on one readable terminal line.
+                fields.append("reason=" + " ".join(str(value["reason"]).splitlines()))
+            print(" ".join(fields), flush=True)
         with self.events.open("a") as stream:
             stream.write(json.dumps(item, separators=(",", ":")) + "\n")
         self.heartbeat.write_text(
@@ -164,10 +190,19 @@ class Runner:
         )
 
     def recover(self, reason, scenario, attempt_id):
+        # Give each recovery a chance to restore readiness and start an attempt.
+        # Exit before a fourth invocation; SystemExit bypasses retry handlers.
+        if self.recoveries_without_start >= 3:
+            message = f"Campaign aborted: three recoveries without a scenario starting; {reason}"
+            self.event("campaign_aborted", reason=message,
+                       scenario_id=scenario["scenario_id"], attempt_id=attempt_id)
+            raise SystemExit(message)
+        self.recoveries_without_start += 1
         self.event(
             "recovery", reason=reason, scenario_id=scenario["scenario_id"],
             attempt_id=attempt_id,
         )
+        failed = False
         for hook in self.args.recovery_hook:
             try:
                 environment = os.environ.copy()
@@ -176,12 +211,14 @@ class Runner:
                 )
                 subprocess.run(
                     [hook, reason, scenario["scenario_id"], attempt_id],
-                    check=False,
+                    check=True,
                     timeout=self.args.recovery_timeout,
                     env=environment,
                 )
-            except (OSError, subprocess.TimeoutExpired) as error:
+            except (OSError, subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
+                failed = True
                 self.event("recovery_hook_failed", hook=hook, reason=str(error))
+        self.recovery_error = reason if failed else None
         time.sleep(self.args.retry_delay)
 
     def retire_failed_attempt(self, reason, scenario, attempt_id):
@@ -191,7 +228,18 @@ class Runner:
         An active failed attempt cannot be disarmed; its 409 reason is appended
         so the recovery hook restarts the MEC before the next arm request.
         """
+        self.event("attempt_invalid", scenario_id=scenario["scenario_id"],
+                   attempt_id=attempt_id, reason=reason)
+        self.event("attempt_cleanup", scenario_id=scenario["scenario_id"],
+                   attempt_id=attempt_id)
+        repair_required = not reason.startswith("collection scenario invalid:")
         try:
+            # Runner-detected failures must stop all UEs before cleanup/restarts.
+            if not reason.startswith("collection scenario invalid:"):
+                http_json(self.args.mec, "/api/scenario/abort", dict(
+                    campaign_id=scenario["campaign_id"], scenario_id=scenario["scenario_id"],
+                    attempt_id=attempt_id, reason=reason))
+                reason = f"collection scenario invalid: {reason}"
             # A latched radio failure has already stopped input. Let resident
             # GPU work settle before disarming; restart only if cleanup fails.
             if reason.startswith("collection scenario invalid:"):
@@ -205,7 +253,15 @@ class Runner:
                     }:
                         raise RuntimeError("scenario context changed during abort")
                     if status.get("scenario_idle"):
+                        failure = (status.get("scenario_error") or {}).get("reason")
+                        repair_required |= failure in {
+                            "execution_failed", "worker_exited", "recording_failed",
+                            "collection_buffer_limit", "result_delivery_failed", "ue_failure",
+                            "scenario_first_frame_timeout", "media_arrival_timeout", "control_unreachable",
+                        }
                         self.disarm(scenario, attempt_id)
+                        if repair_required:
+                            self.recover(reason, scenario, attempt_id)
                         return
                     if time.monotonic() >= deadline:
                         raise RuntimeError("collection abort drain timed out")
@@ -217,6 +273,8 @@ class Runner:
         self.recover(reason, scenario, attempt_id)
 
     def preflight(self, scenario):
+        if self.recovery_error:
+            raise RuntimeError(f"recovery incomplete: {self.recovery_error}")
         status = http_json(self.args.mec, "/api/status")
         if not status["readiness"]["ready"]:
             raise RuntimeError("MEC is not ready")
@@ -228,6 +286,9 @@ class Runner:
             for worker in status["readiness"].get("workers", {}).values()
         ):
             raise RuntimeError("MEC CUDA stream priority differs from manifest")
+        requested = {item["candidate_id"] for item in scenario["ues"]}
+        if requested.intersection(status["readiness"].get("quarantined_candidates", [])):
+            raise RuntimeError("MEC required candidate quarantined")
         if status["unresolved"]:
             raise RuntimeError("MEC has unresolved frames")
         connected = {
@@ -245,6 +306,17 @@ class Runner:
             raise RuntimeError(
                 f"EdgeRIC associations unavailable: {sorted(expected - valid)}"
             )
+        counters_valid = {
+            value["alias"] for value in status.get("ues", {}).values()
+            if value.get("scheduling_counters_valid") is True and value.get("alias")
+        }
+        if not expected <= counters_valid:
+            raise RuntimeError("scheduling_counters_invalid: participating UE counters unavailable")
+        if status.get("edgeric_evidence_errors") != 0:
+            raise RuntimeError("EdgeRIC evidence recording unavailable")
+        metric_age = status.get("gnb_metric_age_s")
+        if not isinstance(metric_age, (int, float)) or not 0 <= metric_age < 0.3:
+            raise RuntimeError("gnb_telemetry_invalid: no fresh advancing sample")
         age = status.get("radio_report_age_s")
         if age is None or age > self.args.max_radio_age:
             raise RuntimeError(f"EdgeRIC radio report is stale: {age}")
@@ -259,13 +331,12 @@ class Runner:
             try:
                 status = self.preflight(scenario)
                 if reported is not None:
-                    print("Campaign preflight ready", flush=True)
+                    self.event("preflight_ready", scenario_id=scenario["scenario_id"])
                 return status
             except Exception as error:
                 last_error = error
                 if str(error) != reported:
                     reported = str(error)
-                    print(f"Waiting for campaign preflight: {error}", flush=True)
                     self.event(
                         "preflight_wait",
                         scenario_id=scenario["scenario_id"],
@@ -273,7 +344,7 @@ class Runner:
                     )
                 if time.monotonic() >= deadline:
                     self.recover(
-                        f"preflight unavailable: {error}", scenario, "preflight"
+                        self.recovery_error or f"preflight unavailable: {error}", scenario, "preflight"
                     )
                     deadline = time.monotonic() + self.args.preflight_timeout
                 time.sleep(self.args.poll_interval)
@@ -368,7 +439,7 @@ class Runner:
 
     def wait(self, scenario, attempt_id, expected_channel=None):
         expected = {item["ue_alias"]: item for item in scenario["ues"]}
-        disconnect_grace = getattr(self.args, "disconnect_grace", 10)
+        disconnect_grace = getattr(self.args, "disconnect_grace", 1)
         deadline = time.monotonic() + self.args.scenario_timeout
         progress_at = time.monotonic()
         progress = None
@@ -463,10 +534,10 @@ class Runner:
                         # recycling the MEC workers.
                         errors.append(f"{alias}: media never started")
                         continue
-                    if video["final_frame_id"] != assignment["frame_count"] - 1:
-                        errors.append(f"{alias}: final frame mismatch")
-                    if outcomes != assignment["frame_count"]:
-                        errors.append(f"{alias}: {outcomes} terminal frame results")
+                    # Timed attempts have variable frame totals. MEC validates
+                    # transport counts only after the late-packet window closes.
+                    if not video.get("frame_counts_validated"):
+                        errors.append(f"{alias}: frame counts not validated")
                     if video.get("collection_error"):
                         errors.append(f"{alias}: {video['collection_error']}")
                 if last["unresolved"]:
@@ -517,6 +588,8 @@ class Runner:
         )
         if started.get("status") != "started":
             raise RuntimeError(f"scenario start failed: {started}")
+        # Preparation alone is not progress: reset only after MEC releases UEs.
+        self.recoveries_without_start = 0
         self.event(
             "scenario_start_released",
             scenario_id=scenario["scenario_id"],
@@ -534,6 +607,8 @@ class Runner:
             for key in ("condition_id", "trace_sha256", "generation"):
                 if channel_after.get(key) != channel.get(key):
                     raise RuntimeError(f"channel {key} changed during scenario")
+        self.event("scenario_finalizing", scenario_id=scenario["scenario_id"],
+                   attempt_id=attempt_id)
         confirmation = http_json(
             self.args.mec, "/api/scenario/finalize",
             dict(campaign_id=scenario["campaign_id"],
@@ -609,7 +684,8 @@ class Runner:
                 self.state.finish(
                     scenario["scenario_id"], "failed", "maximum attempts exhausted"
                 )
-                self.event("scenario_failed", scenario_id=scenario["scenario_id"])
+                self.event("scenario_failed", scenario_id=scenario["scenario_id"],
+                           reason="maximum attempts exhausted")
         if self.scenarios and not self.stop:
             # A pilot invoked with --scenario-id otherwise leaves its final
             # assignment armed, causing a UE that reconnects later to restart it.
@@ -656,14 +732,14 @@ def main():
         help="recover after this many seconds without media or drain progress",
     )
     parser.add_argument(
-        "--disconnect-grace", type=float, default=10,
+        "--disconnect-grace", type=float, default=1,
         help="allow a UE control connection this many seconds to reconnect",
     )
     parser.add_argument("--preflight-timeout", type=float, default=180)
     parser.add_argument("--max-radio-age", type=float, default=1.0)
     parser.add_argument("--poll-interval", type=float, default=1)
     parser.add_argument("--retry-delay", type=float, default=5)
-    parser.add_argument("--recovery-timeout", type=float, default=120)
+    parser.add_argument("--recovery-timeout", type=float, default=420)
     parser.add_argument(
         "--retry-failed", action="store_true",
         help="reset selected failed checkpoint rows after an operator fixes the cause",

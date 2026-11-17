@@ -100,6 +100,7 @@ class OAIAdapter:
                     "dl_rlc_interface_sdu_bytes_total",
                     "ul_rlc_interface_sdu_bytes_total",
                     "rlc_counters_valid",
+                    "scheduling_counters_valid",
                 )
             }
             for u in msg.ue_metrics

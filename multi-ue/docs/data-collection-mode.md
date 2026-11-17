@@ -18,9 +18,9 @@ remain outstanding.
 - Each application has an independent FIFO queue. Frames from UEs using the
   same application share that queue in arrival order. Tracking additionally
   preserves frame order within each video before updating ByteTrack state.
-- A five-second scenario duration is the media transmission interval. After
-  transmission ends, the MEC continues draining accepted work until every
-  transmitted frame has a terminal result.
+- The MEC issues a stop command seven seconds after it begins releasing the
+  scenario, using monotonic elapsed time. UEs stop when the command arrives.
+  The MEC then drains accepted work and sends the remaining results.
 
 ## Completion and failure semantics
 
@@ -154,13 +154,48 @@ attempt. No application acknowledgment is sent for the start command.
 The existing readiness timeout bounds preparation, and first-media timeouts
 begin at release rather than admission. MEC evidence records queue-loop and
 write timing; UE evidence records local release time. Local write completion
-does not prove UE receipt or simultaneous transmission. No future timestamp or
+does not prove UE receipt or simultaneous transmission. Every release also prints
+one `START` summary and a per-UE write table to the MEC terminal after send checks.
+Times use milliseconds; the table includes each retry separately. The summary
+shows queue time, write-start spread (including retries), elapsed release time,
+retry count, and success/failure. Missing timestamps display as `n/a`; pending
+writes remain labeled pending. Terminal output runs outside the event loop. No future timestamp or
 release-delay command is used, and `--start-lead-s` is no longer a runner option.
+
+One second after release begins, MEC checks that every participating UE has
+provided at least one complete frame. A partial frame does not satisfy this
+check. Missing UEs invalidate the attempt with `scenario_first_frame_timeout`;
+the existing abort path stops all participating UEs and the runner retries the
+scenario. The check uses the frame's MEC reception timestamp, so a delayed timer
+callback cannot accept a frame that arrived after the one-second deadline.
+
+Seven seconds after release begins, MEC queues `scenario_stop` for every
+participating UE. Each UE checks a stop flag between UDP packets, excludes an
+interrupted frame from `frames_fully_sent`, and reports that count in the existing
+`video_end` message with `end_reason: scenario_stop`. The control connection stays
+open for results. The existing end-message retention and acknowledgement handle
+reconnection; duplicate end reports cannot extend the arrival window.
+
+MEC reuses `final_arrival_s` (0.5 seconds) and the existing bounded decoder grace
+(2 seconds) before closing input. Incomplete frames receive existing transport-loss
+outcomes; complete queued work drains normally. MEC counts unique complete frame
+receptions independently of inference results. An absolute sent/received count
+difference of at least the configured FPS invalidates the attempt (10 frames at
+10 FPS). Missing end reports are bounded by the existing drain timeout. Early
+source exhaustion is unsuccessful, even if its report arrives after the deadline.
+
+The runner requires confirmed frame counts and final association confirmation.
+Exporter validation uses terminal outcome totals from accepted attempt evidence,
+not the manifest's historical fixed frame count; sent/received counts appear in
+`videos.csv`. Source files must contain enough frames after the assigned start
+position for seven seconds plus stop-command delay. Existing 150-frame segment
+validation alone does not establish that. Export selects the middle five seconds
+of each accepted attempt using MEC first-packet arrival time, as described below.
 
 The arm payload also carries the complete per-UE assignment. Each UE registers
 a stable alias (`pixel1` through `pixel3`, or `linux1`), resolves the exact
 manifest media file, seeks to `source_start_frame`, selects the assigned
-application/DNN/bitrate, and stops after 150 submitted frames. Normal camera
+application/DNN/bitrate, and transmits until the MEC stop command. Normal camera
 and shuffled prerecorded operation remain unchanged outside collection mode.
 An assignment is single-use within an attempt: both the MEC and UE reject a
 second video start until a new `attempt_id` supplies a new scenario context.
@@ -241,7 +276,7 @@ returned as an explicit per-frame decode failure; an incomplete access unit is
 returned as transport loss. These are channel/media outcomes rather than a
 stuck MEC drain, so they do not wait for or trigger the collection watchdog.
 
-The initial bounded five-second configuration permits 192 pending decoded
+The existing buffer configuration permits 192 pending decoded
 frames and 512 MiB per video, a 192-frame tracking reorder allowance, and a
 120-second drain watchdog. A hard limit or watchdog produces a failed outcome
 and a `collection_run_invalid` event. These values require live peak-memory
@@ -257,6 +292,26 @@ utilization does not measure individual CUDA-stream or kernel residency.
 
 ## Joined campaign export
 
+Frame rows are selected from `[1 s, 6 s)` relative to the accepted attempt's
+`release.start_monotonic_ns`, using `first_packet_monotonic_ns` from the same MEC
+clock. Exactly 1 second is included and exactly 6 seconds is excluded. Selected
+frames retain their outcomes and complete processing measurements, even when
+processing finishes later. Timestamped failed frames remain eligible. Frames
+without a usable arrival timestamp are excluded and counted as `unknown_window`
+in `validation.json`; loss rates calculated only from the exported frames can
+therefore understate total loss. Exclusions are reported per attempt and overall.
+An attempt without a usable MEC start timestamp cannot be exported; no media
+frame-number or wall-clock fallback is used.
+
+Full-attempt terminal counts are validated before filtering. Scenario/video
+metadata and sent/received counts still describe the full seven-second attempt;
+`full_attempt_frame_rows` and ingestion `counts` also describe the unfiltered
+evidence. `frame_rows`, join statistics, and `collection_window` describe the
+filtered dataset. Unrelated descriptors, UE transmissions/receipts, and telemetry
+are removed. Measurement intervals linked to retained frames keep their original
+bounds even if they cross the selection boundary. Media events are restricted to
+the same elapsed-time window. Raw source logs are never modified.
+
 `tools/export_campaign_dataset.py` builds a canonical SQLite dataset from the
 immutable campaign manifest/checkpoint plus MEC, EdgeRIC, and optional UE
 evidence. Only the latest attempt marked `valid` enters the canonical frame
@@ -267,9 +322,22 @@ Frames have one-to-many bridge tables for RAN and MEC observation windows.
 `frame_ran_features.csv` contains one row per frame and overlapping 100-ms RAN
 window. `frame_mec_features.csv` contains one row per frame and overlapping MEC
 resource window. `overlap_ns` supports weighted aggregation without pretending
-that a frame maps to one slot or one utilization sample. When UE wall-clock
-transmit evidence is unavailable, `ran_join_basis` says
-`mec_descriptor_arrival_unix_ns` and the overlap is an arrival-instant sample.
+that a frame maps to one slot or one utilization sample. RAN joins cover UE
+transmission through MEC complete reception, or through the last received packet
+for incomplete frames. MEC records the Unix reception endpoint in the receiver
+callback alongside its monotonic timestamp. `ran_join_basis` identifies the
+endpoint and any fallback: missing UE transmit timing uses descriptor arrival as
+the start; older logs without reception endpoints retain descriptor-arrival joins.
+An endpoint earlier than the start is labeled `invalid_timestamp_order` and is
+not joined. MEC resource joins remain first-packet-to-result-ready intervals.
+
+MEC resource reports include host-wide and per-logical-CPU utilization from
+psutil on the existing 100-ms reporting schedule. The CPU object records its
+actual measurement interval; the initial baseline and sampling errors are
+explicitly invalid. `mec_resources.csv` and `frame_mec_features.csv` expose this
+object as `cpu_json` alongside `gpu_json`. Older logs export JSON `null` for CPU
+measurements. See [collection_output_files.md](collection_output_files.md) for
+the fields and their interpretation.
 
 After copying the gNB EdgeRIC evidence and Pixel/Linux UE evidence under a
 local staging directory on the MEC Spark, run:
@@ -317,3 +385,43 @@ counts, percentiles, requested-rate deltas, and evidence coverage.
    with pass-through and AWGN pilots.
 3. Run a one-UE and four-UE pilot through the scenario runner, including one
    forced runner termination and resume, before starting all 2,664 scenarios.
+
+## Failure recovery and control reconnection
+
+Collection permits a control reconnect within one second only with the same IP.
+The association identity is retained for that brief reconnect, while socket
+ownership still changes generation. IP changes, a longer disconnect, or an
+actual radio association loss invalidate the attempt. UE clients stop locally
+when the disconnect grace expires and refuse to restart that attempt.
+Existing control exchanges also detect a silent/unreachable MEC after two seconds
+without replies; Android uses one clock-sync request per second in collection
+mode. No separate probe stream is added.
+
+After the first complete frame, each participating UE must continue delivering
+complete frames at intervals shorter than one second. This watchdog is disabled
+when MEC issues the normal stop command: subsequent silence is intentional and
+the existing arrival/drain deadlines apply. Buffer overflow, result delivery
+exceptions, worker execution failure/death, and recording failure invalidate
+collection immediately; ordinary transport/decode measurement outcomes retain
+the existing frame-count rules. Runner-detected errors call the attempt-specific
+abort API before cleanup. Recovery-hook failures prevent another attempt from
+starting until recovery succeeds.
+
+The runner allows three recovery invocations without MEC confirming a scenario
+start. Each recovery gets a chance to restore readiness and start an attempt;
+if another recovery is needed, the runner records `campaign_aborted` and exits
+with an error instead of invoking recovery a fourth time. Only a successful
+scenario start resets this count, not passing preflight or preparing the UEs.
+The count applies across scenarios during one runner process; existing
+checkpoints and accepted data remain available when the runner is relaunched.
+
+When recovery recreates the gNB, it also uses SSH to restart Orin's client and
+existing `oai-nr-ue` container, waits for the tunnel address through the existing
+route helper, then relaunches the supervisor. The destination defaults to
+`srk@130.127.199.100` (`AETHEREDGE_ORIN_HOST` overrides it). Authentication must
+work noninteractively from the runner host. The supervisor records its exact
+argv and selected environment in `runs/softue-client-launch.json`; recovery can
+also discover a running supervisor's argv. This preserves run-specific media,
+alias, and log paths without guessing. If neither is available, recovery fails
+and waits for an operator to launch the supervisor with the intended arguments.
+No recovery action resets the campaign manifest or accepted evidence.

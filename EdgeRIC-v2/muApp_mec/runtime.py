@@ -50,6 +50,8 @@ class Runtime:
         self.root.mkdir(parents=True, exist_ok=True)
         self.log_queue = asyncio.Queue(maxsize=16384)
         self.log_errors = 0
+        self.telemetry_errors = {}
+        self.finalize_lock = asyncio.Lock()
         self.console_logs = os.environ.get("EDGERIC_CONSOLE_LOGS", "0").lower() in ("1", "true", "yes")
         self.last_index = 0
         telemetry = config.get("ran_telemetry", {})
@@ -63,6 +65,22 @@ class Runtime:
         self.window_ns = window_ms * 1_000_000
         self.probe_commands = []
         # Aetheredge: Capacity tables and realized-ratio proxies are replaced by OAI TBS output.
+
+    def check_telemetry_freshness(self, now):
+        # Repeated messages cannot keep a frozen scheduler alive. Allow 300 ms
+        # between advancing samples, then retain the first failure for this attempt.
+        if self.attempt_id is not None and self.latest_metric and now - self.latest_metric >= 0.3:
+            self.telemetry_errors.setdefault("source", "gnb_telemetry_stale")
+
+    def telemetry_health(self):
+        return dict(evidence_errors=self.log_errors,
+                    telemetry_errors=dict(self.telemetry_errors))
+
+    def counter_failure(self, rnti, reason):
+        if self.attempt_id is not None:
+            for uid, binding in self.associations.bindings.items():
+                if binding.rnti == rnti:
+                    self.telemetry_errors.setdefault(uid, reason)
 
     def record_association_loss(self, uid, reason, generation):
         """Retain the first loss per UE until the attempt context changes."""
@@ -96,7 +114,10 @@ class Runtime:
         while True:
             data = await self.log_queue.get()
             try:
-                await asyncio.to_thread(self._append, data)
+                if data.get("type") == "association_snapshot":
+                    await asyncio.to_thread(self._snapshot, data["snapshot"])
+                else:
+                    await asyncio.to_thread(self._append, data)
             except Exception:
                 self.log_errors += 1
             finally:
@@ -179,6 +200,7 @@ class Runtime:
             self.attempt_id = context["attempt_id"]
             if context_changed:
                 self.association_losses.clear()
+                self.telemetry_errors.clear()
                 self.association_finalization = None
                 # Begin with a fresh radio window. Reacquire cumulative-counter
                 # baselines instead of charging prior traffic to this attempt.
@@ -238,32 +260,42 @@ class Runtime:
         if kind == "association_finalize":
             if self.attempt_id is None:
                 raise ValueError("scenario not armed")
-            if self.association_finalization is None:
-                now = time.monotonic()
-                # Apply expiry/missing-context checks even between report windows.
-                self.associations.tick(
-                    now, set(self.metrics) if now - self.latest_metric < 0.3 else set()
-                )
-                self.association_finalization = dict(
-                    status="association_finalized", run_id=self.run_id,
-                    **self.join_context(), source_generation=self.source,
-                    window_end_unix_ns=time.time_ns(),
-                    metric_age_s=now - self.latest_metric,
-                    association_losses={
-                        uid: dict(loss) for uid, loss in self.association_losses.items()
-                    },
-                    ues={
-                        uid: dict(
-                            association_valid=bool(self.associations.valid(uid, now)),
-                            connection_id=b.connection_id,
-                        )
-                        for uid, b in self.associations.bindings.items()
-                    },
-                )
-                self.event("association_finalized", snapshot=self.association_finalization)
-            # This immutable snapshot defines the end of association monitoring
-            # for the attempt; retries of this request return the same evidence.
-            return self.association_finalization
+            async with self.finalize_lock:
+                if self.association_finalization is None:
+                    now = time.monotonic()
+                    self.check_telemetry_freshness(now)
+                    # Apply expiry/missing-context checks even between report windows.
+                    self.associations.tick(
+                        now, set(self.metrics) if now - self.latest_metric < 0.3 else set()
+                    )
+                    snapshot = dict(
+                        status="association_finalized", run_id=self.run_id,
+                        **self.join_context(), source_generation=self.source,
+                        window_end_unix_ns=time.time_ns(),
+                        metric_age_s=now - self.latest_metric,
+                        association_losses={
+                            uid: dict(loss) for uid, loss in self.association_losses.items()
+                        },
+                        ues={
+                            uid: dict(
+                                association_valid=bool(self.associations.valid(uid, now)),
+                                connection_id=b.connection_id,
+                                scheduling_counters_valid=self.metrics.get(b.rnti, {}).get("scheduling_counters_valid", False),
+                            )
+                            for uid, b in self.associations.bindings.items()
+                        },
+                    )
+                    self.event("association_finalized", snapshot=dict(snapshot, **self.telemetry_health()))
+                    # Queue completion means each file write has finished or recorded
+                    # an error. Never confirm success merely because it was enqueued.
+                    await self.log_queue.join()
+                    if self.message_context(m) != self.join_context():
+                        raise ValueError("scenario context changed during finalization")
+                    snapshot.update(self.telemetry_health())
+                    self.association_finalization = snapshot
+                # This immutable snapshot defines the end of association monitoring
+                # for the attempt; retries of this request return the same evidence.
+                return self.association_finalization
         revision = m.get("awareness_revision")
         if revision is not None:
             revision = integer(revision)
@@ -536,7 +568,11 @@ class Runtime:
     def _consume_ran_sample(self, now):
         generation = getattr(self.adapter, "source_generation", None)
         sequence = getattr(self.adapter, "report_sequence", None)
-        if generation is not None and generation != self.radio_generation:
+        if not generation or not sequence:
+            if self.attempt_id is not None:
+                self.telemetry_errors.setdefault("source", "gnb_telemetry_identity_missing")
+            return False
+        if generation != self.radio_generation:
             previous_generation = self.radio_generation
             self.radio_generation = generation
             self.radio_sequence = None
@@ -555,7 +591,9 @@ class Runtime:
             self.event("radio_source_generation", generation=generation)
         if sequence is not None:
             if self.radio_sequence is not None and sequence <= self.radio_sequence:
-                return
+                if sequence < self.radio_sequence and self.attempt_id is not None:
+                    self.telemetry_errors.setdefault("source", "gnb_telemetry_sequence_regressed")
+                return False
             self.radio_sequence = sequence
 
         counters_valid = True
@@ -579,15 +617,20 @@ class Runtime:
 
             # Aetheredge: Baseline the first cumulative sample; debit only later new data.
             current = (
-                metric.get("new_data_prbs_total", 0),
-                metric.get("new_data_tbs_bytes_total", 0),
-                metric.get("retransmission_prbs_total", 0),
-                metric.get("retransmission_tbs_bytes_total", 0),
-                metric.get("dl_new_data_prbs_total", 0),
-                metric.get("dl_new_data_tbs_bytes_total", 0),
-                metric.get("dl_retransmission_prbs_total", 0),
-                metric.get("dl_retransmission_tbs_bytes_total", 0),
+                metric.get("new_data_prbs_total"),
+                metric.get("new_data_tbs_bytes_total"),
+                metric.get("retransmission_prbs_total"),
+                metric.get("retransmission_tbs_bytes_total"),
+                metric.get("dl_new_data_prbs_total"),
+                metric.get("dl_new_data_tbs_bytes_total"),
+                metric.get("dl_retransmission_prbs_total"),
+                metric.get("dl_retransmission_tbs_bytes_total"),
             )
+            if (metric.get("scheduling_counters_valid") is not True
+                    or any(type(value) is not int or value < 0 for value in current)):
+                counters_valid = False
+                self.counter_failure(rnti, "scheduling_counters_invalid")
+                continue
             previous = self.radio_counters.get(rnti)
             self.radio_counters[rnti] = current
             if previous is None:
@@ -595,12 +638,14 @@ class Runtime:
             delta = tuple(value - old for value, old in zip(current, previous))
             if any(value < 0 for value in delta):
                 counters_valid = False
+                self.counter_failure(rnti, "scheduling_counters_regressed")
                 continue
             if any(delta):
                 self.window.add_counters(rnti, *delta)
                 # Aetheredge: Retransmission deltas are telemetry only in this initial model.
                 self._apply_new_data_service(rnti, delta[1], now)
         self.radio_coverage_valid = counters_valid
+        return True
 
     async def reports(self, m):
         previous = -1
@@ -693,6 +738,7 @@ class Runtime:
                 if self.window is None:
                     start = unix // self.window_ns * self.window_ns
                     self.window = Window(start, start + self.window_ns, "oai_zmq_cumulative_v1")
+                self.check_telemetry_freshness(now)
                 if self.adapter:
                     try:
                         sample = self.adapter.receive()
@@ -700,11 +746,13 @@ class Runtime:
                         self.event("metric_error", reason=str(ex))
                         sample = None
                     if sample:
+                        previous_metrics = self.metrics
                         self.last_index, self.metrics = sample
-                        self.latest_metric = now
-                        self.associations.sample(now, self.metrics)
-                        # Aetheredge: Consume capacity and grants from the same nonblocking sample.
-                        self._consume_ran_sample(now)
+                        if self._consume_ran_sample(now):
+                            self.latest_metric = now
+                            self.associations.sample(now, self.metrics)
+                        else:
+                            self.metrics = previous_metrics
                 self.associations.tick(
                     now, set(self.metrics) if now - self.latest_metric < 0.3 else set()
                 )
@@ -845,6 +893,7 @@ class Runtime:
                         "link_quality_valid",
                     )
                 },
+                scheduling_counters_valid=validation.get("scheduling_counters_valid", False),
                 cumulative_grants={
                     key: validation.get(key)
                     for key in (
@@ -943,6 +992,7 @@ class Runtime:
             association_losses={
                 uid: dict(loss) for uid, loss in self.association_losses.items()
             },
+            **self.telemetry_health(),
             trace_coverage_valid=self.radio_coverage_valid,
             metric_age_s=now - self.latest_metric,
         )
@@ -955,4 +1005,4 @@ class Runtime:
                 bindings={u: asdict(b) for u, b in self.associations.bindings.items()},
                 matches=self.associations.last_result,
             )
-            asyncio.create_task(asyncio.to_thread(self._snapshot, data))
+            self.event("association_snapshot", snapshot=data)

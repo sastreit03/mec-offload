@@ -11,6 +11,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from pathlib import Path
 from .config import collection_candidates, qualified
+from .control import print_start_timing
 from .statistics import History, NetworkFilter
 from .policies import HeuristicGoP, HeuristicPriority, validate_joint
 from .recording import Recorder, ReplayStore
@@ -18,6 +19,7 @@ from .media import Receiver, MockReceiver
 from .workers import Workers
 from .tracking import Tracker
 from .gpu import DeviceGpuSampler
+from .cpu import HostCpuSampler
 from mec_contracts.rpc import Client
 from mec_contracts.wire import envelope, result_id, integer, dumps
 
@@ -66,6 +68,7 @@ class UE:
     generation: int = 0
     association_revision: int = 0
     disconnect_at: float | None = None
+    last_control_at: float | None = None
     network: object = None
     clock_uncertainty_ns: int | None = None
     clock_mapping: dict = field(default_factory=dict)
@@ -94,6 +97,12 @@ class Video:
     current: dict | None = None
     pending: dict | None = None
     applied: dict | None = None
+    frames_fully_sent: int | None = None
+    frames_fully_received: int = 0
+    first_complete_ns: int | None = None
+    last_complete_ns: int | None = None
+    complete_frames: object = field(default_factory=Ranges)
+    frame_counts_validated: bool = False
     received: int = 0
     final_id: int | None = None
     input_close_at: float | None = None
@@ -169,12 +178,15 @@ class Engine:
         self.scenario_assignments = {}
         self.scenario_videos = {}
         self.scenario_start_unix_ns = None
+        self.cancel_scenario_timers()
+        self.scenario_stop_sent = False
         self.scenario_start_result = None
         # Aetheredge: revisions restart at zero with every MEC process. This
         # generation lets EdgeRIC distinguish a restart from delayed messages.
         self.awareness_generation = str(uuid.uuid4())
         self.record = Recorder(self.root, self.join_context)
         self.gpu = DeviceGpuSampler()
+        self.cpu = HostCpuSampler()
         self.replay = ReplayStore(self.root / "replay.sqlite3")
         self.ues = {}
         self.tokens = {}
@@ -326,6 +338,8 @@ class Engine:
         self.scenario_assignments = assignments
         self.scenario_videos.clear()
         self.scenario_start_unix_ns = None
+        self.cancel_scenario_timers()
+        self.scenario_stop_sent = False
         self.scenario_start_result = None
         self.videos.clear()
         self.progress.clear()
@@ -355,10 +369,99 @@ class Engine:
             self.send_scenario_context(ue)
         return dict(status="armed", assignments=len(assignments), **context)
 
+    def cancel_scenario_timers(self):
+        for name in ("scenario_stop_handle", "scenario_first_frame_handle"):
+            handle = getattr(self, name, None)
+            if handle is not None:
+                handle.cancel()
+            setattr(self, name, None)
+
+    def check_scenario_first_frames(self, context, deadline_ns):
+        if self.scenario != context or self.scenario_error or self.scenario_finalization:
+            return
+        missing = []
+        for alias in self.scenario_assignments:
+            v = self.videos.get(self.scenario_videos.get(alias))
+            # A descriptor/partial frame is insufficient. Use reception time so
+            # a late callback cannot accept a frame received after the deadline.
+            if v is None or v.first_complete_ns is None or v.first_complete_ns >= deadline_ns:
+                missing.append(alias)
+        if missing:
+            self.invalidate_scenario("scenario_first_frame_timeout", missing_ues=sorted(missing))
+
+    def stop_scenario(self, context):
+        if self.scenario != context or self.scenario_error or self.scenario_finalization or self.scenario_stop_sent:
+            return
+        self.scenario_stop_sent = True
+        # The deadline issues commands; UEs stop when their commands arrive.
+        for u in self.ues.values():
+            if u.alias in self.scenario_assignments:
+                self.send(u.uid, self.contextual(envelope("scenario_stop", self.cfg.run_id)))
+        self.record.event("scenario_stop_sent")
+        # Reuse the drain budget to bound missing end reports, too.
+        self.scenario_stop_handle = asyncio.get_running_loop().call_later(
+            self.cfg.drain_s, self.check_scenario_ends, dict(context))
+
+    def check_scenario_control(self):
+        if (not self.collection_mode or not self.scenario or self.scenario_error
+                or self.scenario_finalization or self.scenario_start_unix_ns is None):
+            return
+        now = time.monotonic()
+        for u in self.ues.values():
+            if u.alias not in self.scenario_assignments:
+                continue
+            if not u.connected and u.disconnect_at is not None:
+                if now - u.disconnect_at >= 1.0:
+                    self.invalidate_scenario("control_disconnect_timeout", ue_alias=u.alias)
+                    return
+            elif u.last_control_at is not None and now - u.last_control_at >= 2.0:
+                # Existing time-sync/association traffic provides liveness;
+                # no extra probe stream is needed.
+                self.invalidate_scenario("control_unreachable", ue_alias=u.alias)
+                return
+
+    def check_scenario_media_progress(self):
+        if (not self.collection_mode or not self.scenario or self.scenario_error
+                or self.scenario_finalization or self.scenario_stop_sent
+                or self.scenario_start_unix_ns is None):
+            return
+        now = time.monotonic_ns()
+        for alias, vid in self.scenario_videos.items():
+            v = self.videos[vid]
+            # The first-frame timer covers startup. After normal stop, silence
+            # is intentional; only the existing late-arrival/drain timers apply.
+            if v.last_complete_ns is not None and now - v.last_complete_ns >= 1_000_000_000:
+                self.invalidate_scenario("media_arrival_timeout", ue_alias=alias)
+                return
+
+    def check_scenario_ends(self, context):
+        if self.scenario == context and any(
+            self.videos[vid].frames_fully_sent is None
+            for vid in self.scenario_videos.values()
+        ):
+            self.invalidate_scenario("scenario_end_report_timeout")
+
+    def validate_frame_counts(self, v):
+        if not self.collection_mode or self.scenario_error:
+            return
+        if v.frames_fully_sent is None:
+            self.invalidate_scenario("scenario_end_report_missing", video_id=v.vid)
+            return
+        difference = abs(v.frames_fully_sent - v.frames_fully_received)
+        fps = v.current["fps"]
+        if difference >= fps:
+            self.invalidate_scenario("frame_count_mismatch", video_id=v.vid,
+                                     frames_fully_sent=v.frames_fully_sent,
+                                     frames_fully_received=v.frames_fully_received,
+                                     difference=difference)
+        else:
+            v.frame_counts_validated = True
+
     def invalidate_scenario(self, reason, **evidence):
         """Latch failure before stopping input; running GPU jobs settle normally."""
         if not self.collection_mode or not self.scenario or self.scenario_error or self.scenario_finalization:
             return
+        self.cancel_scenario_timers()
         self.scenario_error = dict(reason=reason, detected_unix_ns=time.time_ns(), **evidence)
         self.record.event("collection_run_invalid", **self.scenario_error)
         for ue in self.ues.values():
@@ -397,6 +500,15 @@ class Engine:
         if "association_losses" not in report:
             self.invalidate_scenario("association_loss_reporting_unavailable")
             return
+        age = report.get("metric_age_s")
+        errors = report.get("telemetry_errors", {})
+        if report.get("evidence_errors") != 0:
+            self.invalidate_scenario("edgeric_evidence_failed")
+            return
+        if (errors.get("source") or not isinstance(age, (int, float))
+                or not 0 <= age < self.cfg.ran_telemetry["stale_ms"] / 1000):
+            self.invalidate_scenario("gnb_telemetry_invalid", details=errors.get("source"))
+            return
         for ue in self.ues.values():
             if ue.alias not in self.scenario_assignments:
                 continue
@@ -412,8 +524,13 @@ class Engine:
                     "association_unavailable", ue_id=ue.uid, ue_alias=ue.alias,
                 )
                 return
-        if time.time_ns() - report["window_end_unix_ns"] <= self.cfg.ran_telemetry["stale_ms"] * 1_000_000:
-            self.scenario_report_at = time.monotonic()
+            if errors.get(ue.uid) or radio.get("scheduling_counters_valid") is not True:
+                self.invalidate_scenario("scheduling_counters_invalid", ue_id=ue.uid)
+                return
+        if abs(time.time_ns() - report["window_end_unix_ns"]) > self.cfg.ran_telemetry["stale_ms"] * 1_000_000:
+            self.invalidate_scenario("gnb_telemetry_invalid", details="report timestamp stale or in future")
+            return
+        self.scenario_report_at = time.monotonic()
 
     def check_scenario_report_timeout(self):
         if (self.collection_mode and self.scenario and not self.scenario_finalization and self.scenario_report_at is not None
@@ -434,6 +551,11 @@ class Engine:
             if (set(self.scenario_assignments) != set(self.scenario_videos)
                     or any(v.collection_error for v in self.videos.values())):
                 raise ValueError("scenario videos incomplete or invalid")
+            if not self.scenario_stop_sent or any(
+                not self.videos[vid].frame_counts_validated
+                for vid in self.scenario_videos.values()
+            ):
+                raise ValueError("scenario stop and frame counts must be confirmed")
             try:
                 report = await self.rpc.call(self.contextual(envelope(
                     "association_finalize", self.cfg.run_id,
@@ -480,6 +602,8 @@ class Engine:
         self.scenario_assignments.clear()
         self.scenario_videos.clear()
         self.scenario_start_unix_ns = None
+        self.cancel_scenario_timers()
+        self.scenario_stop_sent = False
         self.scenario_start_result = None
         for ue in self.ues.values():
             ue.scenario_notice = None
@@ -506,10 +630,19 @@ class Engine:
             generations = {u.uid: u.generation for u in users}
             self.scenario_start_unix_ns = time.time_ns()
             begin = time.monotonic_ns()
+            # Every participating UE must deliver a complete frame in the first
+            # second. This uses the same release origin as the seven-second stop.
+            self.scenario_first_frame_handle = asyncio.get_running_loop().call_later(
+                1.0, self.check_scenario_first_frames, dict(context), begin + 1_000_000_000)
+            # Elapsed MEC time, independent of source timestamps or frame rate.
+            self.scenario_stop_handle = asyncio.get_running_loop().call_later(
+                7.0, self.stop_scenario, dict(context))
             for u in users:
                 self.videos[self.scenario_videos[u.alias]].expected_start = begin / 1e9
             receipts = {}
             history = {u.uid: [] for u in users}
+            queued_ns = None
+            release_ok = False
 
             def queue_start(u):
                 receipt = u.sender(self.contextual(envelope("scenario_start", self.cfg.run_id)))
@@ -553,16 +686,27 @@ class Engine:
                 )
                 self.scenario_start_result = result
                 self.record.event("scenario_start_released", release=result)
+                release_ok = True
                 return result
             except BaseException as error:
                 if self.scenario == context:
                     self.invalidate_scenario("scenario_start_send_failed", error=str(error))
                 raise
             finally:
+                # Snapshot before withdrawing leftovers so pending writes remain
+                # distinguishable from queued copies withdrawn for a retry.
+                elapsed_ns = time.monotonic_ns() - begin
+                sends = {u.alias: [r.evidence() for r in history[u.uid]] for u in users}
                 for attempts in history.values():
                     for receipt in attempts:
                         if not receipt.done.done():
                             receipt.done.cancel()
+                # Terminal I/O stays outside both the send loop and event loop.
+                await asyncio.to_thread(
+                    print_start_timing, context["attempt_id"], begin,
+                    None if queued_ns is None else queued_ns - begin,
+                    elapsed_ns, sends, release_ok,
+                )
 
     def send_scenario_context(self, ue):
         """Send one assignment per attempt and control-connection generation."""
@@ -685,11 +829,21 @@ class Engine:
             self.tokens[hashed] = uid
         u = self.ues[uid]
         old = u.sender
+        active = self.collection_mode and self.scenario and u.alias in self.scenario_assignments
+        same_ip = u.peer_ip == peer_ip
+        timely = u.disconnect_at is not None and time.monotonic() - u.disconnect_at < 1.0
+        resumed = active and same_ip and (timely or u.connected) and not self.scenario_error
+        failure = ("control_ip_changed" if not same_ip else "control_disconnect_timeout")
+        failed_resume = active and (not same_ip or (u.disconnect_at is not None and not timely))
         self.last_usable.pop(uid, None)
         u.generation += 1
-        u.connection_id = str(uuid.uuid4())
+        # A brief same-IP reconnect retains its proven radio binding. Socket
+        # generation still changes, fencing the old reader/writer independently.
+        if not resumed:
+            u.connection_id = str(uuid.uuid4())
         u.connected = True
         u.disconnect_at = None
+        u.last_control_at = time.monotonic()
         u.peer_ip = peer_ip
         u.sender = sender
         if old:
@@ -702,6 +856,8 @@ class Engine:
         )
         if u.network:
             u.network.reset(time.monotonic())
+        if failed_resume:
+            self.invalidate_scenario(failure, ue_alias=u.alias)
         self.association(u)
         self.record.event(
             "connected",
@@ -748,7 +904,14 @@ class Engine:
 
     # Reserve each lifecycle command before awaiting setup so retries share one outcome.
     async def command(self, u, m):
+        u.last_control_at = time.monotonic()
         kind = m.get("type")
+        if kind == "scenario_failure":
+            self.validate_message_context(m)
+            if u.alias not in self.scenario_assignments:
+                raise ValueError("UE has no active assignment")
+            self.invalidate_scenario("ue_failure", ue_alias=u.alias, error=m.get("reason"))
+            return None
         if kind == "time_sync":
             return envelope(
                 "time_sync",
@@ -760,7 +923,11 @@ class Engine:
         if kind == "association_update":
             import ipaddress
 
-            u.ip = str(ipaddress.ip_address(m["ue_ip"]))
+            new_ip = str(ipaddress.ip_address(m["ue_ip"]))
+            if (self.collection_mode and self.scenario and u.alias in self.scenario_assignments
+                    and u.ip and u.ip != new_ip):
+                self.invalidate_scenario("control_ip_changed", ue_alias=u.alias)
+            u.ip = new_ip
             alias = m.get("ue_alias")
             if alias is not None:
                 if not isinstance(alias, str) or not alias.strip() or len(alias) > 64:
@@ -839,6 +1006,7 @@ class Engine:
             and set(self.workers.ready) == set(self.cfg.applications)
             and bool(self.candidates)
             and not self.worker_failures
+            and all(p.is_alive() for p in self.workers.processes.values())
             and not self.record.error,
             backend=self.cfg.backend,
             experimental=self.cfg.mode in ("experimental", "collection"),
@@ -847,6 +1015,7 @@ class Engine:
             worker_failures=self.worker_failures,
             recording_error=self.record.error,
             qualified_candidates=len(self.candidates),
+            quarantined_candidates=sorted(self.quarantined),
         )
 
     # Admission may use a brief cached-report grace; ordinary freshness stays stricter.
@@ -1532,9 +1701,16 @@ class Engine:
         v = self.videos.get(m["video_id"])
         if not v or v.uid != u.uid:
             raise ValueError("video identity mismatch")
+        if self.collection_mode and not self.scenario_error:
+            if not self.scenario_stop_sent or m.get("end_reason") != "scenario_stop":
+                self.invalidate_scenario("scenario_ended_before_stop", video_id=v.vid)
+            elif v.frames_fully_sent is None:
+                v.frames_fully_sent = integer(m["frames_fully_sent"], 0)
+            elif v.frames_fully_sent != m.get("frames_fully_sent"):
+                self.invalidate_scenario("scenario_end_report_changed", video_id=v.vid)
         # A later command cannot reopen a lifecycle the drain loop already finalized.
-        if v.state not in TERMINAL and not (self.collection_mode and self.scenario_error):
-            v.final_id = integer(m["final_frame_id"])
+        if v.state not in TERMINAL and v.input_close_at is None and not (self.collection_mode and self.scenario_error):
+            v.final_id = integer(m["final_frame_id"], -1)
             v.state = "DRAINING"
             v.input_close_at = time.monotonic() + self.cfg.final_arrival_s
             if self.collection_mode:
@@ -1783,11 +1959,25 @@ class Engine:
         )
 
     # Reception completion closes UL demand independently of the inference outcome.
-    def progress_event(self, d, unique, complete, received_ns):
+    def progress_event(self, d, unique, complete, received_ns, received_unix_ns=None):
         v = self.videos.get(d.video_id)
         f = self.frames.get((d.video_id, d.frame_id))
         if not v:
             return
+        if received_unix_ns is None:
+            received_unix_ns = received_ns + time.time_ns() - time.monotonic_ns()
+        if f:
+            # Retain one endpoint, not a per-packet log. Duplicate packets also
+            # count as observed reception until the assembly is complete.
+            f.times["last_packet_reception_monotonic_ns"] = received_ns
+            f.times["last_packet_reception_unix_ns"] = received_unix_ns
+        # Count transport completion once, even if later decoding/inference fails.
+        if self.collection_mode and complete and not v.input_closed and not v.complete_frames.has(d.frame_id):
+            v.complete_frames.add(d.frame_id)
+            v.frames_fully_received += 1
+            v.last_complete_ns = received_ns
+            if v.first_complete_ns is None:
+                v.first_complete_ns = received_ns
         radio = v.radio_frames.get(d.frame_id)
         if not radio:
             return
@@ -1802,12 +1992,13 @@ class Engine:
             progress_seq=radio["progress_seq"],
             unique_bytes=unique,
             complete=complete,
-            measurement_unix_ns=received_ns + time.time_ns() - time.monotonic_ns(),
+            measurement_unix_ns=received_unix_ns,
         )
         if complete:
             if f:
                 f.complete_ns = received_ns
                 f.times["complete_reception_monotonic_ns"] = received_ns
+                f.times["complete_reception_unix_ns"] = received_unix_ns
                 u = self.ues[v.uid]
                 if u.network:
                     report = self.last_report or {}
@@ -1926,6 +2117,7 @@ class Engine:
             > self.cfg.pending_bytes_per_video
         )
         if over_limit and self.collection_mode:
+            self.invalidate_scenario("collection_buffer_limit", video_id=v.vid)
             v.collection_error = "collection_buffer_limit"
             self.record.event(
                 "collection_run_invalid",
@@ -2103,6 +2295,7 @@ class Engine:
             self.send(v.uid, message)
         except Exception as ex:
             if self.collection_mode:
+                self.invalidate_scenario("result_delivery_failed", video_id=v.vid, error=repr(ex))
                 v.collection_error = "result_delivery_failed"
                 self.record.event(
                     "collection_run_invalid",
@@ -2119,6 +2312,7 @@ class Engine:
     async def tick(self):
         while True:
             self.check_scenario_report_timeout()
+            self.check_scenario_control()
             now = time.monotonic()
             ns = time.monotonic_ns()
             for _ in range(1024):
@@ -2137,6 +2331,7 @@ class Engine:
                             data["unique_bytes"],
                             data["complete"],
                             data["received_ns"],
+                            data.get("received_unix_ns"),
                         )
                     elif kind == "decoded":
                         self.decoded(
@@ -2151,6 +2346,7 @@ class Engine:
                     self.record.event(
                         "receiver_event_error", kind=kind, reason=repr(ex)
                     )
+            self.check_scenario_media_progress()
             for key in list(self.progress):
                 if now - self.last_progress.get(key, 0) >= 0.005:
                     self.flush_progress(key)
@@ -2162,6 +2358,13 @@ class Engine:
                     and ns >= f.deadline_ns
                 ):
                     self.fail_frame(f.vid, f.fid, "decode_deadline_expired")
+            for app, process in self.workers.processes.items():
+                if process.exitcode is not None and app not in self.worker_failures:
+                    self.worker_failures[app] = f"worker exited: {process.exitcode}"
+                    if self.collection_mode:
+                        self.invalidate_scenario("worker_exited", application=app)
+            if self.collection_mode and self.record.error:
+                self.invalidate_scenario("recording_failed", error=str(self.record.error))
             for m in self.workers.poll():
                 if m["type"] == "startup_failed":
                     self.worker_failures[m["application"]] = m["error"]
@@ -2189,6 +2392,8 @@ class Engine:
                             - m["worker_start_ns"],
                         )
                         self.quarantine_candidate(f.config["id"], m.get("error"))
+                        if self.collection_mode:
+                            self.invalidate_scenario("execution_failed", video_id=vid, error=m.get("error"))
                         self.fail_frame(vid, fid, "execution_failed")
                         continue
                     v = self.videos[vid]
@@ -2451,6 +2656,8 @@ class Engine:
             self.resolve(f, "completed", payload=payload)
         except Exception as ex:
             self.record.event("tracker_error", reason=repr(ex))
+            if self.collection_mode:
+                self.invalidate_scenario("execution_failed", video_id=v.vid, error=repr(ex))
             self.fail_frame(v.vid, f.fid, "execution_failed")
         finally:
             v.tracker_busy = False
@@ -2460,6 +2667,8 @@ class Engine:
         if v.input_closed:
             return
         v.input_closed = True
+        if reason == "video_end" and self.collection_mode:
+            self.validate_frame_counts(v)
         if v.drain_until is None:
             v.drain_until = time.monotonic() + self.cfg.drain_s
         if v.receiver:
@@ -2779,6 +2988,7 @@ class Engine:
                 workers=self.workers.ready,
                 # Aetheredge: NVML supplies device load, not CUDA kernel residency.
                 gpu=self.gpu.sample(),
+                cpu=self.cpu.sample(),
             )
             self.aware("mec_resources", **report)
             self.record.event("mec_resources", snapshot=report)
@@ -2855,6 +3065,7 @@ class Engine:
                 await asyncio.sleep(0.5)
 
     async def close(self):
+        self.cancel_scenario_timers()
         self.closed = True
         for v in self.videos.values():
             if v.state not in TERMINAL:

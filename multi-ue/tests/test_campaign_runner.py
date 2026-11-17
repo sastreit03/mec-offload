@@ -117,6 +117,7 @@ def test_attempt_requires_final_confirmation(tmp_path, monkeypatch, confirmed):
     runner.select_channel = lambda _: None
     runner.await_assignment_ack = lambda *_: None
     runner.wait = lambda *_: dict(videos={})
+    runner.recoveries_without_start = 3
     scenario = dict(campaign_id="campaign", scenario_id="scenario", ues=[], channel={})
     if confirmed:
         result = runner.attempt(scenario, "attempt", dict(awareness_generation="mec"))
@@ -125,6 +126,7 @@ def test_attempt_requires_final_confirmation(tmp_path, monkeypatch, confirmed):
         with pytest.raises(RuntimeError, match="scenario finalization failed"):
             runner.attempt(scenario, "attempt", dict(awareness_generation="mec"))
     assert requests == ["/api/scenario/arm", "/api/scenario/start", "/api/scenario/finalize"]
+    assert runner.recoveries_without_start == 0
 
 
 def test_wait_fails_after_media_progress_stalls(tmp_path, monkeypatch):
@@ -294,6 +296,7 @@ def test_wait_allows_transient_ue_reconnect(tmp_path, monkeypatch):
             "videos": {"video-a": {
                 "ue_alias": "pixel1", "state": "COMPLETED",
                 "candidate_id": "candidate-a", "final_frame_id": 0,
+                "frame_counts_validated": True,
                 "counters": {"completed": 1, "dropped": 0, "failed": 0},
                 "collection_error": None,
             }},
@@ -371,18 +374,23 @@ def test_wait_classifies_zero_frame_expiration_as_media_not_started(
         runner.wait(scenario, "attempt-a")
 
 
-def test_failed_attempt_cleanup_reason_requests_mec_reset(tmp_path):
+def test_failed_attempt_cleanup_reason_requests_mec_reset(tmp_path, monkeypatch):
     state = MODULE.State(tmp_path / "state.sqlite3", "manifest-a")
     runner = MODULE.Runner(
-        SimpleNamespace(output=str(tmp_path), retry_delay=0), [], state
+        SimpleNamespace(output=str(tmp_path), retry_delay=0, mec="http://mec", scenario_timeout=1), [], state
     )
     runner.disarm = lambda *_: (_ for _ in ()).throw(
         RuntimeError("POST /api/scenario/disarm failed (409): MEC must be idle")
     )
     recovered = []
     runner.recover = lambda *args: recovered.append(args)
-    scenario = {"scenario_id": "scenario-a"}
-
+    scenario = {"campaign_id": "campaign-a", "scenario_id": "scenario-a"}
+    def http(_base, endpoint, payload=None):
+        if endpoint.endswith("abort"):
+            return {"status": "aborted"}
+        return {"scenario": dict(campaign_id="campaign-a", scenario_id="scenario-a", attempt_id="attempt-a"),
+                "scenario_idle": True}
+    monkeypatch.setattr(MODULE, "http_json", http)
     runner.retire_failed_attempt("UE disconnected", scenario, "attempt-a")
 
     assert len(recovered) == 1
@@ -433,3 +441,58 @@ def test_assignment_ack_requires_every_expected_ue(tmp_path, monkeypatch):
 
     with pytest.raises(RuntimeError, match="linux1"):
         runner.await_assignment_ack(scenario, "attempt-a")
+
+
+def test_failed_recovery_blocks_preflight_until_success(tmp_path, monkeypatch):
+    import subprocess
+    args = SimpleNamespace(output=str(tmp_path), recovery_hook=["recover"], recovery_timeout=1, retry_delay=0)
+    runner = MODULE.Runner(args, [], MODULE.State(tmp_path / "state.sqlite3", "manifest"))
+    def fail(*a, **k):
+        raise subprocess.CalledProcessError(1, "recover")
+    monkeypatch.setattr(MODULE.subprocess, "run", fail)
+    runner.recover("gNB channel controller unavailable", {"scenario_id": "s"}, "a")
+    with pytest.raises(RuntimeError, match="recovery incomplete"):
+        runner.preflight({})
+    monkeypatch.setattr(MODULE.subprocess, "run", lambda *a, **k: None)
+    runner.recover("gNB channel controller unavailable", {"scenario_id": "s"}, "a")
+    assert runner.recovery_error is None
+
+
+@pytest.mark.parametrize("hook_fails", [False, True])
+def test_preflight_aborts_after_three_recoveries(tmp_path, monkeypatch, hook_fails):
+    import json
+    import subprocess
+    args = SimpleNamespace(output=str(tmp_path), recovery_hook=["recover"],
+                           recovery_timeout=1, retry_delay=0,
+                           preflight_timeout=0, poll_interval=0, max_attempts=3)
+    scenario = {"scenario_id": "s", "execution_index": 0}
+    runner = MODULE.Runner(args, [scenario], MODULE.State(tmp_path / "state.sqlite3", "manifest"))
+    calls = []
+    def hook(*a, **k):
+        calls.append(a)
+        if hook_fails:
+            raise subprocess.CalledProcessError(1, "recover")
+    monkeypatch.setattr(MODULE.subprocess, "run", hook)
+    def unavailable(_):
+        raise RuntimeError("UE aliases unavailable")
+    runner.preflight = unavailable
+    with pytest.raises(SystemExit, match="three recoveries"):
+        runner.run()
+    assert len(calls) == 3
+    assert runner.state.row("s") == ("pending", 0)
+    events = [json.loads(line) for line in runner.events.read_text().splitlines()]
+    assert events[-1]["type"] == "campaign_aborted"
+
+
+def test_failed_start_does_not_reset_recovery_count(tmp_path, monkeypatch):
+    runner = MODULE.Runner(SimpleNamespace(output=str(tmp_path), mec="http://mec"), [],
+                           MODULE.State(tmp_path / "state.sqlite3", "manifest"))
+    runner.recoveries_without_start = 3
+    runner.select_channel = lambda _: None
+    runner.await_assignment_ack = lambda *_: None
+    monkeypatch.setattr(MODULE, "http_json", lambda _base, path, value:
+                        {"status": "armed" if path.endswith("/arm") else "failed"})
+    scenario = dict(campaign_id="campaign", scenario_id="scenario", ues=[])
+    with pytest.raises(RuntimeError, match="scenario start failed"):
+        runner.attempt(scenario, "attempt", {})
+    assert runner.recoveries_without_start == 3

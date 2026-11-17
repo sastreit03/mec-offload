@@ -78,6 +78,8 @@ message UeMetrics {
     uint64 dl_rlc_interface_sdu_bytes_total = 63;
     uint64 ul_rlc_interface_sdu_bytes_total = 64;
     bool rlc_counters_valid = 65;
+  // All cumulative scheduling counters are available, including valid zeros.
+  bool scheduling_counters_valid = 66;
 }
 
 message Metrics {

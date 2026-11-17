@@ -14,6 +14,19 @@ if ! flock -n 9; then
   exit 1
 fi
 
+# Save this run's exact arguments, so recovery never guesses media/log paths.
+launch_state="$(dirname "${BASH_SOURCE[0]}")/../runs/softue-client-launch.json"
+python3 - "$launch_state" "${BASH_SOURCE[0]}" "$@" <<'PYTHON'
+import json, os, sys
+from pathlib import Path
+path = Path(sys.argv[1])
+path.parent.mkdir(parents=True, exist_ok=True)
+keys = ("SOFTUE_CONTAINER", "SOFTUE_INTERFACE", "MEC_SERVER", "SOFTUE_DATA_NETWORK",
+        "SOFTUE_TRAFFIC_SERVER", "SOFTUE_CLIENT_LOCK", "SOFTUE_CLIENT_RETRY_S")
+path.write_text(json.dumps(dict(argv=[str(Path(sys.argv[2]).resolve()), *sys.argv[3:]],
+                               cwd=os.getcwd(), env={k: os.environ[k] for k in keys if k in os.environ})))
+PYTHON
+
 stopping=false
 trap 'stopping=true' INT TERM
 

@@ -35,8 +35,8 @@ def armed(tmp_path):
 def report(ue, **extra):
     return dict(
         source_generation="edge-a", window_end_unix_ns=time.time_ns(),
-        association_losses={},
-        ues={ue.uid: dict(association_valid=True, connection_id=ue.connection_id)},
+        association_losses={}, metric_age_s=0.01, evidence_errors=0, telemetry_errors={},
+        ues={ue.uid: dict(association_valid=True, connection_id=ue.connection_id, scheduling_counters_valid=True)},
         **extra,
     )
 
@@ -143,13 +143,14 @@ def test_linux_abort_stops_media_without_disconnecting_control():
     assert client.aborted_attempt_id == CONTEXT["attempt_id"]
 
 
-@pytest.mark.parametrize("failure", [None, "loss", "timeout", "source", "context", "stale", "during_rpc"])
+@pytest.mark.parametrize("failure", [None, "loss", "timeout", "source", "context", "stale", "during_rpc", "evidence"])
 def test_finalization_confirms_retained_history_before_accepting(armed, tmp_path, failure):
     async def exercise():
         engine, ue, _ = armed
         engine.scenario_start_unix_ns = time.time_ns() - 1_000_000_000
         engine.scenario_videos = {ue.alias: "v"}
-        engine.videos["v"] = Video("v", ue.uid, "detection", 1, 0, state="COMPLETED")
+        engine.scenario_stop_sent = True
+        engine.videos["v"] = Video("v", ue.uid, "detection", 1, 0, state="COMPLETED", frame_counts_validated=True)
         root = Path(__file__).resolve().parents[1]
         cfg = yaml.safe_load((root / "config/edgeric.shadow.yaml").read_text())
         cfg["runs_dir"] = str(tmp_path / "edge")
@@ -165,7 +166,16 @@ def test_finalization_confirms_retained_history_before_accepting(armed, tmp_path
         b = edge.associations.bindings[ue.uid]
         b.rnti = 100
         b.revalidate_at = b.valid_until = time.monotonic() + 100
-        edge.metrics = {100: {}}
+        edge.metrics = {100: {"scheduling_counters_valid": True}}
+        written = []
+        original_append = edge._append
+        def append(data):
+            if failure == "evidence":
+                raise OSError("disk full")
+            original_append(data)
+            written.append(data["type"])
+        edge._append = append
+        writer = asyncio.create_task(edge.writer())
         edge.latest_metric = time.monotonic()
         if failure == "loss":
             # Loss and recovery both occur before the next periodic report.
@@ -198,6 +208,8 @@ def test_finalization_confirms_retained_history_before_accepting(armed, tmp_path
         else:
             result = await engine.finalize_scenario(CONTEXT)
             assert result["status"] == "finalized"
+            assert "association_finalized" in written
+            assert edge.log_queue.empty()
             assert result["association_snapshot"]["association_losses"] == {}
             # Repeated calls are cheap and do not move the completion boundary.
             assert await engine.finalize_scenario(CONTEXT) == result
@@ -234,3 +246,21 @@ def test_finalize_api_returns_conflict_for_unfinished_attempt(armed):
     assert response.status_code == 409
     assert "started and drained" in response.json()["error"]
     client.close()
+
+
+@pytest.mark.parametrize("failure", ["evidence", "stale", "counters", "history", "timestamp"])
+def test_collection_integrity_failure_aborts(armed, failure):
+    engine, ue, _ = armed
+    r = report(ue)
+    if failure == "evidence":
+        r["evidence_errors"] = 1
+    elif failure == "stale":
+        r["metric_age_s"] = 0.3
+    elif failure == "counters":
+        r["ues"][ue.uid]["scheduling_counters_valid"] = False
+    elif failure == "history":
+        r["telemetry_errors"] = {ue.uid: "scheduling_counters_regressed"}
+    else:
+        r["window_end_unix_ns"] -= 1_000_000_000
+    engine.check_scenario_radio(r)
+    assert engine.scenario_error

@@ -100,7 +100,8 @@ def create_database(path):
           ue_alias TEXT, ue_id TEXT, ue_kind TEXT, application TEXT, candidate_id TEXT,
           bitrate_bps INTEGER, media_id TEXT, media_path TEXT, source_start_frame INTEGER,
           frame_count INTEGER, terminal_state TEXT, completed INTEGER, dropped INTEGER,
-          failed INTEGER, collection_error TEXT);
+          failed INTEGER, collection_error TEXT, frames_fully_sent INTEGER,
+          frames_fully_received INTEGER, frame_counts_validated INTEGER);
         CREATE TABLE descriptors (
           campaign_id TEXT, scenario_id TEXT, attempt_id TEXT, video_id TEXT,
           frame_id INTEGER, event_unix_ns INTEGER, tx_unix_ns INTEGER,
@@ -135,7 +136,7 @@ def create_database(path):
           id INTEGER PRIMARY KEY, campaign_id TEXT, scenario_id TEXT, attempt_id TEXT,
           window_start_unix_ns INTEGER, window_end_unix_ns INTEGER,
           snapshot_monotonic_ns INTEGER, streams_json TEXT, workers_json TEXT,
-          gpu_json TEXT, payload_json TEXT);
+          gpu_json TEXT, cpu_json TEXT, payload_json TEXT);
         CREATE TABLE media_events (
           id INTEGER PRIMARY KEY, campaign_id TEXT, scenario_id TEXT, attempt_id TEXT,
           video_id TEXT, event_type TEXT, monotonic_ns INTEGER, unix_ns INTEGER,
@@ -154,6 +155,8 @@ def create_database(path):
           ue_capture_mono_ns INTEGER, ue_tx_mono_ns INTEGER,
           ue_receipt_mono_ns INTEGER, ue_latency_ns INTEGER, ue_slo_success INTEGER,
           ran_window_id INTEGER, ran_join_basis TEXT, ran_join_unix_ns INTEGER,
+          ran_join_end_unix_ns INTEGER, complete_reception_unix_ns INTEGER,
+          last_packet_reception_monotonic_ns INTEGER, last_packet_reception_unix_ns INTEGER,
           stage_times_json TEXT, job_json TEXT,
           PRIMARY KEY (campaign_id,scenario_id,attempt_id,video_id,frame_id));
         CREATE TABLE frame_ran_windows (
@@ -208,7 +211,7 @@ def create_database(path):
                  m.window_start_unix_ns AS mec_window_start_unix_ns,
                  m.window_end_unix_ns AS mec_window_end_unix_ns,
                  m.snapshot_monotonic_ns, m.streams_json, m.workers_json,
-                 m.gpu_json
+                 m.gpu_json, m.cpu_json
           FROM frames f
           JOIN scenarios s USING (campaign_id,scenario_id)
           JOIN frame_mec_windows b USING (
@@ -271,7 +274,7 @@ def load_campaign(db, campaign_dir):
             counters = item.get("counters", {})
             video_map[(sid, aid, vid)] = (alias, item.get("ue_id"))
             db.execute(
-                "INSERT OR REPLACE INTO videos VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT OR REPLACE INTO videos VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     scenario["campaign_id"], sid, aid, vid, alias, item.get("ue_id"),
                     ue_kind(alias), item.get("application"),
@@ -280,7 +283,8 @@ def load_campaign(db, campaign_dir):
                     assignment.get("source_start_frame"), assignment.get("frame_count"),
                     item.get("state"), counters.get("completed", 0),
                     counters.get("dropped", 0), counters.get("failed", 0),
-                    item.get("collection_error"),
+                    item.get("collection_error"), item.get("frames_fully_sent"),
+                    item.get("frames_fully_received"), item.get("frame_counts_validated"),
                 ),
             )
     db.executemany("INSERT INTO scenarios VALUES (" + ",".join("?" * 31) + ")", rows)
@@ -321,7 +325,7 @@ def ingest_mec_events(db, paths, selected=None):
                 c, sid, aid, snap.get("window_start_unix_ns"),
                 snap.get("window_end_unix_ns"), snap.get("snapshot_monotonic_ns"),
                 flat_json(snap.get("streams")), flat_json(snap.get("workers")),
-                flat_json(snap.get("gpu")), flat_json(event),
+                flat_json(snap.get("gpu")), flat_json(snap.get("cpu")), flat_json(event),
             )
             db.execute(
                 "INSERT INTO mec_resources VALUES (NULL," +
@@ -491,12 +495,26 @@ def ingest_jobs(db, paths, scenarios, states, video_map, assignments):
         ).fetchone()
         event_unix = descriptor[0] if descriptor else None
         tx_unix = descriptor[1] if descriptor else None
+        stage = job.get("stage_times") or {}
         join_unix = tx_unix or event_unix
-        ran_end = event_unix if tx_unix is not None else join_unix
-        basis = "ue_tx_to_mec_descriptor_arrival" if tx_unix else (
-            "mec_descriptor_arrival_unix_ns" if event_unix else None
-        )
-        ran = radio_windows(db, c, sid, aid, uid, join_unix, ran_end)
+        ran_end = stage.get("complete_reception_unix_ns")
+        endpoint = "complete_reception"
+        if ran_end is None:
+            ran_end = stage.get("last_packet_reception_unix_ns")
+            endpoint = "last_packet_reception"
+        if ran_end is not None:
+            basis = ("ue_tx" if tx_unix else "mec_descriptor_arrival") + "_to_mec_" + endpoint
+        else:
+            # Older logs have no reception endpoint in Unix time. Preserve their
+            # original join and label it rather than inventing a clock conversion.
+            ran_end = event_unix if tx_unix is not None else join_unix
+            basis = "ue_tx_to_mec_descriptor_arrival" if tx_unix else (
+                "mec_descriptor_arrival_unix_ns" if event_unix else None)
+        # Clock disagreement must not silently become a valid point-in-time join.
+        reversed_interval = join_unix is not None and ran_end is not None and ran_end < join_unix
+        ran = [] if reversed_interval else radio_windows(db, c, sid, aid, uid, join_unix, ran_end)
+        if reversed_interval:
+            basis = "invalid_timestamp_order"
         tx = db.execute(
             "SELECT capture_mono_ns,tx_mono_ns FROM ue_transmissions WHERE "
             "campaign_id=? AND scenario_id=? AND attempt_id=? AND video_id=? AND frame_id=?",
@@ -507,7 +525,9 @@ def ingest_jobs(db, paths, scenarios, states, video_map, assignments):
             "campaign_id=? AND scenario_id=? AND attempt_id=? AND video_id=? AND frame_id=?",
             (c, sid, aid, vid, fid),
         ).fetchone() or (None, None, None)
-        stage = job.get("stage_times") or {}
+        arrival = stage.get("first_packet_monotonic_ns")
+        if type(arrival) is not int or arrival < 0:
+            arrival = None
         scenario = scenarios[sid]
         row = (
             c, sid, aid, scenario["execution_index"], alias, uid,
@@ -516,7 +536,7 @@ def ingest_jobs(db, paths, scenarios, states, video_map, assignments):
             job.get("priority"), job.get("gop_id"), job.get("config_version"),
             job.get("plan_version"), descriptor[3] if descriptor else None,
             descriptor[2] if descriptor else None, job.get("outcome"), job.get("reason"),
-            stage.get("first_packet_monotonic_ns"),
+            arrival,
             stage.get("complete_reception_monotonic_ns"),
             stage.get("decoded_monotonic_ns"), stage.get("decode_s"),
             stage.get("queue_wait_s"), stage.get("preprocess_s"),
@@ -525,6 +545,9 @@ def ingest_jobs(db, paths, scenarios, states, video_map, assignments):
             stage.get("result_prepare_s"), stage.get("result_ready_monotonic_ns"),
             tx[0], tx[1], receipt[0], receipt[1], receipt[2],
             ran[0][0] if ran else None, basis, join_unix,
+            ran_end, stage.get("complete_reception_unix_ns"),
+            stage.get("last_packet_reception_monotonic_ns"),
+            stage.get("last_packet_reception_unix_ns"),
             flat_json(stage), flat_json(job),
         )
         try:
@@ -563,6 +586,58 @@ def ingest_jobs(db, paths, scenarios, states, video_map, assignments):
     return dict(frames=count, duplicate_frames=duplicates)
 
 
+def select_export_window(db, states):
+    """Filter after full-attempt validation; raw source logs remain unchanged.
+
+    Arrival time selects a frame; its outcome and later processing measurements
+    stay intact. Missing arrivals have unknown membership, not successful delivery.
+    """
+    counts = Counter(exported=0, outside_window=0, unknown_window=0)
+    attempts = []
+    for sid, aid in sorted(selected_attempts(states)):
+        evidence = json.loads(states[sid][6] or "{}")
+        start = evidence.get("release", {}).get("start_monotonic_ns")
+        if type(start) is not int or start < 0:
+            raise ValueError(f"{sid}/{aid}: missing usable MEC start_monotonic_ns")
+        lower, upper = start + 1_000_000_000, start + 6_000_000_000
+        # Never substitute frame numbers, UE clocks, or loss-detection times.
+        unknown, outside, kept = db.execute(
+            "SELECT coalesce(sum(first_packet_monotonic_ns IS NULL),0), "
+            "coalesce(sum(first_packet_monotonic_ns<? OR first_packet_monotonic_ns>=?),0), "
+            "coalesce(sum(first_packet_monotonic_ns>=? AND first_packet_monotonic_ns<?),0) "
+            "FROM frames WHERE scenario_id=? AND attempt_id=?",
+            (lower, upper, lower, upper, sid, aid),
+        ).fetchone()
+        counts.update(exported=kept, outside_window=outside, unknown_window=unknown)
+        attempts.append(dict(scenario_id=sid, attempt_id=aid,
+                             start_monotonic_ns=start, exported=kept,
+                             outside_window=outside, unknown_window=unknown))
+        db.execute(
+            "DELETE FROM frames WHERE scenario_id=? AND attempt_id=? AND "
+            "(first_packet_monotonic_ns IS NULL OR first_packet_monotonic_ns<? "
+            "OR first_packet_monotonic_ns>=?)", (sid, aid, lower, upper))
+        db.execute(
+            "DELETE FROM media_events WHERE scenario_id=? AND attempt_id=? AND "
+            "(monotonic_ns IS NULL OR monotonic_ns<? OR monotonic_ns>=?)",
+            (sid, aid, lower, upper))
+    # Shared measurement intervals remain if any selected frame needs them,
+    # including intervals crossing the boundary. Do not relabel their bounds.
+    for table in ("descriptors", "ue_transmissions", "ue_receipts",
+                  "frame_ran_windows", "frame_mec_windows"):
+        db.execute(f"DELETE FROM {table} WHERE NOT EXISTS (SELECT 1 FROM frames f "
+                   f"WHERE f.campaign_id={table}.campaign_id "
+                   f"AND f.scenario_id={table}.scenario_id "
+                   f"AND f.attempt_id={table}.attempt_id "
+                   f"AND f.video_id={table}.video_id AND f.frame_id={table}.frame_id)")
+    db.execute("DELETE FROM ran_windows WHERE id NOT IN "
+               "(SELECT ran_window_id FROM frame_ran_windows)")
+    db.execute("DELETE FROM mec_resources WHERE id NOT IN "
+               "(SELECT mec_resource_id FROM frame_mec_windows)")
+    db.commit()
+    return dict(basis="MEC first_packet_monotonic_ns relative to release.start_monotonic_ns",
+                start_s=1, end_s=6, end_exclusive=True, **counts, attempts=attempts)
+
+
 def export_table(db, table, path):
     cursor = db.execute(f"SELECT * FROM {table}")
     with path.open("w", newline="") as stream:
@@ -586,11 +661,27 @@ def validate(db, scenarios, states):
                 "SELECT count(*) FROM frames WHERE scenario_id=? AND attempt_id=? "
                 "AND ue_alias=?", (sid, aid, alias),
             ).fetchone()[0]
-            if actual != assignment["frame_count"]:
-                problems.append(
-                    f"{sid}/{aid}/{alias}: {actual} frame rows; "
-                    f"expected {assignment['frame_count']}"
-                )
+            evidence = json.loads(state[6]) if state[6] else {}
+            video = next((v for v in evidence.get("videos", {}).values()
+                          if v.get("ue_alias") == alias), {})
+            # Export every terminal frame from the accepted attempt, including
+            # transport failures. Counts are not a fixed media-duration target.
+            expected = (sum(video["counters"].values()) if "counters" in video
+                        else assignment["frame_count"])
+            if actual != expected:
+                problems.append(f"{sid}/{aid}/{alias}: {actual} frame rows; expected {expected}")
+            # Older, frame-limited campaign evidence has no count-validation field.
+            if "frame_counts_validated" in video and not video["frame_counts_validated"]:
+                problems.append(f"{sid}/{aid}/{alias}: frame counts not validated")
+    return {
+        "valid_scenarios": valid,
+        "problems": problems,
+        "status": "pass" if not problems else "fail",
+        **frame_summary(db),
+    }
+
+
+def frame_summary(db):
     frame_count = db.execute("SELECT count(*) FROM frames").fetchone()[0]
     ran_joined = db.execute(
         "SELECT count(*) FROM frames WHERE ran_window_id IS NOT NULL"
@@ -603,15 +694,12 @@ def validate(db, scenarios, states):
         "SELECT coalesce(ran_join_basis,'unjoined'),count(*) FROM frames GROUP BY 1"
     ).fetchall())
     return {
-        "valid_scenarios": valid,
         "frame_rows": frame_count,
         "ran_joined_frames": ran_joined,
         "ran_join_fraction": ran_joined / frame_count if frame_count else None,
         "mec_joined_frames": mec_joined,
         "mec_join_fraction": mec_joined / frame_count if frame_count else None,
         "ran_join_basis": join_basis,
-        "problems": problems,
-        "status": "pass" if not problems else "fail",
     }
 
 
@@ -642,7 +730,12 @@ def main():
     counts["jobs"] = ingest_jobs(
         db, mec_jobs, scenarios, states, video_map, assignments
     )
+    # Validate raw terminal totals before filtering, so missing evidence is not
+    # hidden by the collection window. Join statistics describe exported frames.
     report = validate(db, scenarios, states)
+    report["full_attempt_frame_rows"] = report["frame_rows"]
+    report["collection_window"] = select_export_window(db, states)
+    report.update(frame_summary(db))
     report["counts"] = counts
     ue_files = [
         path

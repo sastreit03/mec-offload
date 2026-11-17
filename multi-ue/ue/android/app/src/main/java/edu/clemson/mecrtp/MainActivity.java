@@ -48,6 +48,8 @@ public final class MainActivity extends Activity {
   private String campaignId, scenarioId, attemptId;
   private String abortedAttemptId;
   private String startedAttemptId, preparedVideoId;
+  private long controlDisconnectedNs, lastControlNs = System.nanoTime(), lastSyncNs;
+  private JSONObject pendingFailure;
   private int inputWidth = 1280, inputHeight = 720, inputFps = 30;
   private String cellularIp = "";
   private JSONObject startRequest;
@@ -165,15 +167,24 @@ public final class MainActivity extends Activity {
             ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
     setContentView(scroll);
     getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    timer.scheduleAtFixedRate(() -> ui.post(() -> {
+      if (!collectionMode || assignment == null || !contextReady()) return;
+      long now = System.nanoTime();
+      if (controlDisconnectedNs != 0 && now - controlDisconnectedNs >= 1_000_000_000L)
+        failCollection("control_disconnect_timeout");
+      else if (controlDisconnectedNs == 0 && now - lastControlNs >= 2_000_000_000L)
+        failCollection("control_unreachable");
+    }), 100, 100, TimeUnit.MILLISECONDS);
     timer.scheduleAtFixedRate(
         () -> {
           try {
-            if (ws != null) {
+            if (ws != null && (collectionMode || System.nanoTime() - lastSyncNs >= 10_000_000_000L)) {
+              lastSyncNs = System.nanoTime();
               send(
                   new JSONObject()
                       .put("type", "time_sync")
                       .put("client_mono_ns", System.nanoTime()));
-              association();
+              if (!collectionMode) association();
             }
             if (session != null) session.deadlines();
             for (StreamSession old : retiring) old.deadlines();
@@ -182,7 +193,7 @@ public final class MainActivity extends Activity {
           }
         },
         1,
-        10,
+        1,
         TimeUnit.SECONDS);
     timer.scheduleAtFixedRate(
         () -> {
@@ -311,6 +322,7 @@ public final class MainActivity extends Activity {
         ui.post(() -> prepareSuccessor(value));
       if (type.equals("plan_unapplied")) send(new JSONObject(value.toString()).put("type", type));
       if (type.equals("sender_error")) {
+        if (collectionMode) ui.post(() -> failCollection("media_sender_failed"));
         show(value.toString());
         // Aetheredge: close a failed collection input so the MEC can resolve
         // its received tail and the campaign runner can retry the scenario.
@@ -354,6 +366,7 @@ public final class MainActivity extends Activity {
                 () -> {
                   if (n.equals(network) && !ip.isEmpty()) {
                     boolean changed = !ip.equals(cellularIp);
+                    if (changed && !cellularIp.isEmpty()) failCollection("control_ip_changed");
                     cellularIp = ip;
                     if (changed) {
                       Log.i(TAG, "Cellular IPv4 address ready: " + ip);
@@ -369,6 +382,7 @@ public final class MainActivity extends Activity {
             ui.post(
                 () -> {
                   if (n.equals(network)) {
+                    if (controlDisconnectedNs == 0) controlDisconnectedNs = System.nanoTime();
                     network = null;
                     if (ws != null) ws.cancel();
                     ws = null;
@@ -428,6 +442,7 @@ public final class MainActivity extends Activity {
                     () -> {
                       if (g != generation) return;
                       try {
+                        lastControlNs = receipt;
                         message(new JSONObject(raw), receipt);
                       } catch (Exception e) {
                         event("protocol_error", object("reason", e.toString()));
@@ -441,14 +456,22 @@ public final class MainActivity extends Activity {
                 if (g != generation) return;
                 resetFrameStatus();
                 showControl("Control: MEC failed: " + e.getMessage());
-                retry(g);
+                ui.post(() -> {
+                  if (g != generation) return;
+                  if (controlDisconnectedNs == 0) controlDisconnectedNs = System.nanoTime();
+                  retry(g);
+                });
               }
 
               public void onClosed(WebSocket socket, int c, String reason) {
                 Log.w(TAG, "MEC control connection closed: " + c + " " + reason);
                 if (g != generation) return;
                 resetFrameStatus();
-                retry(g);
+                ui.post(() -> {
+                  if (g != generation) return;
+                  if (controlDisconnectedNs == 0) controlDisconnectedNs = System.nanoTime();
+                  retry(g);
+                });
               }
             });
   }
@@ -640,12 +663,24 @@ public final class MainActivity extends Activity {
     }
   }
 
+  private void failCollection(String reason) {
+    if (!collectionMode || !contextReady() || attemptId.equals(abortedAttemptId)) return;
+    try {
+      pendingFailure = new JSONObject().put("type", "scenario_failure").put("reason", reason)
+          .put("campaign_id", campaignId).put("scenario_id", scenarioId).put("attempt_id", attemptId);
+      abortCollection(pendingFailure);
+      send(pendingFailure);
+    } catch (Exception e) { show(e.toString()); }
+  }
+
   private void abortCollection(JSONObject m) throws Exception {
     if (!collectionMode || !contextReady()
         || !campaignId.equals(m.optString("campaign_id"))
         || !scenarioId.equals(m.optString("scenario_id"))
         || !attemptId.equals(m.optString("attempt_id"))) return;
     abortedAttemptId = attemptId;
+    // Set the packet-level flag before asynchronous codec cleanup.
+    if (session != null) session.stopTransmission();
     if (media != null) media.close();
     if (session != null) session.close();
     if (preparedSession != null) preparedSession.close();
@@ -664,6 +699,9 @@ public final class MainActivity extends Activity {
     String type = m.getString("type");
     switch (type) {
       case "mec_hello":
+        if (controlDisconnectedNs != 0 && System.nanoTime() - controlDisconnectedNs >= 1_000_000_000L)
+          failCollection("control_disconnect_timeout");
+        controlDisconnectedNs = 0;
         if (session != null
             && (!m.optString("active_video_id").equals(session.video())
                 || run != null && !run.equals(m.getString("run_id")))) {
@@ -677,6 +715,10 @@ public final class MainActivity extends Activity {
         run = m.getString("run_id");
         uid = m.getString("ue_id");
         setContext(m);
+        if (pendingFailure != null) {
+          if (pendingFailure.optString("attempt_id").equals(attemptId)) send(pendingFailure);
+          else pendingFailure = null;
+        }
         connection = m.getString("connection_id");
         // Use the MEC's validated input profile for configurable FPS experiments.
         JSONObject inputProfile = m.optJSONObject("input_profile");
@@ -699,6 +741,15 @@ public final class MainActivity extends Activity {
         // Lifecycle commands are idempotent by client_seq on the MEC. Reusing
         // the original command closes a video whose first video_end was lost.
         if (pendingEnd != null) send(pendingEnd);
+        break;
+      case "scenario_stop":
+        if (collectionMode && contextReady()
+            && campaignId.equals(m.optString("campaign_id"))
+            && scenarioId.equals(m.optString("scenario_id"))
+            && attemptId.equals(m.optString("attempt_id"))) {
+          if (media != null) media.stopTransmission();
+          if (pendingEnd != null) send(pendingEnd);
+        }
         break;
       case "scenario_abort":
         abortCollection(m);
@@ -971,7 +1022,9 @@ public final class MainActivity extends Activity {
               .put("ue_id", uid)
               .put("video_id", session.video())
               .put("client_seq", seq())
-              .put("final_frame_id", value.getLong("final_frame_id"));
+              .put("final_frame_id", value.getLong("final_frame_id"))
+              .put("frames_fully_sent", value.opt("frames_fully_sent"))
+              .put("end_reason", value.opt("end_reason"));
       send(pendingEnd);
       awaitingSuccessor = !collectionMode && playlist != null;
       if (preparedSession != null && preparedSessionReady) startPreparedSuccessor();

@@ -62,7 +62,7 @@ def test_aetheredge_zmq_capacity_and_cumulative_grant_deltas():
     # Aetheredge: Validate the wire contract and loss-proof delta accounting together.
     message = metrics_pb2.Metrics(source_generation=9, report_sequence=1)
     ue = message.ue_metrics.add(
-        rnti=7,
+        rnti=7, scheduling_counters_valid=True,
         capacity_valid=True,
         capacity_bytes_per_prb=125.0,
         reference_prbs=4,
@@ -94,6 +94,9 @@ def test_aetheredge_zmq_capacity_and_cumulative_grant_deltas():
 
     runtime = Runtime.__new__(Runtime)
     runtime.association_losses = {}
+    runtime.attempt_id = None
+    runtime.telemetry_errors = {}
+    runtime.log_errors = 0
     runtime.cfg = {"payload_fraction": 1.0}
     runtime.adapter = SimpleNamespace(source_generation=9, report_sequence=1)
     runtime.metrics = {7: {field.name: getattr(ue, field.name) for field in ue.DESCRIPTOR.fields}}

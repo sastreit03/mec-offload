@@ -101,13 +101,18 @@ class Receiver:
                 else:
                     a = a[0]
                 complete = a.add(p)
+                received_ns = time.monotonic_ns()
+                # Map the receive timestamp while handling the packet, before
+                # queueing it. Export must not use a later machine's clock offset.
+                received_unix_ns = received_ns + time.time_ns() - time.monotonic_ns()
                 self.post(
                     "progress",
                     dict(
                         descriptor=d,
                         unique_bytes=a.unique_bytes,
                         complete=complete,
-                        received_ns=time.monotonic_ns(),
+                        received_ns=received_ns,
+                        received_unix_ns=received_unix_ns,
                     ),
                 )
                 if complete:
