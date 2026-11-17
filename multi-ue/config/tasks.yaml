@@ -669,5 +669,5 @@ codec: H264
 source_hw:
 - 720
 - 1280
-fps: 30
-gop_frames: 30
+fps: 10
+gop_frames: 10

@@ -1,6 +1,6 @@
 # Fixed-policy dataset collection. These defaults support manual runs; the
 # campaign arm contract selects and validates each UE's manifest candidate.
-run_id: collection-replace-me
+run_id: 20261117-pilot-mps-collection
 mode: collection
 catalog: tasks.yaml
 profiles: profiles.measured.yaml
@@ -9,8 +9,8 @@ advertised_ip: 192.168.72.136
 edgeric_target: 192.168.71.140:50052
 runs_dir: runs
 weights_dir: weights
-fps: 30
-gop_frames: 30
+fps: 10
+gop_frames: 10
 applications: [detection, tracking, segmentation]
 priority_streams: [-3]
 gop_policy: fixed
