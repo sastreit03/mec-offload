@@ -264,3 +264,26 @@ def test_collection_integrity_failure_aborts(armed, failure):
         r["window_end_unix_ns"] -= 1_000_000_000
     engine.check_scenario_radio(r)
     assert engine.scenario_error
+
+
+@pytest.mark.parametrize("age_ns", [400_000_000, -400_000_000, 300_000_000])
+def test_report_timestamp_failure_records_signed_age(armed, monkeypatch, age_ns):
+    engine, ue, _ = armed
+    checked = 1_800_000_000_000_000_000
+    received = checked - 10_000_000
+    r = dict(report(ue), sequence=42, window_end_unix_ns=checked - age_ns)
+    monkeypatch.setattr("mec_server.engine.time.time_ns", lambda: checked)
+    engine.check_scenario_radio(r, received_unix_ns=received)
+    if age_ns == 300_000_000:
+        assert engine.scenario_error is None  # Preserve the existing boundary.
+        return
+    error = engine.scenario_error
+    assert error["reason"] == "gnb_telemetry_invalid"
+    assert error["report_sequence"] == 42
+    assert error["report_source_generation"] == "edge-a"
+    assert error["report_window_end_unix_ns"] == checked - age_ns
+    assert error["report_received_unix_ns"] == received
+    assert error["report_checked_unix_ns"] == checked
+    assert error["report_age_s"] == age_ns / 1e9
+    assert error["report_age_at_receipt_s"] == (age_ns - 10_000_000) / 1e9
+    assert error["stale_limit_s"] == 0.3

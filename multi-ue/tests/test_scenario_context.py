@@ -21,6 +21,46 @@ CONTEXT = {
 }
 
 
+@pytest.mark.parametrize("sample_age,lease_left,valid", [
+    (0.05, 30, True), (0.31, 30, False), (0.05, -1, False),
+])
+def test_attempt_change_preserves_real_radio_freshness(tmp_path, sample_age, lease_left, valid):
+    async def exercise():
+        config = yaml.safe_load((ROOT / "config/edgeric.shadow.yaml").read_text())
+        config["runs_dir"] = str(tmp_path)
+        runtime = Runtime(config)
+        sync = dict(
+            schema_version=1, type="sync", run_id="run-a",
+            awareness_generation="mec-process-a", awareness_revision=1,
+            associations=[dict(ue_id="u", connection_id="c", ip="12.1.1.2")],
+            sessions=[], **CONTEXT,
+        )
+        await runtime.exchange(sync)
+        now = 100.0
+        binding = runtime.associations.bindings["u"]
+        binding.rnti = 100
+        binding.valid_until = now + lease_left
+        runtime.metrics = {100: {}}
+        runtime.latest_metric = now - sample_age
+        runtime.window = Window(0, 100_000_000)
+        runtime.latest_report = {"old_attempt": True}
+        runtime.radio_counters[100] = {"old_attempt": True}
+        await runtime.exchange(dict(sync, attempt_id="attempt-002", awareness_revision=2))
+        assert runtime.latest_metric == now - sample_age
+        assert runtime.window is None and runtime.latest_report is None
+        assert runtime.radio_counters == {}
+        # Exercise the interval before another gNB sample arrives.
+        runtime.check_telemetry_freshness(now)
+        runtime.associations.tick(
+            now, set(runtime.metrics) if now - runtime.latest_metric < 0.3 else set()
+        )
+        assert bool(runtime.associations.valid("u", now)) is valid
+        assert bool(runtime.association_losses) is (not valid)
+        assert ("source" in runtime.telemetry_errors) is (sample_age >= 0.3)
+
+    asyncio.run(exercise())
+
+
 def test_edgeric_retains_loss_across_reassociation_reports_and_sync(tmp_path):
     async def exercise():
         config = yaml.safe_load((ROOT / "config/edgeric.shadow.yaml").read_text())

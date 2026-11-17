@@ -489,9 +489,12 @@ class Engine:
         ))
         ue.scenario_notice = notice
 
-    def check_scenario_radio(self, report):
+    def check_scenario_radio(self, report, received_unix_ns=None):
         if not self.collection_mode or not self.scenario or self.scenario_error or self.scenario_finalization:
             return
+        checked_unix_ns = time.time_ns()
+        if received_unix_ns is None:
+            received_unix_ns = checked_unix_ns
         source = report["source_generation"]
         if self.scenario_report_source is not None and source != self.scenario_report_source:
             self.invalidate_scenario("association_reporting_source_changed")
@@ -527,8 +530,19 @@ class Engine:
             if errors.get(ue.uid) or radio.get("scheduling_counters_valid") is not True:
                 self.invalidate_scenario("scheduling_counters_invalid", ue_id=ue.uid)
                 return
-        if abs(time.time_ns() - report["window_end_unix_ns"]) > self.cfg.ran_telemetry["stale_ms"] * 1_000_000:
-            self.invalidate_scenario("gnb_telemetry_invalid", details="report timestamp stale or in future")
+        report_age_ns = checked_unix_ns - report["window_end_unix_ns"]
+        if abs(report_age_ns) > self.cfg.ran_telemetry["stale_ms"] * 1_000_000:
+            self.invalidate_scenario(
+                "gnb_telemetry_invalid", details="report timestamp stale or in future",
+                report_sequence=report.get("sequence"),
+                report_source_generation=source,
+                report_window_end_unix_ns=report["window_end_unix_ns"],
+                report_received_unix_ns=received_unix_ns,
+                report_checked_unix_ns=checked_unix_ns,
+                report_age_s=report_age_ns / 1e9,
+                report_age_at_receipt_s=(received_unix_ns - report["window_end_unix_ns"]) / 1e9,
+                stale_limit_s=self.cfg.ran_telemetry["stale_ms"] / 1000,
+            )
             return
         self.scenario_report_at = time.monotonic()
 
@@ -3025,6 +3039,7 @@ class Engine:
             try:
                 request = self.contextual(envelope("subscribe", self.cfg.run_id))
                 async for r in self.rpc.stream(request):
+                    received_unix_ns = time.time_ns()
                     if r.get("run_id") != self.cfg.run_id:
                         continue
                     expected = self.join_context()
@@ -3045,7 +3060,7 @@ class Engine:
                         continue
                     self.last_report = r
                     self.report_received = time.monotonic()
-                    self.check_scenario_radio(r)
+                    self.check_scenario_radio(r, received_unix_ns=received_unix_ns)
                     for uid, m in r.get("ues", {}).items():
                         if uid in self.ues:
                             self.usable_radio(uid)

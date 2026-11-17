@@ -209,7 +209,10 @@ class Runtime:
                 self.window = None
                 self.latest_report = None
                 self.radio_coverage_valid = False
-                self.latest_metric = 0.0
+                # Sample freshness belongs to the gNB stream, not the attempt.
+                # Resetting it here makes the next association tick see no
+                # RNTIs until a new sample arrives, destroying valid leases.
+                # Keep its real age so genuinely stale samples still expire.
                 self.probe_commands.clear()
             # A full sync is authoritative for current sessions and actual radio demand.
             # Aetheredge: absence is authoritative, but an ordinary scenario
