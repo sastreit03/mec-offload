@@ -895,12 +895,33 @@ class Engine:
 
     def disconnect(self, uid, generation):
         u = self.ues[uid]
-        if u.generation != generation:
+        if u.generation != generation or not u.connected:
             return
         u.connected = False
         u.sender = None
         u.disconnect_at = time.monotonic()
         self.record.event("disconnected", ue_id=uid, connection_id=u.connection_id)
+
+    @property
+    def control_timeout_s(self):
+        # Collection clients sync every second; Android otherwise syncs every 10s.
+        return 5.0 if self.collection_mode else 30.0
+
+    def control_age_s(self, u):
+        return None if u.last_control_at is None else max(0.0, time.monotonic() - u.last_control_at)
+
+    def expire_control(self, uid, generation):
+        """Expire only this socket's generation, including while no scenario is armed."""
+        u = self.ues[uid]
+        if u.generation != generation or not u.connected:
+            return False
+        age = self.control_age_s(u)
+        if age is None or age < self.control_timeout_s:
+            return False
+        self.record.event("control_timeout", ue_id=uid, connection_id=u.connection_id,
+                          last_control_age_s=age, timeout_s=self.control_timeout_s)
+        self.disconnect(uid, generation)
+        return True
 
     # Reserve each lifecycle command before awaiting setup so retries share one outcome.
     async def command(self, u, m):

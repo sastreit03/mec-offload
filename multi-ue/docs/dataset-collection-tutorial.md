@@ -502,3 +502,483 @@ uniquely named campaign directory. Do not manually edit the manifest or lock.
 Once this review passes, preserve both generated files. The next stage is
 verifying/staging the selected media on the devices and checking deployed
 configuration, images, and services before running scenarios.
+
+## 13. Validate the deployed MEC configuration and image
+
+On the **MEC Spark**, confirm that the synchronized configuration loads inside
+the actual MEC image. This starts a temporary validation container, not the MEC
+service; it does not require GPU access or start inference workers.
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+
+docker run --rm -i --network none \
+  -v "$PWD/config:/work/multi-ue/config:ro" \
+  -v "$PWD/weights:/work/multi-ue/weights:ro" \
+  --entrypoint python multi-ue-mec:baseline - <<'PY'
+from pathlib import Path
+from mec_server.config import load
+
+settings, catalog, profiles = load('config/mec.collection.yaml')
+print('Configuration loaded successfully')
+print('run_id:', settings.run_id)
+print('mode:', settings.mode)
+print('FPS / GoP:', settings.fps, settings.gop_frames)
+print('profile compatibility:', profiles.get('compatibility'))
+by_id = {item['id']: item for item in catalog['configurations']}
+for application, candidate_id in settings.fixed_candidates.items():
+    artifact = Path(settings.weights_dir) / by_id[candidate_id]['artifact']
+    if not artifact.is_file() or artifact.stat().st_size == 0:
+        raise SystemExit(f'Missing or empty model artifact: {artifact}')
+    print(application, candidate_id, artifact, 'present')
+PY
+```
+
+Require collection mode and the campaign's FPS/GoP and run ID. A
+`catalog FPS/GoP must match MEC settings` error means the deployed catalog and
+MEC configuration still disagree. Do not bypass this validation. If a catalog
+or campaign input changes after manifest generation, preserve the old output
+and regenerate/review the manifest before collection.
+
+The check above validates startup defaults and artifact presence, not model
+loading, GPU execution, or every candidate selected by the campaign. Those
+require further checks before running scenarios. Existing measured profiles
+retain their original measurement provenance; changing FPS/GoP does not
+reprofile encoding or inference.
+
+The Docker image embeds Python code, while Compose mounts configuration from
+the host. Compare key collection-control files against the MEC host source:
+
+```bash
+sha256sum mec/src/mec_server/{app,engine,config}.py
+
+docker run --rm --network none --entrypoint sha256sum \
+  multi-ue-mec:baseline \
+  mec/src/mec_server/app.py \
+  mec/src/mec_server/engine.py \
+  mec/src/mec_server/config.py
+```
+
+Each file's hash must match between host and image. These checks cover the
+listed files only; also ensure the MEC host has the intended source revision.
+If the image is stale, rebuild from that source and repeat validation:
+
+```bash
+./scripts/containers.sh build-mec
+```
+
+Do not start a campaign until configuration validation succeeds and the image
+contains the intended implementation. Next check all campaign model artifacts,
+GPU/MPS readiness, and the core/RAN services before starting collection.
+
+## 14. Rebuild collection profiles when candidate coverage is missing
+
+The `profile_compatibility` value is a matching label, not a request to load
+the latest measurements. Inspect `provenance.sources` and `candidates` in the
+configured profile file. Every campaign candidate needs measured processing
+time, I/P-frame sizes, and (for tracking) tracker time.
+
+The collection-profile builder permits missing detection/segmentation quality
+rows. It records `quality_status: not_measured`, omits scores, and lists these
+candidates under `provenance.missing_quality_candidates`. Existing quality
+measurements and their input hashes are preserved. Tracking retains its
+separate unmeasured-HOTA status. All candidates remain `qualified: false`, so
+these profiles cannot enable heuristic scheduling. Missing execution evidence
+or malformed supplied quality measurements still cause an error.
+
+Choose measured inputs explicitly. Encoding measurements must describe the
+intended FPS/GoP and encoder. The current builder accepts one frame-size CSV
+and does not distinguish devices: using Pixel measurements makes them shared
+initialization estimates, not measured Linux estimates. Do not silently combine
+different encoder datasets. Quality CSVs remain required arguments, but they
+need not contain every candidate's bitrate. Do not substitute quality scores
+from another bitrate or label historical measurements as newly measured.
+
+After deploying the updated builder to the **MEC Spark**, rebuild into a new
+file. Set these variables to the measured input files selected for the run:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+PROCESSING="runs/profiling/<CHOSEN_MODEL_TIMING>/processing.csv"
+FRAME_SIZES="runs/profiling/<CHOSEN_ENCODER>/frame-sizes.csv"
+DETECTION_QUALITY="runs/profiling/<CHOSEN_DETECTION_QUALITY>/summary.csv"
+SEGMENTATION_QUALITY="runs/profiling/<CHOSEN_SEGMENTATION_QUALITY>/summary.csv"
+NEW_PROFILE="config/profiles.collection-new.yaml"
+
+if [ -e "$NEW_PROFILE" ]; then
+  echo "Choose a new output filename; existing profile retained."
+else
+  docker run --rm --network none \
+    -v "$PWD:/work/multi-ue:ro" \
+    -v "$PWD/config:/work/multi-ue/config" \
+    --entrypoint python multi-ue-mec:baseline \
+    tools/build_collection_profiles.py \
+    --catalog config/tasks.yaml \
+    --processing "$PROCESSING" \
+    --frame-sizes "$FRAME_SIZES" \
+    --detection-quality "$DETECTION_QUALITY" \
+    --segmentation-quality "$SEGMENTATION_QUALITY" \
+    --priority -3 \
+    --output "$NEW_PROFILE"
+fi
+```
+
+Review the reported missing-quality candidates and the new file's provenance.
+Set `profiles` in `mec.collection.yaml` to the new filename only after verifying
+coverage for every candidate in the campaign, and repeat step 13. Keep the
+old profile file. The manifest lock does not hash this profile file, so a
+profile-only update does not require regenerating the manifest; preserve the
+chosen profile and its hash with run evidence. Catalog or campaign changes
+still require a new manifest review.
+
+## 15. Preserve the validated configuration and check GPU access
+
+After validating all catalog candidates and model artifacts on the MEC Spark,
+copy the selected profile and MEC configuration back to the RAN Spark so both
+hosts retain the configuration actually used. On the **RAN Spark**, set the
+profile filename to the one selected in `mec.collection.yaml`:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+MEC_HOST=sstreit@192.168.71.130
+PROFILE=profiles.collection.yaml
+scp "$MEC_HOST:~/mec-offload-ad/multi-ue/config/$PROFILE" config/
+scp "$MEC_HOST:~/mec-offload-ad/multi-ue/config/mec.collection.yaml" config/
+```
+
+Preserve copies and hashes with the campaign evidence. Set `CAMPAIGN` to the
+campaign name before running this on the **RAN Spark**:
+
+```bash
+EVIDENCE="runs/campaigns/$CAMPAIGN/deployment"
+if [ -e "$EVIDENCE" ]; then
+  echo "Deployment evidence already exists; preserve it and use a new snapshot directory."
+else
+  mkdir -p "$EVIDENCE"
+  cp config/mec.collection.yaml "config/$PROFILE" "$EVIDENCE/"
+  (cd "$EVIDENCE" && sha256sum mec.collection.yaml "$PROFILE" > SHA256SUMS)
+fi
+```
+
+On the **MEC Spark**, check the GPU and CUDA visibility inside the deployed
+image, then inspect running services:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+nvidia-smi
+./scripts/containers.sh gpu
+docker ps --format 'table {{.Names}}\t{{.Status}}'
+```
+
+Require CUDA availability to be `True` and the expected GPU to be identified.
+The GPU helper uses a temporary container and does not start MEC workers or
+validate inference. Inspect the existing core containers separately; an empty
+container list means the core still needs startup. Next prepare the core and
+MPS, then start the MEC and check readiness before connecting clients.
+
+## 16. Start MEC MPS and the collection service
+
+On the **MEC Spark**, first ensure the existing core-network stack is running
+and its external Docker networks are available. The commands below manage only
+the MEC additions; they do not launch the core stack.
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+docker network inspect oai-traffic-net oai-public-net --format '{{.Name}}'
+./scripts/containers.sh start-mps
+MEC_CONFIG=mec.collection.yaml ./scripts/containers.sh start-mec
+```
+
+Run the commands in order and stop on any error. `start-mps` may request sudo
+authentication. It manages the MEC Spark's MPS daemon, separately from the RAN
+Spark's daemon. Do not stop or repair MPS while a running MEC is using it.
+
+Check container state and readiness:
+
+```bash
+docker inspect multi-ue-mec \
+  --format 'status={{.State.Status}} exit={{.State.ExitCode}} oom={{.State.OOMKilled}}'
+
+docker exec -i multi-ue-mec python - <<'PY'
+import json
+import urllib.request
+with urllib.request.urlopen('http://127.0.0.1:8765/readyz', timeout=10) as response:
+    print(json.dumps(json.load(response), indent=2))
+PY
+```
+
+Model loading and warmup can take time. If startup is still in progress, inspect
+logs and repeat the readiness check after loading completes:
+
+```bash
+docker logs --tail 100 multi-ue-mec
+```
+
+Require `status=running`, `oom=false`, readiness `ready: true`, and mode
+`collection`. If the container exits or readiness reports an error, resolve it
+before proceeding; do not repeatedly restart without inspecting logs. Keep
+startup evidence with the campaign. MEC readiness alone does not establish
+RAN telemetry, client associations, or end-to-end media delivery. Those are
+checked next, before any scenario is armed.
+
+## 17. Verify the gNB and start EdgeRIC in shadow mode
+
+On the **RAN Spark**, check the gNB before starting EdgeRIC:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+docker inspect oai-gnb --format 'status={{.State.Status}}'
+docker logs oai-gnb 2>&1 | \
+  rg 'Channel emulation disabled|CIR ZMQ initialized|ofdm_symbol_size|sample_rate' | tail -30
+rg '^mode:' config/edgeric.shadow.yaml
+```
+
+Require a running gNB. If it is absent or stopped, launch it through the
+testbed's existing SRK workflow before proceeding. For a physical-RF campaign,
+check the current gNB startup for disabled channel emulation and matching radio
+parameters. Old log entries are not proof of the current process configuration.
+Require `mode: shadow` and ensure no other scheduling application publishes
+weights. Shadow mode records proposed weights without sending them to OAI.
+
+With the intended EdgeRIC image built and the gNB running:
+
+```bash
+./scripts/containers.sh start-edgeric
+docker inspect edgeric-mec --format 'status={{.State.Status}}'
+docker logs --tail 60 edgeric-mec
+```
+
+EdgeRIC shares the gNB network namespace. Recreate EdgeRIC after recreating
+the gNB so it attaches to the new namespace.
+
+On the **MEC Spark**, check readiness and radio-report freshness:
+
+```bash
+docker exec -i multi-ue-mec python - <<'PY'
+import json
+import urllib.request
+with urllib.request.urlopen('http://127.0.0.1:8765/api/status', timeout=10) as response:
+    status = json.load(response)
+print('readiness:', json.dumps(status.get('readiness'), indent=2))
+print('radio_report_age_s:', status.get('radio_report_age_s'))
+print('unresolved:', status.get('unresolved'))
+print('ues:', json.dumps(status.get('ues', {}), indent=2))
+PY
+```
+
+Require fresh reports (a non-null `radio_report_age_s` below one second).
+If reports are absent or stale, inspect EdgeRIC/gNB logs and MEC-to-EdgeRIC
+connectivity before connecting clients. An empty UE registry is expected before
+clients connect. The next step is preparing client aliases and dataset paths,
+then verifying every participating UE's connection and radio association.
+
+## 18. Connect clients and verify radio associations
+
+### Connect and associate clients
+
+Prepare all clients required anywhere in the manifest before starting a
+randomized campaign. Connected clients that are not assigned to a scenario
+wait; the manifest determines which clients transmit.
+
+On each **Pixel**, open the installed campaign app, set the MEC address to
+`192.168.72.136`, and set its unique alias to the corresponding `ues` key
+(`pixel1`, `pixel2`, or `pixel3` on this testbed). Select the dataset directory
+whose files match the inventory. For the existing V2 pool, choose
+`Movies/AetheredgeCampaignV2` and verify the displayed 42-video count. Press
+**Connect and stream** once and wait for **MEC control connected**. Keep the
+app in the foreground. Campaign assignments select application, model, bitrate,
+and media; do not manually restart streaming between scenarios.
+
+On the **Orin**, check the already-attached softUE and its container mounts:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+docker inspect oai-nr-ue --format 'status={{.State.Status}}'
+docker exec oai-nr-ue ip -4 addr show oaitun_ue1
+docker exec oai-nr-ue python3 -c \
+  'from pathlib import Path; p=Path("/datasets/campaign-v2"); print("dataset exists:", p.is_dir()); print("videos:", len(list(p.glob("*.mov")))); print("client mounted:", Path("/multi-ue/ue/linux/src/mec_ue/client.py").is_file())'
+```
+
+Replace `/datasets/campaign-v2` if the chosen inventory uses a different path.
+Require the tunnel IPv4 address, the expected video count, and mounted client
+code. If anything is missing, fix attachment or mounts before starting the
+client. See [`docker-compose.ue-mec.yaml`](../../ue/config/common/docker-compose.ue-mec.yaml)
+for the source, dataset, and writable log mounts. Device file counts alone do
+not establish byte-for-byte agreement with inventory hashes.
+
+Run one supervisor in a dedicated **Orin** terminal, setting the campaign name
+to the current campaign:
+
+```bash
+CAMPAIGN=my-campaign-v1
+./scripts/softue-client-supervisor.sh \
+  --ue-alias linux1 \
+  --source-dir /datasets/campaign-v2 \
+  --logs "/multi-ue/runs/$CAMPAIGN/ue/linux1" \
+  --preview-port 0
+```
+
+The log path is inside the container and must map to writable host storage.
+The supervisor records its launch arguments for recovery. Preview is disabled
+to avoid adding preview work to collection. With MEC in collection mode,
+clients wait for scenario assignments and start/stop commands; this step does
+not arm a scenario.
+
+On the **MEC Spark**, check connections and associations:
+
+```bash
+docker exec -i multi-ue-mec python - <<'PY'
+import json
+import urllib.request
+with urllib.request.urlopen('http://127.0.0.1:8765/api/status', timeout=10) as response:
+    status = json.load(response)
+print('radio_report_age_s:', status.get('radio_report_age_s'))
+print('unresolved:', status.get('unresolved'))
+for uid, ue in status.get('ues', {}).items():
+    print(uid, 'alias=', ue.get('alias'), 'connected=', ue.get('connected'),
+          'last_control_age_s=', ue.get('last_control_age_s'),
+          'control_timeout_s=', ue.get('control_timeout_s'),
+          'association_valid=', ue.get('association_valid'), 'ip=', ue.get('ip'))
+PY
+```
+
+Require each intended alias to report `connected=True` and
+`association_valid=True`, with fresh radio reports and `unresolved=0` before
+arming the first scenario. Probing is serialized, so associations may take
+several seconds. Duplicate aliases, missing clients, or persistently invalid
+associations must be resolved first. Next verify runner recovery access and
+select one scenario for the initial end-to-end collection check.
+
+The MEC expires a control connection after five seconds without incoming control
+messages in collection mode, including while idle (thirty seconds in other modes).
+`last_control_age_s` shows time since the last incoming control message;
+`control_timeout_s` shows the applicable limit. Both clients normally send messages
+every second in collection mode. A timeout clears `connected`, closes the stale
+socket, and records a `control_timeout` event. Restore cellular connectivity and
+wait for the client to reconnect and regain a valid association before proceeding.
+During a started scenario, the existing two-second control-silence failure check
+still applies.
+
+## 19. Verify runner recovery access
+
+Run these checks on the **RAN Spark**, in the terminal that will run the
+campaign. Substitute the actual campaign name and SSH destinations:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+CAMPAIGN=my-campaign-v1
+export AETHEREDGE_CAMPAIGN_DIR="$PWD/runs/campaigns/$CAMPAIGN"
+export AETHEREDGE_MEC_HOST=sstreit@192.168.71.130
+export AETHEREDGE_ORIN_HOST=srk@130.127.199.100
+
+ssh -o BatchMode=yes -o ConnectTimeout=5 "$AETHEREDGE_MEC_HOST" \
+  'hostname; docker inspect multi-ue-mec --format "{{.State.Running}}"'
+
+ssh -o BatchMode=yes -o ConnectTimeout=5 "$AETHEREDGE_ORIN_HOST" \
+  'hostname; docker inspect oai-nr-ue --format "{{.State.Running}}"; test -r ~/mec-offload-ad/multi-ue/runs/softue-client-launch.json && echo supervisor-launch-record-present'
+
+curl --fail --silent --show-error --max-time 10 \
+  http://192.168.71.142:8765/readyz | python3 -m json.tool
+```
+
+Both SSH checks must work without interactive authentication, Docker access
+must succeed, and the MEC control-side readiness endpoint must report ready.
+The normal Orin supervisor writes the launch record that preserves the source,
+alias, and log arguments during recovery. If authentication fails, fix SSH
+access or set the correct destination before running. The earlier client
+association check does not establish SSH access.
+
+Do not invoke `campaign_recover.sh` as a connectivity test: it may restart
+services. These commands only inspect access and running state. Keep these
+environment variables in the runner's shell so recovery uses the intended
+hosts and campaign evidence directory.
+
+## 20. Run and validate one initial scenario
+
+Use the **RAN Spark** terminal with the recovery environment variables and,
+if needed, SSH agent loaded. Keep the Pixel apps foregrounded and the Orin
+supervisor running. Set `CAMPAIGN` to the campaign being collected. Select one
+pending single-UE scenario from the immutable manifest:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+CAMPAIGN=my-campaign-v1
+export AETHEREDGE_CAMPAIGN_DIR="$PWD/runs/campaigns/$CAMPAIGN"
+
+SCENARIO_ID="$(python3 - "$AETHEREDGE_CAMPAIGN_DIR" <<'PY'
+import json
+import sqlite3
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1]).resolve()
+states = {}
+database = root / 'state.sqlite3'
+if database.exists():
+    with sqlite3.connect(database.as_uri() + '?mode=ro', uri=True) as db:
+        states = dict(db.execute('SELECT scenario_id, status FROM scenarios'))
+for line in (root / 'scenarios.jsonl').read_text().splitlines():
+    scenario = json.loads(line)
+    if len(scenario['ues']) == 1 and states.get(scenario['scenario_id'], 'pending') == 'pending':
+        print(scenario['scenario_id'])
+        break
+PY
+)"
+echo "Selected scenario: $SCENARIO_ID"
+```
+
+If no ID is printed, stop and inspect checkpoint states; do not reset the
+database. For a campaign without a single-UE set, select a pending scenario
+from the intended set instead. Display the selected assignment before running:
+
+```bash
+python3 - "$AETHEREDGE_CAMPAIGN_DIR/scenarios.jsonl" "$SCENARIO_ID" <<'PY'
+import json
+import sys
+with open(sys.argv[1]) as stream:
+    scenario = next(json.loads(line) for line in stream
+                    if json.loads(line)['scenario_id'] == sys.argv[2])
+print(json.dumps(scenario, indent=2))
+PY
+```
+
+For a physical-RF campaign, run without `--trace-bank`:
+
+```bash
+if [ -n "$SCENARIO_ID" ]; then
+  ../gnb-core/env/bin/python tools/run_campaign.py \
+    --campaign-dir "$AETHEREDGE_CAMPAIGN_DIR" \
+    --scenario-id "$SCENARIO_ID"
+fi
+```
+
+The runner prepares the assigned client, requests MEC release, waits for
+transmission and drain, then validates the attempt. Other connected clients
+remain idle except for control/association traffic. Do not press the Pixel
+start button again. The runner can retry with new attempt IDs and invoke
+recovery; allow it to finish. In a separate RAN Spark terminal, monitor the
+campaign's `runner-events.jsonl` with `tail -f` if needed.
+
+After the runner returns, inspect its checkpoint:
+
+```bash
+python3 - "$AETHEREDGE_CAMPAIGN_DIR/state.sqlite3" "$SCENARIO_ID" <<'PY'
+import sqlite3
+import sys
+from pathlib import Path
+with sqlite3.connect(Path(sys.argv[1]).resolve().as_uri() + '?mode=ro', uri=True) as db:
+    row = db.execute(
+        'SELECT scenario_id, status, attempts, attempt_id, error FROM scenarios WHERE scenario_id = ?',
+        (sys.argv[2],),
+    ).fetchone()
+print(row)
+if row is None or row[1] != 'valid':
+    raise SystemExit('Initial scenario is not valid; inspect runner events before continuing')
+PY
+```
+
+Require `valid` before proceeding to the remaining campaign. The current
+elapsed-time collection is not required to produce exactly 150 frames. Retain
+the checkpoint and all failed-attempt evidence. A subsequent full campaign
+invocation skips scenarios already marked valid; do not regenerate the
+manifest or delete the checkpoint between the initial check and the full run.

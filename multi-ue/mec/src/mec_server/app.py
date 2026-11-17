@@ -127,7 +127,9 @@ def create_app(engine):
                 u.uid: dict(
                     active_video=u.active_video,
                     alias=u.alias,          # Used in dataset collection. e.g., pixel1, linux1
-                    connected=u.connected,  # whether the UE is connected to the MEC server via the control connection
+                    connected=u.connected,  # cleared on socket closure or control silence
+                    last_control_age_s=engine.control_age_s(u),
+                    control_timeout_s=engine.control_timeout_s,
                     ip=u.ip,                # UE's IP address, used for EdgeRIC association
                     scenario_acknowledged=bool(
                         engine.scenario     # Scenario for dataset collection
@@ -390,15 +392,25 @@ def create_app(engine):
                 offset += len(page)
                 await asyncio.sleep(0)
 
+        async def watch_control():
+            # A lost cellular link need not deliver a TCP close notification.
+            # Invalidate readiness before awaiting a potentially slow close.
+            while u.generation == generation and u.connected:
+                if engine.expire_control(u.uid, generation):
+                    await ws.close(code=1001, reason="Control message timeout")
+                    return
+                await asyncio.sleep(0.25)
+
         # Create tasks for sending and replaying in the current control loop
         sending = asyncio.create_task(sender())
         replaying = asyncio.create_task(replay())
+        watching = asyncio.create_task(watch_control())
         try:
             while True:
                 # Asynchronously wait for message from UE
                 m = loads(await ws.receive_text())
                 # Check if UE's generation is the latest
-                if engine.ues[u.uid].generation != generation:
+                if engine.ues[u.uid].generation != generation or not u.connected:
                     break
                 try:
                     # Pass message from UE to engine and wait for engine's response
@@ -421,7 +433,8 @@ def create_app(engine):
             engine.disconnect(u.uid, generation)    # Disconnect UE of current generation in engine
             sending.cancel()                        # Cancel tasks in event loop and wait for them to cancel in .gather
             replaying.cancel()
-            await asyncio.gather(sending, replaying, return_exceptions=True)
+            watching.cancel()
+            await asyncio.gather(sending, replaying, watching, return_exceptions=True)
 
     return app
 

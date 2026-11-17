@@ -116,9 +116,36 @@ public final class AvcSource {
     sourceRotation = 0;
     MediaFormat f = H264Encoding.format(width, height, fps, bitrate);
     encoder = MediaCodec.createEncoderByType("video/avc");
+    if (!encoder.getCodecInfo().getCapabilitiesForType("video/avc")
+        .getEncoderCapabilities().isBitrateModeSupported(
+            MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)) {
+      throw new IllegalStateException("Selected encoder does not support CBR: " + encoder.getName());
+    }
     encoder.configure(f, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+    recordEncoderFormat("configured", encoder.getInputFormat());
     encoder.start();
     rtp = new H264Rtp(session, 96, 1200, session);
+  }
+
+  private void recordEncoderFormat(String stage, MediaFormat format) throws Exception {
+    Integer reportedMode = format.containsKey(MediaFormat.KEY_BITRATE_MODE)
+        ? format.getInteger(MediaFormat.KEY_BITRATE_MODE) : null;
+    org.json.JSONObject evidence = new org.json.JSONObject()
+        .put("video_id", session.video())
+        .put("encoder", encoder.getName())
+        .put("stage", stage)
+        .put("bitrate_bps", bitrate)
+        .put("bitrate_mode_requested", MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR)
+        .put("bitrate_mode_reported", reportedMode == null ? org.json.JSONObject.NULL : reportedMode)
+        .put("format", format.toString());
+    events.event("encoder_config", evidence);
+    android.util.Log.i("MecEncoder", evidence.toString());
+    // Some codecs omit this field. Record unknown rather than claiming it was
+    // confirmed, but never continue after an explicitly conflicting mode.
+    if (reportedMode != null
+        && reportedMode != MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR) {
+      throw new IllegalStateException("Encoder reported non-CBR bitrate mode: " + reportedMode);
+    }
   }
 
   private void camera() throws Exception {
@@ -405,6 +432,7 @@ public final class AvcSource {
       int i = encoder.dequeueOutputBuffer(info, 0);
       if (i == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
         MediaFormat f = encoder.getOutputFormat();
+        recordEncoderFormat("output", f);
         for (String key : new String[] {"csd-0", "csd-1"}) {
           ByteBuffer b = f.getByteBuffer(key);
           if (b != null) {

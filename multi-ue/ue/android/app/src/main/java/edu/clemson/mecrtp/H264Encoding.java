@@ -13,6 +13,8 @@ public final class H264Encoding {
     f.setInteger(MediaFormat.KEY_COLOR_FORMAT,
         MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
     f.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+    f.setInteger(MediaFormat.KEY_BITRATE_MODE,
+        MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR);
     f.setInteger(MediaFormat.KEY_FRAME_RATE, fps);
     f.setFloat(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
     f.setInteger(MediaFormat.KEY_PROFILE, MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline);

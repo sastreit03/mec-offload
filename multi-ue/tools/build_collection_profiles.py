@@ -33,8 +33,10 @@ def main():
     parser.add_argument("--catalog", default="config/tasks.yaml")
     parser.add_argument("--processing", required=True)
     parser.add_argument("--frame-sizes", required=True)
-    parser.add_argument("--detection-quality", required=True)
-    parser.add_argument("--segmentation-quality", required=True)
+    parser.add_argument("--detection-quality", required=True,
+                        help="Measured quality CSV; missing candidate rows are allowed in collection mode")
+    parser.add_argument("--segmentation-quality", required=True,
+                        help="Measured quality CSV; missing candidate rows are allowed in collection mode")
     parser.add_argument("--priority", type=int, default=-3)
     parser.add_argument("--compatibility", default="measured-testbed-v1")
     parser.add_argument("--output", default="config/profiles.measured.yaml")
@@ -98,6 +100,7 @@ def main():
             }
 
     profiles = {}
+    missing_quality = []
     for candidate in candidates:
         cid = candidate["id"]
         application = candidate["application"]
@@ -135,8 +138,13 @@ def main():
         else:
             key = (application, model, bitrate)
             if key not in quality:
-                raise ValueError(f"missing quality measurement for {cid}")
-            profile.update(quality[key])
+                # Fixed-policy collection needs execution measurements, not a
+                # quality gate. Do not invent scores or borrow another bitrate.
+                profile["quality_status"] = "not_measured"
+                missing_quality.append(cid)
+            else:
+                profile.update(quality[key])
+                profile["quality_status"] = "measured"
         profiles[cid] = profile
 
     sources = {
@@ -159,6 +167,7 @@ def main():
             "radio_bps_per_unit": None,
         },
         "provenance": {
+            "missing_quality_candidates": missing_quality,
             "sources": {
                 name: {"path": str(path), "sha256": sha256(path)}
                 for name, path in sources.items()
@@ -166,6 +175,7 @@ def main():
             "notes": [
                 "Network Kalman parameters remain unmeasured and unused in collection mode.",
                 "Tracking quality remains unmeasured because no HOTA ground truth is available.",
+                "Missing detection/segmentation quality is marked not_measured; no scores are imputed.",
             ],
         },
         "candidates": profiles,
@@ -178,6 +188,8 @@ def main():
         + yaml.safe_dump(document, sort_keys=False)
     )
     print(f"wrote {len(profiles)} measured collection profiles to {output}")
+    if missing_quality:
+        print("Quality unmeasured (collection only): " + ", ".join(missing_quality))
 
 
 if __name__ == "__main__":

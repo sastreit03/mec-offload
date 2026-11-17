@@ -3,7 +3,7 @@
 run_id: 20261117-pilot-mps-collection
 mode: collection
 catalog: tasks.yaml
-profiles: profiles.measured.yaml
+profiles: profiles.collection.yaml
 backend: torchscript
 advertised_ip: 192.168.72.136
 edgeric_target: 192.168.71.140:50052
