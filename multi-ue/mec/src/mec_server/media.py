@@ -24,6 +24,45 @@ class Receiver:
         self.sender = None
         self.diagnostics = getattr(cfg, "mode", None) == "collection"
         self.packet_evidence = OrderedDict()
+        self.decode_pending = OrderedDict()
+        self.sequence_frames = OrderedDict()
+
+    def _decode_failure(self, fid, reason, **evidence):
+        item = self.decode_pending.pop(fid, None)
+        if item is None:
+            return
+        self.post("receiver_frame_unrecoverable", dict(
+            video_id=self.video_id, frame_id=fid, reason=reason,
+            observed_ns=time.monotonic_ns(), **evidence))
+        self.post("frame_failure", dict(descriptor=item[0], reason=reason))
+
+    def _jitter_drop(self, sequence, reason, details):
+        with self.lock:
+            fid = self.sequence_frames.get(sequence)
+            forwarded = self.packet_evidence.get(("jitter_output", fid), {})
+            already_forwarded = sequence in forwarded.get("sequences", ())
+            self.post("jitterbuffer_drop", dict(
+                video_id=self.video_id, sequence=sequence, frame_id=fid,
+                reason=reason, details=details, already_forwarded=already_forwarded,
+                observed_ns=time.monotonic_ns()))
+            # A late duplicate does not destroy an already-forwarded packet.
+            # Unknown sequence numbers are logged without guessing a frame ID.
+            if fid is not None and not already_forwarded:
+                self._decode_failure(fid, "jitterbuffer_drop", sequence=sequence,
+                                     drop_reason=reason)
+
+    def _decoded_frame(self, descriptor):
+        if not self.diagnostics:
+            return
+        with self.lock:
+            self.decode_pending.pop(descriptor.frame_id, None)
+            if descriptor.frame_type == 1:
+                # IDR recovery closes preceding decode gaps in this IDR/P-only
+                # stream. Do not discard newer frames merely because a drop occurred.
+                for fid in list(self.decode_pending):
+                    if fid < descriptor.frame_id:
+                        self._decode_failure(fid, "decode_gap_before_keyframe",
+                                             recovery_frame_id=descriptor.frame_id)
 
     def _observe_packet(self, stage, raw, descriptor, pts):
         if not self.diagnostics:
@@ -86,6 +125,10 @@ class Receiver:
             "video/x-raw,format=RGB ! appsink name=frames emit-signals=true max-buffers=1 drop=false sync=false wait-on-eos=false enable-last-sample=false"
         )
         self.pipeline = Gst.parse_launch(self.description)
+        if self.diagnostics:
+            jitter = self.pipeline.get_by_name("jitter")
+            jitter.set_property("post-drop-messages", True)
+            jitter.set_property("drop-messages-interval", 0)
         self.pipeline.get_by_name("udp").get_static_pad("src").add_probe(
             Gst.PadProbeType.BUFFER, self._packet
         )
@@ -148,8 +191,16 @@ class Receiver:
                         "descriptor",
                         dict(descriptor=d, first_packet_ns=time.monotonic_ns()),
                     )
+                    if self.diagnostics:
+                        self.decode_pending[d.frame_id] = (d, None)
                 else:
                     a = a[0]
+                if self.diagnostics:
+                    sequence = int.from_bytes(raw[2:4], "big")
+                    self.sequence_frames[sequence] = d.frame_id
+                    self.sequence_frames.move_to_end(sequence)
+                    while len(self.sequence_frames) > 8192:
+                        self.sequence_frames.popitem(last=False)
                 complete = a.add(p)
                 received_ns = time.monotonic_ns()
                 # Map the receive timestamp while handling the packet, before
@@ -166,6 +217,8 @@ class Receiver:
                     ),
                 )
                 if complete:
+                    if d.frame_id in self.decode_pending:
+                        self.decode_pending[d.frame_id] = (d, received_ns)
                     self.done[d.frame_id] = None
                     self.done.move_to_end(d.frame_id)
                     if len(self.done) > 8192:
@@ -185,6 +238,8 @@ class Receiver:
                 self.post(
                     "packet_loss", dict(video_id=self.video_id, details=s.to_string())
                 )
+                if self.diagnostics and s.has_field("seqnum"):
+                    self._jitter_drop(int(s.get_value("seqnum")), "considered_lost", s.to_string())
         if info.type & self.Gst.PadProbeType.BUFFER:
             buf = info.get_buffer()
             try:
@@ -239,6 +294,7 @@ class Receiver:
         self.post(
             "decoded", dict(descriptor=d, rgb=rgb, decoded_ns=time.monotonic_ns())
         )
+        self._decoded_frame(d)
         return self.Gst.FlowReturn.OK
 
     def tick(self):
@@ -258,22 +314,28 @@ class Receiver:
                     "frame_failure",
                     dict(descriptor=a.descriptor, reason="transport_loss"),
                 )
+                self.decode_pending.pop(fid, None)
+            for fid, (_, complete_ns) in list(self.decode_pending.items()):
+                if complete_ns is not None and now - complete_ns >= self.cfg.decode_wait_s * 1e9:
+                    self._decode_failure(fid, "decode_wait_timeout",
+                                         timeout_s=self.cfg.decode_wait_s)
         if self.pipeline:
-            msg = self.bus.pop_filtered(
-                self.Gst.MessageType.ERROR | self.Gst.MessageType.WARNING
-            )
-            if msg:
-                self.post(
-                    "media_error",
-                    dict(
-                        video_id=self.video_id,
-                        reason=str(
-                            msg.parse_error()
-                            if msg.type == self.Gst.MessageType.ERROR
-                            else msg.parse_warning()
-                        ),
-                    ),
-                )
+            for _ in range(256):
+                msg = self.bus.pop_filtered(
+                    self.Gst.MessageType.ERROR | self.Gst.MessageType.WARNING
+                    | self.Gst.MessageType.ELEMENT)
+                if msg is None:
+                    break
+                if msg.type == self.Gst.MessageType.ELEMENT:
+                    structure = msg.get_structure()
+                    if structure and structure.get_name() == "drop-msg":
+                        self._jitter_drop(int(structure.get_value("seqnum")),
+                                          str(structure.get_value("reason")),
+                                          structure.to_string())
+                else:
+                    self.post("media_error", dict(video_id=self.video_id, reason=str(
+                        msg.parse_error() if msg.type == self.Gst.MessageType.ERROR
+                        else msg.parse_warning())))
 
     def close(self):
         self.stopped = True

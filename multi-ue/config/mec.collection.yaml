@@ -31,6 +31,9 @@ tracker_buffer: 192
 # A decoder that lost reference continuity cannot emit its buffered access
 # units. Resolve those explicit failures promptly so ordered tracking advances.
 decoder_drain_s: 2.0
+# Fallback for fully received frames without matched decoded output, independent
+# of inference/tracking. Explicit jitter drops and IDR recovery resolve earlier.
+decode_wait_s: 2.0
 # Lateness never drops GPU work; this watchdog marks a genuinely stuck run failed.
 drain_s: 120.0
 # Radio re-establishment can interrupt a UE control socket for several seconds.

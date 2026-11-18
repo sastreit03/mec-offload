@@ -75,6 +75,9 @@ class Settings(BaseModel):
     # A complete encoded access unit can still fail to emerge from GStreamer
     # after reference loss. Bound that wait separately from GPU/result drain.
     decoder_drain_s: float = 2.0
+    # Collection fallback from complete reception to matched decoded output;
+    # excludes inference/tracking. A timeout is evidence, not proven packet loss.
+    decode_wait_s: float = 2.0
     drain_s: float = 5.0
     disconnect_s: float = 5.0
     receive_loss_s: float = 1.0
@@ -156,6 +159,8 @@ class Settings(BaseModel):
             raise ValueError("positive successor preparation time required")
         if self.decoder_drain_s <= 0:
             raise ValueError("positive decoder drain time required")
+        if not math.isfinite(self.decode_wait_s) or self.decode_wait_s <= 0:
+            raise ValueError("positive finite decode wait time required")
         if not self.applications or len(set(self.applications)) != len(
             self.applications
         ):
