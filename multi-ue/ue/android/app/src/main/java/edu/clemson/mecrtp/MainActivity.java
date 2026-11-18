@@ -641,10 +641,43 @@ public final class MainActivity extends Activity {
       }
   }
 
+  // Record preparation decisions without changing admission or retry behavior.
+  private void preparationTrace(String stage, String reason) {
+    try {
+      event("collection_preparation", new JSONObject()
+          .put("stage", stage)
+          .put("reason", reason == null ? JSONObject.NULL : reason)
+          .put("enabled", enabled)
+          .put("collection_mode", collectionMode)
+          .put("dataset_loading", datasetLoading)
+          .put("dataset_error", datasetError == null ? JSONObject.NULL : datasetError)
+          .put("playlist_present", playlist != null)
+          .put("assignment_present", assignment != null)
+          .put("session_present", session != null)
+          .put("prepared_session_present", preparedSession != null)
+          .put("start_request_present", startRequest != null)
+          .put("attempt_present", attemptId != null)
+          .put("attempt_aborted", attemptId != null && attemptId.equals(abortedAttemptId))
+          .put("media_path", assignment == null ? JSONObject.NULL
+              : assignment.opt("media_path")));
+    } catch (Exception e) {
+      Log.w(TAG, "Could not record preparation diagnostic", e);
+    }
+  }
+
   private synchronized void requestStart() throws Exception {
+    preparationTrace("request_start_enter", null);
     if (collectionMode && (assignment == null || attemptId == null
-        || attemptId.equals(abortedAttemptId))) return;
-    if (!enabled || session != null || startRequest != null) return;
+        || attemptId.equals(abortedAttemptId))) {
+      preparationTrace("request_start_skipped", assignment == null ? "assignment_missing"
+          : attemptId == null ? "attempt_missing" : "attempt_aborted");
+      return;
+    }
+    if (!enabled || session != null || startRequest != null) {
+      preparationTrace("request_start_skipped", !enabled ? "client_disabled"
+          : session != null ? "session_present" : "start_request_present");
+      return;
+    }
     startRequest =
         new JSONObject()
             .put("type", "video_start")
@@ -668,6 +701,7 @@ public final class MainActivity extends Activity {
       for (String key :
           new String[] {"candidate_id", "media_id", "source_start_frame", "frame_count"})
         startRequest.put(key, assignment.get(key));
+    preparationTrace("video_start_send_called", null);
     send(startRequest);
   }
 
@@ -1216,17 +1250,25 @@ public final class MainActivity extends Activity {
   }
 
   private void prepareDatasetAssignment() {
-    if (datasetLoading || assignment == null || attemptId.equals(abortedAttemptId)) return;
+    preparationTrace("dataset_assignment_enter", null);
+    if (datasetLoading || assignment == null || attemptId.equals(abortedAttemptId)) {
+      preparationTrace("dataset_assignment_deferred", datasetLoading ? "dataset_loading"
+          : assignment == null ? "assignment_missing" : "attempt_aborted");
+      return;
+    }
     try {
       if (playlist == null)
         throw new java.io.IOException("Dataset not loaded; reselect directory" +
             (datasetError == null ? "" : ": " + datasetError));
+      preparationTrace("media_lookup_started", null);
       selection = playlist.find(new File(assignment.getString("media_path")).getName());
+      preparationTrace("media_lookup_completed", null);
       file = selection.uri;
       try (android.content.res.AssetFileDescriptor fd =
           getContentResolver().openAssetFileDescriptor(file, "r")) {
         if (fd == null) throw new java.io.IOException("Assigned video cannot be opened");
       }
+      preparationTrace("media_open_completed", null);
       String app = assignment.getString("application");
       for (int i = 0; i < application.getCount(); i++)
         if (app.equals(application.getItemAtPosition(i).toString())) {
