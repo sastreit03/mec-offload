@@ -22,6 +22,51 @@ class Receiver:
         self.generation = 0
         self.stopped = False
         self.sender = None
+        self.diagnostics = getattr(cfg, "mode", None) == "collection"
+        self.packet_evidence = OrderedDict()
+
+    def _observe_packet(self, stage, raw, descriptor, pts):
+        if not self.diagnostics:
+            return
+        key = (stage, descriptor.frame_id)
+        now = time.monotonic_ns()
+        if key not in self.packet_evidence:
+            self.packet_evidence[key] = dict(
+                video_id=self.video_id, stage=stage, frame_id=descriptor.frame_id,
+                first_observed_ns=now, packets=0, sequences=set(),
+                rtp_timestamp=int.from_bytes(raw[4:8], "big"),
+            )
+        item = self.packet_evidence[key]
+        item.update(last_observed_ns=now, last_pts_ns=int(pts))
+        item["packets"] += 1
+        item["sequences"].add(int.from_bytes(raw[2:4], "big"))
+        if len(self.packet_evidence) > 8192:
+            self._emit_packet_evidence(self.packet_evidence.popitem(last=False)[1])
+
+    def _emit_packet_evidence(self, item):
+        item = dict(item)
+        item["sequences"] = sorted(item["sequences"])
+        self.post("receiver_packet_summary", item)
+
+    def _observe_buffer(self, stage, buf):
+        if not self.diagnostics:
+            return
+        with self.lock:
+            descriptor = self.pts.get(buf.pts)
+        self.post("receiver_buffer", dict(
+            video_id=self.video_id, stage=stage, observed_ns=time.monotonic_ns(),
+            pts_ns=int(buf.pts), dts_ns=int(buf.dts), bytes=buf.get_size(),
+            flags=int(buf.get_flags()),
+            matched_frame_id=descriptor.frame_id if descriptor else None,
+        ))
+
+    def _decoder_input(self, pad, info):
+        self._observe_buffer("decoder_input", info.get_buffer())
+        return self.Gst.PadProbeReturn.OK
+
+    def _decoder_output(self, pad, info):
+        self._observe_buffer("decoder_output", info.get_buffer())
+        return self.Gst.PadProbeReturn.OK
 
     def start(self):
         import gi
@@ -37,7 +82,7 @@ class Receiver:
             f"udpsrc name=udp port={self.port} buffer-size={self.cfg.udp_buffer_bytes} "
             'caps="application/x-rtp,media=video,encoding-name=H264,clock-rate=90000,payload=96" ! '
             f"rtpjitterbuffer name=jitter latency={self.cfg.jitter_ms} drop-on-latency=true do-lost=true ! "
-            "rtph264depay wait-for-keyframe=true ! h264parse ! avdec_h264 ! videoconvert ! "
+            "rtph264depay wait-for-keyframe=true ! h264parse ! avdec_h264 name=decoder ! videoconvert ! "
             "video/x-raw,format=RGB ! appsink name=frames emit-signals=true max-buffers=1 drop=false sync=false wait-on-eos=false enable-last-sample=false"
         )
         self.pipeline = Gst.parse_launch(self.description)
@@ -48,6 +93,10 @@ class Receiver:
             Gst.PadProbeType.BUFFER | Gst.PadProbeType.EVENT_DOWNSTREAM, self._jitter
         )
         self.pipeline.get_by_name("frames").connect("new-sample", self._sample)
+        if self.diagnostics:
+            decoder = self.pipeline.get_by_name("decoder")
+            decoder.get_static_pad("sink").add_probe(Gst.PadProbeType.BUFFER, self._decoder_input)
+            decoder.get_static_pad("src").add_probe(Gst.PadProbeType.BUFFER, self._decoder_output)
         result = self.pipeline.set_state(Gst.State.PLAYING)
         if result == Gst.StateChangeReturn.FAILURE:
             raise RuntimeError("receiver pipeline setup failed")
@@ -82,6 +131,7 @@ class Receiver:
             if d.video_id != self.video_id or d.media_epoch != self.epoch:
                 return self.Gst.PadProbeReturn.DROP
             with self.lock:
+                self._observe_packet("udp_input", raw, d, buf.pts)
                 source = p.ssrc
                 if self.sender is not None and source != self.sender:
                     raise ValueError("SSRC change requires receiver reconciliation")
@@ -138,8 +188,16 @@ class Receiver:
         if info.type & self.Gst.PadProbeType.BUFFER:
             buf = info.get_buffer()
             try:
-                p = parse_packet(buf.extract_dup(0, buf.get_size()))
+                raw = buf.extract_dup(0, buf.get_size())
+                p = parse_packet(raw)
                 with self.lock:
+                    self._observe_packet("jitter_output", raw, p.descriptor, buf.pts)
+                    previous = self.pts.get(buf.pts)
+                    if self.diagnostics and previous and previous.frame_id != p.descriptor.frame_id:
+                        self.post("receiver_pts_collision", dict(
+                            video_id=self.video_id, pts_ns=int(buf.pts),
+                            previous_frame_id=previous.frame_id, frame_id=p.descriptor.frame_id,
+                        ))
                     self.pts[buf.pts] = p.descriptor
                     if len(self.pts) > 256:
                         self.pts.pop(next(iter(self.pts)))
@@ -153,13 +211,15 @@ class Receiver:
         if sample is None:
             return self.Gst.FlowReturn.OK
         buf = sample.get_buffer()
+        self._observe_buffer("appsink", buf)
         caps = sample.get_caps()
         with self.lock:
             d = self.pts.pop(buf.pts, None)
         if d is None:
             self.post(
                 "media_error",
-                dict(video_id=self.video_id, reason="decoded_metadata_pts_missing"),
+                dict(video_id=self.video_id, reason="decoded_metadata_pts_missing",
+                     pts_ns=int(buf.pts), observed_ns=time.monotonic_ns()),
             )
             return self.Gst.FlowReturn.OK
         info = self.GstVideo.VideoInfo.new_from_caps(caps)
@@ -219,6 +279,10 @@ class Receiver:
         self.stopped = True
         if self.pipeline:
             self.pipeline.set_state(self.Gst.State.NULL)
+        with self.lock:
+            for item in self.packet_evidence.values():
+                self._emit_packet_evidence(item)
+            self.packet_evidence.clear()
 
 
 class MockReceiver:
