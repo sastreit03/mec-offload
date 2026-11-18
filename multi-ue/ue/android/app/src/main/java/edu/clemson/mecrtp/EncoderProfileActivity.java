@@ -30,7 +30,7 @@ public final class EncoderProfileActivity extends Activity {
     LinearLayout root = new LinearLayout(this);
     root.setOrientation(LinearLayout.VERTICAL); root.setPadding(24, 24, 24, 24);
     TextView title = new TextView(this);
-    title.setText("Offline encoder profile\nKeep this screen open. Select the eight Linux profiling videos.");
+    title.setText("Offline encoder profile\nKeep this screen open. Select one or more videos; use the eight Linux profiling videos for a full comparison.");
     root.addView(title);
     choose = new Button(this); choose.setText("Choose profiling video directory");
     choose.setOnClickListener(v -> startActivityForResult(

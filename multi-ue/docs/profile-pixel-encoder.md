@@ -12,6 +12,13 @@ FPS=10/GOP=10. All frames are retained at both rates, so the 10 FPS media timeli
 is three times as long. Linux and Android retain their native decoding/scaling
 pipelines; matching settings does not imply pixel-identical encoder inputs.
 
+For a quick diagnostic, the app also accepts a directory containing just one
+video. Select only the bitrate being investigated (for example, `500000`), set
+FPS and GOP to `10`, width to `1280`, and height to `720`. Keep orientation
+diagnostic mode unchecked. Wait for completion and pull the output as described
+below. Run the validator with those settings and `--expected-videos 1` instead
+of `8`. This diagnostic does not replace the full eight-video comparison.
+
 ## 1. Build and install from Android Studio on the Mac
 
 Copy the updated repository source to the Mac, including the new Java files.
@@ -113,7 +120,7 @@ for bitrate in "${BITRATES[@]}"; do
 done
 python3 tools/profile_encoding_validation.py \
   --profile-dir "$PROFILE_DIR" "${BITRATE_ARGS[@]}" \
-  --fps "$FPS" --gop-frames "$GOP" \
+  --fps "$FPS" --gop-frames "$GOP_FRAMES" \
   --width "$WIDTH" --height "$HEIGHT" --expected-videos 8
 ```
 
@@ -148,9 +155,9 @@ It produces:
 Produced bitrate is `8 * encoded_bytes / (frames / FPS)`. The canonical byte count
 matches production H.264 payload accounting, including four-byte start codes and
 SPS/PPS repeated on IDRs; it excludes RTP/IP/radio overhead. Raw codec output bytes
-are also retained separately. No bitrate-control mode is explicitly forced because
-the production app leaves it at the encoder default. A requested bitrate is a
-target, and passing structural validation does not establish that the ratio is
+are also retained separately. The profiler requests CBR, checks encoder capability,
+and records the output format without rejecting a reported bitrate-mode mismatch.
+A requested bitrate is a target, and passing structural validation does not establish that the ratio is
 close to one: inspect the measurements before deciding on campaign settings.
 
 Local source checks cannot establish hardware behavior. The Mac APK build and

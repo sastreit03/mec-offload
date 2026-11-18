@@ -56,7 +56,7 @@ public final class EncoderProfiler {
     result.sort(Comparator.comparing(v -> v.name));
     Set<String> names = new HashSet<>();
     for (Video v : result) if (!names.add(v.name)) throw new IOException("Duplicate filename");
-    if (result.size() != 8) throw new IOException("Select exactly eight profiling videos; found " + result.size());
+    if (result.isEmpty()) throw new IOException("Select a directory containing at least one profiling video");
     return result;
   }
 
@@ -114,7 +114,7 @@ public final class EncoderProfiler {
         .put("videos", new JSONArray()).put("source_sha256", new JSONObject());
     for (Video v : videos) meta.getJSONArray("videos").put(v.name);
     metadata(root, meta);
-    progress.accept("Output: " + root + "\nHashing eight source videos…");
+    progress.accept("Output: " + root + "\nHashing " + videos.size() + " source video(s)…");
     try {
       for (Video v : videos) meta.getJSONObject("source_sha256").put(v.name, hash(v));
       metadata(root, meta);
