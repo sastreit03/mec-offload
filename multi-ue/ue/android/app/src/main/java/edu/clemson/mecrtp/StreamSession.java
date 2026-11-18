@@ -144,6 +144,16 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
       return false;
     }
     input.put(pts, new long[] {capture, frame, gop, gopFrame, force ? 1 : 0});
+    events.event("encoder_input_prepared", new JSONObject()
+        .put("video_id", video).put("frame_id", frame)
+        .put("gop_id", gop).put("gop_frame", gopFrame)
+        .put("encoder_pts_us", pts).put("capture_mono_ns", capture)
+        .put("keyframe_requested", force || gopFrame == 0)
+        .put("configuration_forced_keyframe", force)
+        .put("fps", current.getInt("fps"))
+        .put("gop_frames", current.getInt("gop_frames"))
+        .put("bitrate_bps", current.getInt("bitrate_bps"))
+        .put("config_version", current.getInt("config_version")));
     nextRelease += 1_000_000_000L / current.getInt("fps");
     return true;
   }
@@ -180,6 +190,9 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
               .put("tx_mono_ns", tx)
               .put("capture_mono_ns", in[0])
               .put("encoded_bytes", size)
+              .put("encoder_pts_us", pts)
+              .put("idr", idr)
+              .put("gop_frame", in[3])
               .put("config_version", current.getInt("config_version"))
               .put("plan_version", current.getInt("plan_version"));
       frame++;

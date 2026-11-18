@@ -457,7 +457,15 @@ public final class AvcSource {
         byte[] a = new byte[info.size];
         b.get(a);
         if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) rtp.configure(a);
-        else rtp.accessUnit(a, info.presentationTimeUs);
+        else {
+          events.event("encoder_output", new org.json.JSONObject()
+              .put("video_id", session.video())
+              .put("encoder_pts_us", info.presentationTimeUs)
+              .put("codec_flags", info.flags)
+              .put("codec_keyframe", (info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0)
+              .put("codec_output_bytes", info.size));
+          rtp.accessUnit(a, info.presentationTimeUs);
+        }
       }
       encoder.releaseOutputBuffer(i, false);
     }
