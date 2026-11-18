@@ -34,6 +34,9 @@ public final class AvcSource {
   private long sourceStartUs;
   private int sourceStartFrame;
   private int frameLimit = -1, submittedFrames;
+  private long encoderSubmittedFrames;
+  // Retain ownership while session pacing prevents submission; never queue a dummy input.
+  private int pendingEncoderInput = -1;
   private long segmentFinishDeadline;
   private boolean released;
   private Runnable heldFirstFrame;
@@ -259,16 +262,16 @@ public final class AvcSource {
   }
 
   // Camera and dataset frames share bitrate changes, keyframe requests, and YUV scaling.
-  private boolean submit(Image source, long pts) throws Exception {
+  private boolean submit(Image source, long sourcePts) throws Exception {
     if (!active || stopRequested || !released) return false;
-    int index = encoder.dequeueInputBuffer(0);
-    if (index < 0) return false;
+    if (pendingEncoderInput < 0) pendingEncoderInput = encoder.dequeueInputBuffer(0);
+    if (pendingEncoderInput < 0) return false;
+    long pts = session.collectionMode()
+        ? Math.round(encoderSubmittedFrames * 1_000_000.0 / fps) : sourcePts;
+    if (!session.prepare(pts, System.nanoTime(), sourcePts)) return false;
+    int index = pendingEncoderInput;
     Image target = encoder.getInputImage(index);
     if (target == null) throw new Exception("Encoder lacks flexible YUV input");
-    if (!session.prepare(pts, System.nanoTime())) {
-      encoder.queueInputBuffer(index, 0, 0, pts, 0);
-      return false;
-    }
     int nextBitrate = session.config().getInt("bitrate_bps");
     Bundle b = new Bundle();
     if (nextBitrate != bitrate) {
@@ -281,6 +284,8 @@ public final class AvcSource {
     ByteBuffer raw = encoder.getInputBuffer(index);
     encoder.queueInputBuffer(
         index, 0, raw == null ? width * height * 3 / 2 : raw.capacity(), pts, 0);
+    pendingEncoderInput = -1;
+    encoderSubmittedFrames++;
     return true;
   }
 
@@ -320,7 +325,8 @@ public final class AvcSource {
         try {
           submitted = submit(image, pts);
         } finally {
-          image.close();
+          // A collection retry still owns this decoded image and its buffer.
+          if (submitted || !session.collectionMode()) image.close();
         }
       }
 
