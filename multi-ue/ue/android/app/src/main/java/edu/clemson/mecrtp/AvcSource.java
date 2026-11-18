@@ -122,7 +122,9 @@ public final class AvcSource {
       throw new IllegalStateException("Selected encoder does not support CBR: " + encoder.getName());
     }
     encoder.configure(f, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-    recordEncoderFormat("configured", encoder.getInputFormat());
+    // Rate control describes the encoded output. The raw input format can
+    // expose a default bitrate-mode that does not describe that output.
+    recordEncoderFormat("configured_output", encoder.getOutputFormat());
     encoder.start();
     rtp = new H264Rtp(session, 96, 1200, session);
   }
