@@ -31,7 +31,7 @@ public final class AvcSource {
   private final long prepareNs;
   private long durationUs = -1;
   private boolean preparationSent;
-  private long sourceStartUs;
+  private long decodedSourceFrames;
   private int sourceStartFrame;
   private int frameLimit = -1, submittedFrames;
   private long encoderSubmittedFrames;
@@ -97,10 +97,10 @@ public final class AvcSource {
         () -> {
           try {
             this.sourceStartFrame = sourceStartFrame;
+            if (sourceStartFrame < 0) throw new IllegalArgumentException("Negative source start frame");
             // MEC elapsed time, rather than a media-frame limit, ends collection.
             frameLimit = session.collectionMode() ? -1 : frameCount;
             JSONObjectConfig();
-            sourceStartUs = Math.round(this.sourceStartFrame * 1_000_000.0 / fps);
             if (file == null) camera();
             else dataset(file);
             pump();
@@ -251,8 +251,8 @@ public final class AvcSource {
     f.setInteger(MediaFormat.KEY_ROTATION, 0);
     if (f.containsKey(MediaFormat.KEY_DURATION)) durationUs = f.getLong(MediaFormat.KEY_DURATION);
     extractor.selectTrack(track);
-    if (sourceStartUs > 0)
-      extractor.seekTo(sourceStartUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+    // Decode from the beginning so sourceStartFrame is an exact picture index,
+    // independent of source timestamps, source FPS, and encoding FPS.
     f.setInteger(
         MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
     decoder = MediaCodec.createDecoderByType(f.getString(MediaFormat.KEY_MIME));
@@ -366,7 +366,8 @@ public final class AvcSource {
     }
   }
 
-  // Pace prerecorded frames by playback time rather than their original recording date.
+  // Collection retains successive pictures and paces them at configured encoder FPS.
+  // Other modes retain source playback timing.
   private void pump() {
     if (!active || stopRequested) return;
     try {
@@ -389,8 +390,24 @@ public final class AvcSource {
         MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
         int i = decoder.dequeueOutputBuffer(info, 0);
         if (i >= 0) {
-          if (info.presentationTimeUs < sourceStartUs) {
+          boolean eos = (info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0;
+          if (info.size <= 0) {
             decoder.releaseOutputBuffer(i, false);
+            if (eos) {
+              if (decodedSourceFrames <= sourceStartFrame)
+                throw new Exception("Source ended before requested frame " + sourceStartFrame);
+              if (session.collectionMode())
+                throw new Exception("Collection source ended before the MEC stop command");
+              finishSegment();
+              return;
+            }
+            handler.post(this::pump);
+            return;
+          }
+          long sourceFrame = decodedSourceFrames++;
+          if (sourceFrame < sourceStartFrame) {
+            decoder.releaseOutputBuffer(i, false);
+            if (eos) throw new Exception("Source ended before requested frame " + sourceStartFrame);
             handler.post(this::pump);
             return;
           }
@@ -403,7 +420,9 @@ public final class AvcSource {
             ready();
             return;
           }
-          long release = fileStart + (info.presentationTimeUs - firstPts) * 1000;
+          long release = session.collectionMode()
+              ? fileStart + Math.round(encoderSubmittedFrames * 1_000_000_000.0 / fps)
+              : fileStart + (info.presentationTimeUs - firstPts) * 1000;
           if (!preparationSent
               && prepareNs > 0
               && durationUs > 0
