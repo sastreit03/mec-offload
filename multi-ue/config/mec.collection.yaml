@@ -39,7 +39,7 @@ drain_s: 120.0
 # Radio re-establishment can interrupt a UE control socket for several seconds.
 # Keep its active media lifecycle alive longer than the runner's reconnect grace.
 disconnect_s: 1.0
-jitter_ms: 100
+jitter_ms: 150
 ran_telemetry:
   aggregation_window_ms: 100
   report_interval_ms: 100
