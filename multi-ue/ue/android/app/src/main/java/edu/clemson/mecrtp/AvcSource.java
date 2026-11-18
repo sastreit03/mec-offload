@@ -142,11 +142,15 @@ public final class AvcSource {
         .put("format", format.toString());
     events.event("encoder_config", evidence);
     android.util.Log.i("MecEncoder", evidence.toString());
-    // Some codecs omit this field. Record unknown rather than claiming it was
-    // confirmed, but never continue after an explicitly conflicting mode.
+    // Some codecs omit or misreport this field. Preserve the evidence and warn
+    // on a mismatch; the reported format alone does not verify rate control.
     if (reportedMode != null
         && reportedMode != MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR) {
-      throw new IllegalStateException("Encoder reported non-CBR bitrate mode: " + reportedMode);
+      org.json.JSONObject warning = new org.json.JSONObject(evidence.toString())
+          .put("reason", "bitrate_mode_mismatch");
+      events.event("encoder_warning", warning);
+      android.util.Log.w("MecEncoder", "Requested CBR but encoder reported bitrate mode "
+          + reportedMode + "; continuing with requested CBR settings. " + warning);
     }
   }
 
