@@ -36,3 +36,20 @@ regressions now run with logging off/on; adapter tests inspect accepted-policy
 CSV records. `check_build.py` additionally compiles the new trace translation unit
 using saved wrapper flags and performs a fresh isolated EdgeRIC CMake link check.
 See `../SCHEDULER-TRACE.md` for usage and limitations.
+
+Active-RNTI publication regression (run from the parent project root):
+
+```bash
+docker run --rm --network none \
+  -v "$PWD/gnb-core/ext/openairinterface5g/executables/edgeric:/src:ro" \
+  -v "$PWD/edgeric-oai-comparison/tests:/checks:ro" \
+  --entrypoint bash ran-build-cuda:edgeric-v1 -c \
+  'g++ -std=gnu++17 -pthread -I/src /checks/active_rnti_publication.cpp /src/edgeric.cpp /src/wrapper.cpp /src/scheduler_trace.cpp /src/metrics.pb.cc /src/control_weights.pb.cc /src/control_mcs.pb.cc -lzmq -lprotobuf -o /tmp/test-active-rntis && /tmp/test-active-rntis'
+```
+
+This uses the real publisher and protobuf messages on the disposable container's
+private loopback interface. It checks that historical telemetry cannot add RNTIs
+to a report, idle active UEs are included, and inactive UE counters remain stored.
+The production caller holds the MAC scheduler lock and connected-list mutex
+through snapshot and publication. Removal uses the same lock order. No telemetry
+cleanup on removal or zero-UE publication cadence change is introduced.

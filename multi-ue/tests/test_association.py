@@ -132,3 +132,25 @@ def test_loss_callback_on_accepted_identity_replacement_only():
     assert a.valid("u", now)
     a.register("u", "new", "ip2", 2, 0)
     assert losses[-1] == ("u", "connection_or_ip_changed", 3)
+
+
+def test_console_changes_preserve_old_mapping_and_ignore_renewals():
+    changes = []
+    a = Associations(config(), on_change=lambda **event: changes.append(event))
+    a.register('u', 'c', '12.1.1.2')
+    now = exercise(a, 1)
+    assert changes == [dict(associated=True, ue_id='u', rnti=100,
+                            ip='12.1.1.2', reason='matched')]
+    a.pending.append('u')
+    now = exercise(a, now + 1)
+    assert len(changes) == 1
+    a.register('u', 'c', '12.1.1.3')
+    assert changes[-1] == dict(associated=False, ue_id='u', rnti=100,
+                               ip='12.1.1.2', reason='connection_or_ip_changed')
+    now = exercise(a, now + 1)
+    a.tick(now + 31, {100})
+    assert changes[-1]['associated'] is False
+    assert changes[-1]['ip'] == '12.1.1.3'
+    count = len(changes)
+    a.invalidate('u', 'again')
+    assert len(changes) == count

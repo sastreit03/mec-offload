@@ -859,19 +859,6 @@ wait for the client to reconnect and regain a valid association before proceedin
 During a started scenario, the existing two-second control-silence failure check
 still applies.
 
-If an attempt fails with `report timestamp stale or in future`, inspect the
-failure details printed by the runner: `report_sequence`,
-`report_source_generation`, `report_window_end_unix_ns`,
-`report_received_unix_ns`, `report_checked_unix_ns`, `report_age_at_receipt_s`,
-`report_age_s`, and `stale_limit_s`. Ages are signed: positive means the report
-window ended before the MEC timestamp; negative means it is ahead of that clock.
-Receipt here means the MEC application received the decoded report, not the
-network interface's packet-arrival time. Compare receipt and validation ages to
-identify additional validation delay; neither alone separates network delay from
-MEC event-loop delay or clock offset. On both Sparks, run `timedatectl status` and
-`chronyc tracking` to check clock synchronization before retrying. Preserve the
-failed attempt evidence and keep the freshness limit unchanged while diagnosing.
-
 ## 19. Verify runner recovery access
 
 Run these checks on the **RAN Spark**, in the terminal that will run the
@@ -905,28 +892,6 @@ Do not invoke `campaign_recover.sh` as a connectivity test: it may restart
 services. These commands only inspect access and running state. Keep these
 environment variables in the runner's shell so recovery uses the intended
 hosts and campaign evidence directory.
-
-Keep the Orin recovery helper synchronized before using campaign recovery. From
-the RAN Spark, in `multi-ue`, run:
-
-```bash
-scp scripts/recover_orin.py \
-  "${AETHEREDGE_ORIN_HOST}:~/mec-offload-ad/multi-ue/scripts/recover_orin.py"
-```
-
-Whenever campaign recovery restarts the gNB, it first stops the Orin client
-supervisor and `oai-nr-ue`, preserving the client launch arguments. It then
-recreates the gNB and waits for healthy status before starting the Orin softUE,
-restoring its cellular route, and relaunching the client. This is a service
-restart, not a Jetson host reboot. If stopping the Orin fails, recovery does not
-restart the gNB. If the gNB fails to become healthy, recovery fails and leaves
-the Orin softUE stopped so it cannot interfere with troubleshooting. Once the
-gNB is healthy, restore the saved Orin launch from the RAN Spark with:
-
-```bash
-ssh -o BatchMode=yes -o ConnectTimeout=5 "$AETHEREDGE_ORIN_HOST" \
-  'python3 ~/mec-offload-ad/multi-ue/scripts/recover_orin.py --phase start'
-```
 
 ## 20. Run and validate one initial scenario
 

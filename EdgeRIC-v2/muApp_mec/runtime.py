@@ -25,10 +25,12 @@ class Runtime:
         self.scenario_id = None
         self.attempt_id = None
         self.source = str(uuid.uuid4())
+        self.association_aliases = {}
         self.association_losses = {}
         self.association_finalization = None
         self.associations = Associations(
-            config["association"], on_loss=self.record_association_loss
+            config["association"], on_loss=self.record_association_loss,
+            on_change=self.record_association_change
         )
         self.sessions = {}
         self.retired_sessions = {}
@@ -53,6 +55,9 @@ class Runtime:
         self.telemetry_errors = {}
         self.finalize_lock = asyncio.Lock()
         self.console_logs = os.environ.get("EDGERIC_CONSOLE_LOGS", "0").lower() in ("1", "true", "yes")
+        self.next_association_console = 0.0
+        self.next_rnti_console = 0.0
+        self.last_received_ran = None
         self.last_index = 0
         telemetry = config.get("ran_telemetry", {})
         window_ms = telemetry.get("aggregation_window_ms", 100)
@@ -81,6 +86,40 @@ class Runtime:
             for uid, binding in self.associations.bindings.items():
                 if binding.rnti == rnti:
                     self.telemetry_errors.setdefault(uid, reason)
+
+    def record_association_change(self, **data):
+        alias = self.association_aliases.get(data["ue_id"])
+        if alias:
+            data["alias"] = alias
+        self.event("association_change", **data)
+
+    def association_console_status(self, now):
+        if now < self.next_association_console:
+            return
+        self.next_association_console = now + 2.0
+        bindings = [
+            dict(ue_id=uid, rnti=b.rnti, ip=b.ip,
+                 **({"alias": self.association_aliases[uid]}
+                    if self.association_aliases.get(uid) else {}))
+            for uid in sorted(self.associations.bindings)
+            if (b := self.associations.valid(uid, now)) is not None
+        ]
+        self.event("association_status", bindings=bindings)
+
+    def rnti_console_status(self, now):
+        if now < self.next_rnti_console:
+            return
+        self.next_rnti_console = now + 1.0
+        received = self.last_received_ran
+        self.event(
+            "gnb_rnti_status",
+            received_rntis=received["rntis"] if received else None,
+            received_age_s=max(0.0, now - received["at"]) if received else None,
+            received_sequence=received["sequence"] if received else None,
+            received_accepted=received["accepted"] if received else None,
+            accepted_rntis=sorted(self.metrics),
+            accepted_age_s=max(0.0, now - self.latest_metric) if self.latest_metric else None,
+        )
 
     def record_association_loss(self, uid, reason, generation):
         """Retain the first loss per UE until the attempt context changes."""
@@ -126,7 +165,45 @@ class Runtime:
         with (self.root / "events.jsonl").open("a") as f:
             f.write(line + "\n")
         # Mirror from the logging worker, outside the scheduling event loop.
-        if self.console_logs:
+        if data["type"] in ("association_status", "association_change", "gnb_rnti_status"):
+            stamp = time.strftime("%Y-%m-%d %H:%M:%S")
+            if data["type"] == "gnb_rnti_status":
+                def rntis(values):
+                    if values is None:
+                        return "not received"
+                    return ", ".join(f"{r} (0x{r:04x})" for r in values) or "none"
+
+                def age(value):
+                    return "unknown" if value is None else f"{value:.3f}s"
+
+                fresh = data["accepted_age_s"] is not None and data["accepted_age_s"] < 0.3
+                print(
+                    f"{stamp} [gNB TELEMETRY -> EdgeRIC] C-RNTIs:\n"
+                    f"  Latest received: {rntis(data['received_rntis'])}; "
+                    f"age={age(data['received_age_s'])}; sequence={data['received_sequence']}; "
+                    f"accepted={data['received_accepted']}\n"
+                    f"  Last accepted: {rntis(data['accepted_rntis'])}; "
+                    f"age={age(data['accepted_age_s'])}; {'FRESH' if fresh else 'STALE / UNAVAILABLE'}",
+                    flush=True,
+                )
+            elif data["type"] == "association_status":
+                rows = data["bindings"]
+                detail = "\n".join(
+                    f"  C-RNTI={b['rnti']} (0x{b['rnti']:04x}) IP={b['ip']}"
+                    + (f" alias={b['alias']}" if b.get("alias") else "")
+                    for b in rows
+                )
+                detail = "\n" + detail if rows else " none"
+                print(f"{stamp} [EdgeRIC ASSOCIATION] associations ({len(rows)}):{detail}", flush=True)
+            else:
+                action = "ASSOCIATED" if data["associated"] else "UNASSOCIATED"
+                print(
+                    f"{stamp} [EdgeRIC ASSOCIATION] {action}: C-RNTI={data['rnti']} "
+                    f"(0x{data['rnti']:04x}) IP={data['ip']} reason={data['reason']}"
+                    + (f" alias={data['alias']}" if data.get("alias") else ""),
+                    flush=True,
+                )
+        elif self.console_logs:
             print(line, flush=True)
 
     def _snapshot(self, data):
@@ -179,8 +256,12 @@ class Runtime:
                     retired_generations.add(current_generation)
                 self.sessions.clear()
                 self.retired_sessions.clear()
+                for uid in self.associations.bindings:
+                    self.associations.removed(uid, "awareness_generation_changed")
+                self.association_aliases.clear()
                 self.associations = Associations(
-                    self.cfg["association"], on_loss=self.record_association_loss
+                    self.cfg["association"], on_loss=self.record_association_loss,
+                    on_change=self.record_association_change,
                 )
                 self.run_id = run
                 self.awareness_generation = generation
@@ -218,6 +299,7 @@ class Runtime:
             snapshot_associations = m.get("associations", [])
             current_uids = {a["ue_id"] for a in snapshot_associations}
             for uid in set(self.associations.bindings) - current_uids:
+                self.associations.removed(uid, "absent_from_sync")
                 del self.associations.bindings[uid]
                 self.associations.last_result.pop(uid, None)
             self.associations.pending = [
@@ -228,6 +310,10 @@ class Runtime:
                 and self.associations.probe["ue_id"] not in current_uids
             ):
                 self.associations.probe = None
+            self.association_aliases = {
+                a["ue_id"]: a["ue_alias"] for a in snapshot_associations
+                if a.get("ue_alias")
+            }
             for a in snapshot_associations:
                 self.associations.register(
                     a["ue_id"],
@@ -749,7 +835,13 @@ class Runtime:
                     if sample:
                         previous_metrics = self.metrics
                         self.last_index, self.metrics = sample
-                        if self._consume_ran_sample(now):
+                        accepted = self._consume_ran_sample(now)
+                        self.last_received_ran = dict(
+                            rntis=sorted(sample[1]), at=now,
+                            sequence=getattr(self.adapter, "report_sequence", None),
+                            accepted=accepted,
+                        )
+                        if accepted:
                             self.latest_metric = now
                             self.associations.sample(now, self.metrics)
                         else:
@@ -757,6 +849,8 @@ class Runtime:
                 self.associations.tick(
                     now, set(self.metrics) if now - self.latest_metric < 0.3 else set()
                 )
+                self.rnti_console_status(now)
+                self.association_console_status(now)
                 command = self.associations.next_probe(now)
                 if command:
                     self.probe_commands.append(command)

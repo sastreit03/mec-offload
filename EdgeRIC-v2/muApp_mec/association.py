@@ -32,14 +32,25 @@ class Binding:
 
 
 class Associations:
-    def __init__(self, config, on_loss=None):
+    def __init__(self, config, on_loss=None, on_change=None):
         self.config = config
         self.on_loss = on_loss
+        self.on_change = on_change
         self.bindings = {}
         self.probe = None
         self.source_generation = None
         self.pending = []
         self.last_result = {}
+
+    def changed(self, b, associated, reason):
+        if b.rnti is not None and self.on_change is not None:
+            self.on_change(
+                associated=associated, ue_id=b.ue_id, rnti=b.rnti,
+                ip=b.ip, reason=reason,
+            )
+
+    def removed(self, uid, reason):
+        self.changed(self.bindings[uid], False, reason)
 
     # Connection generations and address revisions fence delayed identity updates.
     def register(
@@ -69,6 +80,8 @@ class Associations:
             and association_revision < old.association_revision
         ):
             return old
+        if old:
+            self.changed(old, False, "connection_or_ip_changed")
         generation = old.generation + 1 if old else 1
         if old and old.rnti is not None and self.on_loss is not None:
             self.on_loss(uid, "connection_or_ip_changed", generation)
@@ -85,6 +98,7 @@ class Associations:
 
     def invalidate(self, uid, reason):
         b = self.bindings[uid]
+        self.changed(b, False, reason)
         had_mapping = b.rnti is not None
         b.rnti = None
         b.revalidate_at = 0
@@ -128,7 +142,12 @@ class Associations:
                 and b.generation == p["generation"]
             )
             if valid:
+                mapping_changed = b.rnti != best[0]
+                if mapping_changed:
+                    self.changed(b, False, "rnti_changed")
                 b.rnti = best[0]
+                if mapping_changed:
+                    self.changed(b, True, "matched")
                 # Aetheredge: Start revalidation before the lease deadline and
                 # retain the last verified mapping for a bounded grace period.
                 # Four serialized probes can otherwise make a valid UE flicker

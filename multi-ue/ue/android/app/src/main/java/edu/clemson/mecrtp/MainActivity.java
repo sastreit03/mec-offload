@@ -37,6 +37,11 @@ public final class MainActivity extends Activity {
   private String lastResultOutcome = "none";
   private Uri file;
   private VideoPlaylist playlist;
+  private final ExecutorService datasetIo = Executors.newSingleThreadExecutor();
+  private boolean datasetLoading, destroyed;
+  private int datasetGeneration;
+  private String datasetError;
+
   private VideoPlaylist.Selection selection, successorSelection;
   private final java.util.List<StreamSession> retiring = new CopyOnWriteArrayList<>();
   private android.database.sqlite.SQLiteDatabase receiptIds;
@@ -98,6 +103,9 @@ public final class MainActivity extends Activity {
     choose.setText("Choose dataset video directory");
     choose.setOnClickListener(
         v -> {
+          if (enabled || session != null || preparedSession != null) {
+            show("Stop streaming before changing the dataset"); return;
+          }
           Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
           i.addFlags(
               Intent.FLAG_GRANT_READ_URI_PERMISSION
@@ -111,6 +119,12 @@ public final class MainActivity extends Activity {
     camera.setText("Use rear camera");
     camera.setOnClickListener(
         v -> {
+          if (enabled) { show("Stop streaming before changing the dataset"); return; }
+          datasetGeneration++;
+          datasetLoading = false;
+          datasetError = null;
+          prefs.edit().remove("dataset_uri").apply();
+          event("dataset_cleared", object("reason", "camera_selected"));
           file = null;
           playlist = null;
           selection = null;
@@ -122,6 +136,10 @@ public final class MainActivity extends Activity {
     start.setOnClickListener(
         v -> {
           if (enabled) return;
+          if (datasetLoading) { show("Dataset is loading; wait before connecting"); return; }
+          if (prefs.contains("dataset_uri") && playlist == null) {
+            show("Dataset unavailable; reselect the dataset directory"); return;
+          }
           if (file == null
               && checkSelfPermission(Manifest.permission.CAMERA)
                   != PackageManager.PERMISSION_GRANTED) {
@@ -166,6 +184,8 @@ public final class MainActivity extends Activity {
         new ScrollView.LayoutParams(
             ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
     setContentView(scroll);
+    String savedDataset = prefs.getString("dataset_uri", null);
+    if (savedDataset != null) loadDataset(Uri.parse(savedDataset), false);
     getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     timer.scheduleAtFixedRate(() -> ui.post(() -> {
       if (!collectionMode || assignment == null || !contextReady()) return;
@@ -770,24 +790,11 @@ public final class MainActivity extends Activity {
         setContext(m);
         assignment = m.optBoolean("active", false) ? m.optJSONObject("assignment") : null;
         preparedVideoId = null;
-        if (assignment != null) {
-          selection = playlist.find(new File(assignment.getString("media_path")).getName());
-          file = selection.uri;
-          String assignedApplication = assignment.getString("application");
-          ui.post(
-              () -> {
-                for (int i = 0; i < application.getCount(); i++)
-                  if (assignedApplication.equals(application.getItemAtPosition(i).toString())) {
-                    application.setSelection(i);
-                    break;
-                  }
-              });
-        }
         startRequest = null;
         successorRequest = null;
         resetFrameStatus();
         event("scenario_context", new JSONObject());
-        if (assignment != null) requestStart();
+        if (assignment != null) prepareDatasetAssignment();
         break;
       case "scenario_start":
         if (!contextReady() || !campaignId.equals(m.optString("campaign_id"))
@@ -899,9 +906,9 @@ public final class MainActivity extends Activity {
             if (collectionMode) {
               assignment = null;
             }
-            if (!collectionMode && playlist != null && preparedSession != null) {
+            if (enabled && !collectionMode && playlist != null && preparedSession != null) {
               startPreparedSuccessor();
-            } else if (!collectionMode && playlist != null) {
+            } else if (enabled && !collectionMode && playlist != null) {
               // A failed early preparation retries through ordinary admission.
               if (successorSelection == null) {
                 successorSelection = playlist.next();
@@ -910,7 +917,7 @@ public final class MainActivity extends Activity {
               selection = successorSelection;
               file = selection.uri;
               successorSelection = null;
-            } else if (playlist == null && !m.getString("status").equals("EXPIRED")) {
+            } else if ((!enabled || playlist == null) && !m.getString("status").equals("EXPIRED")) {
               enabled = false;
               ui.postDelayed(
                   () -> {
@@ -1026,8 +1033,8 @@ public final class MainActivity extends Activity {
               .put("frames_fully_sent", value.opt("frames_fully_sent"))
               .put("end_reason", value.opt("end_reason"));
       send(pendingEnd);
-      awaitingSuccessor = !collectionMode && playlist != null;
-      if (preparedSession != null && preparedSessionReady) startPreparedSuccessor();
+      awaitingSuccessor = enabled && !collectionMode && playlist != null;
+      if (enabled && preparedSession != null && preparedSessionReady) startPreparedSuccessor();
       else if (playlist != null)
         event("successor_response_pending", object("reason", "response_pending_at_eof"));
     } catch (Exception e) {
@@ -1140,8 +1147,8 @@ public final class MainActivity extends Activity {
 
   private void end() {
     try {
-      // Explicit user stop disables automatic prerecorded continuation.
-      playlist = null;
+      // Stop media without forgetting the selected dataset.
+      enabled = false;
       awaitingSuccessor = false;
       if (preparedSession != null) preparedSession.close();
       preparedSession = null;
@@ -1165,34 +1172,100 @@ public final class MainActivity extends Activity {
     }
   }
 
+  // Dataset state and assignment lookup are owned by the UI thread. Only
+  // directory enumeration runs in the worker; generation fences discard stale loads.
+  private void loadDataset(Uri tree, boolean selected) {
+    final int token = ++datasetGeneration;
+    datasetLoading = true;
+    datasetError = null;
+    playlist = null;
+    file = null;
+    selection = null;
+    showDataset("Loading dataset...");
+    event("dataset_load_started", object("reason", selected ? "selection" : "restore"));
+    datasetIo.execute(() -> {
+      VideoPlaylist loaded = null;
+      String error = null;
+      try {
+        java.util.List<VideoPlaylist.Selection> files = new java.util.ArrayList<>();
+        collectVideos(tree, DocumentsContract.getTreeDocumentId(tree), files);
+        loaded = new VideoPlaylist(files);
+      } catch (Exception e) { error = e.toString(); }
+      final VideoPlaylist result = loaded;
+      final String failure = error;
+      ui.post(() -> {
+        if (destroyed || token != datasetGeneration) return;
+        datasetLoading = false;
+        datasetError = failure;
+        if (result == null) {
+          event("dataset_load_failed", object("reason", failure));
+          showDataset("Dataset unavailable; reselect directory: " + failure);
+        } else {
+          playlist = result;
+          selection = playlist.next();
+          file = selection.uri;
+          prefs.edit().putString("dataset_uri", tree.toString()).apply();
+          event(selected ? "dataset_selected" : "dataset_restored", object("videos", playlist.size()));
+          event("playlist_initialized", object("videos", playlist.size()));
+          recordSelection(selection);
+          showDataset("Dataset directory: " + playlist.size() + " videos");
+        }
+        if (assignment != null) prepareDatasetAssignment();
+      });
+    });
+  }
+
+  private void prepareDatasetAssignment() {
+    if (datasetLoading || assignment == null || attemptId.equals(abortedAttemptId)) return;
+    try {
+      if (playlist == null)
+        throw new java.io.IOException("Dataset not loaded; reselect directory" +
+            (datasetError == null ? "" : ": " + datasetError));
+      selection = playlist.find(new File(assignment.getString("media_path")).getName());
+      file = selection.uri;
+      try (android.content.res.AssetFileDescriptor fd =
+          getContentResolver().openAssetFileDescriptor(file, "r")) {
+        if (fd == null) throw new java.io.IOException("Assigned video cannot be opened");
+      }
+      String app = assignment.getString("application");
+      for (int i = 0; i < application.getCount(); i++)
+        if (app.equals(application.getItemAtPosition(i).toString())) {
+          application.setSelection(i);
+          break;
+        }
+      requestStart();
+    } catch (Exception e) {
+      event("dataset_assignment_failed", object("reason", e.toString()));
+      showDataset("Dataset preparation failed: " + e);
+      failCollection("dataset_preparation_failed: " + e);
+    }
+  }
+
   @Override
   protected void onActivityResult(int request, int result, Intent data) {
     super.onActivityResult(request, result, data);
     if (request == 8 && result == RESULT_OK) {
+      if (enabled || session != null || preparedSession != null) {
+        show("Stop streaming before changing the dataset");
+        return;
+      }
       try {
         Uri tree = data.getData();
-        getContentResolver()
-            .takePersistableUriPermission(tree, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        java.util.List<VideoPlaylist.Selection> files = new java.util.ArrayList<>();
-        collectVideos(tree, DocumentsContract.getTreeDocumentId(tree), files);
-        playlist = new VideoPlaylist(files);
-        selection = playlist.next();
-        file = selection.uri;
-        event(
-            "playlist_initialized",
-            new JSONObject().put("seed", playlist.seed).put("videos", playlist.size()));
-        recordSelection(selection);
-        showDataset("Dataset directory: " + playlist.size() + " videos");
+        getContentResolver().takePersistableUriPermission(tree, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        loadDataset(tree, true);
       } catch (Exception e) {
-        playlist = null;
-        file = null;
-        showDataset("Dataset directory failed: " + e);
+        datasetError = e.toString();
+        event("dataset_load_failed", object("reason", datasetError));
+        showDataset("Dataset directory failed: " + datasetError);
       }
     }
   }
 
   @Override
   protected void onDestroy() {
+    destroyed = true;
+    datasetGeneration++;
+    datasetIo.shutdownNow();
     enabled = false;
     if (media != null) media.close();
     if (session != null) session.close();
