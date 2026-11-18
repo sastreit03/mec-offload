@@ -100,6 +100,7 @@ class Video:
     frames_fully_sent: int | None = None
     frames_fully_received: int = 0
     first_complete_ns: int | None = None
+    first_packet_ns: int | None = None
     last_complete_ns: int | None = None
     complete_frames: object = field(default_factory=Ranges)
     frame_counts_validated: bool = False
@@ -382,12 +383,12 @@ class Engine:
         missing = []
         for alias in self.scenario_assignments:
             v = self.videos.get(self.scenario_videos.get(alias))
-            # A descriptor/partial frame is insufficient. Use reception time so
-            # a late callback cannot accept a frame received after the deadline.
-            if v is None or v.first_complete_ns is None or v.first_complete_ns >= deadline_ns:
+            # Startup proves transmission, not full-frame delivery. Use the
+            # receiver timestamp so a packet arriving after the deadline fails.
+            if v is None or v.first_packet_ns is None or v.first_packet_ns >= deadline_ns:
                 missing.append(alias)
         if missing:
-            self.invalidate_scenario("scenario_first_frame_timeout", missing_ues=sorted(missing))
+            self.invalidate_scenario("scenario_first_packet_timeout", missing_ues=sorted(missing))
 
     def stop_scenario(self, context):
         if self.scenario != context or self.scenario_error or self.scenario_finalization or self.scenario_stop_sent:
@@ -1900,6 +1901,8 @@ class Engine:
             or v.resolved.has(d.frame_id)
         ):
             return
+        if v.first_packet_ns is None or first_ns < v.first_packet_ns:
+            v.first_packet_ns = first_ns
         if v.state == "PREPARED":
             # UDP may beat the predecessor's WebSocket video_end message.
             self.promote_successor(v, "first_descriptor")

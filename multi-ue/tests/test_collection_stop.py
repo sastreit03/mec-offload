@@ -105,7 +105,7 @@ def test_zero_frame_end_is_reportable(armed):
 
 
 @pytest.mark.parametrize("arrival", [None, "partial", "on_time", "at_deadline", "late"])
-def test_first_second_requires_complete_frame_from_every_ue(armed, arrival):
+def test_first_second_requires_packet_from_every_ue(armed, arrival):
     engine, ue, sent = armed
     first = video_for(engine, ue)
     other_messages = []
@@ -116,19 +116,20 @@ def test_first_second_requires_complete_frame_from_every_ue(armed, arrival):
     engine.videos[second.vid] = second
     engine.scenario_videos[other.alias] = second.vid
     deadline = 2_000_000_000
-    engine.progress_event(SimpleNamespace(video_id=first.vid, frame_id=0), 100, True, deadline - 1)
+    first.first_packet_ns = deadline - 1
     if arrival is not None:
         stamp = deadline - 1 if arrival in ("partial", "on_time") else deadline
         if arrival == "late": stamp += 1
+        second.first_packet_ns = stamp
         engine.progress_event(SimpleNamespace(video_id=second.vid, frame_id=0),
                               100, arrival != "partial", stamp)
     # Calling after reception also tests that late frames cannot rescue the attempt.
     engine.check_scenario_first_frames(CONTEXT, deadline)
-    if arrival == "on_time":
+    if arrival in ("partial", "on_time"):
         assert engine.scenario_error is None
         assert not first.input_closed and not second.input_closed
     else:
-        assert engine.scenario_error["reason"] == "scenario_first_frame_timeout"
+        assert engine.scenario_error["reason"] == "scenario_first_packet_timeout"
         assert engine.scenario_error["missing_ues"] == ["linux1"]
         assert first.input_closed and second.input_closed
         assert any(m["type"] == "scenario_abort" for m in sent)

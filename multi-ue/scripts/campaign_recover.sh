@@ -29,6 +29,7 @@ if [[ "$gnb_running" != true || "$gnb_health" == unhealthy \
   || "$reason" == *"UE disconnected during scenario"* \
   || "$reason" == *"UE aliases unavailable"* \
   || "$reason" == *"scenario_first_frame_timeout"* \
+  || "$reason" == *"scenario_first_packet_timeout"* \
   || "$reason" == *"media_arrival_timeout"* \
   || "$reason" == *"gnb_telemetry_invalid"* \
   || "$reason" == *"scheduling_counters_invalid"* \
