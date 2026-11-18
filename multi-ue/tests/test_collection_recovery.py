@@ -43,6 +43,9 @@ def test_unresponsive_control_uses_existing_traffic(armed):
     engine.scenario_start_unix_ns = 1
     u.last_control_at = time.monotonic() - 2.1
     engine.check_scenario_control()
+    assert engine.scenario_error is None
+    u.last_control_at = time.monotonic() - 3.1
+    engine.check_scenario_control()
     assert engine.scenario_error["reason"] == "control_unreachable"
 
 

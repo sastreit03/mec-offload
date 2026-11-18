@@ -415,7 +415,7 @@ class Engine:
                 if now - u.disconnect_at >= 1.0:
                     self.invalidate_scenario("control_disconnect_timeout", ue_alias=u.alias)
                     return
-            elif u.last_control_at is not None and now - u.last_control_at >= 2.0:
+            elif u.last_control_at is not None and now - u.last_control_at >= 3.0:
                 # Existing time-sync/association traffic provides liveness;
                 # no extra probe stream is needed.
                 self.invalidate_scenario("control_unreachable", ue_alias=u.alias)

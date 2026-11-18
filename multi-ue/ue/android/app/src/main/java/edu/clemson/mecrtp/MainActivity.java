@@ -192,7 +192,7 @@ public final class MainActivity extends Activity {
       long now = System.nanoTime();
       if (controlDisconnectedNs != 0 && now - controlDisconnectedNs >= 1_000_000_000L)
         failCollection("control_disconnect_timeout");
-      else if (controlDisconnectedNs == 0 && now - lastControlNs >= 2_000_000_000L)
+      else if (controlDisconnectedNs == 0 && now - lastControlNs >= 3_000_000_000L)
         failCollection("control_unreachable");
     }), 100, 100, TimeUnit.MILLISECONDS);
     timer.scheduleAtFixedRate(
@@ -212,9 +212,9 @@ public final class MainActivity extends Activity {
             event("client_error", object("reason", e.toString()));
           }
         },
-        1,
-        1,
-        TimeUnit.SECONDS);
+        750,
+        750,
+        TimeUnit.MILLISECONDS);
     timer.scheduleAtFixedRate(
         () -> {
           try {

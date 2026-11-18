@@ -430,7 +430,7 @@ class Client:
                     ),
                 )
             )
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.75)
             await self.send(dict(type="time_sync", client_mono_ns=time.monotonic_ns()))
 
     def admission_trigger(self, message):
@@ -473,7 +473,7 @@ class Client:
                 if self.control_disconnected_at is not None:
                     if now - self.control_disconnected_at >= 1.0:
                         self.fail_collection_locally("control_disconnect_timeout")
-                elif now - self.last_control_at >= 2.0:
+                elif now - self.last_control_at >= 3.0:
                     # Reuse regular control replies instead of adding probes.
                     self.fail_collection_locally("control_unreachable")
                     if self.ws:
