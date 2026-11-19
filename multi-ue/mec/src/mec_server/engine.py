@@ -233,6 +233,7 @@ class Engine:
             catalog,
             dict(
                 backend=cfg.backend,
+                mps_enabled=cfg.mps_enabled,
                 weights_dir=cfg.weights_dir,
                 warmup_count=cfg.warmup_count,
                 applications=cfg.applications,

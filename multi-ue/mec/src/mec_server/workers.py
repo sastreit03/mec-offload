@@ -25,18 +25,28 @@ def rle(mask):
 
 
 class TorchAdapter:
-    def __init__(self, model_specs, weights_dir, priorities):
+    def __init__(self, model_specs, weights_dir, priorities, mps_enabled=True):
         import torch
 
         self.torch = torch
         self.models = {}
-        if not torch.cuda.is_available():
-            raise RuntimeError("CUDA required")
-        if not (
+        mps_control = (
             Path(os.environ.get("CUDA_MPS_PIPE_DIRECTORY", "/tmp/nvidia-mps"))
             / "control"
-        ).exists():
-            raise RuntimeError("MPS control pipe not visible; start MPS before workers")
+        )
+        if mps_enabled and not mps_control.exists():
+            raise RuntimeError(
+                "MPS control pipe not visible; start MPS before workers"
+            )
+        if not mps_enabled and mps_control.exists():
+            raise RuntimeError(
+                "MPS is disabled in configuration but its control pipe is present; "
+                "stop MEC and MPS before restarting"
+            )
+
+        if not torch.cuda.is_available():
+            raise RuntimeError("CUDA required")
+        
         lib = ctypes.CDLL(ctypes.util.find_library("cudart") or "libcudart.so")
         least, greatest = ctypes.c_int(), ctypes.c_int()
         if (
@@ -175,10 +185,15 @@ class TorchAdapter:
 
 # CUDA initialization happens in the spawned child, never in the control process.
 def worker_main(application, specs, config, incoming, outgoing):
-    os.environ["CUDA_MPS_CLIENT_PRIORITY"] = "0"
+    mps_enabled = config.get("mps_enabled", True)
+    if mps_enabled:
+        os.environ["CUDA_MPS_CLIENT_PRIORITY"] = "0"
+    else:
+        os.environ.pop("CUDA_MPS_CLIENT_PRIORITY", None)
+
     try:
         adapter = (
-            TorchAdapter(specs, config["weights_dir"], config["priority_streams"])
+            TorchAdapter(specs, config["weights_dir"], config["priority_streams"], mps_enabled=mps_enabled)
             if config["backend"] == "torchscript"
             else None
         )
