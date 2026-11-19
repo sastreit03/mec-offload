@@ -1,0 +1,670 @@
+{
+  "overall": {
+    "scenarios": 12,
+    "selected_frames": 602,
+    "transmitted_frames": 602,
+    "received_results": 602,
+    "missing_results": 0,
+    "latency_samples": 602,
+    "mean_latency_ms": 304.1406715182724,
+    "p99_latency_ms": 4694.407632070001,
+    "slo_success_frames": 214,
+    "slo_success_rate": 0.3554817275747508,
+    "outcomes": {
+      "completed": 582,
+      "failed": 20
+    },
+    "mec_latency_breakdown_ms": {
+      "mec_decode": {
+        "samples": 582,
+        "mean_ms": 6.23671219072165,
+        "p99_ms": 10.064320179999948
+      },
+      "mec_queue_wait": {
+        "samples": 582,
+        "mean_ms": 14.58488298797251,
+        "p99_ms": 317.8698194499992
+      },
+      "mec_preprocess": {
+        "samples": 582,
+        "mean_ms": 0.5970000532646048,
+        "p99_ms": 0.9690415299999999
+      },
+      "mec_gpu_inference": {
+        "samples": 582,
+        "mean_ms": 17.570349300687287,
+        "p99_ms": 48.166043349999995
+      },
+      "mec_postprocess": {
+        "samples": 582,
+        "mean_ms": 1.2107447611683848,
+        "p99_ms": 26.168559099999985
+      },
+      "mec_total_model_processing": {
+        "samples": 582,
+        "mean_ms": 19.397056132302406,
+        "p99_ms": 51.60644583
+      },
+      "mec_reorder_wait": {
+        "samples": 185,
+        "mean_ms": 191.30630994054053,
+        "p99_ms": 4166.878580359999
+      },
+      "mec_tracking": {
+        "samples": 185,
+        "mean_ms": 1.7298887783783783,
+        "p99_ms": 4.7798482799999995
+      },
+      "mec_result_serialization": {
+        "samples": 602,
+        "mean_ms": 1.2399087292358804,
+        "p99_ms": 5.126691930000001
+      },
+      "mec_cuda_event": {
+        "samples": 582,
+        "mean_ms": 17.561104880165807,
+        "p99_ms": 48.15575134277343
+      },
+      "mec_frame_reception_span": {
+        "samples": 602,
+        "mean_ms": 24.7230513089701,
+        "p99_ms": 86.48091021
+      },
+      "mec_reception_to_result_ready": {
+        "samples": 602,
+        "mean_ms": 177.69775516943523,
+        "p99_ms": 4486.67007809
+      },
+      "mec_first_packet_to_result_ready": {
+        "samples": 602,
+        "mean_ms": 202.42080647840532,
+        "p99_ms": 4500.71035853
+      }
+    },
+    "per_application": {
+      "detection": {
+        "scenarios": 4,
+        "selected_frames": 200,
+        "transmitted_frames": 200,
+        "received_results": 200,
+        "missing_results": 0,
+        "latency_samples": 200,
+        "mean_latency_ms": 190.776527795,
+        "p99_latency_ms": 432.01488492999863,
+        "slo_success_frames": 103,
+        "slo_success_rate": 0.515,
+        "outcomes": {
+          "completed": 199,
+          "failed": 1
+        },
+        "mec_latency_breakdown_ms": {
+          "mec_decode": {
+            "samples": 199,
+            "mean_ms": 5.6606794472361806,
+            "p99_ms": 9.851366540000022
+          },
+          "mec_queue_wait": {
+            "samples": 199,
+            "mean_ms": 12.30299592964824,
+            "p99_ms": 285.69044040000057
+          },
+          "mec_preprocess": {
+            "samples": 199,
+            "mean_ms": 0.5654067587939698,
+            "p99_ms": 0.91886268
+          },
+          "mec_gpu_inference": {
+            "samples": 199,
+            "mean_ms": 13.066897417085427,
+            "p99_ms": 20.6421835
+          },
+          "mec_postprocess": {
+            "samples": 199,
+            "mean_ms": 0.24017131658291457,
+            "p99_ms": 0.26445796
+          },
+          "mec_total_model_processing": {
+            "samples": 199,
+            "mean_ms": 13.889630281407035,
+            "p99_ms": 21.46572164
+          },
+          "mec_reorder_wait": {
+            "samples": 0,
+            "mean_ms": null,
+            "p99_ms": null
+          },
+          "mec_tracking": {
+            "samples": 0,
+            "mean_ms": null,
+            "p99_ms": null
+          },
+          "mec_result_serialization": {
+            "samples": 200,
+            "mean_ms": 0.68523047,
+            "p99_ms": 3.5582913599999992
+          },
+          "mec_cuda_event": {
+            "samples": 199,
+            "mean_ms": 13.058496475219727,
+            "p99_ms": 20.63403228759766
+          },
+          "mec_frame_reception_span": {
+            "samples": 200,
+            "mean_ms": 28.4455796,
+            "p99_ms": 84.62947164999996
+          },
+          "mec_reception_to_result_ready": {
+            "samples": 200,
+            "mean_ms": 76.46338903499999,
+            "p99_ms": 370.5025792499995
+          },
+          "mec_first_packet_to_result_ready": {
+            "samples": 200,
+            "mean_ms": 104.908968635,
+            "p99_ms": 390.3575593799993
+          }
+        }
+      },
+      "segmentation": {
+        "scenarios": 4,
+        "selected_frames": 198,
+        "transmitted_frames": 198,
+        "received_results": 198,
+        "missing_results": 0,
+        "latency_samples": 198,
+        "mean_latency_ms": 203.85593702525253,
+        "p99_latency_ms": 313.7765908,
+        "slo_success_frames": 33,
+        "slo_success_rate": 0.16666666666666666,
+        "outcomes": {
+          "completed": 198
+        },
+        "mec_latency_breakdown_ms": {
+          "mec_decode": {
+            "samples": 198,
+            "mean_ms": 6.933482409090909,
+            "p99_ms": 11.900493200000001
+          },
+          "mec_queue_wait": {
+            "samples": 198,
+            "mean_ms": 14.410300888888889,
+            "p99_ms": 65.92265093000002
+          },
+          "mec_preprocess": {
+            "samples": 198,
+            "mean_ms": 0.6747452575757575,
+            "p99_ms": 1.00429004
+          },
+          "mec_gpu_inference": {
+            "samples": 198,
+            "mean_ms": 27.748734616161617,
+            "p99_ms": 48.31763343
+          },
+          "mec_postprocess": {
+            "samples": 198,
+            "mean_ms": 3.0775367626262624,
+            "p99_ms": 26.59819545
+          },
+          "mec_total_model_processing": {
+            "samples": 198,
+            "mean_ms": 31.522312666666668,
+            "p99_ms": 63.69456334
+          },
+          "mec_reorder_wait": {
+            "samples": 0,
+            "mean_ms": null,
+            "p99_ms": null
+          },
+          "mec_tracking": {
+            "samples": 0,
+            "mean_ms": null,
+            "p99_ms": null
+          },
+          "mec_result_serialization": {
+            "samples": 198,
+            "mean_ms": 2.4157778434343435,
+            "p99_ms": 5.572228220000001
+          },
+          "mec_cuda_event": {
+            "samples": 198,
+            "mean_ms": 27.73924432138,
+            "p99_ms": 48.30734615325928
+          },
+          "mec_frame_reception_span": {
+            "samples": 198,
+            "mean_ms": 26.03309468181818,
+            "p99_ms": 99.99727492000004
+          },
+          "mec_reception_to_result_ready": {
+            "samples": 198,
+            "mean_ms": 63.508457616161614,
+            "p99_ms": 143.58412341000002
+          },
+          "mec_first_packet_to_result_ready": {
+            "samples": 198,
+            "mean_ms": 89.54155229797979,
+            "p99_ms": 170.81237742000002
+          }
+        }
+      },
+      "tracking": {
+        "scenarios": 4,
+        "selected_frames": 204,
+        "transmitted_frames": 204,
+        "received_results": 204,
+        "missing_results": 0,
+        "latency_samples": 204,
+        "mean_latency_ms": 512.617172372549,
+        "p99_latency_ms": 4946.302066769999,
+        "slo_success_frames": 78,
+        "slo_success_rate": 0.38235294117647056,
+        "outcomes": {
+          "completed": 185,
+          "failed": 19
+        },
+        "mec_latency_breakdown_ms": {
+          "mec_decode": {
+            "samples": 185,
+            "mean_ms": 6.110604151351351,
+            "p99_ms": 9.405197959999999
+          },
+          "mec_queue_wait": {
+            "samples": 185,
+            "mean_ms": 17.226303421621623,
+            "p99_ms": 351.1258371999999
+          },
+          "mec_preprocess": {
+            "samples": 185,
+            "mean_ms": 0.5477758108108108,
+            "p99_ms": 0.7964847999999998
+          },
+          "mec_gpu_inference": {
+            "samples": 185,
+            "mean_ms": 11.520979745945946,
+            "p99_ms": 21.22859668
+          },
+          "mec_postprocess": {
+            "samples": 185,
+            "mean_ms": 0.256795027027027,
+            "p99_ms": 0.27769308
+          },
+          "mec_total_model_processing": {
+            "samples": 185,
+            "mean_ms": 12.343958567567567,
+            "p99_ms": 22.03547164
+          },
+          "mec_reorder_wait": {
+            "samples": 185,
+            "mean_ms": 191.30630994054053,
+            "p99_ms": 4166.878580359999
+          },
+          "mec_tracking": {
+            "samples": 185,
+            "mean_ms": 1.7298887783783783,
+            "p99_ms": 4.7798482799999995
+          },
+          "mec_result_serialization": {
+            "samples": 204,
+            "mean_ms": 0.6424262156862746,
+            "p99_ms": 2.69621037
+          },
+          "mec_cuda_event": {
+            "samples": 185,
+            "mean_ms": 11.51109116786235,
+            "p99_ms": 21.218232955932617
+          },
+          "mec_frame_reception_span": {
+            "samples": 204,
+            "mean_ms": 19.802001083333334,
+            "p99_ms": 85.26654825
+          },
+          "mec_reception_to_result_ready": {
+            "samples": 204,
+            "mean_ms": 387.77792253431375,
+            "p99_ms": 4860.14433596
+          },
+          "mec_first_packet_to_result_ready": {
+            "samples": 204,
+            "mean_ms": 407.57992361764707,
+            "p99_ms": 4875.06180245
+          }
+        }
+      }
+    }
+  },
+  "per_ue": {
+    "pixel1": {
+      "scenarios": 12,
+      "selected_frames": 602,
+      "transmitted_frames": 602,
+      "received_results": 602,
+      "missing_results": 0,
+      "latency_samples": 602,
+      "mean_latency_ms": 304.1406715182724,
+      "p99_latency_ms": 4694.407632070001,
+      "slo_success_frames": 214,
+      "slo_success_rate": 0.3554817275747508,
+      "outcomes": {
+        "completed": 582,
+        "failed": 20
+      },
+      "mec_latency_breakdown_ms": {
+        "mec_decode": {
+          "samples": 582,
+          "mean_ms": 6.23671219072165,
+          "p99_ms": 10.064320179999948
+        },
+        "mec_queue_wait": {
+          "samples": 582,
+          "mean_ms": 14.58488298797251,
+          "p99_ms": 317.8698194499992
+        },
+        "mec_preprocess": {
+          "samples": 582,
+          "mean_ms": 0.5970000532646048,
+          "p99_ms": 0.9690415299999999
+        },
+        "mec_gpu_inference": {
+          "samples": 582,
+          "mean_ms": 17.570349300687287,
+          "p99_ms": 48.166043349999995
+        },
+        "mec_postprocess": {
+          "samples": 582,
+          "mean_ms": 1.2107447611683848,
+          "p99_ms": 26.168559099999985
+        },
+        "mec_total_model_processing": {
+          "samples": 582,
+          "mean_ms": 19.397056132302406,
+          "p99_ms": 51.60644583
+        },
+        "mec_reorder_wait": {
+          "samples": 185,
+          "mean_ms": 191.30630994054053,
+          "p99_ms": 4166.878580359999
+        },
+        "mec_tracking": {
+          "samples": 185,
+          "mean_ms": 1.7298887783783783,
+          "p99_ms": 4.7798482799999995
+        },
+        "mec_result_serialization": {
+          "samples": 602,
+          "mean_ms": 1.2399087292358804,
+          "p99_ms": 5.126691930000001
+        },
+        "mec_cuda_event": {
+          "samples": 582,
+          "mean_ms": 17.561104880165807,
+          "p99_ms": 48.15575134277343
+        },
+        "mec_frame_reception_span": {
+          "samples": 602,
+          "mean_ms": 24.7230513089701,
+          "p99_ms": 86.48091021
+        },
+        "mec_reception_to_result_ready": {
+          "samples": 602,
+          "mean_ms": 177.69775516943523,
+          "p99_ms": 4486.67007809
+        },
+        "mec_first_packet_to_result_ready": {
+          "samples": 602,
+          "mean_ms": 202.42080647840532,
+          "p99_ms": 4500.71035853
+        }
+      },
+      "per_application": {
+        "detection": {
+          "scenarios": 4,
+          "selected_frames": 200,
+          "transmitted_frames": 200,
+          "received_results": 200,
+          "missing_results": 0,
+          "latency_samples": 200,
+          "mean_latency_ms": 190.776527795,
+          "p99_latency_ms": 432.01488492999863,
+          "slo_success_frames": 103,
+          "slo_success_rate": 0.515,
+          "outcomes": {
+            "completed": 199,
+            "failed": 1
+          },
+          "mec_latency_breakdown_ms": {
+            "mec_decode": {
+              "samples": 199,
+              "mean_ms": 5.6606794472361806,
+              "p99_ms": 9.851366540000022
+            },
+            "mec_queue_wait": {
+              "samples": 199,
+              "mean_ms": 12.30299592964824,
+              "p99_ms": 285.69044040000057
+            },
+            "mec_preprocess": {
+              "samples": 199,
+              "mean_ms": 0.5654067587939698,
+              "p99_ms": 0.91886268
+            },
+            "mec_gpu_inference": {
+              "samples": 199,
+              "mean_ms": 13.066897417085427,
+              "p99_ms": 20.6421835
+            },
+            "mec_postprocess": {
+              "samples": 199,
+              "mean_ms": 0.24017131658291457,
+              "p99_ms": 0.26445796
+            },
+            "mec_total_model_processing": {
+              "samples": 199,
+              "mean_ms": 13.889630281407035,
+              "p99_ms": 21.46572164
+            },
+            "mec_reorder_wait": {
+              "samples": 0,
+              "mean_ms": null,
+              "p99_ms": null
+            },
+            "mec_tracking": {
+              "samples": 0,
+              "mean_ms": null,
+              "p99_ms": null
+            },
+            "mec_result_serialization": {
+              "samples": 200,
+              "mean_ms": 0.68523047,
+              "p99_ms": 3.5582913599999992
+            },
+            "mec_cuda_event": {
+              "samples": 199,
+              "mean_ms": 13.058496475219727,
+              "p99_ms": 20.63403228759766
+            },
+            "mec_frame_reception_span": {
+              "samples": 200,
+              "mean_ms": 28.4455796,
+              "p99_ms": 84.62947164999996
+            },
+            "mec_reception_to_result_ready": {
+              "samples": 200,
+              "mean_ms": 76.46338903499999,
+              "p99_ms": 370.5025792499995
+            },
+            "mec_first_packet_to_result_ready": {
+              "samples": 200,
+              "mean_ms": 104.908968635,
+              "p99_ms": 390.3575593799993
+            }
+          }
+        },
+        "segmentation": {
+          "scenarios": 4,
+          "selected_frames": 198,
+          "transmitted_frames": 198,
+          "received_results": 198,
+          "missing_results": 0,
+          "latency_samples": 198,
+          "mean_latency_ms": 203.85593702525253,
+          "p99_latency_ms": 313.7765908,
+          "slo_success_frames": 33,
+          "slo_success_rate": 0.16666666666666666,
+          "outcomes": {
+            "completed": 198
+          },
+          "mec_latency_breakdown_ms": {
+            "mec_decode": {
+              "samples": 198,
+              "mean_ms": 6.933482409090909,
+              "p99_ms": 11.900493200000001
+            },
+            "mec_queue_wait": {
+              "samples": 198,
+              "mean_ms": 14.410300888888889,
+              "p99_ms": 65.92265093000002
+            },
+            "mec_preprocess": {
+              "samples": 198,
+              "mean_ms": 0.6747452575757575,
+              "p99_ms": 1.00429004
+            },
+            "mec_gpu_inference": {
+              "samples": 198,
+              "mean_ms": 27.748734616161617,
+              "p99_ms": 48.31763343
+            },
+            "mec_postprocess": {
+              "samples": 198,
+              "mean_ms": 3.0775367626262624,
+              "p99_ms": 26.59819545
+            },
+            "mec_total_model_processing": {
+              "samples": 198,
+              "mean_ms": 31.522312666666668,
+              "p99_ms": 63.69456334
+            },
+            "mec_reorder_wait": {
+              "samples": 0,
+              "mean_ms": null,
+              "p99_ms": null
+            },
+            "mec_tracking": {
+              "samples": 0,
+              "mean_ms": null,
+              "p99_ms": null
+            },
+            "mec_result_serialization": {
+              "samples": 198,
+              "mean_ms": 2.4157778434343435,
+              "p99_ms": 5.572228220000001
+            },
+            "mec_cuda_event": {
+              "samples": 198,
+              "mean_ms": 27.73924432138,
+              "p99_ms": 48.30734615325928
+            },
+            "mec_frame_reception_span": {
+              "samples": 198,
+              "mean_ms": 26.03309468181818,
+              "p99_ms": 99.99727492000004
+            },
+            "mec_reception_to_result_ready": {
+              "samples": 198,
+              "mean_ms": 63.508457616161614,
+              "p99_ms": 143.58412341000002
+            },
+            "mec_first_packet_to_result_ready": {
+              "samples": 198,
+              "mean_ms": 89.54155229797979,
+              "p99_ms": 170.81237742000002
+            }
+          }
+        },
+        "tracking": {
+          "scenarios": 4,
+          "selected_frames": 204,
+          "transmitted_frames": 204,
+          "received_results": 204,
+          "missing_results": 0,
+          "latency_samples": 204,
+          "mean_latency_ms": 512.617172372549,
+          "p99_latency_ms": 4946.302066769999,
+          "slo_success_frames": 78,
+          "slo_success_rate": 0.38235294117647056,
+          "outcomes": {
+            "completed": 185,
+            "failed": 19
+          },
+          "mec_latency_breakdown_ms": {
+            "mec_decode": {
+              "samples": 185,
+              "mean_ms": 6.110604151351351,
+              "p99_ms": 9.405197959999999
+            },
+            "mec_queue_wait": {
+              "samples": 185,
+              "mean_ms": 17.226303421621623,
+              "p99_ms": 351.1258371999999
+            },
+            "mec_preprocess": {
+              "samples": 185,
+              "mean_ms": 0.5477758108108108,
+              "p99_ms": 0.7964847999999998
+            },
+            "mec_gpu_inference": {
+              "samples": 185,
+              "mean_ms": 11.520979745945946,
+              "p99_ms": 21.22859668
+            },
+            "mec_postprocess": {
+              "samples": 185,
+              "mean_ms": 0.256795027027027,
+              "p99_ms": 0.27769308
+            },
+            "mec_total_model_processing": {
+              "samples": 185,
+              "mean_ms": 12.343958567567567,
+              "p99_ms": 22.03547164
+            },
+            "mec_reorder_wait": {
+              "samples": 185,
+              "mean_ms": 191.30630994054053,
+              "p99_ms": 4166.878580359999
+            },
+            "mec_tracking": {
+              "samples": 185,
+              "mean_ms": 1.7298887783783783,
+              "p99_ms": 4.7798482799999995
+            },
+            "mec_result_serialization": {
+              "samples": 204,
+              "mean_ms": 0.6424262156862746,
+              "p99_ms": 2.69621037
+            },
+            "mec_cuda_event": {
+              "samples": 185,
+              "mean_ms": 11.51109116786235,
+              "p99_ms": 21.218232955932617
+            },
+            "mec_frame_reception_span": {
+              "samples": 204,
+              "mean_ms": 19.802001083333334,
+              "p99_ms": 85.26654825
+            },
+            "mec_reception_to_result_ready": {
+              "samples": 204,
+              "mean_ms": 387.77792253431375,
+              "p99_ms": 4860.14433596
+            },
+            "mec_first_packet_to_result_ready": {
+              "samples": 204,
+              "mean_ms": 407.57992361764707,
+              "p99_ms": 4875.06180245
+            }
+          }
+        }
+      }
+    }
+  }
+}

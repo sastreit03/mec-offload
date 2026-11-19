@@ -824,6 +824,71 @@ to avoid adding preview work to collection. With MEC in collection mode,
 clients wait for scenario assignments and start/stop commands; this step does
 not arm a scenario.
 
+To stop and restart only the Linux application client (for a deployment update
+or a new campaign log directory), first stop the campaign runner and wait for
+its cleanup to finish. In the **Orin** supervisor terminal, press **Ctrl+C** and
+wait for the shell prompt. Leave the OAI `oai-nr-ue` container running.
+
+If that terminal is unavailable, run this from another **Orin** terminal. Stop
+the supervisor first so it cannot relaunch the client, then terminate only the
+`mec_ue.client` process inside the container:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+pgrep -af '[s]oftue-client-supervisor.sh'
+pkill -TERM -f '[s]oftue-client-supervisor.sh' || true
+
+docker exec -i oai-nr-ue python3 - <<'PYTHON'
+import os
+import signal
+from pathlib import Path
+
+for process in Path('/proc').iterdir():
+    if not process.name.isdigit():
+        continue
+    try:
+        args = (process / 'cmdline').read_bytes().split(b'\0')
+        if b'-m' in args and args[args.index(b'-m') + 1] == b'mec_ue.client':
+            os.kill(int(process.name), signal.SIGTERM)
+            print('Stopped client PID', process.name)
+    except (OSError, ValueError, IndexError):
+        continue
+PYTHON
+```
+
+Before restarting, verify that the supervisor and client have exited:
+
+```bash
+pgrep -af '[s]oftue-client-supervisor.sh'
+docker top oai-nr-ue -eo pid,args
+flock -n /tmp/aetheredge-softue-client.lock -c 'echo "Supervisor lock is free"'
+```
+
+Require no supervisor process, no `python3 -m mec_ue.client` process, and the
+lock-free message. The OAI softmodem processes should remain. If the lock is
+still held, wait for shutdown and repeat these checks; do not delete the lock
+file or start a second supervisor.
+
+Restart in a dedicated **Orin** terminal with the current campaign's log path:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+CAMPAIGN=my-campaign-v2  # Replace with the current campaign directory name.
+./scripts/softue-client-supervisor.sh \
+  --ue-alias linux1 \
+  --source-dir /datasets/campaign-v2 \
+  --logs "/multi-ue/runs/$CAMPAIGN/ue/linux1" \
+  --preview-port 0
+```
+
+Use the same `CAMPAIGN` when resuming a campaign, or the new directory name
+when collecting a fresh repeat. Replace the source directory if needed. This
+launch updates [`runs/softue-client-launch.json`](../runs/softue-client-launch.json),
+which recovery uses to restore the exact arguments; existing logs are retained.
+Keep the terminal open. The launcher is
+[`softue-client-supervisor.sh`](../scripts/softue-client-supervisor.sh), which
+invokes [`softue-client.sh`](../scripts/softue-client.sh).
+
 On the **MEC Spark**, check connections and associations:
 
 ```bash

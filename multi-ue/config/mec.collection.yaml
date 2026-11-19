@@ -1,23 +1,23 @@
 # Fixed-policy dataset collection. These defaults support manual runs; the
 # campaign arm contract selects and validates each UE's manifest candidate.
-run_id: 20261118-pilot-mps-repeat01-collection
+run_id: 20261119-pilot-no-mps-no-tracking-collection
 mode: collection
 catalog: tasks.yaml
 profiles: profiles.collection.yaml
 backend: torchscript
+mps_enabled: false
 advertised_ip: 192.168.72.136
 edgeric_target: 192.168.71.140:50052
 runs_dir: runs
 weights_dir: weights
 fps: 10
 gop_frames: 10
-applications: [detection, tracking, segmentation]
+applications: [detection, segmentation]
 priority_streams: [-3]
 gop_policy: fixed
 priority_policy: fixed
 fixed_candidates:
   detection: detection-yolo26x-500k
-  tracking: tracking-yolo26x-500k
   segmentation: segmentation-segformer-b3-500k
 keyframe_interleaving:
   enabled: true

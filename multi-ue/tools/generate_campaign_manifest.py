@@ -202,19 +202,29 @@ def validate_config(config):
         unknown = set(members) - set(config["ues"])
         if unknown:
             raise ValueError(f"{name} contains unknown UEs: {sorted(unknown)}")
+
+    used_applications = set()
     for number, rotation in enumerate(config["application_rotations"]):
         if set(rotation) != set(config["ues"]):
             raise ValueError(f"rotation {number} must assign every UE")
-        if set(rotation.values()) != set(APPLICATIONS):
-            # linux1 repeats pixel1, so four assignments contain three unique apps.
-            raise ValueError(f"rotation {number} must cover all applications")
+        unknown = set(rotation.values()) - set(APPLICATIONS)
+        if unknown:
+            raise ValueError(
+                f"rotation {number} has unsupported applications: {sorted(unknown)}"
+            )
+
         if rotation["linux1"] != rotation["pixel1"]:
             raise ValueError(f"rotation {number} must keep linux1 with pixel1")
+
+        used_applications.update(rotation.values())
+
+    if not used_applications:
+        raise ValueError("at least one application rotation is required")
     tiers = config["tiers"]
     if [item["tier"] for item in tiers] != list(range(len(tiers))):
         raise ValueError("tiers must be consecutively numbered from zero")
     for item in tiers:
-        if not all(item.get(app) for app in APPLICATIONS):
+        if not all(item.get(app) for app in used_applications):
             raise ValueError(f"tier {item.get('tier')} is incomplete")
     tier_assignment = config.get("tier_assignment", "shared")
     if tier_assignment not in {"shared", "per_ue"}:

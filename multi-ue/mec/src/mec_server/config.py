@@ -119,6 +119,7 @@ class Settings(BaseModel):
             prolonged_outage_s=5,
         )
     )
+    mps_enabled: bool = True
 
     # Experimental runs require explicit calibration and cannot use mock execution.
     def check(self):
