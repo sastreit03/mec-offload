@@ -1047,3 +1047,342 @@ elapsed-time collection is not required to produce exactly 150 frames. Retain
 the checkpoint and all failed-attempt evidence. A subsequent full campaign
 invocation skips scenarios already marked valid; do not regenerate the
 manifest or delete the checkpoint between the initial check and the full run.
+
+## 21. Collect completed-campaign evidence onto RAN Spark
+
+Wait for the runner to exit and finish recovery/cleanup. Do not start another
+campaign, clear app data, regenerate the manifest, or delete failed attempts
+before collecting evidence. Keep raw evidence separate from derived reports.
+All commands below run on **RAN Spark**, including the SSH/SCP commands.
+
+Set the campaign directory name, MEC `run_id`, and Orin log-directory name
+explicitly. They can differ: the MEC run ID comes from the configuration used
+for this run; the Orin directory comes from its supervisor's `--logs` argument.
+Do not infer either from the manifest campaign ID when analyzing a copied repeat.
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+export CAMPAIGN=20261119-pilot-no-mps-no-tracking  # Replace for each campaign.
+export RUN_ID=20261119-pilot-no-mps-no-tracking-collection
+export ORIN_LOG_CAMPAIGN="$CAMPAIGN"  # Change if its supervisor used another path.
+export MEC_HOST=sstreit@192.168.71.130
+export ORIN_HOST=orin-ue
+export REVIEW="$PWD/runs/campaigns/$CAMPAIGN/diagnostics"
+
+mkdir -p "$REVIEW"/{ran,mec,orin,pixel,software}
+cat "runs/campaigns/$CAMPAIGN/runner-status.json"
+python3 - <<'PY'
+import os
+import sqlite3
+from pathlib import Path
+p = Path('runs/campaigns') / os.environ['CAMPAIGN'] / 'state.sqlite3'
+with sqlite3.connect(p.resolve().as_uri() + '?mode=ro', uri=True) as db:
+    print('Checkpoint counts:', db.execute(
+        'SELECT status, COUNT(*) FROM scenarios GROUP BY status').fetchall())
+PY
+```
+
+Check that the counts match the intended manifest. A completed runner is not,
+by itself, proof that every scenario passed. Reports use the checkpoint's
+accepted `attempt_id` for each `valid` scenario; retain other attempts for diagnosis.
+
+### Current campaign files and event filtering
+
+Use the manifest, lock, `state.sqlite3`, and runner logs directly from the parent
+campaign directory; do not copy them into diagnostics. Do not copy RAN configs.
+
+Create this helper once to retain only events with the exact MEC `RUN_ID`.
+It preserves original event lines and all attempts, including failed attempts.
+It leaves source files unchanged, prints progress every five seconds, and parses
+only potentially matching records (rejecting malformed JSON in those records).
+Each scan is bounded by the source file size at opening, so live telemetry
+cannot extend it indefinitely. All historical files are still read from disk;
+large archives take time, but unrelated records avoid expensive JSON parsing.
+Empty input for
+this run is an error unless `--allow-empty` is supplied for an unrelated
+EdgeRIC instance.
+
+```bash
+cat > "$REVIEW/filter-run-events.py" <<'PY'
+import argparse
+import json
+import os
+import time
+from pathlib import Path
+from contextlib import ExitStack
+
+parser = argparse.ArgumentParser()
+parser.add_argument('source', type=Path)
+parser.add_argument('destination', type=Path)
+parser.add_argument('--allow-empty', action='store_true')
+args = parser.parse_args()
+run_id = os.environ['RUN_ID']
+if not run_id:
+    raise SystemExit('RUN_ID must not be empty')
+needle = run_id.encode('utf-8')
+if args.source.resolve() == args.destination.resolve():
+    raise SystemExit('Source and destination must differ')
+temp = args.destination.with_name(args.destination.name + '.partial')
+count = scanned = number = 0
+try:
+    with args.source.open('rb') as source, ExitStack() as outputs:
+        destination = None
+        # Bound the scan so a live writer cannot keep it running indefinitely.
+        size = os.fstat(source.fileno()).st_size
+        print(f'Scanning {args.source} ({size / 1024**2:.1f} MiB)', flush=True)
+        next_progress = time.monotonic() + 5
+        while scanned < size:
+            line = source.readline(size - scanned)
+            if not line:
+                raise SystemExit(f'Source was truncated during scan: {args.source}')
+            scanned += len(line)
+            number += 1
+            if time.monotonic() >= next_progress:
+                print(f'  {100 * scanned / size:.1f}% scanned; {count} matches', flush=True)
+                next_progress = time.monotonic() + 5
+            # Unrelated lines need no JSON parsing. Escaped JSON gets a fallback
+            # parse so escaped run IDs cannot be incorrectly excluded.
+            if needle not in line and b'\\' not in line:
+                continue
+            if not line.strip():
+                continue
+            try:
+                event = json.loads(line)
+            except ValueError as error:
+                raise SystemExit(f'{args.source}:{number}: {error}; recopy/retry if the writer was active')
+            if event.get('run_id') == run_id:
+                if destination is None:
+                    args.destination.parent.mkdir(parents=True, exist_ok=True)
+                    destination = outputs.enter_context(temp.open('wb'))
+                destination.write(line.rstrip(b'\n') + b'\n')
+                count += 1
+    if count:
+        temp.replace(args.destination)
+    elif not args.allow_empty:
+        raise SystemExit(f'No matching events in {args.source}; check RUN_ID')
+    print(f'Done: {count} matching events from {args.source}', flush=True)
+finally:
+    temp.unlink(missing_ok=True)
+PY
+```
+
+### EdgeRIC evidence
+
+EdgeRIC obtains the MEC run ID during synchronization and includes it in event
+records. Search every instance directory, since restarts produce new UUIDs and
+one instance can span multiple campaigns. Save only matching event records:
+
+```bash
+for source in runs/edgeric/*/events.jsonl; do
+  [ -f "$source" ] || continue
+  instance="$(basename "$(dirname "$source")")"
+  python3 "$REVIEW/filter-run-events.py" "$source" \
+    "$REVIEW/ran/$instance/events.jsonl" --allow-empty || break
+done
+```
+
+Instance directories are created only when at least one event matches `RUN_ID`.
+Startup events with a null run ID
+are excluded. Do not copy `associations.json`: it is an overwritten latest-state
+snapshot that may describe a later run. Finalization association evidence is
+already stored in the parent campaign's checkpoint. If parsing fails, inspect
+or recopy the source before continuing; a live writer can leave an incomplete
+last line. Do not treat a partial collection as complete.
+
+### MEC evidence and configuration
+
+Copy only `events.jsonl`, `jobs.jsonl`, and `run.json` from the MEC run directory.
+Save these three evidence files in `diagnostics/mec/` (`$REVIEW/mec`).
+Save the two YAML files directly in `diagnostics/` (`$REVIEW`).
+Do not copy `replay.sqlite3` or its `-wal`/`-shm` files. Copy only the current
+campaign YAML and `mec.collection.yaml`, both from **MEC Spark**. Ensure the
+campaign YAML exists there and these configs have not been changed for a later
+run. The parent manifest and lock remain authoritative for scenario assignments.
+
+```bash
+mkdir -p "$REVIEW/mec"
+for name in events.jsonl jobs.jsonl run.json; do
+  scp "${MEC_HOST}:~/mec-offload-ad/multi-ue/runs/${RUN_ID}/mec/${name}" \
+    "$REVIEW/mec/$name" || break
+done
+scp "${MEC_HOST}:~/mec-offload-ad/multi-ue/config/campaigns/${CAMPAIGN}.yaml" \
+  "$REVIEW/"
+scp "${MEC_HOST}:~/mec-offload-ad/multi-ue/config/mec.collection.yaml" \
+  "$REVIEW/"
+ssh "$MEC_HOST" 'docker inspect --format "{{.Image}}" multi-ue-mec' \
+  > "$REVIEW/software/mec-image-id.txt"
+```
+
+MEC events contain lifecycle, reception, resource, and error evidence; jobs
+contain frame outcomes and processing timings. `run.json` is the latest runtime
+snapshot. Use a unique MEC run ID per collection. The image ID identifies the
+currently deployed image, so collect it before replacing the deployment.
+Broad container logs and full configuration trees are not collected here.
+
+### Pixel evidence
+
+Connect each Pixel by USB. Pull only its event file into temporary storage and
+filter it into diagnostics. Pulling the entire app directory can fail on
+`receipts.sqlite3`; neither that database nor `run-as` is needed.
+
+```bash
+export PIXEL1=32110DLH20024R
+export PIXEL2=2B251FDH200GK3
+export PIXEL3=29171FDH2000UD
+adb devices -l
+```
+
+Run this block once per connected phone, changing `ALIAS` and `SERIAL`:
+
+```bash
+ALIAS=pixel1
+SERIAL="$PIXEL1"  # Use pixel2/$PIXEL2 and pixel3/$PIXEL3 for the other phones.
+mkdir -p "$REVIEW/pixel/$ALIAS"
+PIXEL_CAPTURE="$(mktemp -d)"
+if adb -s "$SERIAL" pull \
+    /sdcard/Android/data/edu.clemson.mecrtp/files/events.jsonl \
+    "$PIXEL_CAPTURE/events.jsonl" && \
+   python3 "$REVIEW/filter-run-events.py" "$PIXEL_CAPTURE/events.jsonl" \
+    "$REVIEW/pixel/$ALIAS/events.jsonl"; then
+  rm "$PIXEL_CAPTURE/events.jsonl"
+  rmdir "$PIXEL_CAPTURE"
+else
+  echo "Collection failed; inspect temporary files in $PIXEL_CAPTURE"
+fi
+adb -s "$SERIAL" shell getprop ro.build.fingerprint \
+  > "$REVIEW/pixel/$ALIAS/build-fingerprint.txt"
+```
+
+Do not copy unfiltered logcat history as current-run evidence. If troubleshooting
+requires it, collect logcat separately with an explicit time range. Preserve all
+matching event types here; analysis later selects accepted attempts and frames.
+
+### Orin evidence
+
+Check the saved launch record to confirm `ORIN_LOG_CAMPAIGN` matches the actual
+`--logs` path. Collect its filtered event file and saved launch arguments only;
+do not copy identity or receipt databases.
+
+```bash
+ssh "$ORIN_HOST" \
+  'python3 -m json.tool ~/mec-offload-ad/multi-ue/runs/softue-client-launch.json'
+
+mkdir -p "$REVIEW/orin/linux1"
+ORIN_CAPTURE="$(mktemp -d)"
+if scp "${ORIN_HOST}:~/mec-offload-ad/multi-ue/runs/${ORIN_LOG_CAMPAIGN}/ue/linux1/events.jsonl" \
+    "$ORIN_CAPTURE/events.jsonl" && \
+   python3 "$REVIEW/filter-run-events.py" "$ORIN_CAPTURE/events.jsonl" \
+    "$REVIEW/orin/linux1/events.jsonl"; then
+  rm "$ORIN_CAPTURE/events.jsonl"
+  rmdir "$ORIN_CAPTURE"
+else
+  echo "Collection failed; inspect temporary files in $ORIN_CAPTURE"
+fi
+scp "${ORIN_HOST}:~/mec-offload-ad/multi-ue/runs/softue-client-launch.json" \
+  "$REVIEW/orin/"
+```
+
+### Validate the copied event files
+
+Check required files are nonempty and parse as JSON Lines. A parse failure may
+indicate a failed copy or an incomplete final line from a live writer; recopy
+and inspect rather than silently discarding evidence.
+
+```bash
+python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+root = Path(os.environ['REVIEW'])
+paths = [root / 'pixel' / alias / 'events.jsonl'
+         for alias in ('pixel1', 'pixel2', 'pixel3')]
+paths += [root / 'orin/linux1/events.jsonl']
+paths += [root / 'mec' / name
+          for name in ('events.jsonl', 'jobs.jsonl')]
+edgeric = list((root / 'ran').glob('*/events.jsonl'))
+if not edgeric:
+    raise SystemExit('No matching EdgeRIC event files collected')
+paths += edgeric
+for path in paths:
+    count = 0
+    with path.open() as stream:
+        for number, line in enumerate(stream, 1):
+            if not line.strip():
+                continue
+            try:
+                event = json.loads(line)
+            except ValueError as error:
+                raise SystemExit(f'{path}:{number}: {error}')
+            if event.get('run_id') != os.environ['RUN_ID']:
+                raise SystemExit(f'{path}:{number}: unexpected run_id')
+            count += 1
+    if not count:
+        raise SystemExit(f'Empty file: {path}')
+    print(count, path)
+print('Required JSONL files are present and parseable.')
+PY
+```
+
+Successful parsing is a transfer check, not a completeness audit. Analysis must
+verify accepted-attempt coverage and join UE transmissions/receipts with MEC
+jobs. Split single-UE and four-UE scenarios using the manifest. For the canonical
+collection window, select frames whose first MEC packet arrival is in `[1 s,
+6 s)` after the MEC scenario release, retaining later result receipts. Count
+unknown window membership and missing receipts explicitly. The exporter’s
+window rule is in [`export_campaign_dataset.py`](../tools/export_campaign_dataset.py).
+Store generated summaries separately from this raw review directory.
+
+## 22. Analyze and plot valid campaign results
+
+After collecting Step 21 evidence, run these commands on **RAN Spark**. Both
+commands take the campaign directory, not its `diagnostics` subdirectory:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+CAMPAIGN=20261119-pilot-no-mps-no-tracking  # Replace for future campaigns.
+python3 tools/campaign_analyze.py --campaign-dir "runs/campaigns/$CAMPAIGN"
+python3 tools/campaign_plot.py --campaign-dir "runs/campaigns/$CAMPAIGN"
+```
+
+[`campaign_analyze.py`](../tools/campaign_analyze.py) uses Python's standard
+library. [`campaign_plot.py`](../tools/campaign_plot.py) requires Matplotlib;
+use a Python environment with Matplotlib installed. To create an isolated
+plotting environment if your Python lacks it:
+
+```bash
+python3 -m venv /tmp/campaign-plots-venv
+/tmp/campaign-plots-venv/bin/python -m pip install matplotlib
+/tmp/campaign-plots-venv/bin/python tools/campaign_plot.py \
+  --campaign-dir "runs/campaigns/$CAMPAIGN"
+```
+
+Outputs go to `runs/campaigns/$CAMPAIGN/diagnostics/results/`:
+
+- `latency_summary.md`: UE and application tables plus pooled MEC stage timings.
+- `summary.json`: all groups, methodology, evidence paths, coverage, and warnings.
+- `<UE-group>-summary.json`: overall, per-UE, and per-application statistics,
+  including mean, median, p95, p99, and sample counts for each latency metric.
+- `frames.csv`: selected frame-level evidence used by the statistics and plots.
+- `plots/<UE-group>/`: PNG and PDF empirical CDFs for overall UE latency,
+  UE latency by application, UE latency by UE, and each MEC timing metric.
+- `plots/index.json`: generated files and metrics skipped because no samples exist.
+
+Groups use exact participating UE aliases, so different combinations with the
+same UE count remain separate. Group membership is listed in the JSON and
+Markdown. Statistics include only the checkpoint's selected valid attempts.
+Frame selection uses MEC first-packet arrival in `[1 s, 6 s)` relative to MEC
+release; result receipts after six seconds remain eligible. UE latency is
+first result receipt minus transmission time on the same UE clock. Failed
+result receipts are included in latency distributions. Missing receipts count
+as SLO failures but cannot contribute a latency sample. The default SLO is
+150 ms; `--slo-ms` on the analyzer explicitly overrides that threshold.
+
+Read coverage warnings before interpreting results. Unknown arrival times are
+excluded from window membership and counted separately. Missing stage timings
+are not zero latency. MEC CUDA-event and inference timings overlap; do not add
+them. A CDF's value at 150 ms is not necessarily the SLO success rate, since
+failed results may arrive quickly. The analysis does not require raw EdgeRIC
+logs for these latency metrics.
+
+Rerunning analysis replaces its generated summaries and CSV; rerun plotting
+afterward to update the CDFs. Raw evidence and the checkpoint are not modified.

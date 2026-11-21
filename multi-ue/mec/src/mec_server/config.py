@@ -61,6 +61,7 @@ class Settings(BaseModel):
     max_videos: int = 30
     pending_frames: int = 16
     pending_bytes_per_video: int = 64 * 1024 * 1024
+    replay_pending_bytes: int = Field(default=64 * 1024 * 1024, gt=0)
     decoded_max_bytes: int = 8 * 1024 * 1024
     encoded_max_bytes: int = 8 * 1024 * 1024
     jitter_ms: int = 20

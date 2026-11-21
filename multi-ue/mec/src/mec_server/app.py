@@ -26,6 +26,7 @@ from .dashboard import HTML as DASHBOARD_HTML
 from .config import load
 from .engine import Engine
 from .control import SendReceipt
+from .results import SerializedResult
 from mec_contracts.wire import envelope, loads, dumps
 
 
@@ -334,7 +335,8 @@ def create_app(engine):
                         await ws.send_text(payload)
                         receipt.finish()
                     else:
-                        await ws.send_text(await asyncio.to_thread(dumps, m))
+                        payload = m.text if isinstance(m, SerializedResult) else await asyncio.to_thread(dumps, m)
+                        await ws.send_text(payload)
                 except Exception as error:
                     if receipt is not None:
                         receipt.finish(str(error))
@@ -363,6 +365,19 @@ def create_app(engine):
 
         # Handle the return of frame results to the UE while a UE's control websocket was disconnected
         async def replay():
+            # Drain only writes already submitted at reconnect. New live results
+            # use this connection and do not extend the persistence barrier.
+            pending = engine.replay.barrier()
+            try:
+                if pending is not None:
+                    await asyncio.shield(asyncio.wrap_future(pending))
+                engine.replay.check()
+            except Exception as error:
+                engine.record.event("replay_failed", ue_id=u.uid, error=repr(error))
+                if engine.collection_mode:
+                    engine.invalidate_scenario("result_delivery_failed", error=repr(error))
+                await ws.close(code=1011)
+                return
             # Fixed reconnect snapshot ordered by video/frame, in bounded disk pages.
             cutoff = await asyncio.to_thread(engine.replay.maximum, u.uid)  # Cutoff is when the results are no longer to be stored
             offset = 0

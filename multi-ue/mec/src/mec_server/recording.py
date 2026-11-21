@@ -7,6 +7,8 @@ import queue
 import threading
 import time
 import copy
+from concurrent.futures import Future
+from .results import SerializedResult
 
 
 class Recorder:
@@ -76,28 +78,97 @@ class Recorder:
 
 
 class ReplayStore:
-    """SQLite-backed full payload retention; accessed with asyncio.to_thread by ControlHub."""
+    """One bounded writer for all UEs; readers use separate SQLite connections."""
 
-    def __init__(self, path):
+    def __init__(self, path, max_pending_bytes=64 * 1024 * 1024):
         import sqlite3
 
         self.path = str(path)
-        self.write_lock = threading.Lock()
+        self.lock = threading.Lock()
+        self.queue = queue.Queue()
+        self.pending_bytes = 0
+        self.max_pending_bytes = max_pending_bytes
+        self.error = None
+        self.closed = False
+        self.tail = None
         with sqlite3.connect(self.path) as c:
             c.execute("PRAGMA journal_mode=WAL")
             c.execute(
                 "CREATE TABLE IF NOT EXISTS results (ue TEXT,video TEXT,frame INTEGER,result TEXT PRIMARY KEY,payload TEXT)"
             )
+        self.thread = threading.Thread(target=self._writer, name="mec-replay-writer", daemon=True)
+        self.thread.start()
 
-    def save(self, ue, video, frame, result, payload):
+    def submit(self, ue, video, frame, result, serialized):
+        """Reserve bytes and return a future completed only after the commit."""
+        # Our JSON encoder emits ASCII (ensure_ascii=True), so chars equal bytes.
+        size = len(serialized)
+        future = Future()
+        with self.lock:
+            if self.closed:
+                raise RuntimeError("replay writer closed")
+            if self.error:
+                raise RuntimeError("replay writer failed") from self.error
+            if self.pending_bytes + size > self.max_pending_bytes:
+                self.error = RuntimeError("replay pending byte limit exceeded")
+                raise self.error
+            self.pending_bytes += size
+            self.tail = future
+            self.queue.put_nowait(((ue, video, frame, result, serialized), size, future))
+        return future
+
+    def _write(self, connection, values):
+        with connection:
+            connection.execute("INSERT OR IGNORE INTO results VALUES (?,?,?,?,?)", values)
+
+    def _writer(self):
         import sqlite3
+        connection = None
+        try:
+            while True:
+                item = self.queue.get()
+                if item is None:
+                    return
+                values, size, future = item
+                error = None
+                try:
+                    if self.error:
+                        raise RuntimeError("replay writer failed") from self.error
+                    if connection is None:
+                        connection = sqlite3.connect(self.path, timeout=30)
+                    self._write(connection, values)
+                except Exception as exc:
+                    with self.lock:
+                        self.error = exc
+                    error = exc
+                finally:
+                    with self.lock:
+                        self.pending_bytes -= size
+                if error is None:
+                    future.set_result(None)
+                else:
+                    future.set_exception(error)
+        finally:
+            if connection is not None:
+                connection.close()
 
-        serialized = json.dumps(payload, allow_nan=False)
-        with self.write_lock, sqlite3.connect(self.path, timeout=30) as c:
-            c.execute(
-                "INSERT OR IGNORE INTO results VALUES (?,?,?,?,?)",
-                (ue, video, frame, result, serialized),
-            )
+    def barrier(self):
+        """Snapshot existing writes; later submissions do not extend this barrier."""
+        with self.lock:
+            return self.tail
+
+    def check(self):
+        with self.lock:
+            if self.error:
+                raise RuntimeError("replay writer failed") from self.error
+
+    def close(self):
+        with self.lock:
+            if not self.closed:
+                self.closed = True
+                self.queue.put_nowait(None)
+        self.thread.join()
+        self.check()
 
     def pages(self, ue, after=0, limit=32):
         import sqlite3
@@ -125,7 +196,7 @@ class ReplayStore:
 
         with sqlite3.connect(self.path) as c:
             return [
-                json.loads(row[0])
+                SerializedResult.from_storage(row[0])
                 for row in c.execute(
                     "SELECT payload FROM results WHERE ue=? AND rowid<=? ORDER BY video,frame LIMIT ? OFFSET ?",
                     (ue, cutoff, limit, offset),

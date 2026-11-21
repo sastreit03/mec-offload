@@ -15,6 +15,7 @@ from .control import print_start_timing
 from .statistics import History, NetworkFilter
 from .policies import HeuristicGoP, HeuristicPriority, validate_joint
 from .recording import Recorder, ReplayStore
+from .results import SerializedResult
 from .media import Receiver, MockReceiver
 from .workers import Workers
 from .tracking import Tracker
@@ -188,7 +189,7 @@ class Engine:
         self.record = Recorder(self.root, self.join_context)
         self.gpu = DeviceGpuSampler()
         self.cpu = HostCpuSampler()
-        self.replay = ReplayStore(self.root / "replay.sqlite3")
+        self.replay = ReplayStore(self.root / "replay.sqlite3", cfg.replay_pending_bytes)
         self.ues = {}
         self.tokens = {}
         self.videos = {}
@@ -282,6 +283,8 @@ class Engine:
         """Attach the active immutable join context to a wire message."""
         if message is None:
             return None
+        if isinstance(message, SerializedResult):
+            return message  # Context was frozen before serialization.
         for key, value in self.join_context().items():
             message.setdefault(key, value)
         return message
@@ -2317,7 +2320,7 @@ class Engine:
             # Freeze scenario identity before durable replay or asynchronous delivery.
             self.contextual(message)
             begin = time.monotonic_ns()
-            await asyncio.to_thread(dumps, message)
+            serialized = await asyncio.to_thread(SerializedResult.prepare, message)
             prepared = time.monotonic_ns()
             message["stage_times"].update(
                 result_prepare_start_monotonic_ns=begin,
@@ -2339,15 +2342,17 @@ class Engine:
                     candidate_id=cid,
                     residence_s=residence,
                 )
-            await asyncio.to_thread(
-                self.replay.save,
+            persisted = self.replay.submit(
                 v.uid,
                 v.vid,
                 message["frame_id"],
                 message["result_id"],
-                message,
+                serialized.text,
             )
-            self.send(v.uid, message)
+            self.send(v.uid, serialized)
+            # Live delivery does not wait for disk. Keep deliveries nonzero until
+            # commit so finalization and clean shutdown still drain persistence.
+            await asyncio.shield(asyncio.wrap_future(persisted))
         except Exception as ex:
             if self.collection_mode:
                 self.invalidate_scenario("result_delivery_failed", video_id=v.vid, error=repr(ex))
@@ -3137,6 +3142,10 @@ class Engine:
         await asyncio.gather(*self.tasks, return_exceptions=True)
         if self.background:
             await asyncio.gather(*self.background, return_exceptions=True)
+        try:
+            await asyncio.to_thread(self.replay.close)
+        except Exception as error:
+            self.record.event("replay_writer_failed", error=repr(error))
         self.snapshot()
         await self.rpc.close()
         self.gpu.close()

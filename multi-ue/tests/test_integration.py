@@ -109,6 +109,9 @@ def test_mock_workers_grpc_lifecycle_replay_and_fencing(tmp_path):
             )
             e.disconnect(u.uid, old)
             assert u2.connected
+            pending = e.replay.barrier()
+            if pending is not None:
+                await asyncio.wrap_future(pending)
             rows = e.replay.ordered_page(u.uid, e.replay.maximum(u.uid), 0, 100)
             assert rows[0]["result_id"] == result["result_id"]
             end = await e.command(
