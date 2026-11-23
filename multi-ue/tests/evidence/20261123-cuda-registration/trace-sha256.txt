@@ -1,0 +1,2 @@
+af82b49563241507d0c9eebb187a343a71c0c1a2b614c9237585c3e2725b2dcd  /tmp/mec-cuda-registration/runs/registration_trace.nsys-rep
+04d652d071a0a9139f3fc934e77c23ab5ef1ba6f28fd078a7700f9366534e21d  /tmp/mec-cuda-registration/runs/registration_trace.sqlite

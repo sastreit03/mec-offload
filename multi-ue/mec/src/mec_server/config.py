@@ -61,6 +61,7 @@ class Settings(BaseModel):
     max_videos: int = 30
     handoff_notifications: int = Field(default=1024, gt=0)
     handoff_decoded_frames: int = Field(default=10, gt=0)
+    shared_rgb_slots: int = Field(default=32, gt=0)
     # Legacy YAML keys accepted for older run configurations.
     pending_frames: int = 16
     pending_bytes_per_video: int = 64 * 1024 * 1024
@@ -124,6 +125,7 @@ class Settings(BaseModel):
         )
     )
     mps_enabled: bool = True
+    cuda_graphs: bool = True
 
     # Experimental runs require explicit calibration and cannot use mock execution.
     def check(self):

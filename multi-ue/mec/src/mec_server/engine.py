@@ -7,6 +7,7 @@ import secrets
 import time
 import uuid
 from .handoff import ReceiverHandoff
+from .shared_rgb import release_rgb
 from dataclasses import dataclass, field
 from pathlib import Path
 from .config import collection_candidates, qualified
@@ -89,6 +90,7 @@ class Video:
     state: str = "AWAITING_DECISION"
     receiver: object = None
     receiver_stopping: bool = False
+    rgb_region: str | None = None
     port: int = 0
     slo: float = 0.15
     can_drop: bool = False
@@ -229,6 +231,8 @@ class Engine:
             dict(
                 backend=cfg.backend,
                 mps_enabled=cfg.mps_enabled,
+                cuda_graphs=cfg.cuda_graphs,
+                max_videos=cfg.max_videos,
                 weights_dir=cfg.weights_dir,
                 warmup_count=cfg.warmup_count,
                 applications=cfg.applications,
@@ -813,6 +817,10 @@ class Engine:
                 )
             elif kind == "frame_failure":
                 d = data["descriptor"]
+                if self.collection_mode and data["reason"] in (
+                    "shared_rgb_pool_exhausted", "decoded_mapping_failed"
+                ):
+                    self.invalidate_scenario(data["reason"], video_id=d.video_id)
                 self.fail_frame(d.video_id, d.frame_id, data["reason"])
             else:
                 self.record.event(kind, **data)
@@ -1409,6 +1417,8 @@ class Engine:
             setup_stage = "receiver"
             try:
                 await asyncio.to_thread(receiver.start)
+                setup_stage = "rgb_registration"
+                await self.prepare_receiver_rgb(v, receiver)
                 if v.app == "tracking":
                     setup_stage = "tracker"
                     # First-use imports and tracker construction must not stall
@@ -1417,7 +1427,12 @@ class Engine:
                         Tracker, self.cfg.fps, self.cfg.tracker_retention_s,
                         self.cfg.backend == "mock",
                     )
+            except asyncio.CancelledError:
+                self.release_receiver_rgb(v)
+                await asyncio.to_thread(receiver.close)
+                raise
             except Exception as ex:
+                self.release_receiver_rgb(v)
                 await asyncio.to_thread(receiver.close)
                 v.state = "DENIED"
                 u.active_video = None
@@ -1429,6 +1444,7 @@ class Engine:
                 self.scenario_error or self.scenario_finalization
                 or self.join_context() != setup_context
             ):
+                self.release_receiver_rgb(v)
                 await asyncio.to_thread(receiver.close)
                 v.state = "DENIED"
                 if u.active_video == vid:
@@ -1444,6 +1460,7 @@ class Engine:
             ] + [v]
             proposal = self.choose(participating)
             if proposal is None:
+                self.release_receiver_rgb(v)
                 await asyncio.to_thread(receiver.close)
                 v.state = "DENIED"
                 u.active_video = None
@@ -1492,6 +1509,8 @@ class Engine:
             queue_contract=dict(
                 max_pending_frames=self.cfg.handoff_decoded_frames,
                 max_notifications=self.cfg.handoff_notifications,
+                shared_rgb_slots=self.cfg.shared_rgb_slots,
+                shared_rgb_max_pixel_bytes=self.cfg.shared_rgb_slots * self.cfg.decoded_max_bytes,
                 max_pending_bytes=self.cfg.decoded_max_bytes * self.cfg.handoff_decoded_frames,
                 mandatory_drops=[]
                 if self.collection_mode
@@ -1499,6 +1518,7 @@ class Engine:
                     "nonpositive_slack",
                     "deadline_expired",
                     "receiver_handoff_overflow",
+                    "shared_rgb_pool_exhausted",
                     "session_suspended",
                     "transport_loss",
                     "tracking_cutoff",
@@ -1605,6 +1625,8 @@ class Engine:
         setup_stage = "receiver"
         try:
             await asyncio.to_thread(receiver.start)
+            setup_stage = "rgb_registration"
+            await self.prepare_receiver_rgb(v, receiver)
             if v.app == "tracking":
                 setup_stage = "tracker"
                 # Each successor owns a fresh tracker; initialize off-loop too.
@@ -1612,7 +1634,12 @@ class Engine:
                     Tracker, self.cfg.fps, self.cfg.tracker_retention_s,
                     self.cfg.backend == "mock",
                 )
+        except asyncio.CancelledError:
+            self.release_receiver_rgb(v)
+            await asyncio.to_thread(receiver.close)
+            raise
         except Exception as ex:
+            self.release_receiver_rgb(v)
             await asyncio.to_thread(receiver.close)
             self.record.event(f"{setup_stage}_setup_failed", video_id=vid, reason=repr(ex))
             return denied("setup_failed")
@@ -2115,6 +2142,15 @@ class Engine:
 
     # Decide and submit on the engine loop in the same receiver callback.
     def decoded(self, d, rgb, decoded_ns):
+        try:
+            return self._decoded(d, rgb, decoded_ns)
+        finally:
+            # Workers and preview retain independent leases before returning.
+            release_rgb(rgb)
+
+    def _decoded(self, d, rgb, decoded_ns):
+        if getattr(self, "closed", False):
+            return
         entered_ns = time.monotonic_ns()
         if self.collection_mode and self.scenario_error:
             return
@@ -2209,7 +2245,7 @@ class Engine:
         self.inflight[key] = dict(candidate_id=f.config["id"], queue_ns=f.queue_ns,
                                   submitted_ns=submitted, application=v.app, priority=f.priority)
         f.state = "PROCESSING"
-        f.rgb = None  # The IPC queue now holds the RGB reference.
+        f.rgb = None  # Workers owns the input lease until consumption or process exit.
 
     def fail_frame(self, vid, fid, reason):
         f = self.frames.get((vid, fid))
@@ -2584,6 +2620,7 @@ class Engine:
                             u.active_video = None
                         if u.prepared_video == v.vid:
                             u.prepared_video = None
+                        self.release_receiver_rgb(v)
                         v.finalized = True
                         self.send(
                             v.uid,
@@ -2680,6 +2717,19 @@ class Engine:
             self.fail_frame(v.vid, f.fid, "execution_failed")
         finally:
             v.tracker_busy = False
+
+    async def prepare_receiver_rgb(self, v, receiver):
+        if self.cfg.backend != "torchscript" or not self.cfg.cuda_graphs:
+            return
+        acknowledgement = await self.workers.prepare_rgb(v.app, receiver.rgb_pool)
+        v.rgb_region = acknowledgement['region']
+        self.record.event('rgb_registered', video_id=v.vid, application=v.app,
+                          **{k: acknowledgement[k] for k in ('region', 'registration_ms')})
+
+    def release_receiver_rgb(self, v):
+        if v.rgb_region is not None:
+            self.workers.release_rgb(v.app, v.rgb_region)
+            v.rgb_region = None
 
     async def finish_receiver(self, v):
         # After stopping the producer, account for every already-posted notification
@@ -2878,6 +2928,9 @@ class Engine:
                 queues={
                     f"{a}/{p}": 0 for a in self.cfg.applications for p in self.cfg.priority_streams
                 },
+                shared_rgb_pools={vid: v.receiver.rgb_pool.stats()
+                                  for vid, v in self.videos.items()
+                                  if hasattr(v.receiver, "rgb_pool")},
                 receiver_handoffs={vid: v.receiver.post.stats() for vid, v in self.videos.items()
                                    if isinstance(getattr(v.receiver, "post", None), ReceiverHandoff)},
                 timing_histories={
@@ -3099,6 +3152,13 @@ class Engine:
         for v in self.videos.values():
             if v.state not in TERMINAL:
                 self.close_input(v, "server_shutdown")
+        # Stop producers and drain their already-posted callbacks before closing
+        # IPC. Closing a receiver pool waits for its worker/preview leases.
+        await asyncio.gather(*(asyncio.to_thread(v.receiver.close)
+                               for v in self.videos.values() if v.receiver))
+        while any(isinstance(getattr(v.receiver, "post", None), ReceiverHandoff)
+                  and v.receiver.post.scheduled for v in self.videos.values()):
+            await asyncio.sleep(0)
         await asyncio.to_thread(self.workers.close)
         until = time.monotonic() + 0.5
         while self.inflight and time.monotonic() < until:

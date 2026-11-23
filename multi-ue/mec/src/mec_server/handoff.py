@@ -2,6 +2,7 @@
 
 from collections import deque
 from threading import Lock
+from .shared_rgb import release_rgb
 
 
 class ReceiverHandoff:
@@ -26,6 +27,7 @@ class ReceiverHandoff:
             if len(self.items) >= self.notifications or (
                 kind == "decoded" and self.decoded >= self.pictures
             ):
+                release_rgb(data.get("rgb"))
                 self.dropped += 1
                 self.lost_count += 1
                 # Report even if the FIFO cannot accept an error record. Keep

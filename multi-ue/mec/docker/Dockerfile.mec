@@ -10,6 +10,9 @@ RUN python -m pip install -r requirements.txt -r mec/requirements-gpu.txt
 RUN python -c "import lap"
 COPY contracts contracts
 COPY mec/src mec/src
+ARG CUDA_RGB_ARCH=sm_121
+RUN nvcc -O3 -shared -Xcompiler -fPIC -cudart=shared -arch=${CUDA_RGB_ARCH} \
+    mec/src/mec_server/shared_preprocess.cu -o mec/src/mec_server/shared_preprocess.so
 COPY config config
 # Include system-installed GStreamer bindings in the container Python search path.
 ENV PYTHONPATH=/work/multi-ue/contracts/python:/work/multi-ue/mec/src:/usr/lib/python3/dist-packages

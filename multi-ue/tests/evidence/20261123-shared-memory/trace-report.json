@@ -1,0 +1,154 @@
+{
+  "status": "passed",
+  "checks": {
+    "probe_passed": true,
+    "every_frame_verified": true,
+    "every_frame_preprocessed": true,
+    "every_frame_graph_replayed": true,
+    "graph_nodes_visible": true,
+    "no_host_to_device_uploads": true,
+    "submission_during_earlier_gpu_work": true,
+    "one_gpu_stream": true
+  },
+  "trial_duration_ms": 1284.110464,
+  "kernel_counts": {
+    "vectorized_elementwise_kernel": 72,
+    "verify_rgb": 24,
+    "preprocess": 24,
+    "spin_kernel": 24
+  },
+  "graph_node_count": 72,
+  "graph_replays": 24,
+  "memory_copies": [
+    {
+      "kind": "CUDA_MEMCPY_KIND_DTOH",
+      "label": "Device-to-Host",
+      "operations": 48,
+      "bytes": 117964896
+    }
+  ],
+  "host_to_device_bytes": 0,
+  "cpu_graph_launches_during_gpu_graph_kernel": 17,
+  "overlap_examples": [
+    {
+      "cpu_launch_start_ns": 2927318224,
+      "cpu_launch_end_ns": 2927336672,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 2918464944,
+      "kernel_end_ns": 2930902896
+    },
+    {
+      "cpu_launch_start_ns": 3016731792,
+      "cpu_launch_end_ns": 3016747344,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3012805200,
+      "kernel_end_ns": 3025243120
+    },
+    {
+      "cpu_launch_start_ns": 3020738640,
+      "cpu_launch_end_ns": 3020752512,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3012805200,
+      "kernel_end_ns": 3025243120
+    },
+    {
+      "cpu_launch_start_ns": 3026771568,
+      "cpu_launch_end_ns": 3026786288,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3025492528,
+      "kernel_end_ns": 3037929840
+    },
+    {
+      "cpu_launch_start_ns": 3119022240,
+      "cpu_launch_end_ns": 3119027264,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3118901360,
+      "kernel_end_ns": 3131337872
+    },
+    {
+      "cpu_launch_start_ns": 3119081344,
+      "cpu_launch_end_ns": 3119085312,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3118901360,
+      "kernel_end_ns": 3131337872
+    },
+    {
+      "cpu_launch_start_ns": 3129042512,
+      "cpu_launch_end_ns": 3129047248,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3118901360,
+      "kernel_end_ns": 3131337872
+    },
+    {
+      "cpu_launch_start_ns": 3224568144,
+      "cpu_launch_end_ns": 3224573488,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3224396400,
+      "kernel_end_ns": 3236832976
+    },
+    {
+      "cpu_launch_start_ns": 3224630704,
+      "cpu_launch_end_ns": 3224634928,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3224396400,
+      "kernel_end_ns": 3236832976
+    },
+    {
+      "cpu_launch_start_ns": 3234822480,
+      "cpu_launch_end_ns": 3234826848,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3224396400,
+      "kernel_end_ns": 3236832976
+    },
+    {
+      "cpu_launch_start_ns": 3330194624,
+      "cpu_launch_end_ns": 3330199088,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3330050640,
+      "kernel_end_ns": 3342487216
+    },
+    {
+      "cpu_launch_start_ns": 3330253872,
+      "cpu_launch_end_ns": 3330257904,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3330050640,
+      "kernel_end_ns": 3342487216
+    },
+    {
+      "cpu_launch_start_ns": 3340492032,
+      "cpu_launch_end_ns": 3340496416,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3330050640,
+      "kernel_end_ns": 3342487216
+    },
+    {
+      "cpu_launch_start_ns": 3434845552,
+      "cpu_launch_end_ns": 3434850768,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3434625616,
+      "kernel_end_ns": 3447062576
+    },
+    {
+      "cpu_launch_start_ns": 3434918640,
+      "cpu_launch_end_ns": 3434922528,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3434625616,
+      "kernel_end_ns": 3447062576
+    },
+    {
+      "cpu_launch_start_ns": 3444930576,
+      "cpu_launch_end_ns": 3444934576,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3434625616,
+      "kernel_end_ns": 3447062576
+    },
+    {
+      "cpu_launch_start_ns": 3540021456,
+      "cpu_launch_end_ns": 3540025920,
+      "running_kernel": "spin_kernel",
+      "kernel_start_ns": 3539938928,
+      "kernel_end_ns": 3552375568
+    }
+  ],
+  "interpretation": "Real GB10 GPU; synthetic inputs and graph. DtoH copies preserve outputs for validation. No claim about physical DRAM/cache traffic or production-model speedup."
+}

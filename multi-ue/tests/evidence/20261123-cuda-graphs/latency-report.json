@@ -1,0 +1,121 @@
+{
+  "groups": {
+    "all": {
+      "frames": 48,
+      "stages": {
+        "decoded_to_model_submit_ms": {
+          "p50": 2.2352575000000003,
+          "p95": 58.429117749999996,
+          "p99": 103.30986429000006,
+          "max": 131.859494
+        },
+        "dequeue_to_launch_entry_ms": {
+          "p50": 0.149929,
+          "p95": 53.50516909999999,
+          "p99": 71.07244048,
+          "max": 72.786632
+        },
+        "model_submission_call_ms": {
+          "p50": 0.060976,
+          "p95": 0.3358248499999999,
+          "p99": 0.44181609000000005,
+          "max": 0.465106
+        },
+        "adapter_launch_ms": {
+          "p50": 0.501546,
+          "p95": 1.582232549999999,
+          "p99": 7.522102070000008,
+          "max": 10.439965
+        }
+      }
+    },
+    "first_frame_per_receiver": {
+      "frames": 4,
+      "stages": {
+        "decoded_to_model_submit_ms": {
+          "p50": 65.095111,
+          "p95": 122.74791004999999,
+          "p99": 130.03717720999998,
+          "max": 131.859494
+        },
+        "dequeue_to_launch_entry_ms": {
+          "p50": 62.7078925,
+          "p95": 72.23954959999999,
+          "p99": 72.67721551999999,
+          "max": 72.786632
+        },
+        "model_submission_call_ms": {
+          "p50": 0.3852175,
+          "p95": 0.45767305,
+          "p99": 0.46361941,
+          "max": 0.465106
+        },
+        "adapter_launch_ms": {
+          "p50": 3.034541,
+          "p95": 9.508732149999998,
+          "p99": 10.25371843,
+          "max": 10.439965
+        }
+      }
+    },
+    "after_first_frame": {
+      "frames": 44,
+      "stages": {
+        "decoded_to_model_submit_ms": {
+          "p50": 2.188353,
+          "p95": 4.2190577000000005,
+          "p99": 33.78356007,
+          "max": 34.125346
+        },
+        "dequeue_to_launch_entry_ms": {
+          "p50": 0.1455765,
+          "p95": 0.30568905,
+          "p99": 1.1084164200000002,
+          "max": 1.680663
+        },
+        "model_submission_call_ms": {
+          "p50": 0.0597685,
+          "p95": 0.18061125,
+          "p99": 0.25238308000000004,
+          "max": 0.300433
+        },
+        "adapter_launch_ms": {
+          "p50": 0.477458,
+          "p95": 0.7296878,
+          "p99": 0.8668032,
+          "max": 0.933092
+        }
+      }
+    },
+    "after_first_two_frames": {
+      "frames": 40,
+      "stages": {
+        "decoded_to_model_submit_ms": {
+          "p50": 2.188353,
+          "p95": 3.5313886499999994,
+          "p99": 4.096638019999999,
+          "max": 4.29557
+        },
+        "dequeue_to_launch_entry_ms": {
+          "p50": 0.149929,
+          "p95": 0.30830114999999986,
+          "p99": 1.1616486599999991,
+          "max": 1.680663
+        },
+        "model_submission_call_ms": {
+          "p50": 0.0597685,
+          "p95": 0.18187939999999997,
+          "p99": 0.25685283999999997,
+          "max": 0.300433
+        },
+        "adapter_launch_ms": {
+          "p50": 0.498506,
+          "p95": 0.7386662499999999,
+          "p99": 0.8729695999999999,
+          "max": 0.933092
+        }
+      }
+    }
+  },
+  "note": "First-use region registration is inside dequeue-to-launch-entry, along with validation/mapping and scheduling; that interval is not a pure CUDA API duration. Later frames can queue behind the first. Explicit subsets are descriptive, not a replacement for all-frame latency. Host submit timestamps do not measure GPU execution start."
+}

@@ -253,7 +253,8 @@ class Assembly:
             raise ValueError("only single NAL and FU-A supported")
         if self.unique_bytes + amount > self.descriptor.encoded_bytes:
             raise ValueError("payload exceeds advertised AU size")
-        self.packets[p.sequence] = data
+        # A mapped Gst payload is borrowed; retain bytes only on first receipt.
+        self.packets[p.sequence] = bytes(data)
         self.unique_bytes += amount
         if p.marker:
             self.marker = p.sequence

@@ -1,0 +1,50 @@
+{"type": "ready", "attributes": {"can_map_host_memory": 1, "host_register_supported": 1, "pageable_memory_access": 1, "pageable_memory_access_uses_host_page_tables": 1, "can_use_host_pointer_for_registered_mem": 1, "concurrent_managed_access": 1}, "worker_host_address": 278982873915392, "worker_device_address": 278982873915392, "mapped_bytes": 8577024, "mapping": "cudaHostRegisterMapped + cudaHostGetDevicePointer", "torch_version": "2.10.0a0+b4e4ee81d3.nv25.12", "gpu": "NVIDIA GB10", "fixed_input_address": 13738442752, "fixed_output_address": 13938393088}
+{"type": "release", "slot": 0, "generation": 1, "frame_id": 0, "inference_pending": true}
+{"type": "completed", "frame_id": 0, "slot": 0, "generation": 1, "rgb_mismatches": 0, "max_absolute_output_error": 7.152557373046875e-07}
+{"type": "release", "slot": 1, "generation": 1, "frame_id": 1, "inference_pending": false}
+{"type": "completed", "frame_id": 1, "slot": 1, "generation": 1, "rgb_mismatches": 0, "max_absolute_output_error": 4.76837158203125e-07}
+{"type": "release", "slot": 2, "generation": 1, "frame_id": 2, "inference_pending": true}
+{"type": "completed", "frame_id": 2, "slot": 2, "generation": 1, "rgb_mismatches": 0, "max_absolute_output_error": 7.152557373046875e-07}
+{"type": "release", "slot": 0, "generation": 2, "frame_id": 3, "inference_pending": false}
+{"type": "completed", "frame_id": 3, "slot": 0, "generation": 2, "rgb_mismatches": 0, "max_absolute_output_error": 4.76837158203125e-07}
+{"type": "release", "slot": 1, "generation": 2, "frame_id": 4, "inference_pending": false}
+{"type": "completed", "frame_id": 4, "slot": 1, "generation": 2, "rgb_mismatches": 0, "max_absolute_output_error": 7.152557373046875e-07}
+{"type": "release", "slot": 2, "generation": 2, "frame_id": 5, "inference_pending": false}
+{"type": "completed", "frame_id": 5, "slot": 2, "generation": 2, "rgb_mismatches": 0, "max_absolute_output_error": 4.76837158203125e-07}
+{"type": "release", "slot": 0, "generation": 3, "frame_id": 6, "inference_pending": true}
+{"type": "completed", "frame_id": 6, "slot": 0, "generation": 3, "rgb_mismatches": 0, "max_absolute_output_error": 7.152557373046875e-07}
+{"type": "release", "slot": 1, "generation": 3, "frame_id": 7, "inference_pending": false}
+{"type": "completed", "frame_id": 7, "slot": 1, "generation": 3, "rgb_mismatches": 0, "max_absolute_output_error": 4.76837158203125e-07}
+{"type": "release", "slot": 2, "generation": 3, "frame_id": 8, "inference_pending": false}
+{"type": "completed", "frame_id": 8, "slot": 2, "generation": 3, "rgb_mismatches": 0, "max_absolute_output_error": 7.152557373046875e-07}
+{"type": "release", "slot": 0, "generation": 4, "frame_id": 9, "inference_pending": false}
+{"type": "completed", "frame_id": 9, "slot": 0, "generation": 4, "rgb_mismatches": 0, "max_absolute_output_error": 4.76837158203125e-07}
+{"type": "release", "slot": 1, "generation": 4, "frame_id": 10, "inference_pending": true}
+{"type": "completed", "frame_id": 10, "slot": 1, "generation": 4, "rgb_mismatches": 0, "max_absolute_output_error": 7.152557373046875e-07}
+{"type": "release", "slot": 2, "generation": 4, "frame_id": 11, "inference_pending": false}
+{"type": "completed", "frame_id": 11, "slot": 2, "generation": 4, "rgb_mismatches": 0, "max_absolute_output_error": 4.76837158203125e-07}
+{"type": "release", "slot": 0, "generation": 5, "frame_id": 12, "inference_pending": false}
+{"type": "completed", "frame_id": 12, "slot": 0, "generation": 5, "rgb_mismatches": 0, "max_absolute_output_error": 7.152557373046875e-07}
+{"type": "release", "slot": 1, "generation": 5, "frame_id": 13, "inference_pending": false}
+{"type": "completed", "frame_id": 13, "slot": 1, "generation": 5, "rgb_mismatches": 0, "max_absolute_output_error": 4.76837158203125e-07}
+{"type": "release", "slot": 2, "generation": 5, "frame_id": 14, "inference_pending": true}
+{"type": "completed", "frame_id": 14, "slot": 2, "generation": 5, "rgb_mismatches": 0, "max_absolute_output_error": 7.152557373046875e-07}
+{"type": "release", "slot": 0, "generation": 6, "frame_id": 15, "inference_pending": false}
+{"type": "completed", "frame_id": 15, "slot": 0, "generation": 6, "rgb_mismatches": 0, "max_absolute_output_error": 4.76837158203125e-07}
+{"type": "release", "slot": 1, "generation": 6, "frame_id": 16, "inference_pending": false}
+{"type": "completed", "frame_id": 16, "slot": 1, "generation": 6, "rgb_mismatches": 0, "max_absolute_output_error": 7.152557373046875e-07}
+{"type": "release", "slot": 2, "generation": 6, "frame_id": 17, "inference_pending": false}
+{"type": "completed", "frame_id": 17, "slot": 2, "generation": 6, "rgb_mismatches": 0, "max_absolute_output_error": 4.76837158203125e-07}
+{"type": "release", "slot": 0, "generation": 7, "frame_id": 18, "inference_pending": true}
+{"type": "completed", "frame_id": 18, "slot": 0, "generation": 7, "rgb_mismatches": 0, "max_absolute_output_error": 7.152557373046875e-07}
+{"type": "release", "slot": 1, "generation": 7, "frame_id": 19, "inference_pending": false}
+{"type": "completed", "frame_id": 19, "slot": 1, "generation": 7, "rgb_mismatches": 0, "max_absolute_output_error": 4.76837158203125e-07}
+{"type": "release", "slot": 2, "generation": 7, "frame_id": 20, "inference_pending": false}
+{"type": "completed", "frame_id": 20, "slot": 2, "generation": 7, "rgb_mismatches": 0, "max_absolute_output_error": 7.152557373046875e-07}
+{"type": "release", "slot": 0, "generation": 8, "frame_id": 21, "inference_pending": false}
+{"type": "completed", "frame_id": 21, "slot": 0, "generation": 8, "rgb_mismatches": 0, "max_absolute_output_error": 4.76837158203125e-07}
+{"type": "release", "slot": 1, "generation": 8, "frame_id": 22, "inference_pending": true}
+{"type": "completed", "frame_id": 22, "slot": 1, "generation": 8, "rgb_mismatches": 0, "max_absolute_output_error": 7.152557373046875e-07}
+{"type": "release", "slot": 2, "generation": 8, "frame_id": 23, "inference_pending": false}
+{"type": "completed", "frame_id": 23, "slot": 2, "generation": 8, "rgb_mismatches": 0, "max_absolute_output_error": 4.76837158203125e-07}
+{"type": "drained", "completed": 24, "peak_inflight": 4, "rgb_releases_before_inference_completion": 7, "max_absolute_output_error": 7.152557373046875e-07, "generation_counts": [8, 8, 8], "mapping_unregistered": true}

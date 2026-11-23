@@ -1,0 +1,202 @@
+{
+  "kind": "isolated decoded-input virtual-UE trial",
+  "backend": "mock",
+  "shared_rgb": true,
+  "cuda_graph_jobs": 0,
+  "direct_rgb_jobs": 0,
+  "worker_ready": {
+    "segmentation": {
+      "type": "ready",
+      "application": "segmentation",
+      "pid": 182,
+      "models": [
+        "segformer-b0",
+        "segformer-b1",
+        "segformer-b2",
+        "segformer-b3"
+      ],
+      "streams": [
+        -3
+      ],
+      "backend": "mock",
+      "cuda_graphs": false,
+      "graph_instances": 0
+    },
+    "detection": {
+      "type": "ready",
+      "application": "detection",
+      "pid": 180,
+      "models": [
+        "yolo26n",
+        "yolo26m",
+        "yolo26l",
+        "yolo26x"
+      ],
+      "streams": [
+        -3
+      ],
+      "backend": "mock",
+      "cuda_graphs": false,
+      "graph_instances": 0
+    },
+    "tracking": {
+      "type": "ready",
+      "application": "tracking",
+      "pid": 181,
+      "models": [
+        "yolo26n",
+        "yolo26m",
+        "yolo26l",
+        "yolo26x"
+      ],
+      "streams": [
+        -3
+      ],
+      "backend": "mock",
+      "cuda_graphs": false,
+      "graph_instances": 0
+    }
+  },
+  "shared_rgb_pools": {
+    "8aecc17d-d1ea-4dcf-9955-bee9285abee2": {
+      "slots": 32,
+      "capacity_bytes": 268566528,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    },
+    "d3b1176b-0ed4-4515-b6d7-60111472c212": {
+      "slots": 32,
+      "capacity_bytes": 268566528,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    },
+    "21cc526d-2d87-4143-a9b9-fcbd6bb56f72": {
+      "slots": 32,
+      "capacity_bytes": 268566528,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    },
+    "91e543ac-9c02-49a6-896c-71ccc8907806": {
+      "slots": 32,
+      "capacity_bytes": 268566528,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    }
+  },
+  "outstanding_input_leases": 0,
+  "ipc_max_serialized_bytes": 1107,
+  "radio_and_decoder_tested": false,
+  "media": "/media/profile.mov",
+  "frames_per_ue": 12,
+  "fps_per_ue": 10,
+  "models": [
+    "detection-yolo26x-500k",
+    "tracking-yolo26x-500k",
+    "tracking-yolo26x-500k",
+    "segmentation-segformer-b3-500k"
+  ],
+  "submitted": 48,
+  "terminal_records": 48,
+  "outcomes": {
+    "completed": 48
+  },
+  "exactly_one_terminal_per_submitted": true,
+  "exactly_one_worker_result_per_submitted": true,
+  "receiver_queues": {
+    "8aecc17d-d1ea-4dcf-9955-bee9285abee2": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "d3b1176b-0ed4-4515-b6d7-60111472c212": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "21cc526d-2d87-4143-a9b9-fcbd6bb56f72": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "91e543ac-9c02-49a6-896c-71ccc8907806": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    }
+  },
+  "decoded_to_model_submit_ms": null,
+  "tracking_order": {
+    "d3b1176b-0ed4-4515-b6d7-60111472c212": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "21cc526d-2d87-4143-a9b9-fcbd6bb56f72": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ]
+  },
+  "tracking_order_correct": true,
+  "before_close": {
+    "frames": 0,
+    "inflight": 0,
+    "deliveries": 0,
+    "tracking_busy": false
+  },
+  "worker_exitcodes": {
+    "detection": 0,
+    "tracking": 0,
+    "segmentation": 0
+  },
+  "worker_drain_clean": true,
+  "scenario_error": null,
+  "errors": [],
+  "model_sha256": {}
+}

@@ -1,0 +1,164 @@
+{
+  "status": "passed",
+  "checks": {
+    "every_frame_preprocessed": true,
+    "every_frame_graph_replayed": true,
+    "no_host_to_device_uploads": true,
+    "production_trial_passed": true,
+    "registration_before_first_preprocessing": true
+  },
+  "workers": [
+    {
+      "global_pid": 281479858880512,
+      "kernel_count": 9600,
+      "graph_nodes": 9588,
+      "preprocessing_kernels": 12,
+      "graph_replays": 12,
+      "copies": [
+        {
+          "kind": "CUDA_MEMCPY_KIND_DTOH",
+          "operations": 12,
+          "bytes": 86400
+        }
+      ],
+      "registration_before_first_preprocessing": true,
+      "host_registration_ms": [
+        52.05072
+      ],
+      "graph_launches_before_earlier_same_worker_graph_finished": 0,
+      "graph_interval_examples": [],
+      "graph_launches_overlapping_earlier_same_worker_kernel": 0,
+      "overlap_examples": []
+    },
+    {
+      "global_pid": 281479875657728,
+      "kernel_count": 19200,
+      "graph_nodes": 19176,
+      "preprocessing_kernels": 24,
+      "graph_replays": 24,
+      "copies": [
+        {
+          "kind": "CUDA_MEMCPY_KIND_DTOH",
+          "operations": 24,
+          "bytes": 172800
+        }
+      ],
+      "registration_before_first_preprocessing": true,
+      "host_registration_ms": [
+        46.169024,
+        55.689904
+      ],
+      "graph_launches_before_earlier_same_worker_graph_finished": 5,
+      "graph_interval_examples": [
+        {
+          "cpu_launch": {
+            "start": 40162588976,
+            "end": 40163323328,
+            "correlationId": 8850148,
+            "name": "cudaGraphLaunch_v10000"
+          },
+          "earlier_correlation_id": 8850067,
+          "gpu_graph_start_ns": 40145396656,
+          "gpu_graph_end_ns": 40175240656
+        },
+        {
+          "cpu_launch": {
+            "start": 40340283024,
+            "end": 40340793424,
+            "correlationId": 8851178,
+            "name": "cudaGraphLaunch_v10000"
+          },
+          "earlier_correlation_id": 8851078,
+          "gpu_graph_start_ns": 40339221040,
+          "gpu_graph_end_ns": 40373260848
+        },
+        {
+          "cpu_launch": {
+            "start": 40543213088,
+            "end": 40544065888,
+            "correlationId": 8852377,
+            "name": "cudaGraphLaunch_v10000"
+          },
+          "earlier_correlation_id": 8852270,
+          "gpu_graph_start_ns": 40541441232,
+          "gpu_graph_end_ns": 40565750736
+        }
+      ],
+      "graph_launches_overlapping_earlier_same_worker_kernel": 5,
+      "overlap_examples": [
+        {
+          "cpu_launch": {
+            "start": 40162588976,
+            "end": 40163323328,
+            "correlationId": 8850148,
+            "name": "cudaGraphLaunch_v10000"
+          },
+          "earlier_graph_kernel": {
+            "start": 40160987664,
+            "end": 40165780944,
+            "graphNodeId": 47244640601,
+            "correlationId": 8850067,
+            "streamId": 16,
+            "name": "max_pool_forward_nchw"
+          }
+        },
+        {
+          "cpu_launch": {
+            "start": 40340283024,
+            "end": 40340793424,
+            "correlationId": 8851178,
+            "name": "cudaGraphLaunch_v10000"
+          },
+          "earlier_graph_kernel": {
+            "start": 40340265520,
+            "end": 40340295760,
+            "graphNodeId": 47244640269,
+            "correlationId": 8851078,
+            "streamId": 16,
+            "name": "elementwise_kernel"
+          }
+        },
+        {
+          "cpu_launch": {
+            "start": 40543213088,
+            "end": 40544065888,
+            "correlationId": 8852377,
+            "name": "cudaGraphLaunch_v10000"
+          },
+          "earlier_graph_kernel": {
+            "start": 40543203056,
+            "end": 40543226544,
+            "graphNodeId": 47244640303,
+            "correlationId": 8852270,
+            "streamId": 16,
+            "name": "Kernel2"
+          }
+        }
+      ]
+    },
+    {
+      "global_pid": 281479892434944,
+      "kernel_count": 9468,
+      "graph_nodes": 9384,
+      "preprocessing_kernels": 12,
+      "graph_replays": 12,
+      "copies": [
+        {
+          "kind": "CUDA_MEMCPY_KIND_DTOH",
+          "operations": 12,
+          "bytes": 44236800
+        }
+      ],
+      "registration_before_first_preprocessing": true,
+      "host_registration_ms": [
+        47.109552
+      ],
+      "graph_launches_before_earlier_same_worker_graph_finished": 0,
+      "graph_interval_examples": [],
+      "graph_launches_overlapping_earlier_same_worker_kernel": 0,
+      "overlap_examples": []
+    }
+  ],
+  "hardware_overlap_observed": true,
+  "interpretation": "Real production models on GB10. Per-process NVTX ranges exclude capture and warmup. Overlap means CPU submits a graph while an earlier graph kernel of that worker executes; it does not mean same-stream kernels execute simultaneously. DtoH result copies remain."
+}

@@ -1,0 +1,147 @@
+{
+  "kind": "isolated decoded-input virtual-UE trial",
+  "backend": "mock",
+  "shared_rgb": true,
+  "shared_rgb_pools": {
+    "3771bcc7-1662-4540-83a2-39d043937df9": {
+      "slots": 32,
+      "capacity_bytes": 268566528,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    },
+    "130738b7-7f3e-4aea-8f96-70fe3d4ac477": {
+      "slots": 32,
+      "capacity_bytes": 268566528,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    },
+    "4230205b-674b-429a-ab34-d5aece77545a": {
+      "slots": 32,
+      "capacity_bytes": 268566528,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    },
+    "6d4a28b9-50ff-4c52-9a41-efac64cf8eec": {
+      "slots": 32,
+      "capacity_bytes": 268566528,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    }
+  },
+  "outstanding_input_leases": 0,
+  "ipc_max_serialized_bytes": 1107,
+  "radio_and_decoder_tested": false,
+  "media": "/media/profile.mov",
+  "frames_per_ue": 12,
+  "fps_per_ue": 10,
+  "models": [
+    "detection-yolo26x-500k",
+    "tracking-yolo26x-500k",
+    "tracking-yolo26x-500k",
+    "segmentation-segformer-b3-500k"
+  ],
+  "submitted": 48,
+  "terminal_records": 48,
+  "outcomes": {
+    "completed": 48
+  },
+  "exactly_one_terminal_per_submitted": true,
+  "exactly_one_worker_result_per_submitted": true,
+  "receiver_queues": {
+    "3771bcc7-1662-4540-83a2-39d043937df9": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "130738b7-7f3e-4aea-8f96-70fe3d4ac477": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "4230205b-674b-429a-ab34-d5aece77545a": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "6d4a28b9-50ff-4c52-9a41-efac64cf8eec": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    }
+  },
+  "decoded_to_model_submit_ms": null,
+  "tracking_order": {
+    "130738b7-7f3e-4aea-8f96-70fe3d4ac477": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "4230205b-674b-429a-ab34-d5aece77545a": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ]
+  },
+  "tracking_order_correct": true,
+  "before_close": {
+    "frames": 0,
+    "inflight": 0,
+    "deliveries": 0,
+    "tracking_busy": false
+  },
+  "worker_exitcodes": {
+    "detection": 0,
+    "tracking": 0,
+    "segmentation": 0
+  },
+  "worker_drain_clean": true,
+  "scenario_error": null,
+  "errors": [],
+  "model_sha256": {}
+}

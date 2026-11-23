@@ -1,0 +1,209 @@
+{
+  "kind": "isolated decoded-input virtual-UE trial",
+  "backend": "torchscript",
+  "shared_rgb": true,
+  "cuda_graph_jobs": 48,
+  "direct_rgb_jobs": 48,
+  "worker_ready": {
+    "detection": {
+      "type": "ready",
+      "application": "detection",
+      "pid": 293,
+      "models": [
+        "yolo26n",
+        "yolo26m",
+        "yolo26l",
+        "yolo26x"
+      ],
+      "streams": [
+        -3
+      ],
+      "backend": "torchscript",
+      "cuda_graphs": true,
+      "graph_instances": 4
+    },
+    "tracking": {
+      "type": "ready",
+      "application": "tracking",
+      "pid": 294,
+      "models": [
+        "yolo26n",
+        "yolo26m",
+        "yolo26l",
+        "yolo26x"
+      ],
+      "streams": [
+        -3
+      ],
+      "backend": "torchscript",
+      "cuda_graphs": true,
+      "graph_instances": 4
+    },
+    "segmentation": {
+      "type": "ready",
+      "application": "segmentation",
+      "pid": 295,
+      "models": [
+        "segformer-b0",
+        "segformer-b1",
+        "segformer-b2",
+        "segformer-b3"
+      ],
+      "streams": [
+        -3
+      ],
+      "backend": "torchscript",
+      "cuda_graphs": true,
+      "graph_instances": 4
+    }
+  },
+  "shared_rgb_pools": {
+    "2205e46b-1296-423a-b075-49606ff33716": {
+      "slots": 32,
+      "capacity_bytes": 268566528,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    },
+    "12e493f4-78c0-49be-a765-a5160a305ccf": {
+      "slots": 32,
+      "capacity_bytes": 268566528,
+      "in_use": 0,
+      "references": 0,
+      "peak": 2,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    },
+    "61d6a34a-6e87-494f-b1f2-c3e74257e64b": {
+      "slots": 32,
+      "capacity_bytes": 268566528,
+      "in_use": 0,
+      "references": 0,
+      "peak": 2,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    },
+    "8bb1352c-a06c-4d86-9cbf-810945500266": {
+      "slots": 32,
+      "capacity_bytes": 268566528,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    }
+  },
+  "outstanding_input_leases": 0,
+  "ipc_max_serialized_bytes": 1109,
+  "radio_and_decoder_tested": false,
+  "media": "/media/profile.mov",
+  "frames_per_ue": 12,
+  "fps_per_ue": 10,
+  "models": [
+    "detection-yolo26x-500k",
+    "tracking-yolo26x-500k",
+    "tracking-yolo26x-500k",
+    "segmentation-segformer-b3-500k"
+  ],
+  "submitted": 48,
+  "terminal_records": 48,
+  "outcomes": {
+    "completed": 48
+  },
+  "exactly_one_terminal_per_submitted": true,
+  "exactly_one_worker_result_per_submitted": true,
+  "receiver_queues": {
+    "2205e46b-1296-423a-b075-49606ff33716": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "12e493f4-78c0-49be-a765-a5160a305ccf": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "61d6a34a-6e87-494f-b1f2-c3e74257e64b": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "8bb1352c-a06c-4d86-9cbf-810945500266": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    }
+  },
+  "decoded_to_model_submit_ms": {
+    "p95": 63.09054775,
+    "p99": 116.51485235000011
+  },
+  "tracking_order": {
+    "12e493f4-78c0-49be-a765-a5160a305ccf": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "61d6a34a-6e87-494f-b1f2-c3e74257e64b": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ]
+  },
+  "tracking_order_correct": true,
+  "before_close": {
+    "frames": 0,
+    "inflight": 0,
+    "deliveries": 0,
+    "tracking_busy": false
+  },
+  "worker_exitcodes": {
+    "detection": 0,
+    "tracking": 0,
+    "segmentation": 0
+  },
+  "worker_drain_clean": true,
+  "scenario_error": null,
+  "errors": [],
+  "model_sha256": {
+    "detection-yolo26x-500k": "e0ac8d74dc500ea764556e0d5f0cec50b1834d7f8b1cb1233c2a792b1d0e671e",
+    "segmentation-segformer-b3-500k": "28db9062816d8a150487a3ff00720132b8fc0ae5afa73b76604ec1cc00761d75",
+    "tracking-yolo26x-500k": "47e33c4ce2ca3c9dd626b6a10fbf44a05c3e01f89a62c6c1bcf4bb0222b8a653"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "configuration": {
+    "region": "psm_22a70120",
+    "width": 1280,
+    "height": 720,
+    "row_stride": 3968,
+    "out_width": 640,
+    "out_height": 640,
+    "slots": 3,
+    "slot_bytes": 2859008,
+    "delay_cycles": 30000000,
+    "library": "/probe/evidence/traced-nodes/shared_rgb_probe.so"
+  },
+  "kind": "synthetic decoded RGB shared-memory CUDA graph probe",
+  "production_models_tested": false,
+  "gstreamer_mapping_tested": false,
+  "preprocessing": "FP32 bilinear align_corners=False letterbox + channel normalization",
+  "graph": "GPU delay then output = input * 1.25 + 0.125",
+  "source_row_stride": 3904,
+  "parent_host_address": 279118849318912,
+  "explicit_full_frame_delivery_copies": 24,
+  "submitted": 24,
+  "status": "passed",
+  "mapping": {
+    "type": "ready",
+    "attributes": {
+      "can_map_host_memory": 1,
+      "host_register_supported": 1,
+      "pageable_memory_access": 1,
+      "pageable_memory_access_uses_host_page_tables": 1,
+      "can_use_host_pointer_for_registered_mem": 1,
+      "concurrent_managed_access": 1
+    },
+    "worker_host_address": 262417541046272,
+    "worker_device_address": 262417541046272,
+    "mapped_bytes": 8577024,
+    "mapping": "cudaHostRegisterMapped + cudaHostGetDevicePointer",
+    "torch_version": "2.10.0a0+b4e4ee81d3.nv25.12",
+    "gpu": "NVIDIA GB10",
+    "fixed_input_address": 13738442752,
+    "fixed_output_address": 13938393088
+  },
+  "drain": {
+    "type": "drained",
+    "completed": 24,
+    "peak_inflight": 4,
+    "rgb_releases_before_inference_completion": 7,
+    "max_absolute_output_error": 7.152557373046875e-07,
+    "generation_counts": [
+      8,
+      8,
+      8
+    ],
+    "mapping_unregistered": true
+  },
+  "worker_exitcode": 0,
+  "unique_completed": 24,
+  "terminal_records": 24,
+  "slots_outstanding": 0,
+  "metadata_max_pickle_bytes": 127,
+  "rgb_bytes_per_frame": 2764800,
+  "parent_mapping_closed_and_unlinked": true
+}

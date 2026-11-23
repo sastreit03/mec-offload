@@ -23,6 +23,7 @@ from mec_contracts.rtp import Descriptor
 from mec_server.config import load
 from mec_server.engine import Engine, Video
 from mec_server.tracking import Tracker
+from mec_server.shared_rgb import RGBPool
 
 
 def media_frames(path, count):
@@ -112,7 +113,13 @@ async def trial(args):
                 tracker.update = track
                 video.tracker = tracker
             handoff = engine.receiver_handoff(vid)
-            video.receiver = SimpleNamespace(post=handoff, tick=lambda: None, close=lambda: None)
+            pool = RGBPool(cfg.shared_rgb_slots, cfg.decoded_max_bytes) if args.shared_rgb else None
+            video.receiver = SimpleNamespace(post=handoff, tick=lambda: None,
+                                              close=pool.close if pool else lambda: None)
+            if pool:
+                pool.allocate()  # Match Receiver.start: reserve before media begins.
+                video.receiver.rgb_pool = pool
+            await engine.prepare_receiver_rgb(video, video.receiver)
             engine.videos[vid] = video
             user.active_video = vid
             videos.append(video)
@@ -126,7 +133,10 @@ async def trial(args):
                 handoff("descriptor", dict(descriptor=descriptor, first_packet_ns=now))
                 handoff("progress", dict(descriptor=descriptor, unique_bytes=100,
                                          complete=True, received_ns=time.monotonic_ns()))
-                handoff("decoded", dict(descriptor=descriptor, rgb=frames[fid],
+                rgb = video.receiver.rgb_pool.copy(frames[fid]) if args.shared_rgb else frames[fid]
+                if rgb is None:
+                    raise RuntimeError("shared RGB pool exhausted in trial")
+                handoff("decoded", dict(descriptor=descriptor, rgb=rgb,
                                         decoded_ns=time.monotonic_ns()))
 
         began = time.monotonic()
@@ -160,6 +170,14 @@ async def trial(args):
     errors = [e for e in events if e.get("type") in
               ("receiver_event_error", "background_error", "tracker_error", "discarded_gpu_completion")]
     report = dict(kind="isolated decoded-input virtual-UE trial", backend=args.backend,
+                  shared_rgb=args.shared_rgb,
+                  cuda_graph_jobs=sum(bool(j["stage_times"].get("cuda_graph")) for j in jobs),
+                  direct_rgb_jobs=sum(bool(j["stage_times"].get("shared_rgb_direct")) for j in jobs),
+                  worker_ready=engine.workers.ready,
+                  rgb_registrations=[e for e in events if e.get("type") == "rgb_registered"],
+                  shared_rgb_pools={v.vid: v.receiver.rgb_pool.stats() for v in videos} if args.shared_rgb else {},
+                  outstanding_input_leases=len(engine.workers.input_leases),
+                  ipc_max_serialized_bytes=max((j["stage_times"].get("ipc_serialized_bytes", 0) for j in jobs), default=0),
                   radio_and_decoder_tested=False, media=str(args.media), frames_per_ue=args.frames,
                   fps_per_ue=cfg.fps, models=selections, submitted=len(submitted),
                   terminal_records=len(jobs), outcomes=dict(Counter(j["outcome"] for j in jobs)),
@@ -173,11 +191,18 @@ async def trial(args):
                   worker_exitcodes={a: p.exitcode for a, p in engine.workers.processes.items()},
                   worker_drain_clean=all(p.exitcode == 0 and not p.is_alive() for p in engine.workers.processes.values()),
                   scenario_error=engine.scenario_error, errors=errors)
+    if args.shared_rgb and args.backend == "torchscript":
+        first_decoded = min(j["stage_times"]["decoded_monotonic_ns"] for j in jobs)
+        report["registration_complete_before_frames"] = (
+            len(report["rgb_registrations"]) == len(videos)
+            and all(e["monotonic_ns"] < first_decoded for e in report["rgb_registrations"]))
+        assert report["registration_complete_before_frames"]
     report["model_sha256"] = {cid: hashlib.sha256((Path(cfg.weights_dir) / engine.candidates[cid]["artifact"]).read_bytes()).hexdigest()
                               for cid in set(selections)} if args.backend != "mock" else {}
     if args.reference_source and args.backend != "mock":
-        spec = importlib.util.spec_from_file_location("baseline_workers", args.reference_source)
+        spec = importlib.util.spec_from_file_location("mec_server.baseline_workers", args.reference_source)
         reference = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = reference
         spec.loader.exec_module(reference)
         comparisons = {}
         for video, cid in zip(videos, selections):
@@ -203,6 +228,10 @@ async def trial(args):
     assert not any(before_close.values())
     assert report["outcomes"] == {"completed": len(submitted)}
     assert not engine.scenario_error and not errors
+    assert not report["outstanding_input_leases"]
+    if args.shared_rgb:
+        assert all(not p["in_use"] and not p["mapped"] and not p["exhaustions"]
+                   for p in report["shared_rgb_pools"].values())
     assert all(not q["overflow_notifications"] for q in report["receiver_queues"].values())
     if "baseline_comparisons" in report:
         assert all(x["exact_payload_match"] for rows in report["baseline_comparisons"].values() for x in rows)
@@ -216,5 +245,6 @@ if __name__ == "__main__":
     parser.add_argument("--run-id", default="queue-trial-" + time.strftime("%Y%m%d-%H%M%S"))
     parser.add_argument("--frames", type=int, default=12)
     parser.add_argument("--backend", choices=("torchscript", "mock"), default="torchscript")
+    parser.add_argument("--shared-rgb", action="store_true", help="Use bounded shared RGB slots and metadata-only IPC")
     parser.add_argument("--reference-source", help="Pre-update workers.py for identical-input output comparison")
     asyncio.run(trial(parser.parse_args()))

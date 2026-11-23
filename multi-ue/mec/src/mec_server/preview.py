@@ -2,6 +2,7 @@
 import asyncio
 import time
 from dataclasses import dataclass
+from .shared_rgb import RGBLease, release_rgb
 
 
 @dataclass
@@ -53,16 +54,36 @@ class Preview:
             self.channels.pop(alias, None)
             channel.task.cancel()
             await asyncio.gather(channel.task, return_exceptions=True)
-            channel.pending = channel.jpeg = None
+            self.release_pending(channel)
+            channel.jpeg = None
 
     def offer(self, uid, video_id, frame_id, rgb):
         ue = self.engine.ues.get(uid)
         channel = self.channels.get(ue.alias) if ue else None
         if channel and ue.connected and ue.active_video == video_id:
             # Keep only a reference to the newest decoded image. Never mutate it.
-            channel.pending = (video_id, frame_id, rgb)
+            self.release_pending(channel)
+            channel.pending = (video_id, frame_id, rgb.retain() if isinstance(rgb, RGBLease) else rgb)
+
+    @staticmethod
+    def release_pending(channel):
+        if channel.pending is not None:
+            release_rgb(channel.pending[2])
+            channel.pending = None
+
+    def encode_owned(self, rgb):
+        try:
+            return self.encode(rgb.array() if isinstance(rgb, RGBLease) else rgb)
+        finally:
+            release_rgb(rgb)
 
     async def run(self, alias, channel):
+        try:
+            await self._run(alias, channel)
+        finally:
+            self.release_pending(channel)
+
+    async def _run(self, alias, channel):
         while True:
             started = time.monotonic()
             current = self.video(alias)
@@ -73,7 +94,14 @@ class Preview:
             pending, channel.pending = channel.pending, None
             if pending is not None and pending[0] == current:
                 try:
-                    jpeg = await asyncio.to_thread(self.encode, pending[2])
+                    encoding = asyncio.create_task(asyncio.to_thread(self.encode_owned, pending[2]))
+                    try:
+                        jpeg = await asyncio.shield(encoding)
+                    except asyncio.CancelledError:
+                        # Cancelling an asyncio waiter does not stop a JPEG thread.
+                        # Keep its lease until encoding actually exits.
+                        await asyncio.gather(encoding, return_exceptions=True)
+                        raise
                     if self.video(alias) == current:
                         channel.jpeg = jpeg
                         channel.video_id, channel.frame_id = pending[:2]
@@ -81,6 +109,8 @@ class Preview:
                         channel.error = None
                 except Exception as exc:
                     channel.error = str(exc)
+            elif pending is not None:
+                release_rgb(pending[2])
             await asyncio.sleep(max(0, 0.2 - (time.monotonic() - started)))
 
     def snapshot(self):
@@ -93,4 +123,6 @@ class Preview:
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
+        for channel in self.channels.values():
+            self.release_pending(channel)
         self.channels.clear()

@@ -4,6 +4,8 @@ import socket
 import threading
 import time
 from collections import OrderedDict
+from contextlib import contextmanager
+from .shared_rgb import RGBPool, release_rgb
 from mec_contracts.rtp import parse_packet, Assembly
 
 
@@ -26,6 +28,8 @@ class Receiver:
         self.packet_evidence = OrderedDict()
         self.decode_pending = OrderedDict()
         self.sequence_frames = OrderedDict()
+        self.rgb_pool = RGBPool(getattr(cfg, "shared_rgb_slots", 32),
+                                getattr(cfg, "decoded_max_bytes", 8*1024*1024))
 
     def _decode_failure(self, fid, reason, **evidence):
         item = self.decode_pending.pop(fid, None)
@@ -115,6 +119,7 @@ class Receiver:
         from gi.repository import Gst, GstVideo
 
         Gst.init(None)
+        self.rgb_pool.allocate()
         self.Gst = Gst
         self.GstVideo = GstVideo
         self.description = (
@@ -167,7 +172,14 @@ class Receiver:
     # Inspect the wire descriptor before jitter buffering, depayloading, and decoding.
     def _packet(self, pad, info):
         buf = info.get_buffer()
-        raw = buf.extract_dup(0, buf.get_size())
+        try:
+            with self._mapped(buf) as raw:
+                return self._packet_mapped(buf, raw)
+        except (ValueError, KeyError, TypeError) as ex:
+            self.post("media_error", dict(video_id=self.video_id, reason=str(ex)))
+            return self.Gst.PadProbeReturn.DROP
+
+    def _packet_mapped(self, buf, raw):
         try:
             p = parse_packet(raw)
             d = p.descriptor
@@ -243,9 +255,8 @@ class Receiver:
         if info.type & self.Gst.PadProbeType.BUFFER:
             buf = info.get_buffer()
             try:
-                raw = buf.extract_dup(0, buf.get_size())
-                p = parse_packet(raw)
-                with self.lock:
+                with self._mapped(buf) as raw, self.lock:
+                    p = parse_packet(raw)
                     self._observe_packet("jitter_output", raw, p.descriptor, buf.pts)
                     previous = self.pts.get(buf.pts)
                     if self.diagnostics and previous and previous.frame_id != p.descriptor.frame_id:
@@ -259,6 +270,19 @@ class Receiver:
             except ValueError:
                 pass
         return self.Gst.PadProbeReturn.OK
+
+    @contextmanager
+    def _mapped(self, buf):
+        ok, mapping = buf.map(self.Gst.MapFlags.READ)
+        if not ok:
+            raise ValueError("GStreamer read mapping failed")
+        try:
+            raw = mapping.data
+            if not isinstance(raw, memoryview):
+                raise ValueError("GStreamer binding must expose borrowed memoryview")
+            yield raw
+        finally:
+            buf.unmap(mapping)
 
     # Copy decoded storage before returning the sample to GStreamer.
     def _sample(self, sink):
@@ -284,16 +308,27 @@ class Receiver:
             return self.Gst.FlowReturn.OK
         import numpy as np
 
-        raw = buf.extract_dup(0, size)
-        rgb = (
-            np.frombuffer(raw, dtype=np.uint8)
-            .reshape(info.height, info.stride[0])[:, : info.width * 3]
-            .reshape(info.height, info.width, 3)
-            .copy()
-        )
-        self.post(
-            "decoded", dict(descriptor=d, rgb=rgb, decoded_ns=time.monotonic_ns())
-        )
+        lease = None
+        try:
+            with self._mapped(buf) as raw:
+                # GstVideoMeta can override caps-derived stride and offset.
+                meta = self.GstVideo.buffer_get_video_meta(buf)
+                stride = meta.stride[0] if meta else info.stride[0]
+                offset = meta.offset[0] if meta else info.offset[0]
+                rgb = np.ndarray((info.height, info.width, 3), np.uint8,
+                                 buffer=raw, offset=offset, strides=(stride, 3, 1))
+                lease = self.rgb_pool.copy(rgb)
+                del rgb
+            if lease is None:
+                self.post("frame_failure", dict(descriptor=d, reason="shared_rgb_pool_exhausted"))
+            else:
+                self.post("decoded", dict(descriptor=d, rgb=lease, decoded_ns=time.monotonic_ns()))
+                lease = None  # Receiver handoff now owns the lease.
+        except Exception as ex:
+            self.post("frame_failure", dict(descriptor=d, reason="decoded_mapping_failed"))
+            self.post("media_error", dict(video_id=self.video_id, reason=repr(ex)))
+        finally:
+            release_rgb(lease)
         self._decoded_frame(d)
         return self.Gst.FlowReturn.OK
 
@@ -345,6 +380,7 @@ class Receiver:
             for item in self.packet_evidence.values():
                 self._emit_packet_evidence(item)
             self.packet_evidence.clear()
+        self.rgb_pool.close()
 
 
 class MockReceiver:

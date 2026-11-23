@@ -87,7 +87,7 @@ class TimedInputQueue(mq.Queue):
                             reader_close()
                             writer_close()
                             return
-                        key = tuple(obj["job_id"]) if isinstance(obj, dict) else None
+                        key = tuple(obj["job_id"]) if isinstance(obj, dict) and "job_id" in obj else None
                         times = {}
                         stamp(times, "ipc_serialize_begin")
                         data = mq._ForkingPickler.dumps(obj)

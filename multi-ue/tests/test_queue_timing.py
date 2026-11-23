@@ -74,3 +74,16 @@ def test_worker_returns_correlated_queue_timings(monkeypatch):
         assert times["ipc_deserialize_end_ns"] <= times["worker_get_end_ns"]
     finally:
         workers.close()
+
+
+def test_timed_queue_accepts_registration_control_without_frame_identity():
+    incoming = TimedInputQueue(ctx=mp.get_context("spawn"))
+    try:
+        incoming.put(dict(command="prepare_rgb", region=dict(region="example", size=4096)))
+        incoming.put(None)
+        assert incoming.get(timeout=5)["command"] == "prepare_rgb"
+        assert incoming.get(timeout=5) is None
+        assert not incoming.traces
+    finally:
+        incoming.close()
+        incoming.join_thread()

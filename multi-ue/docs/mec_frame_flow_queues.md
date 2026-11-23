@@ -7,13 +7,158 @@ The implementation below supersedes the historical audit preserved after this se
 | Stage | Current behavior |
 |---|---|
 | Receiver publication | Each receiver owns one FIFO. Defaults are `handoff_notifications: 1024` and `handoff_decoded_frames: 10` (the decoded entries count toward both). The first pending item schedules one thread-safe wakeup. The loop serves up to 32 items, then schedules its own continuation if necessary. |
-| Accounting | The same loop applies descriptor, byte progress, and decoded notifications in order. GStreamer still copies the RGB picture before publishing its reference. Receiver overflow records lost notifications and affected frame identities separately from the full FIFO. Collection overflow invalidates the attempt. Snapshots include receiver depths, peaks, and overflow counts. |
+| Accounting | The same loop applies descriptor, byte progress, and decoded notifications in order. The receiver maps the Gst buffer and makes one visible-row RGB copy into a bounded shared-memory slot before publishing a local lease. Receiver overflow records lost notifications and affected frame identities separately from the full FIFO. Collection overflow invalidates the attempt. Snapshots include receiver depths, peaks, and overflow counts. |
 | Engine dispatch | After validation and the existing priority decision, `Engine.decoded()` immediately submits an eligible job to its application. The legacy per-video pending limits in existing YAML are accepted for compatibility. Snapshots and resource reports report zero pending scheduler entries and enumerate submitted jobs in `inflight`. |
-| Process boundary | One multiprocessing input queue per application carries the RGB array and job metadata. The queue has no configured job-count cap. Health, configured priority, candidate quarantine, deadlines, and collection policy still apply. Successful IPC acceptance installs the frame in `self.inflight`. |
-| GPU launch | A single launcher per application dequeues jobs and issues each on its selected CUDA stream. It stages RGB in pinned host memory, requests an asynchronous upload, preprocesses, runs the model, enqueues GPU output transformations and asynchronous result readback, and records a final event. |
+| Process boundary | One multiprocessing input queue per application carries only the shared RGB descriptor and job metadata for receiver frames. The queue has no configured job-count cap, but each receiver has a bounded pool (`shared_rgb_slots: 32` by default). Offline callers may still pass NumPy arrays. Health, configured priority, candidate quarantine, deadlines, and collection policy still apply. Successful IPC acceptance installs the frame in `self.inflight`. |
+| GPU launch | One CPU thread per application dequeues jobs and submits work to the selected CUDA stream. GPU preprocessing reads the registered shared RGB slot and writes directly into that model/priority graph’s fixed input tensor. The worker replays the captured model, enqueues output transformations and result readback, and records a final event. |
 | Completion | An observer checks final events across streams. CPU workers format ready results and publish them with job identity and timing. Pinned buffers remain alive through completion. Tracker reordering and result delivery continue on their existing paths. A dead worker's outstanding jobs are reconciled on the engine loop. |
 
 At saturation, a backlog can accumulate before dequeue, on a CUDA stream, or during result handling. The launcher can issue B before same-stream A finishes. Physical memory and driver capacity still constrain throughput.
+
+### Shared RGB ownership and CUDA graphs
+
+`shared_rgb.py` owns Linux POSIX shared-memory regions. Each receiver reserves, during setup before media is enabled, a pool of `shared_rgb_slots` slots, each allowing `decoded_max_bytes`
+visible pixel bytes plus a generation header and page alignment. Backing is
+reserved before publication so a full `/dev/shm` raises an allocation error
+instead of crashing on a later pixel write. With the defaults this reserves
+about 256 MiB per receiver at setup. Allocation is outside the frame callback. Use the existing
+`--ipc=host` container setting or provision an appropriately sized `/dev/shm`.
+
+A descriptor carries region name, slot, byte offset, generation, HWC shape,
+row stride and slot capacity. The worker maps that region at its own address
+and validates bounds and the generation stored in the slot header. Pixels are
+never pickled on the receiver path. GStreamer bindings must expose borrowed
+`memoryview` data; there is no silent whole-frame-copy fallback. Visible rows
+respect caps stride/offset and any `GstVideoMeta` override. RTP packet callbacks
+also use mapped views: assembly retains payload bytes only on first receipt,
+while duplicate-conflict checking and PTS-to-descriptor matching are preserved.
+
+The handoff and engine consume their local leases on overflow, rejection or
+successful transfer. `Workers` retains a lease independently of terminal frame
+accounting until it receives consumption/completion acknowledgement or confirms
+process exit. Deadline expiry alone never frees a worker-owned slot. Preview
+holds another lease; overwriting a pending preview releases it, and cancellation
+waits for any running JPEG encoder before freeing its pixels. Receiver closure
+stops new allocations and unlinks the pool only after its final lease is released.
+Snapshots include `shared_rgb_pools` occupancy, peaks, copies and exhaustion counts.
+
+**GPU preparation now uses direct mapped reads and CUDA graphs** (`cuda_graphs: true`, the default).
+Each worker registers the receiver's POSIX mapping with CUDA and obtains its GPU
+address. `shared_preprocess.cu` reads RGB there and writes resized, padded and
+normalized FP16 NCHW pixels directly into the fixed model-input tensor. There is
+no pinned RGB staging copy, standalone RGB upload, or intermediate input tensor.
+The preprocessing kernel is submitted before graph replay on the same stream;
+it stays outside the graph so each job may use a different shared slot address.
+
+Graphs are captured before worker readiness, once per model and priority, with
+independent fixed inputs, outputs and private graph memory pools. On one stream,
+preprocessing, replay, output transformations and the per-job result copy finish
+before a later frame can overwrite that graph's storage. Separate priorities have
+separate graph storage. The CPU submission thread can enqueue later work while
+GPU work is still running. This does not make same-stream GPU operations concurrent.
+
+The observer releases the worker's RGB lease only after the event immediately
+following preprocessing completes. Inference can continue using the independent
+model input after that release; preview leases still prevent receiver reuse.
+Shutdown drains GPU readers and results before unregistering mappings. Exceptional
+CUDA failures never justify early slot reuse: a failed synchronization forces
+worker exit, and the parent releases leases only after confirming that exit.
+Registration now happens during receiver preparation, before the UE receives
+admission/transport readiness. After `Receiver.start()` reserves the shared region,
+the engine sends its name and size to the application worker and asynchronously
+waits for `rgb_prepared`. This also applies to prepared successors. The control
+loop continues running while it waits; no synthetic frame or RGB copy is needed.
+Registration failure, worker exit or the 30-second preparation timeout prevents
+admission. Cancellation/timeout queues cleanup behind the preparation command.
+
+Prepared regions are protected from cache eviction until video finalization or
+setup rejection. Release unregisters immediately only if there are no GPU readers;
+otherwise it waits for their preprocessing events. Worker shutdown drains readers
+and unregisters all remaining regions. The worker cache is bounded by twice
+`max_videos`, matching receiver-port capacity for active/draining videos and
+prepared successors. Only idle, unprepared entries can be evicted. Direct adapter
+callers without receiver preparation retain lazy registration for compatibility.
+
+This moves the registration cost into setup rather than eliminating it. Preparing
+a new receiver while an application is already busy can delay that application's
+CPU submission thread during the registration command; it does not wait for
+another application's results. `rgb_registered` events record setup duration.
+In the isolated 48-frame trial, registration took 56–62 ms per region before any
+frames were published. Including all first frames, decoded-to-model-submit p95/p99
+was 3.87/4.23 ms; the slowest first frame was 4.24 ms. See
+`tests/evidence/20261123-cuda-registration/` for the separate preparation results.
+
+The exported YOLO CPU `arange` batch indices are relocated to CUDA in the frozen
+TorchScript graph before its first execution. Otherwise advanced indexing performs
+an implicit CPU-to-GPU transfer forbidden during capture. Artifact files and
+weights are unchanged. Capture failures fail worker startup; there is no silent
+eager fallback. `cuda_graphs: false` explicitly restores the previous pinned RGB
+staging/upload and eager model path. Offline array callers also retain that path.
+
+### CUDA graph acceptance and build
+
+On DGX Spark, from `multi-ue`, build and run the isolated tests:
+
+```bash
+docker build -f mec/docker/Dockerfile.mec -t multi-ue-mec:cuda-graphs-acceptance .
+docker run --rm --gpus all --shm-size=2g -e MEC_TEST_CUDA=1 \
+  -v "$PWD/tests:/work/multi-ue/tests:ro" multi-ue-mec:cuda-graphs-acceptance \
+  python -m pytest -q tests/test_cuda_graphs.py tests/test_graph_lifetime.py tests/test_rgb_preparation.py \
+  tests/test_shared_rgb.py tests/test_frame_handoff.py tests/test_queue_timing.py
+```
+
+The native helper is compiled in the image for GB10 (`CUDA_RGB_ARCH=sm_121`).
+The CPU control-flow tests can run without CUDA by omitting `MEC_TEST_CUDA=1`;
+GStreamer tests still require the image's GI dependencies. For the full isolated
+production trial and Nsight trace use `bash tests/run_cuda_graph_acceptance.sh
+NEW_EVIDENCE_DIRECTORY`. This does not start radio/core containers. Tests cover
+bit-exact preprocessing, distinct model/priority input storage, output preservation
+across replays, shared-slot reuse before inference completion, and CPU-index capture.
+Production evidence is under `tests/evidence/20261123-cuda-graphs/`.
+
+Pool exhaustion reports `shared_rgb_pool_exhausted` without blocking GStreamer;
+in collection mode it invalidates the attempt. Mapping/allocation failures report
+`decoded_mapping_failed`. Generation checks prevent stale descriptors or release
+acknowledgements from affecting a reused slot.
+
+Acceptance commands, using the project environment (GStreamer tests require the
+MEC image's system GI bindings):
+
+```bash
+python -m pytest -q tests/test_shared_rgb.py tests/test_frame_handoff.py tests/test_queue_timing.py
+MEC_TEST_CUDA=1 MEC_TRACE_HANDOFF=1 python -m pytest -q tests/test_shared_rgb.py tests/test_frame_handoff.py tests/test_queue_timing.py
+MEC_TRACE_HANDOFF=1 python tests/run_production_handoff_trial.py --shared-rgb \
+  --media datasets/profile.mov --weights weights --output runs \
+  --run-id shared-rgb-production --frames 12
+```
+
+The CUDA acceptance test compares shared-slot input to ordinary array input and
+reuses the slot before reading the model result. The trial reports pool drain,
+metadata IPC size, terminal outcomes, tracking order and production-model latency.
+Evidence is in `tests/evidence/20261123-shared-memory/integration/`.
+The isolated image for this stage is `multi-ue-mec:shared-rgb-acceptance`:
+
+```bash
+# On the DGX Spark, from multi-ue:
+docker build -f mec/docker/Dockerfile.mec -t multi-ue-mec:shared-rgb-acceptance .
+docker run --rm --gpus all --ipc=host -e MEC_TEST_CUDA=1 -e MEC_TRACE_HANDOFF=1 \
+  -v "$PWD/tests:/work/multi-ue/tests:ro" multi-ue-mec:shared-rgb-acceptance \
+  python -m pytest -q tests/test_shared_rgb.py tests/test_frame_handoff.py tests/test_queue_timing.py
+```
+
+The baseline image and running-service configuration are not changed by this build.
+
+Final integration acceptance: 65 tests passed, including actual Gst maps and opt-in
+CUDA checks. Two existing dashboard tests were excluded for the previously known
+development-config FPS/GoP mismatch. The four-virtual-UE production run completed
+48/48 frames with exactly one terminal result each; receiver peaks were three
+notifications and one decoded frame, with zero overflows. Tracking remained in
+frame order and every worker exited zero; all shared pools drained and unlinked.
+Decoded-to-model-submit p95/p99 was 40.21/41.45 ms. All eight first/last-frame output
+comparisons against the preceding implementation matched exactly. The largest
+serialized job was 1,109 bytes, including metadata and optional timing fields.
+The separate mock run also completed 48/48 frames; it is not a GPU result.
+
 
 ### Timing and operational acceptance
 

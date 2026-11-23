@@ -1,0 +1,79 @@
+{
+  "status": "passed",
+  "execution_host": "spark-9d60 (DGX Spark, 192.168.71.130)",
+  "scope": "Standalone hardware mapping and buffer-lifetime experiment; production source unchanged.",
+  "runs": {
+    "plain": {
+      "status": "passed",
+      "frames": 24,
+      "peak_inflight": 4,
+      "slot_generations": [
+        8,
+        8,
+        8
+      ],
+      "early_rgb_releases": 7
+    },
+    "traced": {
+      "status": "passed",
+      "frames": 24,
+      "peak_inflight": 4,
+      "slot_generations": [
+        8,
+        8,
+        8
+      ],
+      "early_rgb_releases": 7
+    },
+    "traced-nodes": {
+      "status": "passed",
+      "frames": 24,
+      "peak_inflight": 4,
+      "slot_generations": [
+        8,
+        8,
+        8
+      ],
+      "early_rgb_releases": 7
+    }
+  },
+  "verified": [
+    "Spawned worker registers the same POSIX shared backing at its own virtual address with cudaHostRegisterMapped.",
+    "GPU validates all visible RGB bytes and row padding after CPU publication, including repeated slot generations.",
+    "One explicit np.copyto publishes each synthetic decoded frame; queues carry only descriptors (127 bytes maximum pickle).",
+    "GPU preprocessing reads mapped shared RGB directly and writes fixed graph input.",
+    "One stream orders preprocessing, graph replay, and output preservation.",
+    "Each frame completes exactly once; all slot leases released, worker exits zero, registration removed and shared mapping unlinked."
+  ],
+  "cuda_trace": {
+    "host_to_device_bytes": 0,
+    "cpu_submissions_during_earlier_gpu_graph": 17,
+    "note": "CPU/GPU overlap, not simultaneous preprocessing and inference kernels. Artificial graph delay makes this observable."
+  },
+  "limitations": [
+    "Synthetic source substitutes for Gst; borrowed Gst mapping and decoder stride handling remain to validate.",
+    "Small affine graph with artificial GPU delay, not production TorchScript models; no production speedup claimed.",
+    "FP32 reference preprocessing, not production FP16 numerical-equivalence acceptance.",
+    "No preview consumer, cancellation, worker-failure recovery, or cross-container shared-memory test.",
+    "No HtoD API copies in CUDA trace does not mean no DRAM/cache traffic.",
+    "Three successful 24-frame runs; this is not a long-duration stress test."
+  ],
+  "reproduce_on_dgx_from_repo_root": "bash multi-ue/tests/run_shared_memory_probe.sh /tmp/mec-shared-memory-rerun",
+  "actual_execution": {
+    "stage": "/tmp/mec-shared-memory-20261123",
+    "image": "multi-ue-mec:queue-acceptance",
+    "docker_flags": [
+      "--rm",
+      "--gpus",
+      "all",
+      "--ipc=host"
+    ],
+    "plain": "python /probe/probe_shared_memory_cuda.py --evidence /probe/evidence/plain",
+    "node_trace": "nsys profile --trace=cuda,nvtx --cuda-graph-trace=node --sample=none --cpuctxsw=none --force-overwrite=true -o /probe/evidence/shared_memory_nodes python /probe/probe_shared_memory_cuda.py --evidence /probe/evidence/traced-nodes"
+  },
+  "scripts_sha256": {
+    "probe_shared_memory_cuda.py": "5f082e436e7b2e12fec919b2535349607c21592fe76d2d91e825b370419ffc66",
+    "report_shared_memory_trace.py": "983d0a6740e5e1f946994488be3afcfa9e5a7ae7359fe87d19cdd762188d8f6c",
+    "run_shared_memory_probe.sh": "f98bccbfc4816a8928c07de72957b902a74051e3c9765cce16a84845d198b772"
+  }
+}

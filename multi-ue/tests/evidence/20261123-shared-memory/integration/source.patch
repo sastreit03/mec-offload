@@ -1,0 +1,1172 @@
+diff --git a/multi-ue/contracts/python/mec_contracts/rtp.py b/multi-ue/contracts/python/mec_contracts/rtp.py
+index 3738259..1c1cd18 100644
+--- a/multi-ue/contracts/python/mec_contracts/rtp.py
++++ b/multi-ue/contracts/python/mec_contracts/rtp.py
+@@ -253,7 +253,8 @@ class Assembly:
+             raise ValueError("only single NAL and FU-A supported")
+         if self.unique_bytes + amount > self.descriptor.encoded_bytes:
+             raise ValueError("payload exceeds advertised AU size")
+-        self.packets[p.sequence] = data
++        # A mapped Gst payload is borrowed; retain bytes only on first receipt.
++        self.packets[p.sequence] = bytes(data)
+         self.unique_bytes += amount
+         if p.marker:
+             self.marker = p.sequence
+diff --git a/multi-ue/mec/src/mec_server/config.py b/multi-ue/mec/src/mec_server/config.py
+index 0e6bee4..3d64fa5 100644
+--- a/multi-ue/mec/src/mec_server/config.py
++++ b/multi-ue/mec/src/mec_server/config.py
+@@ -61,6 +61,7 @@ class Settings(BaseModel):
+     max_videos: int = 30
+     handoff_notifications: int = Field(default=1024, gt=0)
+     handoff_decoded_frames: int = Field(default=10, gt=0)
++    shared_rgb_slots: int = Field(default=32, gt=0)
+     # Legacy YAML keys accepted for older run configurations.
+     pending_frames: int = 16
+     pending_bytes_per_video: int = 64 * 1024 * 1024
+diff --git a/multi-ue/mec/src/mec_server/engine.py b/multi-ue/mec/src/mec_server/engine.py
+index 695ef0a..cf0c660 100644
+--- a/multi-ue/mec/src/mec_server/engine.py
++++ b/multi-ue/mec/src/mec_server/engine.py
+@@ -7,6 +7,7 @@ import secrets
+ import time
+ import uuid
+ from .handoff import ReceiverHandoff
++from .shared_rgb import release_rgb
+ from dataclasses import dataclass, field
+ from pathlib import Path
+ from .config import collection_candidates, qualified
+@@ -813,6 +814,10 @@ class Engine:
+                 )
+             elif kind == "frame_failure":
+                 d = data["descriptor"]
++                if self.collection_mode and data["reason"] in (
++                    "shared_rgb_pool_exhausted", "decoded_mapping_failed"
++                ):
++                    self.invalidate_scenario(data["reason"], video_id=d.video_id)
+                 self.fail_frame(d.video_id, d.frame_id, data["reason"])
+             else:
+                 self.record.event(kind, **data)
+@@ -1492,6 +1497,8 @@ class Engine:
+             queue_contract=dict(
+                 max_pending_frames=self.cfg.handoff_decoded_frames,
+                 max_notifications=self.cfg.handoff_notifications,
++                shared_rgb_slots=self.cfg.shared_rgb_slots,
++                shared_rgb_max_pixel_bytes=self.cfg.shared_rgb_slots * self.cfg.decoded_max_bytes,
+                 max_pending_bytes=self.cfg.decoded_max_bytes * self.cfg.handoff_decoded_frames,
+                 mandatory_drops=[]
+                 if self.collection_mode
+@@ -1499,6 +1506,7 @@ class Engine:
+                     "nonpositive_slack",
+                     "deadline_expired",
+                     "receiver_handoff_overflow",
++                    "shared_rgb_pool_exhausted",
+                     "session_suspended",
+                     "transport_loss",
+                     "tracking_cutoff",
+@@ -2115,6 +2123,15 @@ class Engine:
+ 
+     # Decide and submit on the engine loop in the same receiver callback.
+     def decoded(self, d, rgb, decoded_ns):
++        try:
++            return self._decoded(d, rgb, decoded_ns)
++        finally:
++            # Workers and preview retain independent leases before returning.
++            release_rgb(rgb)
++
++    def _decoded(self, d, rgb, decoded_ns):
++        if getattr(self, "closed", False):
++            return
+         entered_ns = time.monotonic_ns()
+         if self.collection_mode and self.scenario_error:
+             return
+@@ -2209,7 +2226,7 @@ class Engine:
+         self.inflight[key] = dict(candidate_id=f.config["id"], queue_ns=f.queue_ns,
+                                   submitted_ns=submitted, application=v.app, priority=f.priority)
+         f.state = "PROCESSING"
+-        f.rgb = None  # The IPC queue now holds the RGB reference.
++        f.rgb = None  # Workers owns the input lease until consumption or process exit.
+ 
+     def fail_frame(self, vid, fid, reason):
+         f = self.frames.get((vid, fid))
+@@ -2878,6 +2895,9 @@ class Engine:
+                 queues={
+                     f"{a}/{p}": 0 for a in self.cfg.applications for p in self.cfg.priority_streams
+                 },
++                shared_rgb_pools={vid: v.receiver.rgb_pool.stats()
++                                  for vid, v in self.videos.items()
++                                  if hasattr(v.receiver, "rgb_pool")},
+                 receiver_handoffs={vid: v.receiver.post.stats() for vid, v in self.videos.items()
+                                    if isinstance(getattr(v.receiver, "post", None), ReceiverHandoff)},
+                 timing_histories={
+@@ -3099,6 +3119,13 @@ class Engine:
+         for v in self.videos.values():
+             if v.state not in TERMINAL:
+                 self.close_input(v, "server_shutdown")
++        # Stop producers and drain their already-posted callbacks before closing
++        # IPC. Closing a receiver pool waits for its worker/preview leases.
++        await asyncio.gather(*(asyncio.to_thread(v.receiver.close)
++                               for v in self.videos.values() if v.receiver))
++        while any(isinstance(getattr(v.receiver, "post", None), ReceiverHandoff)
++                  and v.receiver.post.scheduled for v in self.videos.values()):
++            await asyncio.sleep(0)
+         await asyncio.to_thread(self.workers.close)
+         until = time.monotonic() + 0.5
+         while self.inflight and time.monotonic() < until:
+diff --git a/multi-ue/mec/src/mec_server/handoff.py b/multi-ue/mec/src/mec_server/handoff.py
+index e3b4c51..9ae5658 100644
+--- a/multi-ue/mec/src/mec_server/handoff.py
++++ b/multi-ue/mec/src/mec_server/handoff.py
+@@ -2,6 +2,7 @@
+ 
+ from collections import deque
+ from threading import Lock
++from .shared_rgb import release_rgb
+ 
+ 
+ class ReceiverHandoff:
+@@ -26,6 +27,7 @@ class ReceiverHandoff:
+             if len(self.items) >= self.notifications or (
+                 kind == "decoded" and self.decoded >= self.pictures
+             ):
++                release_rgb(data.get("rgb"))
+                 self.dropped += 1
+                 self.lost_count += 1
+                 # Report even if the FIFO cannot accept an error record. Keep
+diff --git a/multi-ue/mec/src/mec_server/media.py b/multi-ue/mec/src/mec_server/media.py
+index fc2b4b7..3f980c1 100644
+--- a/multi-ue/mec/src/mec_server/media.py
++++ b/multi-ue/mec/src/mec_server/media.py
+@@ -4,6 +4,8 @@ import socket
+ import threading
+ import time
+ from collections import OrderedDict
++from contextlib import contextmanager
++from .shared_rgb import RGBPool, release_rgb
+ from mec_contracts.rtp import parse_packet, Assembly
+ 
+ 
+@@ -26,6 +28,8 @@ class Receiver:
+         self.packet_evidence = OrderedDict()
+         self.decode_pending = OrderedDict()
+         self.sequence_frames = OrderedDict()
++        self.rgb_pool = RGBPool(getattr(cfg, "shared_rgb_slots", 32),
++                                getattr(cfg, "decoded_max_bytes", 8*1024*1024))
+ 
+     def _decode_failure(self, fid, reason, **evidence):
+         item = self.decode_pending.pop(fid, None)
+@@ -115,6 +119,7 @@ class Receiver:
+         from gi.repository import Gst, GstVideo
+ 
+         Gst.init(None)
++        self.rgb_pool.allocate()
+         self.Gst = Gst
+         self.GstVideo = GstVideo
+         self.description = (
+@@ -167,7 +172,14 @@ class Receiver:
+     # Inspect the wire descriptor before jitter buffering, depayloading, and decoding.
+     def _packet(self, pad, info):
+         buf = info.get_buffer()
+-        raw = buf.extract_dup(0, buf.get_size())
++        try:
++            with self._mapped(buf) as raw:
++                return self._packet_mapped(buf, raw)
++        except (ValueError, KeyError, TypeError) as ex:
++            self.post("media_error", dict(video_id=self.video_id, reason=str(ex)))
++            return self.Gst.PadProbeReturn.DROP
++
++    def _packet_mapped(self, buf, raw):
+         try:
+             p = parse_packet(raw)
+             d = p.descriptor
+@@ -243,9 +255,8 @@ class Receiver:
+         if info.type & self.Gst.PadProbeType.BUFFER:
+             buf = info.get_buffer()
+             try:
+-                raw = buf.extract_dup(0, buf.get_size())
+-                p = parse_packet(raw)
+-                with self.lock:
++                with self._mapped(buf) as raw, self.lock:
++                    p = parse_packet(raw)
+                     self._observe_packet("jitter_output", raw, p.descriptor, buf.pts)
+                     previous = self.pts.get(buf.pts)
+                     if self.diagnostics and previous and previous.frame_id != p.descriptor.frame_id:
+@@ -260,6 +271,19 @@ class Receiver:
+                 pass
+         return self.Gst.PadProbeReturn.OK
+ 
++    @contextmanager
++    def _mapped(self, buf):
++        ok, mapping = buf.map(self.Gst.MapFlags.READ)
++        if not ok:
++            raise ValueError("GStreamer read mapping failed")
++        try:
++            raw = mapping.data
++            if not isinstance(raw, memoryview):
++                raise ValueError("GStreamer binding must expose borrowed memoryview")
++            yield raw
++        finally:
++            buf.unmap(mapping)
++
+     # Copy decoded storage before returning the sample to GStreamer.
+     def _sample(self, sink):
+         sample = sink.emit("pull-sample")
+@@ -284,16 +308,27 @@ class Receiver:
+             return self.Gst.FlowReturn.OK
+         import numpy as np
+ 
+-        raw = buf.extract_dup(0, size)
+-        rgb = (
+-            np.frombuffer(raw, dtype=np.uint8)
+-            .reshape(info.height, info.stride[0])[:, : info.width * 3]
+-            .reshape(info.height, info.width, 3)
+-            .copy()
+-        )
+-        self.post(
+-            "decoded", dict(descriptor=d, rgb=rgb, decoded_ns=time.monotonic_ns())
+-        )
++        lease = None
++        try:
++            with self._mapped(buf) as raw:
++                # GstVideoMeta can override caps-derived stride and offset.
++                meta = self.GstVideo.buffer_get_video_meta(buf)
++                stride = meta.stride[0] if meta else info.stride[0]
++                offset = meta.offset[0] if meta else info.offset[0]
++                rgb = np.ndarray((info.height, info.width, 3), np.uint8,
++                                 buffer=raw, offset=offset, strides=(stride, 3, 1))
++                lease = self.rgb_pool.copy(rgb)
++                del rgb
++            if lease is None:
++                self.post("frame_failure", dict(descriptor=d, reason="shared_rgb_pool_exhausted"))
++            else:
++                self.post("decoded", dict(descriptor=d, rgb=lease, decoded_ns=time.monotonic_ns()))
++                lease = None  # Receiver handoff now owns the lease.
++        except Exception as ex:
++            self.post("frame_failure", dict(descriptor=d, reason="decoded_mapping_failed"))
++            self.post("media_error", dict(video_id=self.video_id, reason=repr(ex)))
++        finally:
++            release_rgb(lease)
+         self._decoded_frame(d)
+         return self.Gst.FlowReturn.OK
+ 
+@@ -345,6 +380,7 @@ class Receiver:
+             for item in self.packet_evidence.values():
+                 self._emit_packet_evidence(item)
+             self.packet_evidence.clear()
++        self.rgb_pool.close()
+ 
+ 
+ class MockReceiver:
+diff --git a/multi-ue/mec/src/mec_server/preview.py b/multi-ue/mec/src/mec_server/preview.py
+index a77fd2c..7292555 100644
+--- a/multi-ue/mec/src/mec_server/preview.py
++++ b/multi-ue/mec/src/mec_server/preview.py
+@@ -2,6 +2,7 @@
+ import asyncio
+ import time
+ from dataclasses import dataclass
++from .shared_rgb import RGBLease, release_rgb
+ 
+ 
+ @dataclass
+@@ -53,16 +54,36 @@ class Preview:
+             self.channels.pop(alias, None)
+             channel.task.cancel()
+             await asyncio.gather(channel.task, return_exceptions=True)
+-            channel.pending = channel.jpeg = None
++            self.release_pending(channel)
++            channel.jpeg = None
+ 
+     def offer(self, uid, video_id, frame_id, rgb):
+         ue = self.engine.ues.get(uid)
+         channel = self.channels.get(ue.alias) if ue else None
+         if channel and ue.connected and ue.active_video == video_id:
+             # Keep only a reference to the newest decoded image. Never mutate it.
+-            channel.pending = (video_id, frame_id, rgb)
++            self.release_pending(channel)
++            channel.pending = (video_id, frame_id, rgb.retain() if isinstance(rgb, RGBLease) else rgb)
++
++    @staticmethod
++    def release_pending(channel):
++        if channel.pending is not None:
++            release_rgb(channel.pending[2])
++            channel.pending = None
++
++    def encode_owned(self, rgb):
++        try:
++            return self.encode(rgb.array() if isinstance(rgb, RGBLease) else rgb)
++        finally:
++            release_rgb(rgb)
+ 
+     async def run(self, alias, channel):
++        try:
++            await self._run(alias, channel)
++        finally:
++            self.release_pending(channel)
++
++    async def _run(self, alias, channel):
+         while True:
+             started = time.monotonic()
+             current = self.video(alias)
+@@ -73,7 +94,14 @@ class Preview:
+             pending, channel.pending = channel.pending, None
+             if pending is not None and pending[0] == current:
+                 try:
+-                    jpeg = await asyncio.to_thread(self.encode, pending[2])
++                    encoding = asyncio.create_task(asyncio.to_thread(self.encode_owned, pending[2]))
++                    try:
++                        jpeg = await asyncio.shield(encoding)
++                    except asyncio.CancelledError:
++                        # Cancelling an asyncio waiter does not stop a JPEG thread.
++                        # Keep its lease until encoding actually exits.
++                        await asyncio.gather(encoding, return_exceptions=True)
++                        raise
+                     if self.video(alias) == current:
+                         channel.jpeg = jpeg
+                         channel.video_id, channel.frame_id = pending[:2]
+@@ -81,6 +109,8 @@ class Preview:
+                         channel.error = None
+                 except Exception as exc:
+                     channel.error = str(exc)
++            elif pending is not None:
++                release_rgb(pending[2])
+             await asyncio.sleep(max(0, 0.2 - (time.monotonic() - started)))
+ 
+     def snapshot(self):
+@@ -93,4 +123,6 @@ class Preview:
+         for task in tasks:
+             task.cancel()
+         await asyncio.gather(*tasks, return_exceptions=True)
++        for channel in self.channels.values():
++            self.release_pending(channel)
+         self.channels.clear()
+diff --git a/multi-ue/mec/src/mec_server/workers.py b/multi-ue/mec/src/mec_server/workers.py
+index 12d3a74..1c2861b 100644
+--- a/multi-ue/mec/src/mec_server/workers.py
++++ b/multi-ue/mec/src/mec_server/workers.py
+@@ -11,6 +11,7 @@ import time
+ from dataclasses import dataclass
+ from pathlib import Path
+ from .queue_timing import TimedInputQueue, stamp
++from .shared_rgb import RGBLease, RGBMapping
+ 
+ DEFAULT_APPLICATIONS = ("tracking", "detection", "segmentation")
+ DEFAULT_PRIORITIES = (-5, -3, 0)
+@@ -117,7 +118,11 @@ class TorchAdapter:
+         top, left = (oh - nh) // 2, (ow - nw) // 2
+         with t.inference_mode(), t.cuda.stream(stream):
+             mark("launch_pin_begin")
+-            host_input = t.from_numpy(image).pin_memory()
++            # Shared input is read-only. Copy once into the existing pinned
++            # staging tensor; this stage deliberately retains the RGB upload.
++            import numpy as np
++            host_input = t.empty(image.shape, dtype=t.uint8, pin_memory=True)
++            np.copyto(host_input.numpy(), image)
+             mark("launch_pin_end")
+             preprocess_start = t.cuda.Event(enable_timing=True)
+             preprocess_start.record(stream)
+@@ -285,7 +290,25 @@ def worker_main(application, specs, config, incoming, outgoing):
+         max_workers=len(config["priority_streams"])
+     )
+ 
+-    def complete(job, submitted, started):
++    def consume_input(job, mapping):
++        if mapping is not None:
++            job.pop("rgb", None)
++            mapping.close()
++            # Result transport must not block the CUDA launch thread.
++            message = dict(type="input_released", application=application,
++                           job_id=job["job_id"], shared_rgb=job["shared_rgb"])
++            if adapter:
++                pool.submit(outgoing.put, message)
++            else:
++                outgoing.put(message)
++
++    def complete(job, submitted, started, mapping=None):
++        try:
++            finish(job, submitted, started)
++        finally:
++            consume_input(job, mapping)
++
++    def finish(job, submitted, started):
+         try:
+             if adapter:
+                 payload, times = adapter.finish(job, submitted)
+@@ -387,16 +410,23 @@ def worker_main(application, specs, config, incoming, outgoing):
+         if get_times:
+             stamp(get_times, "worker_get_end")
+             job.setdefault("handoff_times", {}).update(get_times)
+-        if not adapter:
+-            pool.submit(complete, job, None, started)
+-            continue
++        mapping = None
+         try:
++            if "shared_rgb" in job:
++                mapping = RGBMapping(job["shared_rgb"])
++                job["rgb"] = mapping.image
++            if not adapter:
++                pool.submit(complete, job, None, started, mapping)
++                continue
+             submission = adapter.launch(job)
+         except Exception as ex:
++            consume_input(job, mapping)
+             pool.submit(failed, job, started, ex)
+             continue
+-        # The pinned input is retained by submission until its event fires.
+-        del job["rgb"]
++        # launch has synchronously copied the shared view into pinned storage.
++        # The submission retains that independent storage through GPU completion.
++        consume_input(job, mapping)
++        job.pop("rgb", None)
+         with condition:
+             arrivals.append((job, submission, started))
+             condition.notify()
+@@ -416,6 +446,8 @@ class Workers:
+         self.processes = {}
+         self.ready = {}
+         self.closing = False
++        self.input_leases = {}
++        self.lease_lock = threading.RLock()
+         applications = tuple(config.get("applications", DEFAULT_APPLICATIONS))
+         priorities = tuple(config.get("priority_streams", DEFAULT_PRIORITIES))
+         config = dict(config, applications=applications, priority_streams=priorities)
+@@ -445,15 +477,36 @@ class Workers:
+                 m = self.output.get_nowait()
+             except queue.Empty:
+                 break
++            if m["type"] == "input_released":
++                self.release_input(m["application"], m["job_id"], m["shared_rgb"])
++                continue
+             if m["type"] == "ready":
+                 self.ready[m["application"]] = m
+             if m["type"] in ("completed", "failed"):
++                self.release_input(m["application"], m["job_id"])
+                 incoming = self.inputs[m["application"]]
+                 if isinstance(incoming, TimedInputQueue):
+                     trace = incoming.take_trace(m["job_id"])
+                     m.setdefault("times", {}).update(trace)
+                     m["times"]["ipc_sender_trace_available"] = bool(trace)
+             yield m
++        # Reclaim only after confirmed process exit, never merely a deadline.
++        for app, process in self.processes.items():
++            if process.exitcode is not None:
++                self.release_application(app)
++
++    def release_input(self, app, job_id, wire=None):
++        with self.lease_lock:
++            key = (app, tuple(job_id))
++            lease = self.input_leases.get(key)
++            if lease is not None and (wire is None or wire == lease.wire()):
++                self.input_leases.pop(key).release()
++
++    def release_application(self, app):
++        with self.lease_lock:
++            for key in list(self.input_leases):
++                if key[0] == app:
++                    self.input_leases.pop(key).release()
+ 
+     def available(self, app, p):
+         return (not self.closing and app in self.ready and p in self.ready[app]["streams"]
+@@ -463,18 +516,30 @@ class Workers:
+     def submit(self, app, p, job):
+         if not self.available(app, p):
+             return False
+-        try:
+-            if isinstance(self.inputs[app], TimedInputQueue):
++        key = (app, tuple(job["job_id"]))
++        with self.lease_lock:
++            if self.closing or key in self.input_leases:
++                return False
++            rgb = job.get("rgb")
++            if isinstance(rgb, RGBLease):
+                 job = dict(job)
+-                job["handoff_times"] = dict(job.get("handoff_times", {}))
+-                stamp(job["handoff_times"], "ipc_put_begin")
+-            self.inputs[app].put_nowait(job)
+-        except (queue.Full, OSError, ValueError):
+-            return False
++                job.pop("rgb")
++                job["shared_rgb"] = rgb.wire()
++                self.input_leases[key] = rgb.retain()
++            try:
++                if isinstance(self.inputs[app], TimedInputQueue):
++                    job = dict(job)
++                    job["handoff_times"] = dict(job.get("handoff_times", {}))
++                    stamp(job["handoff_times"], "ipc_put_begin")
++                self.inputs[app].put_nowait(job)
++            except (queue.Full, OSError, ValueError):
++                self.release_input(app, job["job_id"])
++                return False
+         return True
+ 
+     def close(self):
+-        self.closing = True
++        with self.lease_lock:
++            self.closing = True
+         for q in self.inputs.values():
+             try:
+                 q.put(None, timeout=1)
+@@ -486,3 +551,6 @@ class Workers:
+             if p.is_alive():
+                 p.terminate()
+                 p.join()
++
++        for app in self.processes:
++            self.release_application(app)
+diff --git a/multi-ue/tests/run_production_handoff_trial.py b/multi-ue/tests/run_production_handoff_trial.py
+index 598e4a6..ae97d24 100644
+--- a/multi-ue/tests/run_production_handoff_trial.py
++++ b/multi-ue/tests/run_production_handoff_trial.py
+@@ -23,6 +23,7 @@ from mec_contracts.rtp import Descriptor
+ from mec_server.config import load
+ from mec_server.engine import Engine, Video
+ from mec_server.tracking import Tracker
++from mec_server.shared_rgb import RGBPool
+ 
+ 
+ def media_frames(path, count):
+@@ -112,7 +113,12 @@ async def trial(args):
+                 tracker.update = track
+                 video.tracker = tracker
+             handoff = engine.receiver_handoff(vid)
+-            video.receiver = SimpleNamespace(post=handoff, tick=lambda: None, close=lambda: None)
++            pool = RGBPool(cfg.shared_rgb_slots, cfg.decoded_max_bytes) if args.shared_rgb else None
++            video.receiver = SimpleNamespace(post=handoff, tick=lambda: None,
++                                              close=pool.close if pool else lambda: None)
++            if pool:
++                pool.allocate()  # Match Receiver.start: reserve before media begins.
++                video.receiver.rgb_pool = pool
+             engine.videos[vid] = video
+             user.active_video = vid
+             videos.append(video)
+@@ -126,7 +132,10 @@ async def trial(args):
+                 handoff("descriptor", dict(descriptor=descriptor, first_packet_ns=now))
+                 handoff("progress", dict(descriptor=descriptor, unique_bytes=100,
+                                          complete=True, received_ns=time.monotonic_ns()))
+-                handoff("decoded", dict(descriptor=descriptor, rgb=frames[fid],
++                rgb = video.receiver.rgb_pool.copy(frames[fid]) if args.shared_rgb else frames[fid]
++                if rgb is None:
++                    raise RuntimeError("shared RGB pool exhausted in trial")
++                handoff("decoded", dict(descriptor=descriptor, rgb=rgb,
+                                         decoded_ns=time.monotonic_ns()))
+ 
+         began = time.monotonic()
+@@ -160,6 +169,10 @@ async def trial(args):
+     errors = [e for e in events if e.get("type") in
+               ("receiver_event_error", "background_error", "tracker_error", "discarded_gpu_completion")]
+     report = dict(kind="isolated decoded-input virtual-UE trial", backend=args.backend,
++                  shared_rgb=args.shared_rgb,
++                  shared_rgb_pools={v.vid: v.receiver.rgb_pool.stats() for v in videos} if args.shared_rgb else {},
++                  outstanding_input_leases=len(engine.workers.input_leases),
++                  ipc_max_serialized_bytes=max((j["stage_times"].get("ipc_serialized_bytes", 0) for j in jobs), default=0),
+                   radio_and_decoder_tested=False, media=str(args.media), frames_per_ue=args.frames,
+                   fps_per_ue=cfg.fps, models=selections, submitted=len(submitted),
+                   terminal_records=len(jobs), outcomes=dict(Counter(j["outcome"] for j in jobs)),
+@@ -176,8 +189,9 @@ async def trial(args):
+     report["model_sha256"] = {cid: hashlib.sha256((Path(cfg.weights_dir) / engine.candidates[cid]["artifact"]).read_bytes()).hexdigest()
+                               for cid in set(selections)} if args.backend != "mock" else {}
+     if args.reference_source and args.backend != "mock":
+-        spec = importlib.util.spec_from_file_location("baseline_workers", args.reference_source)
++        spec = importlib.util.spec_from_file_location("mec_server.baseline_workers", args.reference_source)
+         reference = importlib.util.module_from_spec(spec)
++        sys.modules[spec.name] = reference
+         spec.loader.exec_module(reference)
+         comparisons = {}
+         for video, cid in zip(videos, selections):
+@@ -203,6 +217,10 @@ async def trial(args):
+     assert not any(before_close.values())
+     assert report["outcomes"] == {"completed": len(submitted)}
+     assert not engine.scenario_error and not errors
++    assert not report["outstanding_input_leases"]
++    if args.shared_rgb:
++        assert all(not p["in_use"] and not p["mapped"] and not p["exhaustions"]
++                   for p in report["shared_rgb_pools"].values())
+     assert all(not q["overflow_notifications"] for q in report["receiver_queues"].values())
+     if "baseline_comparisons" in report:
+         assert all(x["exact_payload_match"] for rows in report["baseline_comparisons"].values() for x in rows)
+@@ -216,5 +234,6 @@ if __name__ == "__main__":
+     parser.add_argument("--run-id", default="queue-trial-" + time.strftime("%Y%m%d-%H%M%S"))
+     parser.add_argument("--frames", type=int, default=12)
+     parser.add_argument("--backend", choices=("torchscript", "mock"), default="torchscript")
++    parser.add_argument("--shared-rgb", action="store_true", help="Use bounded shared RGB slots and metadata-only IPC")
+     parser.add_argument("--reference-source", help="Pre-update workers.py for identical-input output comparison")
+     asyncio.run(trial(parser.parse_args()))
+diff --git a/multi-ue/mec/src/mec_server/shared_rgb.py b/multi-ue/mec/src/mec_server/shared_rgb.py
+new file mode 100644
+index 0000000..d379273
+--- /dev/null
++++ b/multi-ue/mec/src/mec_server/shared_rgb.py
+@@ -0,0 +1,172 @@
++"""Bounded decoded RGB storage. Local leases never cross multiprocessing IPC.
++
++The producer owns/unlinks each region. Workers receive only a descriptor and
++acknowledge consumption; Workers retains a local lease until that acknowledgement
++or confirmed process exit. A separate lease protects each preview encoder.
++"""
++from dataclasses import asdict, dataclass
++from multiprocessing.shared_memory import SharedMemory
++from threading import RLock
++import struct
++import os
++
++HEADER_BYTES = 64
++
++import numpy as np
++
++
++@dataclass(frozen=True)
++class RGBDescriptor:
++    region: str
++    offset: int
++    slot: int
++    generation: int
++    shape: tuple
++    row_stride: int
++    slot_bytes: int
++
++
++class RGBLease:
++    def __init__(self, pool, descriptor):
++        self.pool = pool
++        self.descriptor = descriptor
++        self.released = False
++
++    def retain(self):
++        with self.pool.lock:
++            if self.released:
++                raise RuntimeError("released RGB lease")
++            self.pool.references[self.descriptor.slot] += 1
++            return RGBLease(self.pool, self.descriptor)
++
++    def array(self):
++        with self.pool.lock:
++            if self.released:
++                raise RuntimeError("released RGB lease")
++            return rgb_view(self.pool.region, self.descriptor)
++
++    def release(self):
++        with self.pool.lock:
++            if not self.released:
++                self.released = True
++                self.pool.references[self.descriptor.slot] -= 1
++                self.pool._dispose_if_drained()
++
++    def wire(self):
++        if self.released:
++            raise RuntimeError("released RGB lease")
++        return asdict(self.descriptor)
++
++
++def release_rgb(rgb):
++    if isinstance(rgb, RGBLease):
++        rgb.release()
++
++
++def rgb_view(region, descriptor):
++    d = descriptor
++    if (len(d.shape) != 3 or d.shape[2] != 3 or min(d.shape) <= 0
++            or d.row_stride < d.shape[1]*3 or d.slot < 0 or d.generation < 1
++            or d.slot_bytes <= HEADER_BYTES or d.offset != d.slot*d.slot_bytes+HEADER_BYTES
++            or (d.shape[0]-1)*d.row_stride + d.shape[1]*3 > d.slot_bytes-HEADER_BYTES
++            or (d.slot+1)*d.slot_bytes > region.size):
++        raise ValueError("invalid shared RGB descriptor")
++    if struct.unpack_from("=Q", region.buf, d.slot*d.slot_bytes)[0] != d.generation:
++        raise ValueError("stale shared RGB generation")
++    result = np.ndarray(tuple(d.shape), dtype=np.uint8, buffer=region.buf,
++                        offset=d.offset, strides=(d.row_stride, 3, 1))
++    result.flags.writeable = False
++    return result
++
++
++class RGBMapping:
++    """Worker-local mapping; close only after all views have been dropped."""
++    def __init__(self, wire):
++        self.descriptor = RGBDescriptor(**wire)
++        self.region = SharedMemory(name=self.descriptor.region)
++        try:
++            self.image = rgb_view(self.region, self.descriptor)
++        except BaseException:
++            self.region.close()
++            raise
++
++    def close(self):
++        self.image = None
++        self.region.close()
++
++
++class RGBPool:
++    def __init__(self, slots, max_bytes):
++        if slots <= 0 or max_bytes <= 0:
++            raise ValueError("positive shared RGB limits required")
++        self.slots = slots
++        self.slot_bytes = ((max_bytes+HEADER_BYTES+4095)//4096)*4096
++        self.max_bytes = max_bytes
++        self.region = None  # Receiver.start reserves storage before enabling media.
++        self.references = [0]*slots
++        self.generations = [0]*slots
++        self.lock = RLock()
++        self.closed = False
++        self.copies = self.exhaustions = self.peak = 0
++
++    def allocate(self):
++        with self.lock:
++            if self.closed:
++                raise RuntimeError("closed shared RGB pool")
++            if self.region is None:
++                region = SharedMemory(create=True, size=self.slots*self.slot_bytes)
++                try:
++                    # Linux tmpfs otherwise faults with SIGBUS on first write
++                    # when /dev/shm is full. Reserve backing before publishing.
++                    os.posix_fallocate(region._fd, 0, region.size)
++                except BaseException:
++                    region.close()
++                    region.unlink()
++                    raise
++                self.region = region
++
++    def copy(self, image):
++        if image.dtype != np.uint8 or image.ndim != 3 or image.shape[2] != 3:
++            raise ValueError("expected HWC uint8 RGB")
++        if image.nbytes > self.max_bytes or min(image.shape) <= 0:
++            raise ValueError("decoded_byte_budget")
++        with self.lock:
++            if self.closed:
++                return None
++            try:
++                slot = self.references.index(0)
++            except ValueError:
++                self.exhaustions += 1
++                return None
++            self.allocate()
++            self.generations[slot] += 1
++            d = RGBDescriptor(self.region.name, slot*self.slot_bytes+HEADER_BYTES, slot,
++                              self.generations[slot], image.shape, image.shape[1]*3,
++                              self.slot_bytes)
++            target = np.ndarray(image.shape, np.uint8, buffer=self.region.buf,
++                                offset=d.offset)
++            np.copyto(target, image)
++            del target
++            struct.pack_into("=Q", self.region.buf, slot*self.slot_bytes, d.generation)
++            self.references[slot] = 1
++            self.copies += 1
++            self.peak = max(self.peak, sum(n > 0 for n in self.references))
++            return RGBLease(self, d)
++
++    def stats(self):
++        with self.lock:
++            return dict(slots=self.slots, capacity_bytes=self.slots*self.slot_bytes, in_use=sum(n > 0 for n in self.references),
++                        references=sum(self.references), peak=self.peak,
++                        copies=self.copies, exhaustions=self.exhaustions,
++                        closed=self.closed, mapped=self.region is not None)
++
++    def _dispose_if_drained(self):
++        if self.closed and not any(self.references) and self.region is not None:
++            self.region.close()
++            self.region.unlink()
++            self.region = None
++
++    def close(self):
++        with self.lock:
++            self.closed = True
++            self._dispose_if_drained()
+diff --git a/multi-ue/tests/test_shared_rgb.py b/multi-ue/tests/test_shared_rgb.py
+new file mode 100644
+index 0000000..8f96088
+--- /dev/null
++++ b/multi-ue/tests/test_shared_rgb.py
+@@ -0,0 +1,395 @@
++"""Shared RGB ownership, actual Gst maps, metadata IPC and optional CUDA checks."""
++import asyncio
++import os
++import pickle
++import queue
++import time
++from multiprocessing.shared_memory import SharedMemory
++from threading import Event
++from types import SimpleNamespace
++from unittest.mock import Mock
++
++import numpy as np
++import pytest
++
++from mec_server.shared_rgb import RGBPool, RGBMapping
++from mec_server.handoff import ReceiverHandoff
++from mec_server.media import Receiver
++from mec_server.preview import Preview
++from mec_server import workers
++
++
++def test_padded_source_generation_exhaustion_and_delayed_unlink():
++    pool = RGBPool(1, 4096)
++    padded = np.arange(4*32, dtype=np.uint8).reshape(4, 32)
++    image = np.ndarray((4, 7, 3), np.uint8, buffer=padded, strides=(32, 3, 1))
++    first = pool.copy(image)
++    name = first.descriptor.region
++    consumer = first.retain()
++    assert len(pickle.dumps(first.wire())) < 512
++    mapping = RGBMapping(first.wire())
++    np.testing.assert_array_equal(mapping.image, image)
++    assert not mapping.image.flags.writeable
++    mapping.close()
++    first.release()
++    assert pool.copy(image) is None
++    consumer.release()
++    second = pool.copy(image)
++    assert second.descriptor.generation == 2
++    assert pool.stats()['copies'] == 2
++    pool.close()
++    assert pool.stats()['mapped']  # still leased
++    np.testing.assert_array_equal(second.array(), image)
++    second.release()
++    second.release()  # duplicate local releases are harmless
++    assert not pool.stats()['mapped']
++    with pytest.raises(FileNotFoundError):
++        SharedMemory(name=name)
++    with pytest.raises(RuntimeError):
++        second.retain()
++
++
++def test_invalid_descriptor_cannot_read_outside_slot():
++    pool = RGBPool(1, 100)
++    lease = pool.copy(np.zeros((2, 3, 3), np.uint8))
++    try:
++        wire = lease.wire()
++        wire['row_stride'] = pool.slot_bytes
++        with pytest.raises(ValueError, match='descriptor'):
++            RGBMapping(wire)
++    finally:
++        lease.release()
++        pool.close()
++
++
++def test_stale_generation_cannot_be_mapped_or_release_new_owner():
++    from threading import RLock
++    pool = RGBPool(1, 100)
++    first = pool.copy(np.zeros((2, 3, 3), np.uint8))
++    old = first.wire()
++    first.release()
++    current = pool.copy(np.ones((2, 3, 3), np.uint8))
++    w = workers.Workers.__new__(workers.Workers)
++    w.lease_lock = RLock()
++    w.input_leases = {('detection', ('v', 0)): current}
++    try:
++        with pytest.raises(ValueError, match='stale'):
++            RGBMapping(old)
++        w.release_input('detection', ['v', 0], old)
++        assert pool.stats()['in_use'] == 1
++        w.release_input('detection', ['v', 0], current.wire())
++        assert pool.stats()['in_use'] == 0
++    finally:
++        current.release()
++        pool.close()
++
++
++def test_backing_allocation_failure_is_recoverable(monkeypatch):
++    import errno
++    def full(*args):
++        raise OSError(errno.ENOSPC, 'shared memory full')
++    monkeypatch.setattr('mec_server.shared_rgb.os.posix_fallocate', full)
++    pool = RGBPool(1, 100)
++    with pytest.raises(OSError):
++        pool.copy(np.zeros((2, 3, 3), np.uint8))
++    assert not pool.stats()['mapped'] and not pool.stats()['in_use']
++    pool.close()
++
++
++def test_submission_failure_does_not_keep_worker_lease():
++    from threading import RLock
++    w = workers.Workers.__new__(workers.Workers)
++    w.available = lambda *a: True
++    w.closing, w.input_leases, w.lease_lock = False, {}, RLock()
++    def fail(job): raise ValueError('queue closed')
++    w.inputs = {'detection': SimpleNamespace(put_nowait=fail)}
++    pool = RGBPool(1, 100)
++    lease = pool.copy(np.zeros((2, 3, 3), np.uint8))
++    try:
++        assert not w.submit('detection', 0, dict(job_id=['v', 0], rgb=lease))
++        assert not w.input_leases and pool.stats()['references'] == 1
++    finally:
++        lease.release()
++        pool.close()
++
++
++def test_handoff_overflow_releases_only_rejected_lease():
++    async def exercise():
++        pool = RGBPool(2, 100)
++        seen = []
++        handoff = ReceiverHandoff(asyncio.get_running_loop(), lambda k, d: seen.append(d),
++                                  lambda *args: None, pictures=1)
++        a, b = [pool.copy(np.zeros((2, 3, 3), np.uint8)) for _ in range(2)]
++        handoff('decoded', dict(rgb=a))
++        handoff('decoded', dict(rgb=b))
++        assert b.released and not a.released
++        await asyncio.sleep(0)
++        assert seen == [dict(rgb=a)]
++        a.release()
++        pool.close()
++    asyncio.run(exercise())
++
++
++@pytest.mark.parametrize('failure', ['resolved', 'incomplete', 'closed', 'quarantined', 'submit'])
++def test_engine_rejection_releases_rgb(failure):
++    from mec_server.engine import Engine, Frame, Video
++    engine = Engine.__new__(Engine)
++    engine.cfg = SimpleNamespace(mode='development')
++    engine.frames, engine.videos = {}, {}
++    engine.quarantined = set()
++    engine.fail_frame = Mock()
++    d = SimpleNamespace(video_id='v', frame_id=0, tx_unix_ns=1)
++    config = dict(id='c', application='detection')
++    f = Frame('v', 0, d, 1, config, complete_ns=2, deadline_ns=2**63-1)
++    v = Video('v', 'u', 'detection', 1, 0, state='ACTIVE')
++    engine.frames['v', 0] = f
++    engine.videos['v'] = v
++    if failure == 'resolved': v.resolved.add(0)
++    if failure == 'incomplete': f.complete_ns = None
++    if failure == 'closed': v.input_closed = True
++    if failure == 'quarantined': engine.quarantined.add('c')
++    if failure == 'submit':
++        engine.priority = SimpleNamespace(propose=lambda *a: 0, version='test')
++        engine.queue_history = SimpleNamespace(value=0)
++        engine.processing = lambda *a: 0
++        engine.record = Mock()
++        engine.workers = SimpleNamespace(submit=lambda *a: False)
++    pool = RGBPool(1, 100)
++    lease = pool.copy(np.zeros((2, 3, 3), np.uint8))
++    engine.decoded(d, lease, 3)
++    assert pool.stats()['in_use'] == 0
++    pool.close()
++
++
++def test_preview_replacement_and_cancel_wait_for_encoder():
++    async def exercise():
++        entered, finish = Event(), Event()
++        def encode(image):
++            entered.set()
++            assert finish.wait(5)
++            assert np.all(image == 7)
++            return b'jpeg'
++        engine = SimpleNamespace(ues={'u': SimpleNamespace(alias='a', connected=True, active_video='v')})
++        preview = Preview(engine, encode)
++        channel = preview.watch('a')
++        pool = RGBPool(2, 100)
++        a = pool.copy(np.full((2, 3, 3), 1, np.uint8))
++        b = pool.copy(np.full((2, 3, 3), 7, np.uint8))
++        preview.offer('u', 'v', 0, a)
++        a.release()
++        preview.offer('u', 'v', 1, b)
++        b.release()
++        assert pool.stats()['in_use'] == 1
++        try:
++            for _ in range(200):
++                if entered.is_set(): break
++                await asyncio.sleep(.005)
++            assert entered.is_set()
++            closing = asyncio.create_task(preview.close())
++            await asyncio.sleep(.02)
++            assert not closing.done() and pool.stats()['in_use'] == 1
++            finish.set()
++            await closing
++            assert pool.stats()['in_use'] == 0
++        finally:
++            finish.set()
++            await preview.close()
++            pool.close()
++    asyncio.run(exercise())
++
++
++def gst_receiver():
++    gi = pytest.importorskip('gi')
++    gi.require_version('Gst', '1.0')
++    gi.require_version('GstVideo', '1.0')
++    from gi.repository import Gst, GstVideo
++    Gst.init(None)
++    events = []
++    cfg = SimpleNamespace(mode='development', decoded_max_bytes=4096, shared_rgb_slots=1)
++    receiver = Receiver('v', 1, 5000, cfg, lambda k, d: events.append((k, d)))
++    receiver.Gst, receiver.GstVideo = Gst, GstVideo
++    return receiver, events, Gst, GstVideo
++
++
++@pytest.mark.parametrize('video_meta', [False, True])
++def test_real_gst_borrowed_map_stride_identity_and_exhaustion(video_meta):
++    receiver, events, Gst, GstVideo = gst_receiver()
++    caps = Gst.Caps.from_string('video/x-raw,format=RGB,width=5,height=3,framerate=30/1')
++    info = GstVideo.VideoInfo.new_from_caps(caps)
++    assert info.stride[0] > 5*3
++    stride, offset = (32, 5) if video_meta else (info.stride[0], 0)
++    size = offset+3*stride
++    raw = np.arange(size, dtype=np.uint8)
++    buffer = Gst.Buffer.new_allocate(None, size, None)
++    if video_meta:
++        GstVideo.buffer_add_video_meta_full(buffer, GstVideo.VideoFrameFlags.NONE,
++            GstVideo.VideoFormat.RGB, 5, 3, 1, [offset, 0, 0, 0], [stride, 0, 0, 0])
++    buffer.fill(0, raw.tobytes())
++    buffer.pts = 123
++    sample = Gst.Sample.new(buffer, caps, None, None)
++    d = SimpleNamespace(frame_id=1)
++    receiver.pts[123] = d
++    with receiver._mapped(buffer) as borrowed:
++        assert isinstance(borrowed, memoryview)
++    receiver._sample(SimpleNamespace(emit=lambda _: sample))
++    kind, event = events.pop()
++    assert kind == 'decoded' and event['descriptor'] is d
++    lease = event['rgb']
++    expected = np.ndarray((3, 5, 3), np.uint8, buffer=raw, offset=offset, strides=(stride, 3, 1))
++    np.testing.assert_array_equal(lease.array(), expected)
++    receiver.pts[123] = SimpleNamespace(frame_id=2)
++    receiver._sample(SimpleNamespace(emit=lambda _: sample))
++    assert events[-1][1]['reason'] == 'shared_rgb_pool_exhausted'
++    receiver.close()
++    assert receiver.rgb_pool.stats()['mapped']
++    np.testing.assert_array_equal(lease.array(), expected)
++    lease.release()
++    assert not receiver.rgb_pool.stats()['mapped']
++
++
++def test_mapped_rtp_retains_payload_and_validates_conflicting_duplicate():
++    import uuid
++    from mec_contracts.rtp import Descriptor, Assembly, packetize, parse_packet
++    nals = [b'\x65'+b'x'*400]
++    d = Descriptor(str(uuid.uuid4()), 1, 0, 0, 1, 1, 1, 405)
++    raw = bytearray(next(packetize(nals, d, 10, 20, 30, mtu=256)))
++    a = Assembly(d)
++    a.add(parse_packet(memoryview(raw)))
++    retained = a.packets[10]
++    assert isinstance(retained, bytes)
++    a.add(parse_packet(memoryview(raw)))
++    assert a.packets[10] is retained
++    raw[-1] ^= 1
++    with pytest.raises(ValueError, match='conflicting RTP sequence'):
++        a.add(parse_packet(memoryview(raw)))
++    assert a.packets[10] == retained
++
++
++def start_mock_workers():
++    specs = [dict(application='detection', model=str(n)) for n in range(4)]
++    w = workers.Workers(dict(configurations=specs), dict(backend='mock',
++                        applications=['detection'], priority_streams=[0]))
++    w.start()
++    deadline = time.monotonic()+20
++    while not w.ready:
++        list(w.poll())
++        assert time.monotonic() < deadline
++        time.sleep(.005)
++    return w
++
++
++def test_spawn_metadata_only_and_consumption_reuses_slots():
++    w = start_mock_workers()
++    pool = RGBPool(2, 4096)
++    completed = []
++    try:
++        for fid in range(12):
++            lease = pool.copy(np.full((5, 7, 3), fid, np.uint8))
++            assert lease is not None
++            assert w.submit('detection', 0, dict(job_id=['v', fid], priority=0,
++                            configuration={}, rgb=lease))
++            lease.release()
++            deadline = time.monotonic()+10
++            while len(completed) <= fid or w.input_leases:
++                completed.extend(m for m in w.poll() if m['type'] == 'completed')
++                assert time.monotonic() < deadline
++                time.sleep(.001)
++        assert [m['job_id'][1] for m in completed] == list(range(12))
++        assert all(m['payload']['height'] == 5 and m['payload']['width'] == 7 for m in completed)
++        assert pool.stats()['in_use'] == 0
++        assert max(pool.generations) > 1
++    finally:
++        w.close()
++        pool.close()
++
++
++def test_dead_worker_releases_outstanding_lease_only_after_exit():
++    w = start_mock_workers()
++    pool = RGBPool(1, 100)
++    lease = pool.copy(np.zeros((2, 3, 3), np.uint8))
++    # Hold a loan without submitting; simulates a worker dying before dequeue.
++    w.input_leases['detection', ('v', 0)] = lease.retain()
++    lease.release()
++    try:
++        assert pool.stats()['in_use'] == 1
++        process = w.processes['detection']
++        process.terminate()
++        process.join(5)
++        list(w.poll())
++        assert pool.stats()['in_use'] == 0
++    finally:
++        w.close()
++        pool.close()
++
++
++def test_worker_fifo_pixels_and_early_release_before_completion(monkeypatch):
++    finished = Event()
++    seen = []
++    class Adapter:
++        def __init__(self, *a, **k): pass
++        def launch(self, job):
++            seen.append((job['job_id'][1], job['rgb'].copy()))
++            return SimpleNamespace(ready=SimpleNamespace(query=finished.is_set), times={})
++        def finish(self, job, submission): return {}, {}
++    monkeypatch.setattr(workers, 'TorchAdapter', Adapter)
++    pool = RGBPool(2, 100)
++    incoming, outgoing = queue.Queue(), queue.Queue()
++    leases = [pool.copy(np.full((2, 3, 3), n, np.uint8)) for n in (7, 9)]
++    for fid, lease in enumerate(leases):
++        incoming.put(dict(job_id=['v', fid], priority=0, shared_rgb=lease.wire()))
++    from threading import Thread
++    thread = Thread(target=workers.worker_main, args=('detection', {}, dict(
++        backend='torchscript', weights_dir='', priority_streams=[0], warmup_count=0), incoming, outgoing))
++    thread.start()
++    try:
++        assert outgoing.get(timeout=5)['type'] == 'ready'
++        for _ in leases:
++            message = outgoing.get(timeout=5)
++            assert message['type'] == 'input_released'
++            leases[message['job_id'][1]].release()
++        assert not finished.is_set() and pool.stats()['in_use'] == 0
++        assert [fid for fid, _ in seen] == [0, 1]
++        assert [int(image[0, 0, 0]) for _, image in seen] == [7, 9]
++    finally:
++        finished.set()
++        incoming.put(None)
++        thread.join(5)
++        for lease in leases: lease.release()
++        pool.close()
++    assert not thread.is_alive()
++
++
++@pytest.mark.skipif(os.getenv('MEC_TEST_CUDA') != '1', reason='opt-in CUDA acceptance')
++def test_cuda_shared_input_matches_array_input_and_survives_slot_reuse(tmp_path):
++    import torch
++    class Boxes(torch.nn.Module):
++        def forward(self, x):
++            score = x.mean().float()
++            return torch.stack([score*0, score*0, score, score, score, score*0]).reshape(1, 1, 6)
++    torch.jit.trace(Boxes(), torch.ones(1, 3, 32, 32)).save(str(tmp_path/'boxes.pt'))
++    spec = dict(application='detection', model='tiny', input_hw=[32, 32], artifact='boxes.pt', confidence=0)
++    adapter = workers.TorchAdapter({'tiny': spec}, tmp_path, [0], mps_enabled=False)
++    for _ in range(5):
++        adapter.infer(dict(priority=0, configuration=spec, rgb=np.zeros((16, 32, 3), np.uint8)))
++    pool = RGBPool(1, 4096)
++    try:
++        for value in (0, 37, 255):
++            image = np.full((16, 32, 3), value, np.uint8)
++            reference, _ = adapter.infer(dict(priority=0, configuration=spec, rgb=image))
++            lease = pool.copy(image)
++            mapping = RGBMapping(lease.wire())
++            job = dict(priority=0, configuration=spec, rgb=mapping.image)
++            # Keep the upload pending while we overwrite its original shared slot.
++            with torch.cuda.stream(adapter.streams[0]):
++                torch.cuda._sleep(200_000_000)
++            submitted = adapter.launch(job)
++            assert not submitted.ready.query()
++            job.pop('rgb')
++            mapping.close()
++            lease.release()
++            replacement = pool.copy(np.full_like(image, 123))
++            result, _ = adapter.finish(job, submitted)
++            assert result == reference
++            replacement.release()
++    finally:
++        pool.close()

@@ -1,0 +1,147 @@
+{
+  "status": "passed",
+  "image": "multi-ue-mec:shared-rgb-acceptance",
+  "image_sha256": "0f39470ca20ea421dd7c2714b3f59281e2c2fce866554fd22e466ba6dfba42a5",
+  "scope": "Shared-memory receiver/engine/worker handoff. Existing pinned staging and RGB GPU upload retained. No CUDA graph integration.",
+  "source_sha256": {
+    "multi-ue/mec/src/mec_server/shared_rgb.py": "1fd67378d835637d5b0e7e6204acfbb802b009bfabf0fba2ea128cfdb21a39b2",
+    "multi-ue/mec/src/mec_server/media.py": "cc72decf4530bf219402ca23c478e3fcaddb2bb02d51aef6fc2bcb63598e241f",
+    "multi-ue/mec/src/mec_server/workers.py": "8f9a891deae11f5032b82919a133a71b4182635b33544a257b0366fc90bf2db4",
+    "multi-ue/mec/src/mec_server/engine.py": "c9282aeb985ed3500035348a56ef4612e24dafb20284f4cbd903f49f334ad704",
+    "multi-ue/mec/src/mec_server/handoff.py": "0b420b6269e9529d283c64d257e9366f62531d5a4bbb1693b0cc6fba0c1e5b84",
+    "multi-ue/mec/src/mec_server/preview.py": "59a5bc633bbc003162bcf54be4377007673c6efc35d6b72721f3a2673d015a92",
+    "multi-ue/mec/src/mec_server/config.py": "feb4cb0b839fdb7dc3a8a882e6e4ceaf405d2b3ab3e9f2678bce2d6d3243b7ef",
+    "multi-ue/contracts/python/mec_contracts/rtp.py": "560a0af4d3e74386af0b20826d7e37d7d306782d8a795306338f57d66e37fd6b",
+    "multi-ue/tests/test_shared_rgb.py": "226e224fffed01f2850dbb63c8a19d5edc59aba2dc8da961e0fb964197312b83",
+    "multi-ue/tests/run_production_handoff_trial.py": "0cece6b10d50fbdf4a37bff39eb4a9030ec660c081b9bc51d569ccf6a3209dc8"
+  },
+  "tests": {
+    "passed": 65,
+    "deselected": 2,
+    "log": "acceptance-final.log",
+    "cuda_enabled": true,
+    "gstreamer_tests_executed": true,
+    "exclusions": [
+      "test_dashboard_and_status_routes",
+      "test_mjpeg_subscription_cleanup"
+    ],
+    "exclusion_reason": "Previously existing development config FPS/GoP mismatch; initial run reproduced it.",
+    "hardware_overlap": "CUDA tests validate same-stream launch overlap and shared-slot overwrite while a warmed model upload remains pending.",
+    "test_setup_corrections": [
+      "Added legacy-wire fixtures to the test container for test_wire.py collection.",
+      "Warmed the tiny TorchScript model before asserting asynchronous upload overlap."
+    ]
+  },
+  "production": {
+    "report": "production/trial-summary.json",
+    "submitted": 48,
+    "outcomes": {
+      "completed": 48
+    },
+    "terminal_unique": true,
+    "worker_results_unique": true,
+    "receiver_queues": {
+      "102f51a8-f6b9-429d-bb38-fb3f15311832": {
+        "depth": 0,
+        "decoded": 0,
+        "peak_notifications": 3,
+        "peak_decoded": 1,
+        "overflow_notifications": 0
+      },
+      "12959fcf-ca9d-46a6-93bf-2fbe3b200094": {
+        "depth": 0,
+        "decoded": 0,
+        "peak_notifications": 3,
+        "peak_decoded": 1,
+        "overflow_notifications": 0
+      },
+      "c5e96446-68a6-4a47-affc-a0b974def437": {
+        "depth": 0,
+        "decoded": 0,
+        "peak_notifications": 3,
+        "peak_decoded": 1,
+        "overflow_notifications": 0
+      },
+      "d9d465b4-8606-482f-a59a-410231de6806": {
+        "depth": 0,
+        "decoded": 0,
+        "peak_notifications": 3,
+        "peak_decoded": 1,
+        "overflow_notifications": 0
+      }
+    },
+    "shared_rgb_pools": {
+      "102f51a8-f6b9-429d-bb38-fb3f15311832": {
+        "slots": 32,
+        "capacity_bytes": 268566528,
+        "in_use": 0,
+        "references": 0,
+        "peak": 1,
+        "copies": 12,
+        "exhaustions": 0,
+        "closed": true,
+        "mapped": false
+      },
+      "12959fcf-ca9d-46a6-93bf-2fbe3b200094": {
+        "slots": 32,
+        "capacity_bytes": 268566528,
+        "in_use": 0,
+        "references": 0,
+        "peak": 1,
+        "copies": 12,
+        "exhaustions": 0,
+        "closed": true,
+        "mapped": false
+      },
+      "c5e96446-68a6-4a47-affc-a0b974def437": {
+        "slots": 32,
+        "capacity_bytes": 268566528,
+        "in_use": 0,
+        "references": 0,
+        "peak": 1,
+        "copies": 12,
+        "exhaustions": 0,
+        "closed": true,
+        "mapped": false
+      },
+      "d9d465b4-8606-482f-a59a-410231de6806": {
+        "slots": 32,
+        "capacity_bytes": 268566528,
+        "in_use": 0,
+        "references": 0,
+        "peak": 1,
+        "copies": 12,
+        "exhaustions": 0,
+        "closed": true,
+        "mapped": false
+      }
+    },
+    "ipc_max_serialized_bytes": 1109,
+    "decoded_to_model_submit_ms": {
+      "p95": 40.21174645,
+      "p99": 41.448824349999995
+    },
+    "tracking_order_correct": true,
+    "worker_drain_clean": true,
+    "exact_output_comparisons": 8,
+    "radio_and_decoder_tested": false
+  },
+  "mock": {
+    "report": "mock/trial-summary.json",
+    "submitted": 48,
+    "outcomes": {
+      "completed": 48
+    },
+    "worker_drain_clean": true,
+    "tracking_order_correct": true,
+    "hardware_result": false
+  },
+  "reservation_change": "An intermediate run reserved backing during first-frame callbacks and showed a 116 ms receiver handoff delay. Final source reserves during Receiver.start, before media is enabled. Intermediate evidence retained in final-run/; final accepted evidence is production/.",
+  "limitations": [
+    "No physical multi-UE/RF trial.",
+    "Real Gst mapped-buffer tests cover padded caps rows and GstVideoMeta stride/offset; production trial injects decoded clip frames.",
+    "Production equivalence checks cover first and last frame per virtual UE (8 comparisons), not every output.",
+    "Pinned staging and full-frame RGB upload remain for this stage; no no-upload claim.",
+    "Short acceptance trials do not establish long-run performance."
+  ]
+}

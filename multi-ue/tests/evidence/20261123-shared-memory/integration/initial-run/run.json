@@ -1,0 +1,839 @@
+{
+  "run_id": "shared-rgb-production",
+  "settings": {
+    "run_id": "shared-rgb-production",
+    "mode": "collection",
+    "catalog": "tasks.yaml",
+    "profiles": "profiles.collection.yaml",
+    "listen": "0.0.0.0",
+    "advertised_ip": "192.168.72.136",
+    "control_port": 8765,
+    "first_udp_port": 5000,
+    "max_videos": 30,
+    "handoff_notifications": 1024,
+    "handoff_decoded_frames": 10,
+    "shared_rgb_slots": 32,
+    "pending_frames": 192,
+    "pending_bytes_per_video": 536870912,
+    "replay_pending_bytes": 67108864,
+    "decoded_max_bytes": 8388608,
+    "encoded_max_bytes": 8388608,
+    "jitter_ms": 150,
+    "udp_buffer_bytes": 2097152,
+    "gop_frames": 10,
+    "fps": 10,
+    "slo_s": 0.15,
+    "first_media_s": 5.0,
+    "successor_prepare_s": 5.0,
+    "final_arrival_s": 0.5,
+    "decoder_drain_s": 2.0,
+    "decode_wait_s": 2.0,
+    "drain_s": 120.0,
+    "disconnect_s": 1.0,
+    "receive_loss_s": 1.0,
+    "snapshot_s": 5.0,
+    "tracker_buffer": 192,
+    "tracker_retention_s": 1.0,
+    "tracker_margin_s": 0.01,
+    "applications": [
+      "detection",
+      "tracking",
+      "segmentation"
+    ],
+    "priority_streams": [
+      -3
+    ],
+    "keyframe_interleaving": {
+      "enabled": true
+    },
+    "edgeric_target": "192.168.71.140:50052",
+    "awareness_timeout_s": 0.25,
+    "gop_lead_s": 1.0,
+    "runs_dir": "/stage/runs",
+    "weights_dir": "/weights",
+    "backend": "torchscript",
+    "warmup_count": 3,
+    "radio_budget": null,
+    "compute_budget_s_per_s": null,
+    "global_queue_initial_s": null,
+    "profile_compatibility": "measured-testbed-v1",
+    "allow_scheduled_throughput_estimate": false,
+    "max_clock_uncertainty_ns": 20000000,
+    "gop_policy": "fixed",
+    "priority_policy": "fixed",
+    "fixed_candidates": {
+      "detection": "detection-yolo26x-500k",
+      "segmentation": "segmentation-segformer-b3-500k"
+    },
+    "ran_telemetry": {
+      "aggregation_window_ms": 100,
+      "report_interval_ms": 100,
+      "stale_ms": 300,
+      "prolonged_outage_s": 1
+    },
+    "mps_enabled": false
+  },
+  "scenario_error": null,
+  "catalog_version": "mec-catalog-v1",
+  "ues": {
+    "394c27fb-dff2-4486-826b-d211af43f454": {
+      "connection_id": "e0540dc8-d70d-4889-9fc8-74622eac4bb9",
+      "connected": true,
+      "active_video": null,
+      "prepared_video": null,
+      "reported_ip": "",
+      "observed_peer_ip": "12.1.1.1",
+      "clock_mapping": {},
+      "clock_uncertainty_ns": null,
+      "network_estimator": null
+    },
+    "1e9a70a4-e2a4-4f22-9c89-abba90c4c476": {
+      "connection_id": "45e00ffc-dad1-4451-8254-0b2e71481807",
+      "connected": true,
+      "active_video": null,
+      "prepared_video": null,
+      "reported_ip": "",
+      "observed_peer_ip": "12.1.1.2",
+      "clock_mapping": {},
+      "clock_uncertainty_ns": null,
+      "network_estimator": null
+    },
+    "1c200f15-62b0-4bfc-8bfb-0fe69d2df591": {
+      "connection_id": "e9259a4e-871e-4177-af85-a4959b5d24aa",
+      "connected": true,
+      "active_video": null,
+      "prepared_video": null,
+      "reported_ip": "",
+      "observed_peer_ip": "12.1.1.3",
+      "clock_mapping": {},
+      "clock_uncertainty_ns": null,
+      "network_estimator": null
+    },
+    "03e62c85-7e39-4bfa-a54f-e8dcdc55495b": {
+      "connection_id": "c6d1b184-30ae-4e4a-a407-856ac9b5fe35",
+      "connected": true,
+      "active_video": null,
+      "prepared_video": null,
+      "reported_ip": "",
+      "observed_peer_ip": "12.1.1.4",
+      "clock_mapping": {},
+      "clock_uncertainty_ns": null,
+      "network_estimator": null
+    }
+  },
+  "videos": {
+    "0fdd43fb-0124-4334-aa89-e385a8331f5a": {
+      "ue_id": "394c27fb-dff2-4486-826b-d211af43f454",
+      "application": "detection",
+      "state": "COMPLETED",
+      "media_epoch": 1,
+      "current": {
+        "candidate_id": "detection-yolo26x-500k",
+        "config_version": 1,
+        "plan_version": 1,
+        "fps": 10,
+        "gop_frames": 10,
+        "epoch_unix_ns": 1795452491245031395,
+        "offset_frames": 0,
+        "activation_cycle": 0,
+        "boundary_unix_ns": 1795452491245031523,
+        "first_frame_id": 0,
+        "first_tx_unix_ns": 1795452491837501426
+      },
+      "pending": null,
+      "applied": {
+        "candidate_id": "detection-yolo26x-500k",
+        "config_version": 1,
+        "plan_version": 1,
+        "fps": 10,
+        "gop_frames": 10,
+        "epoch_unix_ns": 1795452491245031395,
+        "offset_frames": 0,
+        "activation_cycle": 0,
+        "boundary_unix_ns": 1795452491245031523,
+        "first_frame_id": 0,
+        "first_tx_unix_ns": 1795452491837501426
+      },
+      "transmission_control": {
+        "control_version": 1,
+        "command_id": "d6779198-0be9-43cc-a3ee-dbb898098ae8",
+        "status": "ACTIVE",
+        "suspension_version": 0,
+        "effective_unix_ns": 1795452492946281948,
+        "plan_version": 1,
+        "stop_unix_ns": 1795452492946281948
+      },
+      "counters": {
+        "completed": 12,
+        "dropped": 0,
+        "failed": 0
+      }
+    },
+    "327fee50-34f3-4858-86e4-fe6c4e610254": {
+      "ue_id": "1e9a70a4-e2a4-4f22-9c89-abba90c4c476",
+      "application": "tracking",
+      "state": "COMPLETED",
+      "media_epoch": 1,
+      "current": {
+        "candidate_id": "tracking-yolo26x-500k",
+        "config_version": 1,
+        "plan_version": 1,
+        "fps": 10,
+        "gop_frames": 10,
+        "epoch_unix_ns": 1795452491245130020,
+        "offset_frames": 0,
+        "activation_cycle": 0,
+        "boundary_unix_ns": 1795452491245130148,
+        "first_frame_id": 0,
+        "first_tx_unix_ns": 1795452491839543291
+      },
+      "pending": null,
+      "applied": {
+        "candidate_id": "tracking-yolo26x-500k",
+        "config_version": 1,
+        "plan_version": 1,
+        "fps": 10,
+        "gop_frames": 10,
+        "epoch_unix_ns": 1795452491245130020,
+        "offset_frames": 0,
+        "activation_cycle": 0,
+        "boundary_unix_ns": 1795452491245130148,
+        "first_frame_id": 0,
+        "first_tx_unix_ns": 1795452491839543291
+      },
+      "transmission_control": {
+        "control_version": 1,
+        "command_id": "5667401e-984f-41f5-8f80-566f11fbb9ad",
+        "status": "ACTIVE",
+        "suspension_version": 0,
+        "effective_unix_ns": 1795452492946401037,
+        "plan_version": 1,
+        "stop_unix_ns": 1795452492946401037
+      },
+      "counters": {
+        "completed": 12,
+        "dropped": 0,
+        "failed": 0
+      }
+    },
+    "cc226085-2c59-4880-b954-589a571245ff": {
+      "ue_id": "1c200f15-62b0-4bfc-8bfb-0fe69d2df591",
+      "application": "tracking",
+      "state": "COMPLETED",
+      "media_epoch": 1,
+      "current": {
+        "candidate_id": "tracking-yolo26x-500k",
+        "config_version": 1,
+        "plan_version": 1,
+        "fps": 10,
+        "gop_frames": 10,
+        "epoch_unix_ns": 1795452491837161344,
+        "offset_frames": 0,
+        "activation_cycle": 0,
+        "boundary_unix_ns": 1795452491837161520,
+        "first_frame_id": 0,
+        "first_tx_unix_ns": 1795452491841748613
+      },
+      "pending": null,
+      "applied": {
+        "candidate_id": "tracking-yolo26x-500k",
+        "config_version": 1,
+        "plan_version": 1,
+        "fps": 10,
+        "gop_frames": 10,
+        "epoch_unix_ns": 1795452491837161344,
+        "offset_frames": 0,
+        "activation_cycle": 0,
+        "boundary_unix_ns": 1795452491837161520,
+        "first_frame_id": 0,
+        "first_tx_unix_ns": 1795452491841748613
+      },
+      "transmission_control": {
+        "control_version": 1,
+        "command_id": "74c566a7-8fa5-443f-893d-337c3af36602",
+        "status": "ACTIVE",
+        "suspension_version": 0,
+        "effective_unix_ns": 1795452492946552462,
+        "plan_version": 1,
+        "stop_unix_ns": 1795452492946552462
+      },
+      "counters": {
+        "completed": 12,
+        "dropped": 0,
+        "failed": 0
+      }
+    },
+    "cafb0d2a-004c-40df-8634-dc5069c867f7": {
+      "ue_id": "03e62c85-7e39-4bfa-a54f-e8dcdc55495b",
+      "application": "segmentation",
+      "state": "COMPLETED",
+      "media_epoch": 1,
+      "current": {
+        "candidate_id": "segmentation-segformer-b3-500k",
+        "config_version": 1,
+        "plan_version": 1,
+        "fps": 10,
+        "gop_frames": 10,
+        "epoch_unix_ns": 1795452491837207057,
+        "offset_frames": 0,
+        "activation_cycle": 0,
+        "boundary_unix_ns": 1795452491837207121,
+        "first_frame_id": 0,
+        "first_tx_unix_ns": 1795452491844075887
+      },
+      "pending": null,
+      "applied": {
+        "candidate_id": "segmentation-segformer-b3-500k",
+        "config_version": 1,
+        "plan_version": 1,
+        "fps": 10,
+        "gop_frames": 10,
+        "epoch_unix_ns": 1795452491837207057,
+        "offset_frames": 0,
+        "activation_cycle": 0,
+        "boundary_unix_ns": 1795452491837207121,
+        "first_frame_id": 0,
+        "first_tx_unix_ns": 1795452491844075887
+      },
+      "transmission_control": {
+        "control_version": 1,
+        "command_id": "c8cb52ee-d96c-4745-8b7d-f7585bdb2482",
+        "status": "ACTIVE",
+        "suspension_version": 0,
+        "effective_unix_ns": 1795452492946573230,
+        "plan_version": 1,
+        "stop_unix_ns": 1795452492946573230
+      },
+      "counters": {
+        "completed": 12,
+        "dropped": 0,
+        "failed": 0
+      }
+    }
+  },
+  "unresolved": [],
+  "inflight": [],
+  "queues": {
+    "detection/-3": 0,
+    "tracking/-3": 0,
+    "segmentation/-3": 0
+  },
+  "shared_rgb_pools": {
+    "0fdd43fb-0124-4334-aa89-e385a8331f5a": {
+      "slots": 32,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    },
+    "327fee50-34f3-4858-86e4-fe6c4e610254": {
+      "slots": 32,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    },
+    "cc226085-2c59-4880-b954-589a571245ff": {
+      "slots": 32,
+      "in_use": 0,
+      "references": 0,
+      "peak": 2,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    },
+    "cafb0d2a-004c-40df-8634-dc5069c867f7": {
+      "slots": 32,
+      "in_use": 0,
+      "references": 0,
+      "peak": 1,
+      "copies": 12,
+      "exhaustions": 0,
+      "closed": true,
+      "mapped": false
+    }
+  },
+  "receiver_handoffs": {
+    "0fdd43fb-0124-4334-aa89-e385a8331f5a": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "327fee50-34f3-4858-86e4-fe6c4e610254": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "cc226085-2c59-4880-b954-589a571245ff": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "cafb0d2a-004c-40df-8634-dc5069c867f7": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    }
+  },
+  "timing_histories": {
+    "detection-yolo26n-500k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26n-1000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26n-2000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26n-4000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26m-500k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26m-1000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26m-1500k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26m-2000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26m-4000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26l-500k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26l-1000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26l-2000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26l-4000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "detection-yolo26x-500k": {
+      "processing_s": [
+        0.041032375,
+        0.040546404,
+        0.041000886,
+        0.041128295,
+        0.042584942,
+        0.042997071,
+        0.039376703,
+        0.040017106,
+        0.039580624,
+        0.040934278
+      ],
+      "tracker_s": []
+    },
+    "detection-yolo26x-1000k": {
+      "processing_s": [
+        0.041032375,
+        0.040546404,
+        0.041000886,
+        0.041128295,
+        0.042584942,
+        0.042997071,
+        0.039376703,
+        0.040017106,
+        0.039580624,
+        0.040934278
+      ],
+      "tracker_s": []
+    },
+    "detection-yolo26x-2000k": {
+      "processing_s": [
+        0.041032375,
+        0.040546404,
+        0.041000886,
+        0.041128295,
+        0.042584942,
+        0.042997071,
+        0.039376703,
+        0.040017106,
+        0.039580624,
+        0.040934278
+      ],
+      "tracker_s": []
+    },
+    "detection-yolo26x-4000k": {
+      "processing_s": [
+        0.041032375,
+        0.040546404,
+        0.041000886,
+        0.041128295,
+        0.042584942,
+        0.042997071,
+        0.039376703,
+        0.040017106,
+        0.039580624,
+        0.040934278
+      ],
+      "tracker_s": []
+    },
+    "tracking-yolo26n-500k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26n-1000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26n-2000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26n-4000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26m-500k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26m-1000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26m-1500k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26m-2000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26m-4000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26l-500k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26l-1000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26l-2000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26l-4000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "tracking-yolo26x-500k": {
+      "processing_s": [
+        0.039421488,
+        0.031224699,
+        0.039980578,
+        0.031092138,
+        0.038681644,
+        0.030643,
+        0.038966078,
+        0.031124539,
+        0.039415023,
+        0.032776882
+      ],
+      "tracker_s": [
+        0.000706051,
+        0.000507842,
+        0.00079842,
+        0.0008889,
+        0.000921988,
+        0.000560099,
+        0.000676787,
+        0.0008905,
+        0.000662035,
+        0.000435809
+      ]
+    },
+    "tracking-yolo26x-1000k": {
+      "processing_s": [
+        0.039421488,
+        0.031224699,
+        0.039980578,
+        0.031092138,
+        0.038681644,
+        0.030643,
+        0.038966078,
+        0.031124539,
+        0.039415023,
+        0.032776882
+      ],
+      "tracker_s": [
+        0.000706051,
+        0.000507842,
+        0.00079842,
+        0.0008889,
+        0.000921988,
+        0.000560099,
+        0.000676787,
+        0.0008905,
+        0.000662035,
+        0.000435809
+      ]
+    },
+    "tracking-yolo26x-2000k": {
+      "processing_s": [
+        0.039421488,
+        0.031224699,
+        0.039980578,
+        0.031092138,
+        0.038681644,
+        0.030643,
+        0.038966078,
+        0.031124539,
+        0.039415023,
+        0.032776882
+      ],
+      "tracker_s": [
+        0.000706051,
+        0.000507842,
+        0.00079842,
+        0.0008889,
+        0.000921988,
+        0.000560099,
+        0.000676787,
+        0.0008905,
+        0.000662035,
+        0.000435809
+      ]
+    },
+    "tracking-yolo26x-4000k": {
+      "processing_s": [
+        0.039421488,
+        0.031224699,
+        0.039980578,
+        0.031092138,
+        0.038681644,
+        0.030643,
+        0.038966078,
+        0.031124539,
+        0.039415023,
+        0.032776882
+      ],
+      "tracker_s": [
+        0.000706051,
+        0.000507842,
+        0.00079842,
+        0.0008889,
+        0.000921988,
+        0.000560099,
+        0.000676787,
+        0.0008905,
+        0.000662035,
+        0.000435809
+      ]
+    },
+    "segmentation-segformer-b0-500k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b0-1000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b0-2000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b0-4000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b1-500k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b1-1000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b1-1500k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b1-2000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b1-4000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b2-500k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b2-1000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b2-2000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b2-4000k": {
+      "processing_s": [],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b3-500k": {
+      "processing_s": [
+        0.073800281,
+        0.092175243,
+        0.085644445,
+        0.090551363,
+        0.074241322,
+        0.071622319,
+        0.073006117,
+        0.073508392,
+        0.074348795,
+        0.072913556
+      ],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b3-1000k": {
+      "processing_s": [
+        0.073800281,
+        0.092175243,
+        0.085644445,
+        0.090551363,
+        0.074241322,
+        0.071622319,
+        0.073006117,
+        0.073508392,
+        0.074348795,
+        0.072913556
+      ],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b3-2000k": {
+      "processing_s": [
+        0.073800281,
+        0.092175243,
+        0.085644445,
+        0.090551363,
+        0.074241322,
+        0.071622319,
+        0.073006117,
+        0.073508392,
+        0.074348795,
+        0.072913556
+      ],
+      "tracker_s": []
+    },
+    "segmentation-segformer-b3-4000k": {
+      "processing_s": [
+        0.073800281,
+        0.092175243,
+        0.085644445,
+        0.090551363,
+        0.074241322,
+        0.071622319,
+        0.073006117,
+        0.073508392,
+        0.074348795,
+        0.072913556
+      ],
+      "tracker_s": []
+    }
+  },
+  "global_queue_history_s": [
+    0.036648756,
+    0.001559815,
+    0.001543319,
+    0.000783988,
+    0.036700419,
+    0.000526786,
+    0.002001177,
+    0.003808561,
+    0.035499502,
+    0.001009476
+  ],
+  "workers": {
+    "tracking": {
+      "type": "ready",
+      "application": "tracking",
+      "pid": 256,
+      "models": [
+        "yolo26n",
+        "yolo26m",
+        "yolo26l",
+        "yolo26x"
+      ],
+      "streams": [
+        -3
+      ],
+      "backend": "torchscript"
+    },
+    "detection": {
+      "type": "ready",
+      "application": "detection",
+      "pid": 255,
+      "models": [
+        "yolo26n",
+        "yolo26m",
+        "yolo26l",
+        "yolo26x"
+      ],
+      "streams": [
+        -3
+      ],
+      "backend": "torchscript"
+    },
+    "segmentation": {
+      "type": "ready",
+      "application": "segmentation",
+      "pid": 257,
+      "models": [
+        "segformer-b0",
+        "segformer-b1",
+        "segformer-b2",
+        "segformer-b3"
+      ],
+      "streams": [
+        -3
+      ],
+      "backend": "torchscript"
+    }
+  },
+  "quarantined": [],
+  "media_bridge_errors": 0,
+  "campaign_id": null,
+  "scenario_id": null,
+  "attempt_id": null
+}
