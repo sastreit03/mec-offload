@@ -806,23 +806,31 @@ client. See [`docker-compose.ue-mec.yaml`](../../ue/config/common/docker-compose
 for the source, dataset, and writable log mounts. Device file counts alone do
 not establish byte-for-byte agreement with inventory hashes.
 
-Run one supervisor in a dedicated **Orin** terminal, setting the campaign name
-to the current campaign:
+### Check and restart the Orin client for the current campaign
+
+Before launching a client, check whether recovery or an earlier session already
+started one. Run these commands on the **Orin**:
 
 ```bash
-CAMPAIGN=my-campaign-v1
-./scripts/softue-client-supervisor.sh \
-  --ue-alias linux1 \
-  --source-dir /datasets/campaign-v2 \
-  --logs "/multi-ue/runs/$CAMPAIGN/ue/linux1" \
-  --preview-port 0
+cd ~/mec-offload-ad/multi-ue
+pgrep -af '[s]oftue-client-supervisor.sh' || true
+docker top oai-nr-ue -eo pid,args
+if [ -f runs/softue-client-launch.json ]; then
+  python3 -m json.tool runs/softue-client-launch.json
+fi
 ```
 
-The log path is inside the container and must map to writable host storage.
-The supervisor records its launch arguments for recovery. Preview is disabled
-to avoid adding preview work to collection. With MEC in collection mode,
-clients wait for scenario assignments and start/stop commands; this step does
-not arm a scenario.
+In `docker top`, look for `python3 -m mec_ue.client`; its `--logs` argument shows
+where the running client writes evidence. The `nr-uesoftmodem` processes are
+the cellular UE, not the MEC application client. The launch JSON records the
+last supervisor arguments for recovery; its existence alone does not prove
+that a client is running.
+
+If the client is already using the intended campaign directory, leave it
+running and proceed to the MEC association check below. If neither the client
+nor supervisor is running, skip termination and follow the identity guidance
+below before launching.
+Otherwise, use the following stop/restart sequence to change directories.
 
 To stop and restart only the Linux application client (for a deployment update
 or a new campaign log directory), first stop the campaign runner and wait for
@@ -861,7 +869,8 @@ Before restarting, verify that the supervisor and client have exited:
 ```bash
 pgrep -af '[s]oftue-client-supervisor.sh'
 docker top oai-nr-ue -eo pid,args
-flock -n /tmp/aetheredge-softue-client.lock -c 'echo "Supervisor lock is free"'
+flock -n "${SOFTUE_CLIENT_LOCK:-/tmp/aetheredge-softue-client.lock}" \
+  -c 'echo "Supervisor lock is free"'
 ```
 
 Require no supervisor process, no `python3 -m mec_ue.client` process, and the
@@ -869,17 +878,35 @@ lock-free message. The OAI softmodem processes should remain. If the lock is
 still held, wait for shutdown and repeat these checks; do not delete the lock
 file or start a second supervisor.
 
-Restart in a dedicated **Orin** terminal with the current campaign's log path:
+**For a new campaign:** the Linux client's `identity.json` lives in its log
+directory. A new directory normally has no saved resume token. After stopping
+the old Orin client, restart the MEC with the new campaign configuration and
+`run_id` before launching the new client. This clears the MEC's in-memory UE
+records, including any disconnected record reserving `linux1`. If the MEC was
+already restarted and the old client never reconnected, another restart is
+unnecessary. This MEC action runs on the **MEC Spark**, not on the Orin. Other
+UEs must reconnect and reestablish associations after it. Do not delete old
+campaign identities or copy them into the new directory for this workflow.
+
+For a restart within the **same campaign**, keep the same log directory and its
+identity file; do not restart the MEC solely to restart the client.
+
+Start in a dedicated **Orin** terminal with the current campaign's log path:
 
 ```bash
 cd ~/mec-offload-ad/multi-ue
-CAMPAIGN=my-campaign-v2  # Replace with the current campaign directory name.
+CAMPAIGN=my-new-campaign  # Replace with the campaign directory name you are starting.
 ./scripts/softue-client-supervisor.sh \
   --ue-alias linux1 \
   --source-dir /datasets/campaign-v2 \
   --logs "/multi-ue/runs/$CAMPAIGN/ue/linux1" \
   --preview-port 0
 ```
+
+The log path is inside the container and must map to writable host storage.
+Preview is disabled to avoid extra work during collection. The client waits
+for MEC scenario assignments and start/stop commands; launching it does not
+arm a scenario.
 
 Use the same `CAMPAIGN` when resuming a campaign, or the new directory name
 when collecting a fresh repeat. Replace the source directory if needed. This
@@ -888,6 +915,17 @@ which recovery uses to restore the exact arguments; existing logs are retained.
 Keep the terminal open. The launcher is
 [`softue-client-supervisor.sh`](../scripts/softue-client-supervisor.sh), which
 invokes [`softue-client.sh`](../scripts/softue-client.sh).
+
+In a second **Orin** terminal, confirm that the new launch is running and that
+both the process arguments and saved recovery arguments contain the intended
+`--logs` path:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+pgrep -af '[s]oftue-client-supervisor.sh' || true
+docker top oai-nr-ue -eo pid,args
+python3 -m json.tool runs/softue-client-launch.json
+```
 
 On the **MEC Spark**, check connections and associations:
 
