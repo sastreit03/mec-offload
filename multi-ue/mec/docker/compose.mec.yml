@@ -1,7 +1,7 @@
 name: multi-ue-mec
 services:
   mec:
-    image: multi-ue-mec:baseline
+    image: multi-ue-mec:latest
     container_name: multi-ue-mec
     # Aetheredge: fixed-policy collection is the operational campaign mode.
     # MEC_CONFIG can still select a dedicated calibration/development profile.

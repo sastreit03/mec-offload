@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 # These commands manage the MEC additions; the core and RAN stacks have separate launchers.
 case "${1:-}" in
- build-mec) docker build -f mec/docker/Dockerfile.mec -t multi-ue-mec:baseline . ;;
+ build-mec) docker build -f mec/docker/Dockerfile.mec -t multi-ue-mec:latest . ;;
  build-edgeric) docker build -f mec/docker/Dockerfile.edgeric -t multi-ue-edgeric:baseline .. ;;
  start-mec)
    mec_config="${MEC_CONFIG:-mec.collection.yaml}"
@@ -18,7 +18,7 @@ case "${1:-}" in
  stop-mec) docker compose -f mec/docker/compose.mec.yml down ;;
  start-edgeric) mkdir -p runs "${RAN_TRACE_DIR:-../edgeric-validation}"; docker compose -f mec/docker/compose.edgeric.yml up -d ;;
  stop-edgeric) docker compose -f mec/docker/compose.edgeric.yml down ;;
- gpu) docker run --rm --gpus all multi-ue-mec:baseline python -c 'import torch; print(torch.__version__, torch.cuda.is_available()); print(torch.cuda.get_device_name())' ;;
+ gpu) docker run --rm --gpus all multi-ue-mec:latest python -c 'import torch; print(torch.__version__, torch.cuda.is_available()); print(torch.cuda.get_device_name())' ;;
  start-mps)
    mps_pipe="${CUDA_MPS_PIPE_DIRECTORY:-/tmp/nvidia-mps}"
    mps_log="${CUDA_MPS_LOG_DIRECTORY:-/tmp/nvidia-log}"
