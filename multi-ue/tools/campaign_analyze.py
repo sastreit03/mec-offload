@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Summarize valid campaign attempts using the canonical MEC-arrival window.
+"""Summarize valid attempts with MEC arrival in [1,6) s and result send <=6 s.
 
 Usage: python3 tools/campaign_analyze.py --campaign-dir runs/campaigns/NAME
-Inputs: scenarios.jsonl, state.sqlite3, diagnostics/mec/jobs.jsonl, and
+Inputs: scenarios.jsonl, state.sqlite3, diagnostics/mec/{jobs,events}.jsonl, and
  diagnostics/{pixel,orin,ue}/ALIAS/events.jsonl. No GPU dependencies required.
 """
 import argparse
@@ -32,6 +32,7 @@ STAGE_INTERVALS = {
     'mec_first_packet_to_result_ready': ('first_packet_monotonic_ns', 'result_ready_monotonic_ns'),
 }
 STAGES = [*STAGE_SECONDS, 'mec_cuda_event', *STAGE_INTERVALS]
+SELECTION_RULE = 'mec-arrival-[1,6)-send-by-6-v1'
 
 
 def read_jsonl(path):
@@ -171,6 +172,17 @@ def analyze(campaign_dir, slo_ms=150.0):
                 raise ValueError(f'Conflicting MEC job records: {key}')
         else:
             jobs[key] = event
+    sends = {}
+    for event in selected(diag / 'mec/events.jsonl'):
+        if event.get('type') != 'send_attempt' or event.get('message_type') != 'frame_result':
+            continue
+        rid, timestamp = event.get('result_id'), event.get('monotonic_ns')
+        if not isinstance(rid, str) or not rid or type(timestamp) is not int or timestamp < 0:
+            raise ValueError('Frame-result send event lacks valid result_id/monotonic_ns')
+        key = (event['scenario_id'], event['attempt_id'], rid)
+        if key in sends:
+            duplicates['send_attempt'] += 1
+        sends[key] = min(timestamp, sends.get(key, timestamp))
     txs = {}; receipts = {}; event_aliases = {}
     for alias in sorted({u for g in groups.values() for u in g['ue_aliases']}):
         # Prefer the current layout. Legacy ue/ is only a fallback.
@@ -218,6 +230,19 @@ def analyze(campaign_dir, slo_ms=150.0):
             if not start + 10**9 <= arrival < start + 6 * 10**9:
                 counts['outside_window'] += 1
                 continue
+            counts['arrival_window'] += 1
+            rid = job.get('result_id')
+            if not isinstance(rid, str) or not rid:
+                raise ValueError(f'{key}: MEC job lacks result_id required for send matching')
+            sent = sends.get((sid, aid, rid))
+            if sent is None:
+                counts['missing_send_evidence'] += 1
+                continue
+            if sent < arrival:
+                raise ValueError(f'{key}: result send precedes first packet arrival')
+            if sent > start + 6 * 10**9:
+                counts['sent_after_cutoff'] += 1
+                continue
             counts['selected'] += 1
             tx, receipt = txs.get(key), receipts.get(key)
             video = video_map.get(key[:3], {})
@@ -241,6 +266,7 @@ def analyze(campaign_dir, slo_ms=150.0):
                        scenario_id=sid, attempt_id=aid, ue_alias=alias,
                        video_id=key[2], frame_id=key[3], application=assignment['application'],
                        candidate_id=job.get('candidate_id'), arrival_offset_s=(arrival-start)/1e9,
+                       result_id=rid, mec_send_monotonic_ns=sent, send_offset_s=(sent-start)/1e9,
                        transmitted=True, result_received=bool(receipt), ue_latency_ms=latency,
                        outcome=job.get('outcome'), failure_reason=job.get('reason'), slo_success=success)
             for name, field in STAGE_SECONDS.items():
@@ -260,12 +286,15 @@ def analyze(campaign_dir, slo_ms=150.0):
         warnings.append(f'{missing} selected transmissions lack result receipts; counted as SLO failures, excluded from latency statistics')
     if window['unknown_window']:
         warnings.append(f"{window['unknown_window']} frame keys lack usable MEC first-packet timestamps; excluded, not counted as successes")
-    result = dict(schema_version=1, campaign_id=campaign_id, run_id=next(iter(runs)),
+    if window['missing_send_evidence']:
+        warnings.append(f"{window['missing_send_evidence']} arrival-window frames lack successful-send evidence; excluded from all statistics and the SLO denominator")
+    result = dict(schema_version=2, campaign_id=campaign_id, run_id=next(iter(runs)),
+                  selection_rule=SELECTION_RULE,
                   campaign_directory=str(campaign_dir), slo_threshold_ms=slo_ms,
-                  selection='Accepted valid attempts only; 1 <= (MEC first packet arrival - MEC scenario release) / 1e9 < 6',
+                  selection='Accepted valid attempts only; MEC first packet arrival in [1,6) seconds and earliest successful MEC WebSocket send at or before 6 seconds, relative to MEC scenario release',
                   latency_definition='First UE result receipt minus UE transmission timestamp; includes completed and failed result receipts',
                   percentile_definition='Linear interpolation at (n-1)*q; pooled samples are frame-weighted',
-                  slo_definition='Completed result with UE latency <= threshold / selected transmitted frames; missing receipts fail',
+                  slo_definition='Completed result with UE latency <= threshold / arrival-window frames whose results were sent by 6 seconds; selected frames missing UE receipts fail; later UE receipts are retained',
                   mec_timing_notes='Same-host durations. Missing stages excluded, not zero. CUDA event overlaps inference; processing includes pre/inference/post, excludes reorder/tracking. Serialization excludes disk replay, socket queue, network.',
                   window_counts=dict(window), checkpoint_status_counts=dict(Counter(r['status'] for r in states)),
                   duplicates_ignored=dict(duplicates), warnings=warnings, inputs=inputs,
@@ -273,7 +302,12 @@ def analyze(campaign_dir, slo_ms=150.0):
     for gid, info in sorted(groups.items()):
         group_rows = [r for r in rows if r['ue_group'] == gid]
         assignments = {sid: manifest[sid]['ues'] for sid in info['scenario_ids']}
+        group_counts = Counter()
+        for attempt in per_attempt:
+            if attempt['ue_group'] == gid:
+                group_counts.update({key: attempt.get(key, 0) for key in window})
         result['groups'][gid] = dict(**info, ue_count=len(info['ue_aliases']),
+            window_counts=dict(group_counts),
             overall=with_applications(group_rows, info['scenario_ids'], assignments),
             per_ue={alias: with_applications([r for r in group_rows if r['ue_alias'] == alias], info['scenario_ids'],
                                             {sid: [a for a in values if a['ue_alias'] == alias] for sid, values in assignments.items()})
@@ -281,7 +315,7 @@ def analyze(campaign_dir, slo_ms=150.0):
     output = diag / 'results'
     output.mkdir(parents=True, exist_ok=True)
     for gid, group in result['groups'].items():
-        (output / f'{gid}-summary.json').write_text(json.dumps(dict(campaign_id=campaign_id, run_id=result['run_id'], **group), indent=2, allow_nan=False)+'\n')
+        (output / f'{gid}-summary.json').write_text(json.dumps(dict(campaign_id=campaign_id, run_id=result['run_id'], selection=result['selection'], selection_rule=SELECTION_RULE, slo_definition=result['slo_definition'], **group), indent=2, allow_nan=False)+'\n')
     (output / 'summary.json').write_text(json.dumps(result, indent=2, allow_nan=False)+'\n')
     with (output / 'frames.csv').open('w', newline='') as stream:
         fields = list(rows[0]) if rows else ['ue_group','ue_alias','application','ue_latency_ms',*STAGES]
@@ -294,7 +328,8 @@ def analyze(campaign_dir, slo_ms=150.0):
 def write_markdown(path, result):
     lines = [f"# Latency summary: {result['campaign_id']}", '',
              f"MEC run: `{result['run_id']}`. SLO: {result['slo_threshold_ms']:g} ms.", '',
-             result['selection']+'. Results received after the window are retained.', '',
+             result['selection']+'. UE receipts after 6 seconds remain eligible when the MEC send met the cutoff.', '',
+             result['slo_definition']+'.', '',
              result['latency_definition']+'. Missing results are excluded from latency statistics but fail the SLO.', '',
              'All latency values are milliseconds; percentiles use linear interpolation.', '']
     def fmt(value):
@@ -302,7 +337,8 @@ def write_markdown(path, result):
     for gid, group in result['groups'].items():
         lines += [f"## {group['ue_count']} UEs: {', '.join(group['ue_aliases'])}", '',
                   f"{group['overall']['scenarios']} valid scenarios. JSON: [{gid}-summary.json]({gid}-summary.json).", '',
-                  '| UE / application | Transmitted | Receipts | Mean | Median | P95 | P99 | SLO success |',
+                  f"Selection counts: `{group['window_counts']}`.", '',
+                  '| UE / application | Selected transmissions | Receipts | Mean | Median | P95 | P99 | SLO success |',
                   '|---|---:|---:|---:|---:|---:|---:|---:|']
         scopes = [('All UEs', group['overall']), *group['per_ue'].items()]
         for label, summary in scopes:

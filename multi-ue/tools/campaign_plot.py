@@ -10,7 +10,7 @@ import json
 import math
 from pathlib import Path
 
-from campaign_analyze import STAGES
+from campaign_analyze import STAGES, SELECTION_RULE
 
 
 def ecdf(values):
@@ -27,9 +27,15 @@ def plot_campaign(campaign_dir):
 
     results = Path(campaign_dir).resolve() / 'diagnostics/results'
     summary = json.loads((results/'summary.json').read_text())
+    if summary.get('selection_rule') != SELECTION_RULE:
+        raise ValueError('Analysis lacks the MEC send-by-6s cutoff; rerun campaign_analyze.py first')
     with (results/'frames.csv').open() as stream:
         rows = list(csv.DictReader(stream))
     for row in rows:
+        sent = float(row.get('send_offset_s', 'nan'))
+        arrival = float(row.get('arrival_offset_s', 'nan'))
+        if not (math.isfinite(sent) and math.isfinite(arrival) and 1 <= arrival < 6 and arrival <= sent <= 6):
+            raise ValueError('CSV frame violates arrival/send selection; rerun analysis')
         for metric in ['ue_latency_ms', *STAGES]:
             raw = row.get(metric)
             value = float(raw) if raw else None
@@ -65,7 +71,7 @@ def plot_campaign(campaign_dir):
             if slo:
                 ax.axvline(summary['slo_threshold_ms'], color='black', linestyle='--', alpha=.6,
                            label=f"SLO {summary['slo_threshold_ms']:g} ms")
-            ax.set(title=f'{title}\n{title_prefix}', xlabel='Latency (ms)', ylabel='Empirical cumulative probability')
+            ax.set(title=f'{title}\n{title_prefix}\nMEC arrival [1,6) s; result sent by 6 s', xlabel='Latency (ms)', ylabel='Empirical cumulative probability')
             ax.set_xlim(left=0); ax.set_ylim(0, 1.01)
             ax.grid(True, alpha=.25); ax.legend(fontsize='small')
             for suffix in ('png','pdf'):
@@ -82,7 +88,8 @@ def plot_campaign(campaign_dir):
         for stage in STAGES:
             draw(stage+'_cdf', stage.replace('_',' '), stage, [('All UEs',selected)])
     report = dict(campaign_id=summary['campaign_id'], run_id=summary['run_id'], generated=generated, skipped=skipped,
-                  definition='ECDF of observed samples in the accepted-attempt MEC-arrival [1,6) window. Missing receipts/stages excluded. UE curves include failed result receipts; CDF at SLO is not necessarily SLO success rate.')
+                  selection_rule=SELECTION_RULE,
+                  definition='ECDF of observed samples from valid attempts with MEC arrival in [1,6) s and successful MEC send at or before 6 s. Later UE receipts retained. Missing receipts/stages excluded. UE curves include failed result receipts; CDF at SLO is not necessarily SLO success rate.')
     (results/'plots/index.json').write_text(json.dumps(report,indent=2)+'\n')
     print(f"Wrote {len(generated)} plot files to {results/'plots'}; skipped {len(skipped)} plots with no samples")
     return report

@@ -18,7 +18,7 @@ def jsonl(path, values):
 
 @pytest.fixture
 def campaign(tmp_path):
-    scenarios=[];jobs=[];events={};states=[]
+    scenarios=[];jobs=[];events={};states=[];sends=[]
     for index, aliases in enumerate([['pixel1'], ['pixel1','pixel2'], ['pixel1','linux1']]):
         sid=f's{index}';aid=f'a{index}'
         assignments=[dict(ue_alias=a,application='detection') for a in aliases]
@@ -27,7 +27,8 @@ def campaign(tmp_path):
         for alias in aliases:
             vid=f'{sid}-{alias}';videos[vid]=dict(ue_alias=alias,application='detection')
             for fid, offset in enumerate([999999999,1000000000,5999999999,6000000000,None]):
-                context=dict(campaign_id='c',scenario_id=sid,attempt_id=aid,run_id='run',video_id=vid,frame_id=fid)
+                context=dict(campaign_id='c',scenario_id=sid,attempt_id=aid,run_id='run',video_id=vid,frame_id=fid, result_id=f'{sid}-{alias}-{fid}')
+                sends.append(dict(context,type='send_attempt',message_type='frame_result',monotonic_ns=16*10**9))
                 stage={} if offset is None else dict(first_packet_monotonic_ns=10**10+offset,decode_s=.002)
                 outcome='failed' if fid==2 else 'completed'
                 jobs.append(dict(context,type='frame_result',application='detection',outcome=outcome,stage_times=stage))
@@ -51,6 +52,7 @@ def campaign(tmp_path):
         db.execute('CREATE TABLE scenarios (scenario_id TEXT, status TEXT, attempt_id TEXT, evidence_json TEXT)')
         db.executemany('INSERT INTO scenarios VALUES (?,?,?,?)',states)
     jsonl(tmp_path/'diagnostics/mec/jobs.jsonl',jobs)
+    jsonl(tmp_path/'diagnostics/mec/events.jsonl',sends)
     for alias,records in events.items():
         family='orin' if alias=='linux1' else 'pixel'
         jsonl(tmp_path/f'diagnostics/{family}/{alias}/events.jsonl',records)
@@ -60,7 +62,7 @@ def campaign(tmp_path):
 def test_valid_selection_window_membership_and_missing_receipts(campaign):
     result=analyze(campaign)
     assert len(result['groups'])==3  # Two distinct pairs are not collapsed.
-    assert result['window_counts']==dict(selected=10,outside_window=10,unknown_window=5)
+    assert result['window_counts']==dict(selected=10,arrival_window=10,outside_window=10,unknown_window=5)
     assert result['duplicates_ignored']['result_receipt']==5
     assert len(result['attempts'])==3
     for group in result['groups'].values():
@@ -102,3 +104,41 @@ def test_statistics_and_ecdf():
     s=stats([0,100]);assert s['median_ms']==50 and s['p95_ms']==95 and s['p99_ms']==99
     assert ecdf([3,1,1])==([1,1,1,3],[0,1/3,2/3,1])
     assert ecdf([])==([],[])
+
+
+def test_send_cutoff_duplicates_context_and_late_receipt(campaign):
+    p=campaign/'diagnostics/mec/events.jsonl'
+    sends=[json.loads(l) for l in p.read_text().splitlines()]
+    # s0 frame 1 is late; a different attempt's early send must not rescue it.
+    for e in sends:
+        if e['scenario_id']=='s0' and e['frame_id']==1:
+            e['monotonic_ns']=16*10**9+1
+            sends.append(dict(e,attempt_id='invalid',monotonic_ns=12*10**9))
+            break
+    # s1 pixel1 frame 1 has no send evidence; s1 pixel2 frame 1 has an
+    # early send and a late replay. Preserve the early send regardless of order.
+    sends=[e for e in sends if not (e['scenario_id']=='s1' and e['video_id']=='s1-pixel1' and e['frame_id']==1)]
+    e=next(e for e in sends if e['scenario_id']=='s1' and e['video_id']=='s1-pixel2' and e['frame_id']==1)
+    sends.insert(0,dict(e,monotonic_ns=20*10**9))
+    jsonl(p,sends)
+    # UE clock is independent: a receipt many seconds after its transmission is
+    # still included if the corresponding MEC send met the cutoff.
+    p=campaign/'diagnostics/pixel/pixel2/events.jsonl'
+    events=[json.loads(l) for l in p.read_text().splitlines()]
+    for e in events:
+        if e['type']=='result_receipt': e['receipt_mono_ns']=30*10**9
+    jsonl(p,events)
+    result=analyze(campaign)
+    assert result['window_counts']['selected']==8
+    assert result['window_counts']['sent_after_cutoff']==1
+    assert result['window_counts']['missing_send_evidence']==1
+    group=next(g for g in result['groups'].values() if g['ue_aliases']==['pixel1','pixel2'])
+    assert group['overall']['transmitted_frames']==3
+    assert group['overall']['mec_latency_breakdown_ms']['mec_decode']['samples']==3
+    assert group['per_ue']['pixel2']['ue_latency_ms']['mean_ms']==29000
+    assert group['overall']['slo_success_rate']==0
+
+
+def test_missing_mec_events_file_fails(campaign):
+    (campaign/'diagnostics/mec/events.jsonl').unlink()
+    with pytest.raises(FileNotFoundError): analyze(campaign)

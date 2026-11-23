@@ -41,7 +41,7 @@ from a schema-1 example supported by the current generator:
 cd ~/mec-offload-ad/multi-ue
 CAMPAIGN="my-campaign-v1"  # Replace with a unique descriptive name.
 test ! -e "config/campaigns/${CAMPAIGN}.yaml" &&
-  cp config/campaigns/aetheredge-pass-through-51prb-pilot.yaml \
+  cp config/campaigns/20261119-pilot-no-mps-no-tracking.yaml \
      "config/campaigns/${CAMPAIGN}.yaml"
 ```
 
@@ -51,10 +51,37 @@ may not match the intended comparison.
 
 Set `campaign_name` to the chosen name and `campaign_seed` to an integer.
 The name identifies the campaign; the seed makes media selection and randomized
-execution reproducible. Set `execution.checkpoint_database` to
-`runs/campaigns/<campaign_name>/state.sqlite3` for consistency; the runner uses
-the directory supplied through `--campaign-dir`. Never reuse an existing
-campaign directory for a changed design.
+execution reproducible. Never reuse an existing campaign directory for a
+changed design.
+
+### Update the checkpoint path for the new campaign
+
+In the new `config/campaigns/<campaign_name>.yaml`, find the existing
+`execution` block and change **`execution.checkpoint_database`** so its directory
+contains the exact new `campaign_name`, not the name from the copied example:
+
+```yaml
+campaign_name: my-campaign-v1
+
+execution:
+  # Keep the other existing execution settings.
+  checkpoint_database: runs/campaigns/my-campaign-v1/state.sqlite3
+```
+
+Edit the existing block rather than adding a second `execution` block. Use a
+literal campaign name in YAML; do not put the shell variable `$CAMPAIGN` in
+this value. Check the two fields on the **RAN Spark**:
+
+```bash
+rg -n '^(campaign_name:|[[:space:]]+checkpoint_database:)' \
+  "config/campaigns/${CAMPAIGN}.yaml"
+```
+
+The path should be `runs/campaigns/<campaign_name>/state.sqlite3`. The runner
+uses the directory passed through `--campaign-dir`, so use that same campaign
+directory when generating and running the manifest later. Retain the existing
+checkpoint when resuming the same campaign; do not delete earlier campaigns'
+databases.
 
 Only `schema_version: 1` is currently supported by
 [`generate_campaign_manifest.py`](../tools/generate_campaign_manifest.py).
@@ -515,7 +542,7 @@ cd ~/mec-offload-ad/multi-ue
 docker run --rm -i --network none \
   -v "$PWD/config:/work/multi-ue/config:ro" \
   -v "$PWD/weights:/work/multi-ue/weights:ro" \
-  --entrypoint python multi-ue-mec:baseline - <<'PY'
+  --entrypoint python multi-ue-mec:latest - <<'PY'
 from pathlib import Path
 from mec_server.config import load
 
@@ -553,7 +580,7 @@ the host. Compare key collection-control files against the MEC host source:
 sha256sum mec/src/mec_server/{app,engine,config}.py
 
 docker run --rm --network none --entrypoint sha256sum \
-  multi-ue-mec:baseline \
+  multi-ue-mec:latest \
   mec/src/mec_server/app.py \
   mec/src/mec_server/engine.py \
   mec/src/mec_server/config.py
@@ -1408,8 +1435,13 @@ Outputs go to `runs/campaigns/$CAMPAIGN/diagnostics/results/`:
 Groups use exact participating UE aliases, so different combinations with the
 same UE count remain separate. Group membership is listed in the JSON and
 Markdown. Statistics include only the checkpoint's selected valid attempts.
-Frame selection uses MEC first-packet arrival in `[1 s, 6 s)` relative to MEC
-release; result receipts after six seconds remain eligible. UE latency is
+Frame selection requires MEC first-packet arrival in `[1 s, 6 s)` and a
+successful MEC WebSocket send at or before 6 s, relative to MEC release.
+The analyzer requires `diagnostics/mec/events.jsonl` to match `send_attempt`
+records by result ID and scenario/attempt. Results sent after the cutoff or
+without send evidence are excluded from UE and MEC statistics and the SLO
+denominator; exclusion counts are reported. UE receipts after six seconds
+remain eligible if the MEC send met the cutoff. UE latency is
 first result receipt minus transmission time on the same UE clock. Failed
 result receipts are included in latency distributions. Missing receipts count
 as SLO failures but cannot contribute a latency sample. The default SLO is
