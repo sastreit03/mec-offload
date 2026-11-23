@@ -1,6 +1,5 @@
 """Candidate quarantine covers shared models and prevents new frame admission."""
 
-from collections import deque
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -66,8 +65,11 @@ def test_priority_decision_has_separate_timing_evidence():
     engine.queue_history = SimpleNamespace(value=0.0)
     engine.processing = Mock(return_value=0.01)
     engine.cfg = SimpleNamespace(pending_frames=8, pending_bytes_per_video=1024)
-    engine.pending = {("detection", -3): deque()}
+    engine.workers = Mock()
+    engine.workers.submit.return_value = True
+    engine.inflight = {}
     engine.record = Mock()
+    frame.deadline_ns = 2**63 - 1
     rgb = SimpleNamespace(nbytes=1)
 
     engine.decoded(descriptor, rgb, 3)

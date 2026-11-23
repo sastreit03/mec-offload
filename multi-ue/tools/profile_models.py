@@ -98,6 +98,7 @@ def main():
                 "postprocess_s",
                 "cuda_event_ms",
                 "gpu_submit_ns",
+                "gpu_launch_end_ns",
                 "gpu_completion_observed_ns",
                 "tracker_s",
             ]

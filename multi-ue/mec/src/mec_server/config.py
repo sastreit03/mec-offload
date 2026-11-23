@@ -59,6 +59,9 @@ class Settings(BaseModel):
     control_port: int = 8765
     first_udp_port: int = 5000
     max_videos: int = 30
+    handoff_notifications: int = Field(default=1024, gt=0)
+    handoff_decoded_frames: int = Field(default=10, gt=0)
+    # Legacy YAML keys accepted for older run configurations.
     pending_frames: int = 16
     pending_bytes_per_video: int = 64 * 1024 * 1024
     replay_pending_bytes: int = Field(default=64 * 1024 * 1024, gt=0)

@@ -53,8 +53,7 @@ def test_resource_report_records_and_forwards_cpu_in_existing_event(monkeypatch)
     sample = dict(valid=True, utilization_percent=28.4,
                   per_cpu_utilization_percent=[41.2, 15.6], interval_s=.1)
     engine = Engine.__new__(Engine)
-    engine.cfg = SimpleNamespace(ran_telemetry={'report_interval_ms': 100})
-    engine.pending = {}
+    engine.cfg = SimpleNamespace(ran_telemetry={'report_interval_ms': 100}, applications=(), priority_streams=())
     engine.videos = {}
     engine.workers = SimpleNamespace(ready={})
     engine.gpu = SimpleNamespace(sample=lambda: {'valid': False})

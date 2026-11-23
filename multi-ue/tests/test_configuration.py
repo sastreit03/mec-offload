@@ -1,6 +1,5 @@
 """Validated controls for the configurable experiment layout."""
 
-from collections import deque
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -238,14 +237,17 @@ def test_collection_uses_fixed_candidate_and_fifo_priority():
     video.input_closed = True
     engine.frames = {("video", 7): frame}
     engine.videos = {"video": video}
-    engine.pending = {("detection", -3): deque()}
+    engine.workers = Mock()
+    engine.workers.submit.return_value = True
+    engine.inflight = {}
     engine.queue_history = SimpleNamespace(value=0.0)
     rgb = SimpleNamespace(nbytes=1)
 
     engine.decoded(descriptor, rgb, 3)
 
-    assert frame.state == "QUEUED" and frame.priority == -3
-    assert list(engine.pending[("detection", -3)]) == [("video", 7)]
+    assert frame.state == "PROCESSING" and frame.priority == -3
+    assert list(engine.inflight) == [("video", 7)]
+    engine.workers.submit.assert_called_once()
 
 
 @pytest.mark.parametrize("enabled,expected_offsets", [(True, [0, 24]), (False, [0, 0])])

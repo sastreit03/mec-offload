@@ -3,11 +3,10 @@ import asyncio
 import hashlib
 import json
 import math
-import queue
 import secrets
 import time
 import uuid
-from collections import deque
+from .handoff import ReceiverHandoff
 from dataclasses import dataclass, field
 from pathlib import Path
 from .config import collection_candidates, qualified
@@ -89,6 +88,7 @@ class Video:
     admitted: float
     state: str = "AWAITING_DECISION"
     receiver: object = None
+    receiver_stopping: bool = False
     port: int = 0
     slo: float = 0.15
     can_drop: bool = False
@@ -197,11 +197,6 @@ class Engine:
         self.inflight = {}
         self.dedup = {}
         self.quarantined = set()
-        self.pending = {
-            (a, p): deque()
-            for a in cfg.applications
-            for p in cfg.priority_streams
-        }
         self.histories = {}
         self.residence = {}
         self.queue_history = History(cfg.global_queue_initial_s or 0.0)
@@ -225,7 +220,6 @@ class Engine:
         self.worker_failures = {}
         self.closed = False
         self.loop = None
-        self.events = queue.Queue(maxsize=1024)
         self.media_bridge_errors = 0
         self.admission_lock = asyncio.Lock()
         self.background = []
@@ -303,7 +297,6 @@ class Engine:
         return bool(
             not self.frames
             and not self.inflight
-            and all(not values for values in self.pending.values())
             and all(
                 v.state in TERMINAL and v.deliveries == 0 and not v.tracker_busy
                 for v in self.videos.values()
@@ -781,22 +774,52 @@ class Engine:
             asyncio.create_task(self.resource_reports()),
         ]
 
-    def post(self, kind, data):
-        # Bounded staging. A decoded overflow is made an explicit outcome on the loop.
+    def receiver_handoff(self, vid):
+        def overflow(count, descriptors):
+            self.media_bridge_errors += count
+            self.record.event("receiver_handoff_overflow", video_id=vid, count=count)
+            if self.collection_mode:
+                self.invalidate_scenario("receiver_handoff_overflow", video_id=vid)
+            v = self.videos.get(vid)
+            for d in descriptors:
+                if not v or d.media_epoch != v.epoch or v.resolved.has(d.frame_id):
+                    continue
+                if (vid, d.frame_id) in self.frames:
+                    self.fail_frame(vid, d.frame_id, "receiver_handoff_overflow")
+                else:
+                    self.resolve_missing(v, d.frame_id, "receiver_handoff_overflow",
+                                         "failed" if self.collection_mode else "dropped")
+
+        return ReceiverHandoff(self.loop, self.dispatch_media, overflow,
+                               self.cfg.handoff_notifications, self.cfg.handoff_decoded_frames)
+
+    def dispatch_media(self, kind, data):
         try:
-            self.events.put_nowait((kind, data))
-        except queue.Full:
-            self.media_bridge_errors += 1
-            if kind == "decoded":
-                d = data["descriptor"]
-                self.loop.call_soon_threadsafe(
-                    self.fail_frame,
-                    d.video_id,
-                    d.frame_id,
-                    "collection_event_overflow"
-                    if self.collection_mode
-                    else "buffer_overflow",
+            if kind == "descriptor":
+                self.receive_descriptor(
+                    data["descriptor"], data["first_packet_ns"]
                 )
+            elif kind == "progress":
+                self.progress_event(
+                    data["descriptor"],
+                    data["unique_bytes"],
+                    data["complete"],
+                    data["received_ns"],
+                    data.get("received_unix_ns"),
+                )
+            elif kind == "decoded":
+                self.decoded(
+                    data["descriptor"], data["rgb"], data["decoded_ns"]
+                )
+            elif kind == "frame_failure":
+                d = data["descriptor"]
+                self.fail_frame(d.video_id, d.frame_id, data["reason"])
+            else:
+                self.record.event(kind, **data)
+        except Exception as ex:
+            self.record.event(
+                "receiver_event_error", kind=kind, reason=repr(ex)
+            )
 
     def send(self, uid, message):
         u = self.ues[uid]
@@ -1380,7 +1403,7 @@ class Engine:
                 return denied("receiver_capacity")
             v.port = port
             receiver = (MockReceiver if self.cfg.backend == "mock" else Receiver)(
-                vid, v.epoch, port, self.cfg, self.post
+                vid, v.epoch, port, self.cfg, self.receiver_handoff(vid)
             )
             setup_context = self.join_context()
             setup_stage = "receiver"
@@ -1467,14 +1490,15 @@ class Engine:
             config=v.pending,
             rtp=dict(extension_id=1, descriptor_bytes=96, mtu=1200, payload_type=96),
             queue_contract=dict(
-                max_pending_frames=self.cfg.pending_frames,
-                max_pending_bytes=self.cfg.pending_bytes_per_video,
+                max_pending_frames=self.cfg.handoff_decoded_frames,
+                max_notifications=self.cfg.handoff_notifications,
+                max_pending_bytes=self.cfg.decoded_max_bytes * self.cfg.handoff_decoded_frames,
                 mandatory_drops=[]
                 if self.collection_mode
                 else [
                     "nonpositive_slack",
                     "deadline_expired",
-                    "buffer_overflow",
+                    "receiver_handoff_overflow",
                     "session_suspended",
                     "transport_loss",
                     "tracking_cutoff",
@@ -1576,7 +1600,7 @@ class Engine:
             stop_unix_ns=None,
         )
         receiver = (MockReceiver if self.cfg.backend == "mock" else Receiver)(
-            vid, v.epoch, port, self.cfg, self.post
+            vid, v.epoch, port, self.cfg, self.receiver_handoff(vid)
         )
         setup_stage = "receiver"
         try:
@@ -2089,8 +2113,9 @@ class Engine:
             self.aware("progress", 0 if msg["complete"] else 1, **msg)
             self.last_progress[key] = time.monotonic()
 
-    # Assign priority once, then enforce the per-video pending-input limits.
+    # Decide and submit on the engine loop in the same receiver callback.
     def decoded(self, d, rgb, decoded_ns):
+        entered_ns = time.monotonic_ns()
         if self.collection_mode and self.scenario_error:
             return
         f = self.frames.get((d.video_id, d.frame_id))
@@ -2113,6 +2138,9 @@ class Engine:
         ):
             self.fail_frame(v.vid, d.frame_id, "session_suspended")
             return
+        if f.state != "RECEIVING":
+            return
+        f.times["decoded_handler_monotonic_ns"] = entered_ns
         f.state = "PRIORITY_PENDING"
         f.decoded_ns = decoded_ns
         f.rgb = rgb
@@ -2164,45 +2192,24 @@ class Engine:
         if f.priority is None:
             self.fail_frame(v.vid, d.frame_id, "nonpositive_slack")
             return
-        pending = [
-            x
-            for x in self.frames.values()
-            if x.vid == v.vid and x.state in ("PRIORITY_PENDING", "QUEUED")
-        ]
-        over_limit = (
-            len(pending) > self.cfg.pending_frames
-            or sum(x.rgb.nbytes for x in pending if x.rgb is not None)
-            > self.cfg.pending_bytes_per_video
-        )
-        if over_limit and self.collection_mode:
-            self.invalidate_scenario("collection_buffer_limit", video_id=v.vid)
-            v.collection_error = "collection_buffer_limit"
-            self.record.event(
-                "collection_run_invalid",
-                video_id=v.vid,
-                reason=v.collection_error,
-                pending_frames=len(pending),
-                pending_bytes=sum(
-                    x.rgb.nbytes for x in pending if x.rgb is not None
-                ),
-            )
-            self.fail_frame(v.vid, d.frame_id, v.collection_error)
-            return
-        while over_limit:
-            oldest = min(pending, key=lambda x: x.fid)
-            pending.remove(oldest)
-            self.fail_frame(v.vid, oldest.fid, "buffer_overflow")
-            over_limit = (
-                len(pending) > self.cfg.pending_frames
-                or sum(x.rgb.nbytes for x in pending if x.rgb is not None)
-                > self.cfg.pending_bytes_per_video
-            )
-        if v.resolved.has(d.frame_id):
-            return
+        key = (v.vid, f.fid)
         f.queue_ns = time.monotonic_ns()
         f.times["queue_enter_monotonic_ns"] = f.queue_ns
-        f.state = "QUEUED"
-        self.pending[(v.app, f.priority)].append((v.vid, f.fid))
+        if not self.collection_mode and f.queue_ns >= f.deadline_ns:
+            self.fail_frame(*key, "deadline_expired")
+            return
+        job = dict(job_id=list(key), priority=f.priority, configuration=f.config, rgb=rgb)
+        if not self.workers.submit(v.app, f.priority, job):
+            if self.collection_mode:
+                self.invalidate_scenario("worker_unavailable", video_id=v.vid)
+            self.fail_frame(*key, "worker_unavailable")
+            return
+        submitted = time.monotonic_ns()
+        f.times["worker_submitted_monotonic_ns"] = submitted
+        self.inflight[key] = dict(candidate_id=f.config["id"], queue_ns=f.queue_ns,
+                                  submitted_ns=submitted, application=v.app, priority=f.priority)
+        f.state = "PROCESSING"
+        f.rgb = None  # The IPC queue now holds the RGB reference.
 
     def fail_frame(self, vid, fid, reason):
         f = self.frames.get((vid, fid))
@@ -2218,6 +2225,7 @@ class Engine:
             or reason
             in (
                 "execution_failed",
+                "worker_unavailable",
                 "execution_candidate_quarantined",
                 "transport_loss",
                 "invalid_metadata",
@@ -2375,37 +2383,6 @@ class Engine:
             self.check_scenario_control()
             now = time.monotonic()
             ns = time.monotonic_ns()
-            for _ in range(1024):
-                try:
-                    kind, data = self.events.get_nowait()
-                except queue.Empty:
-                    break
-                try:
-                    if kind == "descriptor":
-                        self.receive_descriptor(
-                            data["descriptor"], data["first_packet_ns"]
-                        )
-                    elif kind == "progress":
-                        self.progress_event(
-                            data["descriptor"],
-                            data["unique_bytes"],
-                            data["complete"],
-                            data["received_ns"],
-                            data.get("received_unix_ns"),
-                        )
-                    elif kind == "decoded":
-                        self.decoded(
-                            data["descriptor"], data["rgb"], data["decoded_ns"]
-                        )
-                    elif kind == "frame_failure":
-                        d = data["descriptor"]
-                        self.fail_frame(d.video_id, d.frame_id, data["reason"])
-                    else:
-                        self.record.event(kind, **data)
-                except Exception as ex:
-                    self.record.event(
-                        "receiver_event_error", kind=kind, reason=repr(ex)
-                    )
             self.check_scenario_media_progress()
             for key in list(self.progress):
                 if now - self.last_progress.get(key, 0) >= 0.005:
@@ -2418,13 +2395,10 @@ class Engine:
                     and ns >= f.deadline_ns
                 ):
                     self.fail_frame(f.vid, f.fid, "decode_deadline_expired")
-            for app, process in self.workers.processes.items():
-                if process.exitcode is not None and app not in self.worker_failures:
-                    self.worker_failures[app] = f"worker exited: {process.exitcode}"
-                    if self.collection_mode:
-                        self.invalidate_scenario("worker_exited", application=app)
             if self.collection_mode and self.record.error:
                 self.invalidate_scenario("recording_failed", error=str(self.record.error))
+            exited = {app: process.exitcode for app, process in self.workers.processes.items()
+                      if process.exitcode is not None and app not in self.worker_failures}
             for m in self.workers.poll():
                 if m["type"] == "startup_failed":
                     self.worker_failures[m["application"]] = m["error"]
@@ -2445,6 +2419,7 @@ class Engine:
                         )
                         continue
                     if m["type"] == "failed":
+                        f.times.update(m.get("times", {}))
                         f.times.update(
                             worker_start_monotonic_ns=m["worker_start_ns"],
                             worker_end_monotonic_ns=m["worker_finish_ns"],
@@ -2480,39 +2455,18 @@ class Engine:
                             self.fail_frame(vid, oldest, "tracking_buffer_overflow")
                     else:
                         self.resolve(f, "completed", payload=f.payload)
-            for (app, p), items in self.pending.items():
-                if not self.workers.available(app, p):
-                    continue
-                while items:
-                    key = items.popleft()
-                    f = self.frames.get(key)
-                    if not f or f.state != "QUEUED":
-                        continue
-                    if f.config["id"] in self.quarantined:
-                        self.fail_frame(*key, "execution_candidate_quarantined")
-                        continue
-                    if not self.collection_mode and ns >= f.deadline_ns:
-                        self.fail_frame(*key, "deadline_expired")
-                        continue
-                    job = dict(
-                        job_id=list(key), priority=p, configuration=f.config, rgb=f.rgb
-                    )
-                    if self.workers.submit(app, p, job):
-                        self.inflight[key] = dict(
-                            candidate_id=f.config["id"],
-                            queue_ns=f.queue_ns,
-                            submitted_ns=ns,
-                            application=app,
-                            priority=p,
-                        )
-                        f.state = "PROCESSING"
-                    else:
-                        items.appendleft(key)
-                    break
+            for app, code in exited.items():
+                self.worker_failures[app] = f"worker exited: {code}"
+                if self.collection_mode:
+                    self.invalidate_scenario("worker_exited", application=app)
+                for key, context in list(self.inflight.items()):
+                    if context["application"] == app:
+                        self.inflight.pop(key)
+                        self.fail_frame(*key, "worker_unavailable")
             for v in list(self.videos.values()):
                 if v.finalized:
                     continue
-                if v.receiver:
+                if v.receiver and not v.receiver_stopping:
                     v.receiver.tick()
                 if v.app == "tracking":
                     self.tracker_tick(v, ns)
@@ -2570,7 +2524,12 @@ class Engine:
                         # so do not use the much longer GPU/result drain here.
                         and now < v.input_close_at + self.cfg.decoder_drain_s
                     ):
-                        self.close_input(v, "video_end")
+                        if isinstance(getattr(v.receiver, "post", None), ReceiverHandoff):
+                            if not v.receiver_stopping:
+                                v.receiver_stopping = True
+                                self.task(self.finish_receiver(v))
+                        else:
+                            self.close_input(v, "video_end")
                 if v.input_closed:
                     if v.final_id is not None:
                         for fid in range(
@@ -2722,6 +2681,16 @@ class Engine:
         finally:
             v.tracker_busy = False
 
+    async def finish_receiver(self, v):
+        # After stopping the producer, account for every already-posted notification
+        # before validating frame counts or declaring missing tail frames.
+        try:
+            await asyncio.to_thread(v.receiver.close)
+            while v.receiver.post.scheduled:
+                await asyncio.sleep(0)
+        finally:
+            self.close_input(v, "video_end")
+
     # Closing media starts drain; shared application workers remain resident.
     def close_input(self, v, reason):
         if v.input_closed:
@@ -2731,7 +2700,8 @@ class Engine:
             self.validate_frame_counts(v)
         if v.drain_until is None:
             v.drain_until = time.monotonic() + self.cfg.drain_s
-        if v.receiver:
+        if v.receiver and not v.receiver_stopping:
+            v.receiver_stopping = True
             self.task(asyncio.to_thread(v.receiver.close))
         self.close_demand(v)
         if reason == "video_end" and self.collection_mode:
@@ -2906,8 +2876,10 @@ class Engine:
                     for k, value in self.inflight.items()
                 ],
                 queues={
-                    f"{a}/{p}": len(items) for (a, p), items in self.pending.items()
+                    f"{a}/{p}": 0 for a in self.cfg.applications for p in self.cfg.priority_streams
                 },
+                receiver_handoffs={vid: v.receiver.post.stats() for vid, v in self.videos.items()
+                                   if isinstance(getattr(v.receiver, "post", None), ReceiverHandoff)},
                 timing_histories={
                     cid: dict(
                         processing_s=list(h[0].values), tracker_s=list(h[1].values)
@@ -3026,11 +2998,7 @@ class Engine:
                     dict(
                         application=a,
                         priority=p,
-                        queued=sum(
-                            1
-                            for key in items
-                            if key in self.frames and self.frames[key].state == "QUEUED"
-                        ),
+                        queued=0,
                         inflight=[
                             dict(
                                 video_id=key[0],
@@ -3042,7 +3010,7 @@ class Engine:
                             if context["application"] == a and context["priority"] == p
                         ],
                     )
-                    for (a, p), items in self.pending.items()
+                    for a in self.cfg.applications for p in self.cfg.priority_streams
                 ],
                 tracker_active=[v.vid for v in self.videos.values() if v.tracker_busy],
                 workers=self.workers.ready,

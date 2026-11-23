@@ -1,0 +1,147 @@
+{
+  "kind": "isolated decoded-input virtual-UE trial",
+  "backend": "torchscript",
+  "radio_and_decoder_tested": false,
+  "media": "/media/profile.mov",
+  "frames_per_ue": 12,
+  "fps_per_ue": 10,
+  "models": [
+    "detection-yolo26x-500k",
+    "tracking-yolo26x-500k",
+    "tracking-yolo26x-500k",
+    "segmentation-segformer-b3-500k"
+  ],
+  "submitted": 48,
+  "terminal_records": 48,
+  "outcomes": {
+    "completed": 48
+  },
+  "exactly_one_terminal_per_submitted": true,
+  "exactly_one_worker_result_per_submitted": true,
+  "receiver_queues": {
+    "128ae5dd-9d60-4867-be51-7c94649248e8": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "deb018aa-85d0-49a0-a8fb-82c61380c5c3": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "fc7e39ce-d428-4880-8e42-dd48eb1aa7bd": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    },
+    "0673aa55-811a-4fe4-bdaf-def677af68b6": {
+      "depth": 0,
+      "decoded": 0,
+      "peak_notifications": 3,
+      "peak_decoded": 1,
+      "overflow_notifications": 0
+    }
+  },
+  "decoded_to_model_submit_ms": {
+    "p95": 54.4214239,
+    "p99": 60.92873981
+  },
+  "tracking_order": {
+    "deb018aa-85d0-49a0-a8fb-82c61380c5c3": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "fc7e39ce-d428-4880-8e42-dd48eb1aa7bd": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ]
+  },
+  "tracking_order_correct": true,
+  "before_close": {
+    "frames": 0,
+    "inflight": 0,
+    "deliveries": 0,
+    "tracking_busy": false
+  },
+  "worker_exitcodes": {
+    "detection": 0,
+    "tracking": 0,
+    "segmentation": 0
+  },
+  "worker_drain_clean": true,
+  "scenario_error": null,
+  "errors": [],
+  "model_sha256": {
+    "segmentation-segformer-b3-500k": "28db9062816d8a150487a3ff00720132b8fc0ae5afa73b76604ec1cc00761d75",
+    "tracking-yolo26x-500k": "47e33c4ce2ca3c9dd626b6a10fbf44a05c3e01f89a62c6c1bcf4bb0222b8a653",
+    "detection-yolo26x-500k": "e0ac8d74dc500ea764556e0d5f0cec50b1834d7f8b1cb1233c2a792b1d0e671e"
+  },
+  "baseline_comparisons": {
+    "128ae5dd-9d60-4867-be51-7c94649248e8": [
+      {
+        "frame_id": 0,
+        "exact_payload_match": true
+      },
+      {
+        "frame_id": 11,
+        "exact_payload_match": true
+      }
+    ],
+    "deb018aa-85d0-49a0-a8fb-82c61380c5c3": [
+      {
+        "frame_id": 0,
+        "exact_payload_match": true
+      },
+      {
+        "frame_id": 11,
+        "exact_payload_match": true
+      }
+    ],
+    "fc7e39ce-d428-4880-8e42-dd48eb1aa7bd": [
+      {
+        "frame_id": 0,
+        "exact_payload_match": true
+      },
+      {
+        "frame_id": 11,
+        "exact_payload_match": true
+      }
+    ],
+    "0673aa55-811a-4fe4-bdaf-def677af68b6": [
+      {
+        "frame_id": 0,
+        "exact_payload_match": true
+      },
+      {
+        "frame_id": 11,
+        "exact_payload_match": true
+      }
+    ]
+  }
+}

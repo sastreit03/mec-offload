@@ -1,0 +1,224 @@
+{
+  "missing_timestamps": 0,
+  "summary": {
+    "all": {
+      "count": 48,
+      "stages": {
+        "handoff_ms": {
+          "p50": 0.4474,
+          "p95": 2.2775,
+          "p99": 4.4272
+        },
+        "engine_ms": {
+          "p50": 0.0202,
+          "p95": 1.7939,
+          "p99": 2.5645
+        },
+        "ipc_and_launcher_wait_ms": {
+          "p50": 10.4303,
+          "p95": 52.3051,
+          "p99": 58.9769
+        },
+        "worker_pre_model_ms": {
+          "p50": 1.2345,
+          "p95": 2.9341,
+          "p99": 3.7122
+        },
+        "total_ms": {
+          "p50": 12.1399,
+          "p95": 54.4214,
+          "p99": 60.9287
+        }
+      }
+    },
+    "detection": {
+      "count": 12,
+      "stages": {
+        "handoff_ms": {
+          "p50": 0.306,
+          "p95": 0.7821,
+          "p99": 0.8273
+        },
+        "engine_ms": {
+          "p50": 0.0353,
+          "p95": 0.102,
+          "p99": 0.1554
+        },
+        "ipc_and_launcher_wait_ms": {
+          "p50": 8.0058,
+          "p95": 12.8627,
+          "p99": 14.0576
+        },
+        "worker_pre_model_ms": {
+          "p50": 1.2365,
+          "p95": 2.5226,
+          "p99": 3.5689
+        },
+        "total_ms": {
+          "p50": 9.2476,
+          "p95": 14.8327,
+          "p99": 16.0882
+        }
+      }
+    },
+    "tracking": {
+      "count": 24,
+      "stages": {
+        "handoff_ms": {
+          "p50": 0.4837,
+          "p95": 1.1065,
+          "p99": 2.4769
+        },
+        "engine_ms": {
+          "p50": 0.0173,
+          "p95": 2.375,
+          "p99": 2.6447
+        },
+        "ipc_and_launcher_wait_ms": {
+          "p50": 27.7746,
+          "p95": 57.1548,
+          "p99": 59.442
+        },
+        "worker_pre_model_ms": {
+          "p50": 1.1006,
+          "p95": 3.0116,
+          "p99": 3.4686
+        },
+        "total_ms": {
+          "p50": 32.2425,
+          "p95": 58.7054,
+          "p99": 61.6233
+        }
+      }
+    },
+    "segmentation": {
+      "count": 12,
+      "stages": {
+        "handoff_ms": {
+          "p50": 0.5546,
+          "p95": 4.2792,
+          "p99": 5.0934
+        },
+        "engine_ms": {
+          "p50": 0.0164,
+          "p95": 0.4195,
+          "p99": 0.7601
+        },
+        "ipc_and_launcher_wait_ms": {
+          "p50": 7.2487,
+          "p95": 11.217,
+          "p99": 11.2858
+        },
+        "worker_pre_model_ms": {
+          "p50": 1.3067,
+          "p95": 2.1929,
+          "p99": 2.5398
+        },
+        "total_ms": {
+          "p50": 10.5153,
+          "p95": 13.5133,
+          "p99": 13.6058
+        }
+      }
+    }
+  },
+  "slowest_frames": [
+    {
+      "handoff_ms": 0.384802,
+      "engine_ms": 0.010432,
+      "ipc_and_launcher_wait_ms": 59.887697,
+      "worker_pre_model_ms": 2.006025,
+      "total_ms": 62.288956,
+      "application": "tracking",
+      "video_id": "fc7e39ce-d428-4880-8e42-dd48eb1aa7bd",
+      "frame_id": 4,
+      "overlap_with_previous_launch_ms": 33.876506,
+      "remaining_ipc_interval_ms": 26.011191000000004
+    },
+    {
+      "handoff_ms": 0.437842,
+      "engine_ms": 0.01192,
+      "ipc_and_launcher_wait_ms": 57.9498,
+      "worker_pre_model_ms": 0.995317,
+      "total_ms": 59.394879,
+      "application": "tracking",
+      "video_id": "fc7e39ce-d428-4880-8e42-dd48eb1aa7bd",
+      "frame_id": 2,
+      "overlap_with_previous_launch_ms": 38.516736,
+      "remaining_ipc_interval_ms": 19.433064
+    },
+    {
+      "handoff_ms": 1.145942,
+      "engine_ms": 0.010912,
+      "ipc_and_launcher_wait_ms": 52.649584,
+      "worker_pre_model_ms": 0.991812,
+      "total_ms": 54.79825,
+      "application": "tracking",
+      "video_id": "fc7e39ce-d428-4880-8e42-dd48eb1aa7bd",
+      "frame_id": 5,
+      "overlap_with_previous_launch_ms": 35.318529,
+      "remaining_ipc_interval_ms": 17.331055
+    },
+    {
+      "handoff_ms": 0.520594,
+      "engine_ms": 0.009632,
+      "ipc_and_launcher_wait_ms": 51.665452,
+      "worker_pre_model_ms": 1.525926,
+      "total_ms": 53.721604,
+      "application": "tracking",
+      "video_id": "fc7e39ce-d428-4880-8e42-dd48eb1aa7bd",
+      "frame_id": 8,
+      "overlap_with_previous_launch_ms": 35.53533,
+      "remaining_ipc_interval_ms": 16.130122
+    },
+    {
+      "handoff_ms": 0.483843,
+      "engine_ms": 2.7215,
+      "ipc_and_launcher_wait_ms": 47.760714,
+      "worker_pre_model_ms": 1.007444,
+      "total_ms": 51.973501,
+      "application": "tracking",
+      "video_id": "fc7e39ce-d428-4880-8e42-dd48eb1aa7bd",
+      "frame_id": 11,
+      "overlap_with_previous_launch_ms": 31.731121,
+      "remaining_ipc_interval_ms": 16.029593
+    },
+    {
+      "handoff_ms": 0.360658,
+      "engine_ms": 0.011824,
+      "ipc_and_launcher_wait_ms": 49.252256,
+      "worker_pre_model_ms": 1.258998,
+      "total_ms": 50.883736,
+      "application": "tracking",
+      "video_id": "fc7e39ce-d428-4880-8e42-dd48eb1aa7bd",
+      "frame_id": 1,
+      "overlap_with_previous_launch_ms": 38.767505,
+      "remaining_ipc_interval_ms": 10.484751000000003
+    },
+    {
+      "handoff_ms": 0.263121,
+      "engine_ms": 0.01224,
+      "ipc_and_launcher_wait_ms": 49.601042,
+      "worker_pre_model_ms": 0.964805,
+      "total_ms": 50.841208,
+      "application": "tracking",
+      "video_id": "fc7e39ce-d428-4880-8e42-dd48eb1aa7bd",
+      "frame_id": 3,
+      "overlap_with_previous_launch_ms": 36.344182,
+      "remaining_ipc_interval_ms": 13.256859999999996
+    },
+    {
+      "handoff_ms": 0.767012,
+      "engine_ms": 0.189152,
+      "ipc_and_launcher_wait_ms": 47.877883,
+      "worker_pre_model_ms": 1.118245,
+      "total_ms": 49.952292,
+      "application": "tracking",
+      "video_id": "fc7e39ce-d428-4880-8e42-dd48eb1aa7bd",
+      "frame_id": 7,
+      "overlap_with_previous_launch_ms": 34.067372,
+      "remaining_ipc_interval_ms": 13.810510999999998
+    }
+  ],
+  "note": "IPC interval includes feeder serialization, transfer, and waiting for the single application launcher. Endpoint is before the model call, not hardware start."
+}
