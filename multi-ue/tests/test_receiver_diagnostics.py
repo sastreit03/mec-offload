@@ -3,6 +3,31 @@ from types import SimpleNamespace
 from mec_server.media import Receiver
 
 
+def test_udp_callback_maps_packet_and_reports_reception():
+    from uuid import uuid4
+    from mec_contracts.rtp import Descriptor, packetize
+
+    events, unmapped = [], []
+    descriptor = Descriptor(str(uuid4()), 1, 0, 0, 1, 1, 1, 405)
+    raw = next(packetize([b"\x65" + b"x" * 400], descriptor, 10, 20, 30, mtu=256))
+    mapping = SimpleNamespace(data=memoryview(raw))
+    buffer = SimpleNamespace(pts=100000, map=lambda flags: (True, mapping),
+                             unmap=unmapped.append)
+    receiver = Receiver(descriptor.video_id, 1, 5000,
+                        SimpleNamespace(mode="collection", encoded_max_bytes=1024),
+                        lambda kind, value: events.append((kind, value)))
+    receiver.Gst = SimpleNamespace(MapFlags=SimpleNamespace(READ=1),
+                                   PadProbeReturn=SimpleNamespace(OK=1, DROP=0))
+    try:
+        assert receiver._packet(None, SimpleNamespace(get_buffer=lambda: buffer)) == 1
+        assert unmapped == [mapping]
+        assert [kind for kind, _ in events] == ["descriptor", "progress"]
+        assert events[0][1]["descriptor"] == descriptor
+        assert events[1][1]["unique_bytes"] > 0
+    finally:
+        receiver.close()
+
+
 def test_packet_summaries_distinguish_jitter_drops_and_duplicates():
     events = []
     receiver = Receiver("video", 1, 5000, SimpleNamespace(mode="collection"),

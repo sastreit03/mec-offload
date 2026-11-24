@@ -996,7 +996,6 @@ campaign. Substitute the actual campaign name and SSH destinations:
 
 ```bash
 cd ~/mec-offload-ad/multi-ue
-CAMPAIGN=my-campaign-v1
 export AETHEREDGE_CAMPAIGN_DIR="$PWD/runs/campaigns/$CAMPAIGN"
 export AETHEREDGE_MEC_HOST=sstreit@192.168.71.130
 export AETHEREDGE_ORIN_HOST=srk@130.127.199.100
@@ -1032,7 +1031,6 @@ pending single-UE scenario from the immutable manifest:
 
 ```bash
 cd ~/mec-offload-ad/multi-ue
-CAMPAIGN=my-campaign-v1
 export AETHEREDGE_CAMPAIGN_DIR="$PWD/runs/campaigns/$CAMPAIGN"
 
 SCENARIO_ID="$(python3 - "$AETHEREDGE_CAMPAIGN_DIR" <<'PY'

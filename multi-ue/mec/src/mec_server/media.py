@@ -173,7 +173,6 @@ class Receiver:
     def _packet(self, pad, info):
         buf = info.get_buffer()
         try:
-            timing["image_extract_start_ns"] = time.monotonic_ns()
             with self._mapped(buf) as raw:
                 return self._packet_mapped(buf, raw)
         except (ValueError, KeyError, TypeError) as ex:
