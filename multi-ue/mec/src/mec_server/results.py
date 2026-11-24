@@ -1,4 +1,5 @@
 """A prepared frame result: reusable wire text and read-only routing metadata."""
+import time
 from collections.abc import Mapping
 from types import MappingProxyType
 from mec_contracts.wire import dumps, loads
@@ -7,14 +8,21 @@ from mec_contracts.wire import dumps, loads
 class SerializedResult(Mapping):
     def __init__(self, text, fields):
         self.text = text
+        self.timing = {}
         # Routing/logging never needs to retain the potentially large payload.
         self._fields = MappingProxyType({k: v for k, v in fields.items()
                                          if k not in ("payload", "stage_times")})
 
     @classmethod
     def prepare(cls, message):
+        begin, cpu = time.monotonic_ns(), time.thread_time_ns()
         wire = {k: v for k, v in message.items() if k != "stage_times"}
-        return cls(dumps(wire), wire)
+        result = cls(dumps(wire), wire)
+        end = time.monotonic_ns()
+        result.timing.update(serialization_start_ns=begin, serialization_end_ns=end,
+                             serialization_s=(end-begin)/1e9,
+                             serialization_thread_s=(time.thread_time_ns()-cpu)/1e9)
+        return result
 
     @classmethod
     def from_storage(cls, text):

@@ -282,7 +282,7 @@ def create_app(engine):
             try:
                 # Put messages into queue to send to UE
                 # Messages have priority, sequence, and the actual message
-                out.put_nowait((priority, sequence, m, receipt))
+                out.put_nowait((priority, sequence, m, receipt, time.monotonic_ns()))
                 if receipt is not None:
                     receipts.add(receipt)
             except asyncio.QueueFull:
@@ -315,7 +315,9 @@ def create_app(engine):
         async def sender():
             while True:
                 # Continuously read messages from the priority queue and send them over the websocket
-                _, _, m, receipt = await out.get()
+                _, _, m, receipt, enqueued_ns = await out.get()
+                dequeued_ns = time.monotonic_ns()
+                send_start_ns = None
                 # Because of await, execution of this coroutine halts here until a message is in the UE's priority queue
                 # Consecutive message sends are performed synchronously, one after the other
                 # to_thread moves the serialization of the JSON from dumps into a worker thread
@@ -332,11 +334,15 @@ def create_app(engine):
                         # Tiny control message: avoid a thread hop before timing its write.
                         payload = dumps(m)
                         receipt.started_ns = time.monotonic_ns()
+                        send_start_ns = time.monotonic_ns()
                         await ws.send_text(payload)
+                        send_end_ns = time.monotonic_ns()
                         receipt.finish()
                     else:
                         payload = m.text if isinstance(m, SerializedResult) else await asyncio.to_thread(dumps, m)
+                        send_start_ns = time.monotonic_ns()
                         await ws.send_text(payload)
+                        send_end_ns = time.monotonic_ns()
                 except Exception as error:
                     if receipt is not None:
                         receipt.finish(str(error))
@@ -353,6 +359,11 @@ def create_app(engine):
                     result_id=m.get("result_id"),
                     message_type=m["type"],
                     delivery="live_or_replay",
+                    video_id=m.get("video_id"), frame_id=m.get("frame_id"),
+                    stage_times=dict(outbound_enqueued_ns=enqueued_ns, outbound_dequeued_ns=dequeued_ns,
+                                     websocket_send_start_ns=send_start_ns, websocket_send_end_ns=send_end_ns,
+                                     outbound_queue_s=(dequeued_ns-enqueued_ns)/1e9,
+                                     websocket_send_s=(send_end_ns-send_start_ns)/1e9),
                     **{
                         key: m.get(key)
                         for key in ("campaign_id", "scenario_id", "attempt_id")

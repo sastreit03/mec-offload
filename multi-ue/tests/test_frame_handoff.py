@@ -171,6 +171,12 @@ def test_cuda_worker_launches_b_before_a_finishes(tmp_path, monkeypatch):
         assert msg["job_id"] == ["v", n] and msg["priority"] == 0
         assert msg["payload"]["detections"][0]["score"] == pytest.approx(n)
         assert msg["worker_start_ns"] <= msg["times"]["gpu_launch_end_ns"] <= msg["worker_finish_ns"]
+        times = msg["times"]
+        assert times["stream_waiting_est_s"] == pytest.approx(
+            times["cuda_submission_to_completion_observed_s"] - times["cuda_pipeline_s"])
+        assert times["worker_dequeue_to_cuda_submit_s"] >= 0
+        assert times["cuda_preprocess_submit_start_ns"] >= msg["worker_start_ns"]
+        assert 0 <= times["cuda_submit_to_preprocess_marker_lower_s"] <= times["cuda_submit_to_preprocess_marker_upper_s"]
         if os.getenv("MEC_TRACE_HANDOFF") == "1":
             times = msg["times"]
             assert times["worker_get_begin_ns"] <= times["worker_get_end_ns"] <= times["launch_enter_ns"]

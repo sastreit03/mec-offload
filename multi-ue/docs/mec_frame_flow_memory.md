@@ -1,5 +1,79 @@
 # MEC frame flow and memory
 
+## Current memory handling (24 November 2026)
+
+This section describes the current implementation. The **Memory audit** below is retained as the 20 November record. Its descriptions of two appsink image copies, whole-image worker IPC, engine application/priority deques, and synchronous inference no longer describe the current input path. Use this section for current memory ownership and copying behavior.
+
+Timing fields and their boundaries are documented in [MEC frame timing](mec_frame_timing.md). Resource telemetry is documented in [NVML diagnosis](mec_nvml_diagnosis.md). Queue ownership and limits are described in [MEC frame flow queues](mec_frame_flow_queues.md).
+
+### Picture ownership from decoder to worker
+
+GStreamer decodes and converts the picture to RGB → the appsink callback retrieves the available sample → a NumPy view reads the mapped GStreamer buffer → **one pixel copy writes the picture into a shared-memory slot** → the receiver handoff and engine pass a lease protecting that slot → **worker IPC carries a descriptor, not the pixels** → the worker accesses the same slot through its own mapping.
+
+Retrieving a sample with `pull-sample` takes it from appsink's internal queue into the callback. It does not send the picture to another process or duplicate its pixels. The callback maps the sample's buffer, constructs a NumPy view using the image's row stride and offset, and copies the visible RGB pixels into the receiver's `RGBPool`. It then drops the view and unmaps the GStreamer buffer. There is no intermediate Python `bytes` copy of the decoded picture. Compressed-packet inspection still copies packet bytes separately.
+
+An `RGBLease` is a local ownership reference: while any lease remains, the pool cannot overwrite that slot. The ordered receiver handoff holds the decoded notification and its lease. During validation the engine temporarily attaches the lease to the frame. On accepted submission, `Workers.submit` retains a lease and the engine clears the frame's RGB reference; the receiver's lease is released when decoded-event handling finishes. The worker input can therefore remain valid without keeping the RGB reference in the engine frame until inference completes.
+
+The production worker job contains a `shared_rgb` descriptor with the region name, slot, generation, offset, shape, row stride, and slot size. The multiprocessing queue serializes that metadata. The worker checks the descriptor's bounds and generation and exposes a read-only NumPy view of the shared pixels. Opening that mapping does not reconstruct another full picture. Alternate array-based inputs used outside this receiver path should not be assumed to have the same copy behavior.
+
+There is one worker input queue per application and a CUDA stream per priority. The engine no longer holds the earlier per-application/per-priority dispatch deques. Workers submit CUDA work asynchronously, so several frames may be outstanding; ownership is tracked per job rather than by a single busy slot lasting until engine completion.
+
+Sources: [media.py](../mec/src/mec_server/media.py), [shared_rgb.py](../mec/src/mec_server/shared_rgb.py), [engine.py](../mec/src/mec_server/engine.py), and [workers.py](../mec/src/mec_server/workers.py).
+
+### CUDA graph input and inference storage
+
+The TorchScript configuration defaults to `cuda_graphs=true`. With graphs enabled, the worker registers the receiver's shared-memory region with CUDA so a GPU kernel can read its pixels directly. Registration is prepared before frame processing and retained across frames; it is not a full-image upload for each job.
+
+The preprocessing kernel reads the shared RGB slot and writes resized, padded, normalized FP16 input into a fixed CUDA tensor. Each model/priority pair has its own captured graph and fixed input/output storage, prepared during worker startup. Graph replay runs the model after preprocessing on the same priority stream. Output transformations and readback are queued before that stream processes the next frame, protecting reused graph output from being overwritten before it is consumed.
+
+This path has no additional full RGB copy into a pinned staging tensor and no explicit per-frame RGB upload. It still writes a separate model-input tensor and uses model weights, graph storage, intermediate tensors, output transformations, and CPU result buffers. Shared physical RAM on the Spark does not eliminate those logical allocations or make the entire pipeline copy-free.
+
+The worker records an `input_read_done` CUDA event after the preprocessing kernel. Once its observer sees that event complete, it drops the job's input mapping and sends an `input_released` acknowledgement. The parent releases the corresponding worker lease when it receives the acknowledgement. Thus the RGB slot can become reusable before inference finishes, provided preview or another owner does not still hold a lease. Full job completion also provides a fallback release path. A failed worker's leases are released only after its process is confirmed to have exited; a deadline alone does not make GPU input safe to overwrite.
+
+The registration cache tracks active readers separately from the pool's leases. Releasing a video retires its registration, and removal waits for active readers to drain. Closing a receiver pool similarly defers closing and unlinking the shared region until its leases drain. Releasing a slot makes it reusable; it does not deallocate the whole region.
+
+Sources: [cuda_rgb.py](../mec/src/mec_server/cuda_rgb.py), [workers.py](../mec/src/mec_server/workers.py), and [shared_rgb.py](../mec/src/mec_server/shared_rgb.py).
+
+### Implemented path with CUDA graphs disabled
+
+The non-graph path is also implemented. It reads the shared-memory picture into a separate pinned CPU tensor with `np.copyto`, then submits a nonblocking transfer to a CUDA tensor. Tensor operations perform preprocessing before ordinary model execution. The shared RGB lease can be released after the CPU copy; the pinned tensor remains referenced through GPU completion so the asynchronous upload can safely finish.
+
+This alternative therefore has an additional full RGB CPU copy and an explicit upload. Its allocations should not be used to describe the graph-enabled direct-input path. Both paths use asynchronous submission and completion observation during normal frame processing; the synchronous `infer` helper used for warmup/profiling is not the normal frame path.
+
+### Output, preview, and result lifetimes
+
+After model execution, GPU operations produce detection output or a segmentation label map. The worker allocates pinned CPU output storage and submits a nonblocking device-to-host copy. CPU postprocessing starts after completion is observed. It reads that output through NumPy and constructs result objects. Segmentation additionally creates converted label data, run boundaries, and many Python lists representing RLE runs. These objects can occupy substantially more space than the compact label array.
+
+The worker completion queue serializes the result objects back to the engine process; this return path does reconstruct result objects. It does not carry the RGB picture. Engine frame state and, where applicable, tracking order can retain results until delivery.
+
+Preview has its own lease on the latest pending picture when viewers are present. Replacing a pending preview releases its lease. Encoding reads the shared picture and allocates resized/color-converted images and JPEG bytes; the lease is released after the encoder thread finishes. Preview can therefore keep a slot occupied after inference has stopped reading it. Without viewers, this branch does not retain a picture for JPEG encoding.
+
+Delivery still serializes the UE result to JSON once, excluding stage timings. The outgoing WebSocket queue and asynchronous replay writer reference the same serialized result. Logging copies payload-free metadata, rather than duplicating segmentation payloads into evidence records. Original Python result objects may remain referenced by delivery code until its work finishes; serialization does not guarantee immediate reclamation. SQLite, WebSocket libraries, and the operating system may make their own internal buffers. Scenario completion and reconnect replay still wait for the required persistence barrier.
+
+Sources: [preview.py](../mec/src/mec_server/preview.py), [results.py](../mec/src/mec_server/results.py), [recording.py](../mec/src/mec_server/recording.py), and [app.py](../mec/src/mec_server/app.py).
+
+### Explicit pixel copies and retained storage
+
+| Boundary | Memory operation | What keeps the storage alive |
+| --- | --- | --- |
+| Appsink sample to NumPy view | View of mapped GStreamer pixels; no full pixel copy | Sample and buffer mapping during callback |
+| NumPy view to RGB pool | One copy into a shared-memory slot | Receiver, worker, and optional preview leases |
+| Engine to worker | Descriptor serialization; shared pixels are mapped | Parent worker lease until input acknowledgement or safe fallback release |
+| Shared RGB to graph input | GPU kernel reads mapped RGB and writes fixed FP16 CUDA input | RGB lease until preprocessing read completes; graph input retained across frames |
+| Shared RGB to non-graph input | CPU copy into pinned storage, then asynchronous CUDA upload | Pinned tensor retained through GPU completion |
+| Model output to CPU | GPU transformations and asynchronous copy into pinned output | In-flight submission and CPU completion handling |
+| CPU output to result | NumPy processing and Python result allocation, including segmentation RLE | Worker completion, then engine/delivery references |
+| Worker result to engine | Binary serialization reconstructs result objects | Engine frame and delivery state |
+| Result to socket/replay | One JSON serialization shared by both paths | Outbound queue and asynchronous persistence operation |
+
+Each receiver has a pool with `shared_rgb_slots` slots (default 32). Each slot reserves `decoded_max_bytes` (default 8 MiB), plus a 64-byte header, rounded up to a 4,096-byte boundary. Reserved capacity is therefore `slots × ceil((decoded_max_bytes + 64) / 4096) × 4096`: about 256.125 MiB per receiver with those defaults, even when a 1280 × 720 RGB picture uses only 2,764,800 pixel bytes. The pool reserves its shared-memory backing before media starts, so insufficient backing storage fails at allocation rather than during a later pixel write.
+
+Pool statistics distinguish occupied slots, lease references, total capacity, peak occupancy, copies, and exhaustion. Multiple leases can refer to one occupied slot. Pool exhaustion fails the frame rather than overwriting a slot in use. This bound covers shared decoded RGB storage only: GStreamer buffers, preview allocations, pinned buffers, CUDA graph/model storage, result objects, queued JSON, and library caches are separate. Python and PyTorch may retain freed allocation capacity for reuse instead of immediately returning RAM to the operating system.
+
+---
+
+## Memory audit
+
 Produced on 20 November 2026. This describes the current TorchScript processing path, from received video to the result sent to a UE. A **picture** is a decoded RGB pixel array: a 1280 × 720 picture occupies 2,764,800 bytes (about 2.64 MiB), before object overhead. A **reference** keeps an existing object alive without duplicating its contents. **Serialization** turns an object into bytes or text for transfer or storage.
 
 ## Through-line

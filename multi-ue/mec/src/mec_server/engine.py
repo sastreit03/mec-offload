@@ -813,7 +813,7 @@ class Engine:
                 )
             elif kind == "decoded":
                 self.decoded(
-                    data["descriptor"], data["rgb"], data["decoded_ns"]
+                    data["descriptor"], data["rgb"], data["decoded_ns"], data.get("timing")
                 )
             elif kind == "frame_failure":
                 d = data["descriptor"]
@@ -2141,14 +2141,14 @@ class Engine:
             self.last_progress[key] = time.monotonic()
 
     # Decide and submit on the engine loop in the same receiver callback.
-    def decoded(self, d, rgb, decoded_ns):
+    def decoded(self, d, rgb, decoded_ns, timing=None):
         try:
-            return self._decoded(d, rgb, decoded_ns)
+            return self._decoded(d, rgb, decoded_ns, timing)
         finally:
             # Workers and preview retain independent leases before returning.
             release_rgb(rgb)
 
-    def _decoded(self, d, rgb, decoded_ns):
+    def _decoded(self, d, rgb, decoded_ns, timing=None):
         if getattr(self, "closed", False):
             return
         entered_ns = time.monotonic_ns()
@@ -2176,7 +2176,9 @@ class Engine:
             return
         if f.state != "RECEIVING":
             return
+        f.times.update(timing or {})
         f.times["decoded_handler_monotonic_ns"] = entered_ns
+        f.times["decoded_validation_end_ns"] = time.monotonic_ns()
         f.state = "PRIORITY_PENDING"
         f.decoded_ns = decoded_ns
         f.rgb = rgb
@@ -2366,6 +2368,7 @@ class Engine:
             begin = time.monotonic_ns()
             serialized = await asyncio.to_thread(SerializedResult.prepare, message)
             prepared = time.monotonic_ns()
+            message["stage_times"].update(serialized.timing)
             message["stage_times"].update(
                 result_prepare_start_monotonic_ns=begin,
                 result_prepare_end_monotonic_ns=prepared,
@@ -2397,6 +2400,9 @@ class Engine:
             # Live delivery does not wait for disk. Keep deliveries nonzero until
             # commit so finalization and clean shutdown still drain persistence.
             await asyncio.shield(asyncio.wrap_future(persisted))
+            self.record.event("result_persisted",
+                **{k: message.get(k) for k in ("campaign_id", "scenario_id", "attempt_id", "run_id", "ue_id", "video_id", "frame_id", "result_id")},
+                stage_times=persisted.timing)
         except Exception as ex:
             if self.collection_mode:
                 self.invalidate_scenario("result_delivery_failed", video_id=v.vid, error=repr(ex))
@@ -2476,7 +2482,7 @@ class Engine:
                         - m["worker_start_ns"],
                     )
                     wait = (m["worker_start_ns"] - f.queue_ns) / 1e9
-                    f.times["queue_wait_s"] = wait
+                    f.times["worker_process_transfer_s"] = wait
                     f.payload = m["payload"]
                     f.rgb = None
                     if v.app == "tracking":

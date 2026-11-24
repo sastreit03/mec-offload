@@ -1,5 +1,9 @@
 # MEC frame flow: queues, accounting, and logging
 
+## Timing instrumentation update (2026-11-23)
+
+See the [current timing audit](mec_frame_flow_memory.md#current-timing-audit-2026-11-23) for the complete boundary table, units, overlap, unavailable values, GC correlation limits, late-event joins, NVML diagnosis and deployment/validation procedure. Queue capacities and scheduling are unchanged. `worker_process_transfer_s` (formerly `queue_wait_s`) still ends at worker dequeue; completion-executor waiting, worker result handoff, outbound socket waiting and replay writer waiting now have separate metrics. Existing optional IPC tracing is retained. `worker_dequeue_to_cuda_submit_s` now measures dequeue to host submission of the preprocessing-start event. Nonblocking event-query bounds describe submission to marker readiness; these do not claim to measure exact first-kernel execution. `stream_waiting_est_s` subtracts the full preprocessing-start-to-ready CUDA duration from the host submission-to-ready-observation duration; it includes enqueue overhead and observation delay. No Nsight integration is used. See the linked timing audit for the estimate and bound definitions.
+
 ## Receiver handoff and worker submission update
 
 The implementation below supersedes the historical audit preserved after this section.
@@ -162,9 +166,27 @@ The separate mock run also completed 48/48 frames; it is not a GPU result.
 
 ### Timing and operational acceptance
 
-All host timestamps below use the MEC monotonic clock. Inspect the per-frame stage times. Use `decoded_handler_monotonic_ns - decoded_monotonic_ns` for receiver handoff latency; `worker_start_monotonic_ns - queue_enter_monotonic_ns` for submission plus IPC latency. `worker_submitted_monotonic_ns` marks the parent's return from queue acceptance. The worker timestamps dequeue before launch. `gpu_submit_ns` precedes model submission and `gpu_launch_end_ns` follows enqueueing result readback and its final event. `gpu_completion_observed_ns` records observation of output readiness. Host observation can lag hardware completion.
+All host timestamps below use the MEC monotonic clock. The main boundaries are:
 
-For this revision, `preprocess_s` measures stream time from upload through preprocessing, `inference_s` is the model's CUDA-event interval in seconds, and `postprocess_s` includes output GPU operations/readback and CPU formatting. `processing_s` measures elapsed worker residence through formatting and can include waiting. Treat old wall-clock stage measurements and new event-based measurements separately in campaign comparisons.
+| Timestamp interval or field | What it measures |
+|---|---|
+| `decoded_monotonic_ns` → `decoded_handler_monotonic_ns` | Waiting for the engine to handle the receiver's notification that the RGB picture is ready in shared memory. |
+| `worker_process_transfer_s` | Passing the job from the engine to the worker process: `worker_start_monotonic_ns - queue_enter_monotonic_ns`, converted to seconds. Includes preparing the submission, process communication, queue waiting and worker scheduling. |
+| `worker_submitted_monotonic_ns` | The engine's submission call has returned after placing the job in the worker input queue. This does not mean the worker has received it. |
+| `worker_dequeue_to_cuda_submit_s` | Preparing the job after the worker retrieves it, up to the CPU call that submits the preprocessing-start marker to the CUDA stream. |
+| `gpu_submit_ns` | The CPU is about to record the model-start event, after submitting preprocessing operations. This is later than the frame's first CUDA submission. |
+| `gpu_launch_end_ns` | The CPU has submitted the output copy and final ready event. The GPU may still be working. |
+| `gpu_completion_observed_ns` | The observer has just confirmed that the final ready event is complete and the output is available in CPU memory. Observation can happen after actual GPU completion. |
+| `preprocess_s` | GPU-event duration covering input preparation for the model, including upload on the non-graph path and stalls between the start and end events. |
+| `inference_s` | GPU-event duration around model execution, including stalls within that interval. |
+| `postprocess_s` | Combined GPU output transformation/copy time and CPU result-formatting time; excludes waiting for a completion thread. |
+| `processing_s` | Elapsed time from starting the worker's launch method through finishing result formatting. Includes submission, GPU work, waiting and CPU formatting. |
+| `stream_waiting_est_s` | CPU submission-to-completion-observation duration minus the complete CUDA-event duration for the frame. Estimates time before GPU execution plus enqueue overhead and final observation delay. |
+
+The [memory-flow timing reference](mec_frame_flow_memory.md#current-timing-audit-2026-11-23)
+defines the full set of fields and their limitations. For campaign comparisons,
+check the measurement definitions: historical wall-clock stage measurements and
+CUDA-event stage measurements do not describe the same intervals.
 
 1. From the repository root, run `python -m pytest -q multi-ue/tests/test_frame_handoff.py` in the project's test environment. The CPU tests cover receiver FIFO order and limits, plus a same-priority burst through a spawned worker before polling completions.
 2. On the Spark, run `MEC_TEST_CUDA=1 python -m pytest -q multi-ue/tests/test_frame_handoff.py -k cuda_worker` in the CUDA-enabled MEC test environment. The test builds a tiny TorchScript model, extends A's GPU residence, queries A's CUDA event immediately after B has launched, and checks both result IDs and pixel-dependent scores.

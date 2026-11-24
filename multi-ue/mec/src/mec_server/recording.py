@@ -104,6 +104,7 @@ class ReplayStore:
         # Our JSON encoder emits ASCII (ensure_ascii=True), so chars equal bytes.
         size = len(serialized)
         future = Future()
+        future.timing = {"replay_submitted_ns": time.monotonic_ns()}
         with self.lock:
             if self.closed:
                 raise RuntimeError("replay writer closed")
@@ -130,6 +131,9 @@ class ReplayStore:
                 if item is None:
                     return
                 values, size, future = item
+                started = time.monotonic_ns()
+                future.timing["replay_writer_start_ns"] = started
+                future.timing["replay_queue_s"] = (started-future.timing["replay_submitted_ns"])/1e9
                 error = None
                 try:
                     if self.error:
@@ -145,6 +149,8 @@ class ReplayStore:
                     with self.lock:
                         self.pending_bytes -= size
                 if error is None:
+                    ended = time.monotonic_ns()
+                    future.timing.update(replay_commit_end_ns=ended, replay_write_s=(ended-started)/1e9)
                     future.set_result(None)
                 else:
                     future.set_exception(error)

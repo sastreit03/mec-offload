@@ -142,3 +142,74 @@ def test_send_cutoff_duplicates_context_and_late_receipt(campaign):
 def test_missing_mec_events_file_fails(campaign):
     (campaign/'diagnostics/mec/events.jsonl').unlink()
     with pytest.raises(FileNotFoundError): analyze(campaign)
+
+
+def test_late_timings_join_first_send_and_missing_stays_missing(campaign):
+    path = campaign/'diagnostics/mec/events.jsonl'
+    events = [json.loads(line) for line in path.read_text().splitlines()]
+    for event in events:
+        event['stage_times'] = {'websocket_send_s': .002}
+    first = events[1]
+    events.append(dict(first, monotonic_ns=first['monotonic_ns']+100,
+                       stage_times={'websocket_send_s': .999}))
+    events.append(dict(first, type='result_persisted', stage_times={'replay_write_s': .003}))
+    jsonl(path, events)
+    result = analyze(campaign)
+    for group in result['groups'].values():
+        timing = group['overall']['mec_latency_breakdown_ms']
+        assert timing['mec_websocket_send']['mean_ms'] == 2
+        assert timing['mec_rle']['samples'] == 0
+
+    replay = [g['overall']['mec_latency_breakdown_ms']['mec_replay_write'] for g in result['groups'].values()]
+    assert sum(v['samples'] for v in replay) == 1
+    assert next(v['mean_ms'] for v in replay if v['samples']) == 3
+
+
+@pytest.mark.parametrize('stage', [
+    {'queue_wait_s': .004},
+    {'worker_process_transfer_s': .004},
+    {'queue_wait_s': .999, 'worker_process_transfer_s': .004},
+    {'queue_wait_s': .999, 'worker_process_transfer_s': None},
+    {},
+])
+def test_transfer_rename_legacy_and_missing(campaign, stage):
+    path = campaign/'diagnostics/mec/jobs.jsonl'
+    jobs = [json.loads(line) for line in path.read_text().splitlines()]
+    for job in jobs:
+        job.setdefault('stage_times', {}).update(stage)
+    jsonl(path, jobs)
+    result = analyze(campaign)
+    expected = stage.get('worker_process_transfer_s', stage.get('queue_wait_s'))
+    for group in result['groups'].values():
+        stages = group['overall']['mec_latency_breakdown_ms']
+        assert 'mec_queue_wait' not in stages
+        metric = stages['mec_worker_process_transfer']
+        if expected is None:
+            assert metric['samples'] == 0
+        else:
+            assert metric['mean_ms'] == 4
+        assert stages['mec_cuda_submit_to_preprocess_marker_upper']['samples'] == 0
+
+
+
+@pytest.mark.parametrize('estimate', [.003, -.000001, None])
+def test_stream_wait_estimate_reporting(campaign, estimate):
+    path = campaign/'diagnostics/mec/jobs.jsonl'
+    jobs = [json.loads(line) for line in path.read_text().splitlines()]
+    for job in jobs:
+        if estimate is not None:
+            job.setdefault('stage_times', {})['stream_waiting_est_s'] = estimate
+    jsonl(path, jobs)
+    result = analyze(campaign)
+    for group in result['groups'].values():
+        metric = group['overall']['mec_latency_breakdown_ms']['mec_stream_waiting_est']
+        if estimate is None:
+            assert metric['samples'] == 0
+        else:
+            assert metric['mean_ms'] == pytest.approx(estimate*1000)
+
+
+def test_negative_duration_is_still_rejected():
+    from campaign_analyze import stats
+    with pytest.raises(ValueError):
+        stats([-.001])

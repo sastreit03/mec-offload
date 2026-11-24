@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from .queue_timing import TimedInputQueue, stamp
 from .shared_rgb import RGBLease, RGBMapping
+from .frame_timing import (gc_trace, timed_rle, record_preprocess_submission,
+                           observe_preprocess_start, add_stream_wait_estimate)
 
 DEFAULT_APPLICATIONS = ("tracking", "detection", "segmentation")
 DEFAULT_PRIORITIES = (-5, -3, 0)
@@ -66,6 +68,8 @@ class Submission:
     begin_ns: int
     input_read_done: object = None
     input_mapping: object = None
+    output_ready: object = None
+    readback_start: object = None
 
 
 class TorchAdapter:
@@ -188,7 +192,8 @@ class TorchAdapter:
                     raise ValueError("configuration does not match captured model shape")
                 host_input = None
                 preprocess_start = t.cuda.Event(enable_timing=True)
-                preprocess_start.record(stream)
+                record_preprocess_submission(preprocess_start, stream, times,
+                                             job.get("worker_dequeued_ns"))
                 mark("launch_preprocess_begin")
                 self.native_rgb.check(self.native_rgb.lib.preprocess(
                     mapped.pointer, x.data_ptr(), w, h, mapped.descriptor.row_stride,
@@ -207,7 +212,8 @@ class TorchAdapter:
                 np.copyto(host_input.numpy(), image)
                 mark("launch_pin_end")
                 preprocess_start = t.cuda.Event(enable_timing=True)
-                preprocess_start.record(stream)
+                record_preprocess_submission(preprocess_start, stream, times,
+                                             job.get("worker_dequeued_ns"))
                 mark("launch_upload_begin")
                 uploaded = host_input.to("cuda", non_blocking=True)
                 mark("launch_upload_end")
@@ -258,28 +264,47 @@ class TorchAdapter:
                 )
             else:
                 result = output[0].float()
+            output_ready = t.cuda.Event(enable_timing=True)
+            output_ready.record(stream)
             mark("launch_output_ops_end")
             mark("launch_output_alloc_begin")
+            allocation_start = time.monotonic_ns()
             host_output = t.empty(result.shape, dtype=result.dtype, device="cpu", pin_memory=True)
+            times["host_output_allocation_s"] = (time.monotonic_ns()-allocation_start)/1e9
             mark("launch_output_alloc_end")
             mark("launch_readback_begin")
+            readback_start = t.cuda.Event(enable_timing=True)
+            readback_start.record(stream)
             host_output.copy_(result, non_blocking=True)
             mark("launch_readback_end")
             ready = t.cuda.Event(enable_timing=True)
             ready.record(stream)
-            times.update(gpu_submit_ns=infer_start, gpu_launch_end_ns=time.monotonic_ns())
+            times.update(gpu_submit_ns=infer_start, gpu_launch_end_ns=time.monotonic_ns(),
+                         host_launch_start_ns=begin)
+            times["host_cuda_submission_s"] = (times["gpu_launch_end_ns"] - begin) / 1e9
         mark("launch_exit")
         return Submission(host_input, host_output, ready, preprocess_start, event0, event1,
-                          times, (h, w, scale, top, left), begin, input_read_done, mapped)
+                          times, (h, w, scale, top, left), begin, input_read_done, mapped, output_ready, readback_start)
 
     def finish(self, job, submission):
+        finish_enter = time.monotonic_ns()
         submission.ready.synchronize()
         observed = time.monotonic_ns()
         times = submission.times
+        add_stream_wait_estimate(times,
+            submission.preprocess_start.elapsed_time(submission.ready) / 1000)
         times.setdefault("gpu_completion_observed_ns", observed)
         times["preprocess_s"] = submission.preprocess_start.elapsed_time(submission.model_start) / 1000
         times["cuda_event_ms"] = submission.model_start.elapsed_time(submission.model_end)
         times["inference_s"] = times["cuda_event_ms"] / 1000
+        times["finish_ready_check_s"] = (observed - finish_enter) / 1e9
+        if submission.output_ready is not None:
+            times["gpu_output_transform_s"] = submission.model_end.elapsed_time(submission.output_ready) / 1000
+        if submission.readback_start is not None:
+            times["gpu_output_to_readback_s"] = submission.output_ready.elapsed_time(submission.readback_start) / 1000
+            times["gpu_readback_s"] = submission.readback_start.elapsed_time(submission.ready) / 1000
+        cpu_start = time.monotonic_ns()
+        thread_start = time.thread_time_ns()
         result = submission.host_output.numpy()
         h, w, scale, top, left = submission.geometry
         c = job["configuration"]
@@ -290,7 +315,7 @@ class TorchAdapter:
                 width=w,
                 class_map_id=c["class_map_id"],
                 encoding="rle_row_major",
-                runs=rle(result),
+                runs=timed_rle(result, times),
             )
         else:
             boxes = result
@@ -318,6 +343,11 @@ class TorchAdapter:
             payload = dict(
                 schema="detection.v1", height=h, width=w, detections=detections
             )
+        cpu_end = time.monotonic_ns()
+        times.update(cpu_format_start_ns=cpu_start, cpu_format_end_ns=cpu_end,
+                     cpu_format_s=(cpu_end-cpu_start)/1e9,
+                     cpu_format_thread_s=(time.thread_time_ns()-thread_start)/1e9)
+        times.update(gc_trace.overlap(cpu_start, cpu_end))
         times["postprocess_s"] = ((time.monotonic_ns() - observed) / 1e9
                                   + submission.model_end.elapsed_time(submission.ready) / 1000)
         times["processing_s"] = (time.monotonic_ns() - submission.begin_ns) / 1e9
@@ -330,6 +360,7 @@ class TorchAdapter:
 
 # CUDA initialization happens in the spawned child, never in the control process.
 def worker_main(application, specs, config, incoming, outgoing):
+    gc_trace.start()
     mps_enabled = config.get("mps_enabled", True)
     if mps_enabled:
         os.environ["CUDA_MPS_CLIENT_PRIORITY"] = "0"
@@ -398,6 +429,10 @@ def worker_main(application, specs, config, incoming, outgoing):
                 outgoing.put(message)
 
     def complete(job, submitted, started, mapping=None):
+        if submitted is not None:
+            entered = time.monotonic_ns()
+            submitted.times["completion_executor_start_ns"] = entered
+            submitted.times["completion_executor_wait_s"] = (entered-submitted.times["completion_enqueued_ns"])/1e9
         try:
             finish(job, submitted, started)
         finally:
@@ -482,6 +517,8 @@ def worker_main(application, specs, config, incoming, outgoing):
             waiting = []
             for job, submission, started in pending:
                 try:
+                    if getattr(submission, "preprocess_start", None) is not None:
+                        observe_preprocess_start(submission.preprocess_start, submission.times)
                     if getattr(submission, "input_mapping", None) is not None and submission.input_read_done.query():
                         consume_input(job, submission.input_mapping)
                         submission.input_mapping = None
@@ -491,6 +528,12 @@ def worker_main(application, specs, config, incoming, outgoing):
                         continue
                     if submission.ready.query():
                         submission.times["gpu_completion_observed_ns"] = time.monotonic_ns()
+                        # The start marker may have completed between the two queries.
+                        if getattr(submission, "preprocess_start", None) is not None:
+                            observe_preprocess_start(submission.preprocess_start, submission.times)
+                        if "gpu_launch_end_ns" in submission.times:
+                            submission.times["launch_to_completion_observed_s"] = (submission.times["gpu_completion_observed_ns"]-submission.times["gpu_launch_end_ns"])/1e9
+                        submission.times["completion_enqueued_ns"] = time.monotonic_ns()
                         pool.submit(complete, job, submission, started)
                     else:
                         waiting.append((job, submission, started))
@@ -528,11 +571,13 @@ def worker_main(application, specs, config, incoming, outgoing):
                                   error=repr(ex)))
             continue
         started = time.monotonic_ns()
+        job["worker_dequeued_ns"] = started
         if get_times:
             stamp(get_times, "worker_get_end")
             job.setdefault("handoff_times", {}).update(get_times)
         mapping = None
         try:
+            mapping_start = time.monotonic_ns()
             if "shared_rgb" in job:
                 if adapter and getattr(adapter, "cuda_graphs", False):
                     mapping = adapter.rgb_cache.acquire(job["shared_rgb"])
@@ -540,6 +585,7 @@ def worker_main(application, specs, config, incoming, outgoing):
                 else:
                     mapping = RGBMapping(job["shared_rgb"])
                 job["rgb"] = mapping.image
+            job.setdefault("handoff_times", {})["worker_input_mapping_s"] = (time.monotonic_ns()-mapping_start)/1e9
             if not adapter:
                 pool.submit(complete, job, None, started, mapping)
                 continue
@@ -631,6 +677,8 @@ class Workers:
             if m["type"] == "ready":
                 self.ready[m["application"]] = m
             if m["type"] in ("completed", "failed"):
+                m.setdefault("times", {})["engine_result_polled_ns"] = time.monotonic_ns()
+                m["times"]["worker_result_handoff_s"] = (m["times"]["engine_result_polled_ns"]-m["worker_finish_ns"])/1e9
                 self.release_input(m["application"], m["job_id"])
                 incoming = self.inputs[m["application"]]
                 if isinstance(incoming, TimedInputQueue):

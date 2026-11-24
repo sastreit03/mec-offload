@@ -173,6 +173,7 @@ class Receiver:
     def _packet(self, pad, info):
         buf = info.get_buffer()
         try:
+            timing["image_extract_start_ns"] = time.monotonic_ns()
             with self._mapped(buf) as raw:
                 return self._packet_mapped(buf, raw)
         except (ValueError, KeyError, TypeError) as ex:
@@ -286,7 +287,9 @@ class Receiver:
 
     # Copy decoded storage before returning the sample to GStreamer.
     def _sample(self, sink):
+        timing = {"appsink_enter_ns": time.monotonic_ns()}
         sample = sink.emit("pull-sample")
+        timing["appsink_pulled_ns"] = time.monotonic_ns()
         if sample is None:
             return self.Gst.FlowReturn.OK
         buf = sample.get_buffer()
@@ -310,6 +313,7 @@ class Receiver:
 
         lease = None
         try:
+            timing["image_extract_start_ns"] = time.monotonic_ns()
             with self._mapped(buf) as raw:
                 # GstVideoMeta can override caps-derived stride and offset.
                 meta = self.GstVideo.buffer_get_video_meta(buf)
@@ -317,12 +321,14 @@ class Receiver:
                 offset = meta.offset[0] if meta else info.offset[0]
                 rgb = np.ndarray((info.height, info.width, 3), np.uint8,
                                  buffer=raw, offset=offset, strides=(stride, 3, 1))
+                timing["shared_rgb_copy_start_ns"] = time.monotonic_ns()
                 lease = self.rgb_pool.copy(rgb)
+                timing["shared_rgb_copy_end_ns"] = time.monotonic_ns()
                 del rgb
             if lease is None:
                 self.post("frame_failure", dict(descriptor=d, reason="shared_rgb_pool_exhausted"))
             else:
-                self.post("decoded", dict(descriptor=d, rgb=lease, decoded_ns=time.monotonic_ns()))
+                self.post("decoded", dict(descriptor=d, rgb=lease, decoded_ns=time.monotonic_ns(), timing=timing))
                 lease = None  # Receiver handoff now owns the lease.
         except Exception as ex:
             self.post("frame_failure", dict(descriptor=d, reason="decoded_mapping_failed"))

@@ -29,12 +29,12 @@ def test_single_serialization_and_live_delivery_before_commit(tmp_path):
             assert release.wait(5)
             write(connection, values)
         store._write = blocked
-        records, sent, errors = [], [], []
+        records, sent, errors, milestones = [], [], [], []
         video = SimpleNamespace(uid="ue", vid="video", deliveries=1, collection_error=None)
         engine = SimpleNamespace(
             contextual=lambda m: m, replay=store, collection_mode=True,
             record=SimpleNamespace(put=lambda name, m: records.append((name, m)),
-                                   event=lambda *a, **k: None),
+                                   event=lambda kind, **k: milestones.append((kind, k))),
             send=lambda uid, m: sent.append(m),
             invalidate_scenario=lambda *a, **k: errors.append((a, k)))
         task = None
@@ -65,6 +65,11 @@ def test_single_serialization_and_live_delivery_before_commit(tmp_path):
                 assert rows[0].text == sent[0].text
                 assert rows[0]["attempt_id"] == "attempt"
                 assert encode.call_count == 1
+                persisted = next(v for kind, v in milestones if kind == "result_persisted")
+                assert persisted["result_id"] == "result" and persisted["attempt_id"] == "attempt"
+                timing = persisted["stage_times"]
+                assert timing["replay_submitted_ns"] <= timing["replay_writer_start_ns"] <= timing["replay_commit_end_ns"]
+                assert "serialization_s" in evidence["stage_times"]
         finally:
             release.set()
             if task:

@@ -1113,7 +1113,41 @@ the checkpoint and all failed-attempt evidence. A subsequent full campaign
 invocation skips scenarios already marked valid; do not regenerate the
 manifest or delete the checkpoint between the initial check and the full run.
 
-## 21. Collect completed-campaign evidence onto RAN Spark
+## 21. Run the full campaign
+
+After the initial scenario passes, use the same **RAN Spark** terminal with
+the recovery environment variables and SSH agent from step 19. Keep all
+required Pixel apps connected and foregrounded, and the Orin supervisor
+running. Run the campaign **without `--scenario-id`**:
+
+```bash
+cd ~/mec-offload-ad/multi-ue
+# Set AETHEREDGE_CAMPAIGN_DIR to the campaign directory used in step 20}"
+../gnb-core/env/bin/python tools/run_campaign.py \
+  --campaign-dir "$AETHEREDGE_CAMPAIGN_DIR"
+```
+
+This command uses the existing manifest and checkpoint and skips scenarios
+already marked `valid`, including the initial test. A previously set
+`SCENARIO_ID` shell variable does not restrict this command because it is not
+passed to the runner. For physical RF, do not add `--trace-bank`.
+
+Let the runner complete its retries and any recovery/cleanup. Do not launch a
+second runner for the same campaign. If scenarios previously exhausted their
+attempts and are marked `failed`, investigate and correct the cause first,
+then explicitly retry them with:
+
+```bash
+../gnb-core/env/bin/python tools/run_campaign.py \
+  --campaign-dir "$AETHEREDGE_CAMPAIGN_DIR" \
+  --retry-failed
+```
+
+Keep the manifest, checkpoint, and failed-attempt evidence. Once the runner
+exits, use step 22 to verify the scenario counts and collect the evidence;
+runner completion alone does not establish that every scenario is valid.
+
+## 22. Collect completed-campaign evidence onto RAN Spark
 
 Wait for the runner to exit and finish recovery/cleanup. Do not start another
 campaign, clear app data, regenerate the manifest, or delete failed attempts
@@ -1156,7 +1190,12 @@ accepted `attempt_id` for each `valid` scenario; retain other attempts for diagn
 Use the manifest, lock, `state.sqlite3`, and runner logs directly from the parent
 campaign directory; do not copy them into diagnostics. Do not copy RAN configs.
 
-Create this helper once to retain only events with the exact MEC `RUN_ID`.
+Use the shared [`tools/filter_run_events.py`](../tools/filter_run_events.py)
+helper to retain only events with the exact MEC `RUN_ID`. It is reusable across
+campaigns: set/export `RUN_ID` for the current collection each time. From
+`~/mec-offload-ad/multi-ue` on **RAN Spark**, the block below checks whether the
+helper exists and creates it only if missing; it never overwrites an existing
+helper. Do not create a separate copy under each campaign's diagnostics folder.
 It preserves original event lines and all attempts, including failed attempts.
 It leaves source files unchanged, prints progress every five seconds, and parses
 only potentially matching records (rejecting malformed JSON in those records).
@@ -1168,7 +1207,11 @@ this run is an error unless `--allow-empty` is supplied for an unrelated
 EdgeRIC instance.
 
 ```bash
-cat > "$REVIEW/filter-run-events.py" <<'PY'
+if [ -e tools/filter_run_events.py ]; then
+  echo "Using existing tools/filter_run_events.py"
+else
+  mkdir -p tools
+  cat > tools/filter_run_events.py <<'PY'
 import argparse
 import json
 import os
@@ -1229,6 +1272,11 @@ try:
 finally:
     temp.unlink(missing_ok=True)
 PY
+fi
+test -f tools/filter_run_events.py && test -r tools/filter_run_events.py || {
+  echo "Missing or unreadable helper: tools/filter_run_events.py" >&2
+  exit 1
+}
 ```
 
 ### EdgeRIC evidence
@@ -1241,7 +1289,7 @@ one instance can span multiple campaigns. Save only matching event records:
 for source in runs/edgeric/*/events.jsonl; do
   [ -f "$source" ] || continue
   instance="$(basename "$(dirname "$source")")"
-  python3 "$REVIEW/filter-run-events.py" "$source" \
+  python3 tools/filter_run_events.py "$source" \
     "$REVIEW/ran/$instance/events.jsonl" --allow-empty || break
 done
 ```
@@ -1307,7 +1355,7 @@ PIXEL_CAPTURE="$(mktemp -d)"
 if adb -s "$SERIAL" pull \
     /sdcard/Android/data/edu.clemson.mecrtp/files/events.jsonl \
     "$PIXEL_CAPTURE/events.jsonl" && \
-   python3 "$REVIEW/filter-run-events.py" "$PIXEL_CAPTURE/events.jsonl" \
+   python3 tools/filter_run_events.py "$PIXEL_CAPTURE/events.jsonl" \
     "$REVIEW/pixel/$ALIAS/events.jsonl"; then
   rm "$PIXEL_CAPTURE/events.jsonl"
   rmdir "$PIXEL_CAPTURE"
@@ -1336,7 +1384,7 @@ mkdir -p "$REVIEW/orin/linux1"
 ORIN_CAPTURE="$(mktemp -d)"
 if scp "${ORIN_HOST}:~/mec-offload-ad/multi-ue/runs/${ORIN_LOG_CAMPAIGN}/ue/linux1/events.jsonl" \
     "$ORIN_CAPTURE/events.jsonl" && \
-   python3 "$REVIEW/filter-run-events.py" "$ORIN_CAPTURE/events.jsonl" \
+   python3 tools/filter_run_events.py "$ORIN_CAPTURE/events.jsonl" \
     "$REVIEW/orin/linux1/events.jsonl"; then
   rm "$ORIN_CAPTURE/events.jsonl"
   rmdir "$ORIN_CAPTURE"
@@ -1397,9 +1445,9 @@ unknown window membership and missing receipts explicitly. The exporter’s
 window rule is in [`export_campaign_dataset.py`](../tools/export_campaign_dataset.py).
 Store generated summaries separately from this raw review directory.
 
-## 22. Analyze and plot valid campaign results
+## 23. Analyze and plot valid campaign results
 
-After collecting Step 21 evidence, run these commands on **RAN Spark**. Both
+After collecting Step 22 evidence, run these commands on **RAN Spark**. Both
 commands take the campaign directory, not its `diagnostics` subdirectory:
 
 ```bash

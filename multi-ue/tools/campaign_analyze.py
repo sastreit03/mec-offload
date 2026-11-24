@@ -17,7 +17,7 @@ from statistics import mean, median
 
 STAGE_SECONDS = {
     'mec_decode': 'decode_s',
-    'mec_queue_wait': 'queue_wait_s',
+    'mec_worker_process_transfer': 'worker_process_transfer_s',
     'mec_preprocess': 'preprocess_s',
     'mec_gpu_inference': 'inference_s',
     'mec_postprocess': 'postprocess_s',
@@ -26,12 +26,57 @@ STAGE_SECONDS = {
     'mec_tracking': 'tracker_s',
     'mec_result_serialization': 'result_prepare_s',
 }
+STAGE_SECONDS.update({
+    'mec_stream_waiting_est': 'stream_waiting_est_s',
+    'mec_cuda_pipeline': 'cuda_pipeline_s',
+    'mec_cuda_submission_to_completion_observed': 'cuda_submission_to_completion_observed_s',
+    'mec_worker_dequeue_to_cuda_submit': 'worker_dequeue_to_cuda_submit_s',
+    'mec_cuda_preprocess_submit_call': 'cuda_preprocess_submit_call_s',
+    'mec_cuda_submit_to_preprocess_marker_lower': 'cuda_submit_to_preprocess_marker_lower_s',
+    'mec_cuda_submit_to_preprocess_marker_upper': 'cuda_submit_to_preprocess_marker_upper_s',
+    'mec_preprocess_marker_observation_span': 'preprocess_marker_observation_span_s',
+
+    'mec_host_cuda_submission': 'host_cuda_submission_s',
+    'mec_gpu_output_transform': 'gpu_output_transform_s',
+    'mec_gpu_readback': 'gpu_readback_s',
+    'mec_gpu_output_to_readback': 'gpu_output_to_readback_s',
+    'mec_host_output_allocation': 'host_output_allocation_s',
+    'mec_finish_ready_check': 'finish_ready_check_s',
+    'mec_completion_executor_wait': 'completion_executor_wait_s',
+    'mec_launch_to_completion_observed': 'launch_to_completion_observed_s',
+    'mec_cpu_format': 'cpu_format_s',
+    'mec_cpu_format_thread': 'cpu_format_thread_s',
+    'mec_rle': 'rle_s',
+    'mec_rle_thread': 'rle_thread_s',
+    'mec_gc_overlap': 'gc_overlap_s',
+    'mec_worker_input_mapping': 'worker_input_mapping_s',
+    'mec_worker_result_handoff': 'worker_result_handoff_s',
+    'mec_serialization': 'serialization_s',
+    'mec_serialization_thread': 'serialization_thread_s',
+    'mec_outbound_queue': 'outbound_queue_s',
+    'mec_websocket_send': 'websocket_send_s',
+    'mec_replay_queue': 'replay_queue_s',
+    'mec_replay_write': 'replay_write_s',
+})
 STAGE_INTERVALS = {
     'mec_frame_reception_span': ('first_packet_monotonic_ns', 'complete_reception_monotonic_ns'),
     'mec_reception_to_result_ready': ('complete_reception_monotonic_ns', 'result_ready_monotonic_ns'),
     'mec_first_packet_to_result_ready': ('first_packet_monotonic_ns', 'result_ready_monotonic_ns'),
 }
+STAGE_INTERVALS.update({
+    'mec_appsink_pull': ('appsink_enter_ns', 'appsink_pulled_ns'),
+    'mec_decode_to_appsink': ('complete_reception_monotonic_ns', 'appsink_enter_ns'),
+    'mec_image_extract': ('image_extract_start_ns', 'decoded_monotonic_ns'),
+    'mec_shared_rgb_copy': ('shared_rgb_copy_start_ns', 'shared_rgb_copy_end_ns'),
+    'mec_decoded_handoff': ('decoded_monotonic_ns', 'decoded_handler_monotonic_ns'),
+    'mec_decoded_validation': ('decoded_handler_monotonic_ns', 'decoded_validation_end_ns'),
+    'mec_decoded_to_submit': ('decoded_handler_monotonic_ns', 'worker_submitted_monotonic_ns'),
+    'mec_engine_result_handling': ('engine_result_polled_ns', 'result_ready_monotonic_ns'),
+    'mec_serialization_dispatch': ('result_prepare_start_monotonic_ns', 'serialization_start_ns'),
+    'mec_serialization_resume': ('serialization_end_ns', 'result_prepare_end_monotonic_ns'),
+})
 STAGES = [*STAGE_SECONDS, 'mec_cuda_event', *STAGE_INTERVALS]
+SIGNED_STAGES = {'mec_stream_waiting_est'}
 SELECTION_RULE = 'mec-arrival-[1,6)-send-by-6-v1'
 
 
@@ -59,9 +104,9 @@ def percentile(values, q):
     return ordered[lo] + (ordered[hi] - ordered[lo]) * (x - lo)
 
 
-def stats(values):
+def stats(values, *, allow_negative=False):
     values = [v for v in values if v is not None]
-    if any(not math.isfinite(v) or v < 0 for v in values):
+    if any(not math.isfinite(v) or (v < 0 and not allow_negative) for v in values):
         raise ValueError('Latency samples must be finite and nonnegative')
     return dict(samples=len(values), mean_ms=mean(values) if values else None,
                 median_ms=median(values) if values else None,
@@ -88,7 +133,7 @@ def summarize(rows, scenario_ids):
                 slo_success_rate=success / transmitted if transmitted else None,
                 outcomes=dict(Counter(r['outcome'] for r in rows)),
                 ue_latency_ms=stats(r['ue_latency_ms'] for r in rows),
-                mec_latency_breakdown_ms={s: stats(r[s] for r in rows) for s in STAGES})
+                mec_latency_breakdown_ms={s: stats((r[s] for r in rows), allow_negative=s in SIGNED_STAGES) for s in STAGES})
 
 
 def with_applications(rows, scenario_ids, assignments):
@@ -173,7 +218,10 @@ def analyze(campaign_dir, slo_ms=150.0):
         else:
             jobs[key] = event
     sends = {}
+    late = {}
     for event in selected(diag / 'mec/events.jsonl'):
+        if event.get('type') == 'result_persisted':
+            late.setdefault((event['scenario_id'], event['attempt_id'], event.get('result_id')), {}).update(event.get('stage_times') or {})
         if event.get('type') != 'send_attempt' or event.get('message_type') != 'frame_result':
             continue
         rid, timestamp = event.get('result_id'), event.get('monotonic_ns')
@@ -182,6 +230,8 @@ def analyze(campaign_dir, slo_ms=150.0):
         key = (event['scenario_id'], event['attempt_id'], rid)
         if key in sends:
             duplicates['send_attempt'] += 1
+        if key not in sends or timestamp < sends[key]:
+            late.setdefault(key, {}).update(event.get('stage_times') or {})
         sends[key] = min(timestamp, sends.get(key, timestamp))
     txs = {}; receipts = {}; event_aliases = {}
     for alias in sorted({u for g in groups.values() for u in g['ue_aliases']}):
@@ -269,6 +319,11 @@ def analyze(campaign_dir, slo_ms=150.0):
                        result_id=rid, mec_send_monotonic_ns=sent, send_offset_s=(sent-start)/1e9,
                        transmitted=True, result_received=bool(receipt), ue_latency_ms=latency,
                        outcome=job.get('outcome'), failure_reason=job.get('reason'), slo_success=success)
+            stage = {**stage, **late.get((sid, aid, rid), {})}
+            if 'worker_process_transfer_s' not in stage and 'queue_wait_s' in stage:
+                stage['worker_process_transfer_s'] = stage['queue_wait_s']
+            row['rle_run_count'] = stage.get('rle_run_count')
+            row['gc_overlap_count'] = stage.get('gc_overlap_count')
             for name, field in STAGE_SECONDS.items():
                 row[name] = stage[field]*1000 if stage.get(field) is not None else None
             row['mec_cuda_event'] = stage.get('cuda_event_ms')

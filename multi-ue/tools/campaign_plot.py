@@ -3,6 +3,9 @@
 
 Usage: python3 tools/campaign_plot.py --campaign-dir runs/campaigns/NAME
 Requires matplotlib. Run campaign_analyze.py first; no source logs are rescanned.
+Stage CDFs include overlapping host/CUDA intervals and are not additive.
+The shared stage registry includes late send/persistence measurements; absent
+columns in older CSVs remain unavailable and produce no fabricated samples.
 """
 import argparse
 import csv
@@ -10,7 +13,7 @@ import json
 import math
 from pathlib import Path
 
-from campaign_analyze import STAGES, SELECTION_RULE
+from campaign_analyze import STAGES, SIGNED_STAGES, SELECTION_RULE
 
 
 def ecdf(values):
@@ -32,6 +35,8 @@ def plot_campaign(campaign_dir):
     with (results/'frames.csv').open() as stream:
         rows = list(csv.DictReader(stream))
     for row in rows:
+        if 'mec_worker_process_transfer' not in row:
+            row['mec_worker_process_transfer'] = row.get('mec_queue_wait')
         sent = float(row.get('send_offset_s', 'nan'))
         arrival = float(row.get('arrival_offset_s', 'nan'))
         if not (math.isfinite(sent) and math.isfinite(arrival) and 1 <= arrival < 6 and arrival <= sent <= 6):
@@ -39,7 +44,7 @@ def plot_campaign(campaign_dir):
         for metric in ['ue_latency_ms', *STAGES]:
             raw = row.get(metric)
             value = float(raw) if raw else None
-            if value is not None and (not math.isfinite(value) or value < 0):
+            if value is not None and (not math.isfinite(value) or (value < 0 and metric not in SIGNED_STAGES)):
                 raise ValueError(f'Invalid {metric} in frames.csv')
             row[metric] = value
     generated = []; skipped = []
@@ -72,7 +77,12 @@ def plot_campaign(campaign_dir):
                 ax.axvline(summary['slo_threshold_ms'], color='black', linestyle='--', alpha=.6,
                            label=f"SLO {summary['slo_threshold_ms']:g} ms")
             ax.set(title=f'{title}\n{title_prefix}\nMEC arrival [1,6) s; result sent by 6 s', xlabel='Latency (ms)', ylabel='Empirical cumulative probability')
-            ax.set_xlim(left=0); ax.set_ylim(0, 1.01)
+            if metric not in SIGNED_STAGES:
+                ax.set_xlim(left=0)
+            else:
+                ax.set_xlabel("Residual estimate (ms; includes observation delay)")
+                ax.axvline(0, color="black", linewidth=.7, alpha=.5)
+            ax.set_ylim(0, 1.01)
             ax.grid(True, alpha=.25); ax.legend(fontsize='small')
             for suffix in ('png','pdf'):
                 path=directory/f'{name}.{suffix}'
