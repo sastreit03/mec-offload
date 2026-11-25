@@ -32,6 +32,9 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
   private volatile boolean transmissionStopped;
   private long framesFullySent;
   private JSONObject transmitting;
+  private boolean preencoded;
+
+  void usePreencoded() { preencoded = true; }
 
   // Do not acquire the sender lock: stop must interrupt between UDP packets.
   public void stopTransmission() { transmissionStopped = true; }
@@ -154,7 +157,7 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
       }
       input.put(pts, new long[] {capture, frame, gop, gopFrame, force ? 1 : 0, sourcePts,
           scheduledRelease == null ? releaseMono(nextRelease) : scheduledRelease});
-      record = new JSONObject()
+      record = preencoded ? null : new JSONObject()
           .put("video_id", video).put("frame_id", frame)
           .put("gop_id", gop).put("gop_frame", gopFrame)
           .put("encoder_pts_us", pts).put("capture_mono_ns", capture)
@@ -167,7 +170,7 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
           .put("config_version", current.getInt("config_version"));
       nextRelease += 1_000_000_000L / current.getInt("fps");
     }
-    events.event("encoder_input_prepared", record);
+    if (record != null) events.event("encoder_input_prepared", record);
     return true;
   }
 
@@ -216,11 +219,12 @@ public final class StreamSession implements H264Rtp.Metadata, H264Rtp.Sink {
               .put("capture_mono_ns", in[0])
               .put("encoded_bytes", size)
               .put("encoder_pts_us", pts)
-              .put("source_pts_us", in[5])
+              .put(preencoded ? "source_frame_index" : "source_pts_us", in[5])
               .put("idr", idr)
               .put("gop_frame", in[3])
               .put("config_version", config.getInt("config_version"))
               .put("plan_version", config.getInt("plan_version"));
+      if (preencoded) transmitting.put("sender_mode", "preencoded");
       return FrameDescriptor.encode(
           video,
           epoch,

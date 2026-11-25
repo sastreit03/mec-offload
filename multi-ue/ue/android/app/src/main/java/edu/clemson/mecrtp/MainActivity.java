@@ -62,7 +62,7 @@ public final class MainActivity extends Activity {
   private long controlDisconnectedNs, lastSyncNs;
   private volatile long lastControlNs = System.nanoTime();
   private JSONObject pendingFailure;
-  private int inputWidth = 1280, inputHeight = 720, inputFps = 30;
+  private int inputWidth = 1280, inputHeight = 720, inputFps = 30, inputGop = 30;
   private String cellularIp = "";
   private JSONObject startRequest;
   private JSONObject successorRequest;
@@ -563,7 +563,9 @@ public final class MainActivity extends Activity {
                             admitted,
                             this::event,
                             playlist == null || collectionMode ? 0 : successorPrepareS);
-                    if (collectionMode && assignment != null)
+                    if (collectionMode && assignment != null && playlist != null && playlist.isEncoded())
+                      media.startEncoded(source, selection.name, assignment);
+                    else if (collectionMode && assignment != null)
                       media.start(
                           source,
                           assignment.getInt("source_start_frame"),
@@ -712,6 +714,8 @@ public final class MainActivity extends Activity {
           : session != null ? "session_present" : "start_request_present");
       return;
     }
+    if (playlist != null && playlist.isEncoded() && !collectionMode)
+      throw new IllegalStateException("Encoded assets require campaign collection mode");
     startRequest =
         new JSONObject()
             .put("type", "video_start")
@@ -902,6 +906,7 @@ public final class MainActivity extends Activity {
           inputWidth = inputProfile.getInt("width");
           inputHeight = inputProfile.getInt("height");
           inputFps = inputProfile.getInt("fps");
+          inputGop = inputProfile.getInt("gop_frames");
         }
         successorPrepareS = m.optDouble("successor_prepare_s", 5.0);
         collectionMode = m.optBoolean("collection_mode", false);
@@ -1218,7 +1223,7 @@ public final class MainActivity extends Activity {
         String id = cursor.getString(0), name = cursor.getString(1), mime = cursor.getString(2);
         if (DocumentsContract.Document.MIME_TYPE_DIR.equals(mime)) {
           collectVideos(tree, id, out);
-        } else if ((mime != null && mime.startsWith("video/"))
+        } else if (name.endsWith(".pav") || (mime != null && mime.startsWith("video/"))
             || name.toLowerCase(java.util.Locale.ROOT).matches(".*\\.(mp4|mov|mkv|m4v)$")) {
           out.add(
               new VideoPlaylist.Selection(
@@ -1337,7 +1342,8 @@ public final class MainActivity extends Activity {
           event(selected ? "dataset_selected" : "dataset_restored", object("videos", playlist.size()));
           event("playlist_initialized", object("videos", playlist.size()));
           recordSelection(selection);
-          showDataset("Dataset directory: " + playlist.size() + " videos");
+          showDataset("Dataset directory: " + playlist.size()
+              + (playlist.isEncoded() ? " pre-encoded assets" : " videos"));
         }
         if (assignment != null) prepareDatasetAssignment();
       });
@@ -1356,7 +1362,9 @@ public final class MainActivity extends Activity {
         throw new java.io.IOException("Dataset not loaded; reselect directory" +
             (datasetError == null ? "" : ": " + datasetError));
       preparationTrace("media_lookup_started", null);
-      selection = playlist.find(new File(assignment.getString("media_path")).getName());
+      selection = playlist.isEncoded()
+          ? playlist.encoded(EncodedSegment.key(assignment, inputWidth, inputHeight, inputFps, inputGop))
+          : playlist.find(new File(assignment.getString("media_path")).getName());
       preparationTrace("media_lookup_completed", null);
       file = selection.uri;
       try (android.content.res.AssetFileDescriptor fd =

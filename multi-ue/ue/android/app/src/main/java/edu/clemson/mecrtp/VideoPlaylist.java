@@ -30,6 +30,9 @@ public final class VideoPlaylist {
     if (files.isEmpty()) throw new IllegalArgumentException("No videos in selected directory");
     this.files = new ArrayList<>(files);
     this.files.sort(Comparator.comparing(x -> x.uri.toString()));
+    for (Selection f : files)
+      if (f.name.endsWith(".pav") != isEncoded())
+        throw new IllegalArgumentException("Select a folder containing only encoded assets or only source videos");
     seed = new SecureRandom().nextLong() & Long.MAX_VALUE;
     random = new Random(seed);
   }
@@ -43,6 +46,21 @@ public final class VideoPlaylist {
     for (Selection file : files)
       if (file.name.equals(name)) return new Selection(file.uri, file.name, -1, -1);
     throw new IllegalArgumentException("Campaign video is not staged: " + name);
+  }
+
+  boolean isEncoded() {
+    return files.get(0).name.endsWith(".pav");
+  }
+
+  Selection encoded(String key) {
+    Selection found = null;
+    for (Selection item : files) {
+      if (!item.name.startsWith(key + "-") || !item.name.endsWith(".pav")) continue;
+      if (found != null) throw new IllegalArgumentException("Ambiguous encoded asset " + key);
+      found = item;
+    }
+    if (found == null) throw new IllegalArgumentException("Missing encoded asset " + key);
+    return found;
   }
 
   public Selection next() {

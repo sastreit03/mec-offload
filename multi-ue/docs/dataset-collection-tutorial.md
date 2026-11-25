@@ -363,7 +363,7 @@ PY
 
 Require the inventory count for each declared UE to match `videos_per_ue`.
 Check that inventory paths describe the intended device destinations: Android
-paths refer to files in the selected document-tree directory; Linux paths must
+paths identify the original inventory files. For pre-encoded Pixel runs the staging tool resolves their basenames on the RAN Spark and verifies their source hashes. Linux paths must
 exist inside the softUE container. Local hash verification does not verify
 copies installed on remote devices; check those during deployment.
 
@@ -382,11 +382,10 @@ and explicit `--count`, `--seed`, `--segment-frames`, and
 generated inventory and hashes. These checks do not establish sufficient
 runtime duration after every selected starting position.
 
-For beginning-of-file selection, use `segments_per_video: 1`; the starting
-frame will be zero. This also avoids a current cross-client difference:
-Android converts nonzero starting frames to timestamps using configured output
-FPS, while Linux seeks by source frame index. Do not assume nonzero offsets
-refer to identical content when source FPS differs from output FPS.
+For beginning-of-file selection, use `segments_per_video: 1`. Offline Pixel
+encoding uses the Linux UE convention for nonzero start positions. It seeks by
+source frame index, consumes successive source frames and assigns them the
+campaign frame rate.
 
 Next, generate the manifest in a fresh campaign directory and inspect the
 selected files and starting positions. Verify each selected source has enough
@@ -400,7 +399,7 @@ chosen above. These shell variables are reused in the inspection commands:
 
 ```bash
 cd ~/mec-offload-ad/multi-ue
-CAMPAIGN="my-campaign-v1"  # Replace with your campaign_name.
+#CAMPAIGN="my-campaign-v1"  # Replace with your campaign_name.
 INVENTORY="config/campaigns/media-inventory-v2.yaml"
 CAMPAIGN_DIR="runs/campaigns/${CAMPAIGN}"
 
@@ -529,6 +528,76 @@ uniquely named campaign directory. Do not manually edit the manifest or lock.
 Once this review passes, preserve both generated files. The next stage is
 verifying/staging the selected media on the devices and checking deployed
 configuration, images, and services before running scenarios.
+
+### 12a. Encode and stage the assigned segments on each Pixel
+
+Run this step after verifying the immutable manifest. Use the RAN Spark and
+the same GStreamer/x264 environment used for Linux UE encoder profiling.
+Install the updated Pixel app using the Android project's normal build and
+signing setup (`bash gradlew :app:assembleDebug` from `ue/android`). Install
+the newly built APK on each handset. Keep existing campaign data when updating
+an installation signed with the same key.
+
+From `multi-ue`, verify the encoding environment and identify the USB device.
+The Python interpreter must see OpenCV, PyYAML, PyGObject, Gst and GstVideo.
+The pipeline requires `x264enc`, `h264parse`, and the GStreamer app elements.
+
+```bash
+PY=../gnb-core/env/bin/python
+"$PY" -c 'import cv2, yaml, gi; gi.require_version("Gst", "1.0"); gi.require_version("GstVideo", "1.0"); from gi.repository import Gst, GstVideo; Gst.init(None); assert all(Gst.ElementFactory.find(n) for n in ("appsrc", "videoconvert", "x264enc", "h264parse", "appsink"))'
+adb devices -l
+```
+
+Connect one Pixel, unlock it and authorize USB debugging. Set the alias to
+the alias you will enter in the app and use the corresponding ADB serial.
+Repeat the following commands for each participating Pixel. Use the source
+directory from section 10 and the same catalog used in section 11.
+
+```bash
+PIXEL=pixel1
+SERIAL=replace_with_adb_serial
+adb -s "$SERIAL" install -r ue/android/app/build/outputs/apk/debug/app-debug.apk
+"$PY" tools/stage_pixel_media.py --campaign-dir "$CAMPAIGN_DIR" \
+  --catalog config/tasks.yaml --sources datasets/campaign-v2 \
+  --ue "$PIXEL" --serial "$SERIAL"
+```
+
+The tool groups repeated assignments by source SHA-256, start frame, encoded
+frame count, dimensions, fps, GoP length, bitrate and asset format version.
+It checks SHA-256 on the connected phone first. A verified copy skips both
+encoding and transfer. Otherwise it checks `datasets/pixel-encoded` on the
+Spark. On a cache miss it verifies the source hash, decodes the selected
+frames, resizes them, and calls the Linux UE's GStreamer encoder with the
+manifest bitrate and explicit keyframe requests. The encode runs without
+real-time pacing. A newly uploaded file is verified before its final rename.
+
+Each `.pav` contains the key, frame count and sequential length-prefixed Annex-B
+access units with an IDR flag. The app builds its in-memory frame table during
+scenario preparation. The encoder covers the larger of the assigned frame
+count and eight seconds at the assigned fps, allowing one second beyond the
+current seven-second stop timer. A short source fails staging. If the stop is
+delayed beyond the available content the app reports a sender failure.
+
+After the last handset, run this check before starting the campaign:
+
+```bash
+"$PY" tools/stage_pixel_media.py --campaign-dir "$CAMPAIGN_DIR" \
+  --catalog config/tasks.yaml --check-staged "config/campaigns/${CAMPAIGN}.yaml"
+```
+
+This checks the saved USB verification receipts in `$CAMPAIGN_DIR/pixel-staging/`
+against the locked manifest and catalog, all assigned Android aliases, and
+distinct device serials. It can run with the phones disconnected. Rerun
+staging if files or devices changed after verification. Keep the receipts
+with the campaign. The app verifies the assigned file and its hash again
+before sending its normal preparation acknowledgment.
+
+At 10 fps, playback releases one access unit every 100 ms from the scenario
+start and passes it to the existing RTP packetizer. Transmitted events record
+`sender_mode=preencoded`, `source_frame_index`, `scheduled_release_mono_ns`,
+`tx_mono_ns`, and `last_udp_send_return_mono_ns`. In this mode the capture
+timestamp measures local submission of a staged frame. Encoding happened
+before the campaign. The SLO still ends at `receipt_mono_ns`.
 
 ## 13. Validate the deployed MEC configuration and image
 
@@ -809,9 +878,11 @@ wait; the manifest determines which clients transmit.
 
 On each **Pixel**, open the installed campaign app, set the MEC address to
 `192.168.72.136`, and set its unique alias to the corresponding `ues` key
-(`pixel1`, `pixel2`, or `pixel3` on this testbed). Select the dataset directory
-whose files match the inventory. For the existing V2 pool, choose
-`Movies/AetheredgeCampaignV2` and verify the displayed 42-video count. Press
+(`pixel1`, `pixel2`, or `pixel3` on this testbed). For pre-encoded playback select
+**Movies → AetheredgeEncoded** using the app's directory picker. Check that
+the status displays **pre-encoded assets**. If the folder was selected before
+staging more files, select it again to refresh the list. For a live-encoding
+baseline, select the original source-video folder instead. Press
 **Connect and stream** once and wait for **MEC control connected**. Keep the
 app in the foreground. Campaign assignments select application, model, bitrate,
 and media; do not manually restart streaming between scenarios.
@@ -1159,7 +1230,7 @@ Do not infer either from the manifest campaign ID when analyzing a copied repeat
 
 ```bash
 cd ~/mec-offload-ad/multi-ue
-export CAMPAIGN=20261119-pilot-no-mps-no-tracking  # Replace for each campaign.
+#export CAMPAIGN=20261119-pilot-no-mps-no-tracking  # Replace for each campaign.
 export RUN_ID=20261119-pilot-no-mps-no-tracking-collection
 export ORIN_LOG_CAMPAIGN="$CAMPAIGN"  # Change if its supervisor used another path.
 export MEC_HOST=sstreit@192.168.71.130
@@ -1450,7 +1521,7 @@ commands take the campaign directory, not its `diagnostics` subdirectory:
 
 ```bash
 cd ~/mec-offload-ad/multi-ue
-CAMPAIGN=20261119-pilot-no-mps-no-tracking  # Replace for future campaigns.
+#CAMPAIGN=20261119-pilot-no-mps-no-tracking  # Replace for future campaigns.
 python3 tools/campaign_analyze.py --campaign-dir "runs/campaigns/$CAMPAIGN"
 python3 tools/campaign_plot.py --campaign-dir "runs/campaigns/$CAMPAIGN"
 ```

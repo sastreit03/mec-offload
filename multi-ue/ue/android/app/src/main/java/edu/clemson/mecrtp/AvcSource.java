@@ -40,6 +40,57 @@ public final class AvcSource {
   private long segmentFinishDeadline;
   private boolean released;
   private Runnable heldFirstFrame;
+  private EncodedSegment encoded;
+  private long releaseOriginNs;
+  private int encodedGop;
+
+  public void startEncoded(Uri uri, String name, org.json.JSONObject assignment) {
+    handler.post(() -> {
+      try {
+        org.json.JSONObject cfg = session.config();
+        fps = cfg.getInt("fps");
+        encodedGop = cfg.getInt("gop_frames");
+        bitrate = assignment.getInt("bitrate_bps");
+        if (bitrate != cfg.getInt("bitrate_bps"))
+          throw new IllegalArgumentException("Assigned and admitted bitrates differ");
+        String key = EncodedSegment.key(assignment, cfg.getInt("width"), cfg.getInt("height"),
+            fps, encodedGop);
+        encoded = EncodedSegment.read(context.getContentResolver().openInputStream(uri),
+            key, name, EncodedSegment.count(assignment, fps), encodedGop);
+        sourceStartFrame = assignment.getInt("source_start_frame");
+        rtp = new H264Rtp(session, 96, 1200, session);
+        session.usePreencoded();
+        events.event("media_prepared", new org.json.JSONObject().put("video_id", session.video())
+            .put("sender_mode", "preencoded").put("asset", name).put("frame_count", encoded.frames.length));
+      } catch (Exception e) { fail(e); }
+    });
+  }
+
+  private void playEncoded() {
+    if (!active || stopRequested) return;
+    try {
+      int i = submittedFrames;
+      long due = releaseOriginNs + Math.round(i * 1_000_000_000.0 / fps);
+      long remaining = due - System.nanoTime();
+      if (remaining > 0) {
+        handler.postDelayed(this::playEncoded, (remaining + 999_999L) / 1_000_000L);
+        return;
+      }
+      if (i == encoded.frames.length) throw new IllegalStateException("Encoded asset ended before scenario_stop");
+      long pts = Math.round(i * 1_000_000.0 / fps);
+      if (!session.prepare(pts, System.nanoTime(), sourceStartFrame + (long) i, due)) {
+        handler.postDelayed(this::playEncoded, 1);
+        return;
+      }
+      org.json.JSONObject cfg = session.config();
+      if (cfg.getInt("bitrate_bps") != bitrate || cfg.getInt("fps") != fps
+          || cfg.getInt("gop_frames") != encodedGop || (session.keyframe() && !encoded.idr[i]))
+        throw new IllegalStateException("Active plan does not match staged encoding");
+      rtp.accessUnit(encoded.frames[i], pts);
+      submittedFrames++;
+      handler.post(this::playEncoded);
+    } catch (Exception e) { fail(e); }
+  }
 
   public AvcSource(Context c, StreamSession s, StreamSession.Events e, double prepareS)
       throws Exception {
@@ -62,6 +113,11 @@ public final class AvcSource {
       if (!active || released) return;
       released = true;
       fileStart = session.activate();
+      if (encoded != null) {
+        releaseOriginNs = session.releaseMono(fileStart);
+        playEncoded();
+        return;
+      }
       if (heldFirstFrame != null) {
         Runnable first = heldFirstFrame;
         heldFirstFrame = null;
