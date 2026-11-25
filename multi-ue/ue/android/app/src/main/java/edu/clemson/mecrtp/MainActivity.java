@@ -26,7 +26,8 @@ public final class MainActivity extends Activity {
   private final ThreadPoolExecutor log =
       new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(4096));
   // One reader preserves wire order across result and lifecycle messages.
-  private final ExecutorService incoming = Executors.newSingleThreadExecutor();
+  private final ThreadPoolExecutor incoming =
+      new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
   private BufferedWriter evidenceWriter; // Owned exclusively by the log executor.
   private final CpuSampler cpu = new CpuSampler(timer, this::event);
   private boolean refreshPending;
@@ -499,7 +500,8 @@ public final class MainActivity extends Activity {
                 if (destroyed || g != generation) return;
                 lastControlNs = receipt;
                 try {
-                  incoming.execute(() -> dispatch(raw, receipt, g));
+                  int queuedAhead = incoming.getQueue().size();
+                  incoming.execute(() -> dispatch(raw, receipt, g, queuedAhead));
                 } catch (RejectedExecutionException e) {
                   if (!destroyed) throw e;
                 }
@@ -791,24 +793,63 @@ public final class MainActivity extends Activity {
 
   // Controls still run on the UI thread. Wait only on the background worker so
   // a later result observes the session established by the preceding control.
-  private void dispatch(String raw, long receipt, int g) {
+  private void dispatch(String raw, long receipt, int g, int queuedAhead) {
+    long start = System.nanoTime();
     if (g != generation) return;
+    JSONObject timing = object("receipt_mono_ns", receipt);
     try {
+      timing.put("dispatch_start_mono_ns", start)
+          .put("worker_queue_ns", start - receipt)
+          .put("queued_ahead", queuedAhead)
+          .put("connection_generation", g);
+      long parseStart = System.nanoTime();
       JSONObject result = resultEnvelope(raw);
       if (result != null) {
-        handleResult(result, receipt);
+        long parsed = System.nanoTime();
+        identifyMessage(timing, result);
+        timing.put("parse_ns", parsed - parseStart);
+        handleResult(result, receipt, timing);
       } else {
         JSONObject control = new JSONObject(raw);
+        long parsed = System.nanoTime();
+        identifyMessage(timing, control);
+        timing.put("parse_ns", parsed - parseStart);
+        long[] uiTimes = new long[2];
         FutureTask<Void> applied = new FutureTask<>(() -> {
-          if (!destroyed && g == generation) message(control, receipt);
+          uiTimes[0] = System.nanoTime();
+          try {
+            if (!destroyed && g == generation) message(control, receipt);
+          } finally {
+            uiTimes[1] = System.nanoTime();
+          }
           return null;
         });
+        long posted = System.nanoTime();
         ui.post(applied);
-        applied.get();
+        try {
+          applied.get();
+        } finally {
+          long resumed = System.nanoTime();
+          timing.put("ui_wait_ns", resumed - posted);
+          if (applied.isDone() && uiTimes[1] != 0) {
+            timing.put("ui_queue_ns", uiTimes[0] - posted)
+                .put("ui_handler_ns", uiTimes[1] - uiTimes[0]);
+          }
+        }
       }
     } catch (Exception e) {
       event("protocol_error", object("reason", e.toString()));
       show(e.toString());
+    } finally {
+      event("incoming_message_timing", timing);
+    }
+  }
+
+  private static void identifyMessage(JSONObject timing, JSONObject message) throws JSONException {
+    timing.put("message_type", message.optString("type"));
+    for (String key : new String[] {"campaign_id", "scenario_id", "attempt_id",
+                                    "video_id", "frame_id", "result_id"}) {
+      if (message.has(key)) timing.put(key, message.get(key));
     }
   }
 
@@ -843,13 +884,20 @@ public final class MainActivity extends Activity {
     }
   }
 
-  private void handleResult(JSONObject m, long receipt) throws Exception {
+  private void handleResult(JSONObject m, long receipt, JSONObject timing) throws Exception {
     String id = m.getString("result_id");
+    boolean duplicate;
+    long queryStart = System.nanoTime();
     try (android.database.Cursor cursor =
         receiptIds.rawQuery("SELECT 1 FROM seen WHERE id=?", new String[] {id})) {
-      if (cursor.moveToFirst()) return;
+      duplicate = cursor.moveToFirst();
     }
+    timing.put("sqlite_select_ns", System.nanoTime() - queryStart)
+        .put("duplicate", duplicate);
+    if (duplicate) return;
+    long insertStart = System.nanoTime();
     receiptIds.execSQL("INSERT INTO seen VALUES (?)", new Object[] {id});
+    timing.put("sqlite_insert_ns", System.nanoTime() - insertStart);
     StreamSession owner = session;
     if (owner != null && !owner.video().equals(m.getString("video_id"))) owner = null;
     for (StreamSession old : retiring)
