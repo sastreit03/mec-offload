@@ -71,7 +71,7 @@ public final class MainActivity extends Activity {
   // interrupt the WebSocket after the final RTP packet but before this command.
   private JSONObject pendingEnd;
   private boolean awaitingSuccessor;
-  private boolean collectionMode;
+  private volatile boolean collectionMode;
   private JSONObject assignment;
   private double successorPrepareS;
   private volatile boolean enabled;
@@ -814,6 +814,10 @@ public final class MainActivity extends Activity {
         long parsed = System.nanoTime();
         identifyMessage(timing, control);
         timing.put("parse_ns", parsed - parseStart);
+        if (collectionMode && "association_status".equals(control.optString("type"))) {
+          timing.put("ui_skipped", true);
+          return;
+        }
         long[] uiTimes = new long[2];
         FutureTask<Void> applied = new FutureTask<>(() -> {
           uiTimes[0] = System.nanoTime();
@@ -875,6 +879,14 @@ public final class MainActivity extends Activity {
                 || reader.peek() == android.util.JsonToken.NUMBER) {
               result.put(key, reader.nextString());
             } else reader.skipValue();
+            break;
+          case "payload":
+            // Older replay messages may carry receipt fields after the payload.
+            if (result.has("type") && result.has("frame_id") && result.has("video_id")
+                && result.has("result_id") && result.has("outcome") && result.has("reason")
+                && result.has("campaign_id") && result.has("scenario_id") && result.has("attempt_id"))
+              return result;
+            reader.skipValue();
             break;
           default: reader.skipValue();
         }
@@ -1028,8 +1040,6 @@ public final class MainActivity extends Activity {
         probe(m);
         break;
       case "association_status":
-        if (collectionMode && !contextReady()) break;
-        if (collectionMode && assignment == null) break;
         if (collectionMode) break;
         if (m.getBoolean("valid") && successorRequest != null) send(successorRequest);
         if (m.getBoolean("valid")) requestStart();

@@ -1013,7 +1013,7 @@ Start in a dedicated **Orin** terminal with the current campaign's log path:
 
 ```bash
 cd ~/mec-offload-ad/multi-ue
-CAMPAIGN=my-new-campaign  # Replace with the campaign directory name you are starting.
+#CAMPAIGN=my-new-campaign  # Replace with the campaign directory name you are starting.
 ./scripts/softue-client-supervisor.sh \
   --ue-alias linux1 \
   --source-dir /datasets/campaign-v2 \

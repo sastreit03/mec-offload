@@ -16,7 +16,10 @@ class SerializedResult(Mapping):
     @classmethod
     def prepare(cls, message):
         begin, cpu = time.monotonic_ns(), time.thread_time_ns()
-        wire = {k: v for k, v in message.items() if k != "stage_times"}
+        # Put the potentially large payload after every receipt field on the wire.
+        wire = {k: v for k, v in message.items() if k not in ("stage_times", "payload")}
+        if "payload" in message:
+            wire["payload"] = message["payload"]
         result = cls(dumps(wire), wire)
         end = time.monotonic_ns()
         result.timing.update(serialization_start_ns=begin, serialization_end_ns=end,

@@ -19,6 +19,25 @@ def message():
                 stage_times={"processing_s": .01}, payload={"detections": []})
 
 
+@pytest.mark.parametrize("payload", [{"rle": [[1, 100], [2, 50]]}, None])
+def test_payload_follows_all_receipt_fields_without_mutating_message(payload):
+    original = {"payload": payload, **message(), "reason": None}
+    original["payload"] = payload
+    original_keys = list(original)
+    result = SerializedResult.prepare(original)
+    wire = json.loads(result.text)
+    assert list(wire)[-1] == "payload"
+    assert wire == {k: v for k, v in original.items() if k != "stage_times"}
+    assert list(original) == original_keys
+    assert "payload" not in result and "stage_times" not in result
+
+
+def test_result_without_payload_does_not_add_one():
+    original = message()
+    del original["payload"]
+    assert "payload" not in json.loads(SerializedResult.prepare(original).text)
+
+
 def test_single_serialization_and_live_delivery_before_commit(tmp_path):
     async def exercise():
         store = ReplayStore(tmp_path / "replay.sqlite3")
