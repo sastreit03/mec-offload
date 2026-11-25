@@ -26,6 +26,11 @@ public final class ClockMap {
     return valid() ? unix(System.nanoTime()) : System.currentTimeMillis() * 1_000_000L;
   }
 
+  public synchronized long monotonic(long unixNs) {
+    return valid() ? unixNs - offset
+        : System.nanoTime() + (unixNs - System.currentTimeMillis() * 1_000_000L);
+  }
+
   public synchronized long uncertainty() {
     return uncertainty;
   }

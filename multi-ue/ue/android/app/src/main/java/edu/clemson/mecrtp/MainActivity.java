@@ -25,6 +25,11 @@ public final class MainActivity extends Activity {
   private final ExecutorService networkIo = Executors.newSingleThreadExecutor();
   private final ThreadPoolExecutor log =
       new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new ArrayBlockingQueue<>(4096));
+  // One reader preserves wire order across result and lifecycle messages.
+  private final ExecutorService incoming = Executors.newSingleThreadExecutor();
+  private BufferedWriter evidenceWriter; // Owned exclusively by the log executor.
+  private final CpuSampler cpu = new CpuSampler(timer, this::event);
+  private boolean refreshPending;
   private ConnectivityManager connectivity;
   private ConnectivityManager.NetworkCallback callback;
   private volatile Network network;
@@ -38,14 +43,15 @@ public final class MainActivity extends Activity {
   private Uri file;
   private VideoPlaylist playlist;
   private final ExecutorService datasetIo = Executors.newSingleThreadExecutor();
-  private boolean datasetLoading, destroyed;
+  private boolean datasetLoading;
+  private volatile boolean destroyed;
   private int datasetGeneration;
   private String datasetError;
 
   private VideoPlaylist.Selection selection, successorSelection;
   private final java.util.List<StreamSession> retiring = new CopyOnWriteArrayList<>();
   private android.database.sqlite.SQLiteDatabase receiptIds;
-  private StreamSession session;
+  private volatile StreamSession session;
   private StreamSession preparedSession;
   private boolean preparedSessionReady;
   private AvcSource media;
@@ -53,7 +59,8 @@ public final class MainActivity extends Activity {
   private String campaignId, scenarioId, attemptId;
   private String abortedAttemptId;
   private String startedAttemptId, preparedVideoId;
-  private long controlDisconnectedNs, lastControlNs = System.nanoTime(), lastSyncNs;
+  private long controlDisconnectedNs, lastSyncNs;
+  private volatile long lastControlNs = System.nanoTime();
   private JSONObject pendingFailure;
   private int inputWidth = 1280, inputHeight = 720, inputFps = 30;
   private String cellularIp = "";
@@ -67,7 +74,7 @@ public final class MainActivity extends Activity {
   private JSONObject assignment;
   private double successorPrepareS;
   private volatile boolean enabled;
-  private int generation;
+  private volatile int generation;
   private long clientSeq;
   private android.content.SharedPreferences prefs;
 
@@ -184,6 +191,7 @@ public final class MainActivity extends Activity {
         new ScrollView.LayoutParams(
             ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
     setContentView(scroll);
+    timer.scheduleWithFixedDelay(() -> flushEvidence(false), 250, 250, TimeUnit.MILLISECONDS);
     String savedDataset = prefs.getString("dataset_uri", null);
     if (savedDataset != null) loadDataset(Uri.parse(savedDataset), false);
     getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -264,42 +272,47 @@ public final class MainActivity extends Activity {
     ui.post(() -> controlStatus.setText(s));
   }
 
+  private final Object frameStatusLock = new Object();
+
   private void resetFrameStatus() {
-    ui.post(
-        () -> {
-          lastTransmittedFrame = -1;
-          lastResultFrame = -1;
-          lastResultOutcome = "none";
-          renderFrameStatus();
-        });
+    synchronized (frameStatusLock) {
+      lastTransmittedFrame = lastResultFrame = -1;
+      lastResultOutcome = "none";
+      scheduleFrameRefresh();
+    }
   }
 
   private void showTransmittedFrame(long frameId) {
-    ui.post(
-        () -> {
-          lastTransmittedFrame = Math.max(lastTransmittedFrame, frameId);
-          renderFrameStatus();
-        });
+    synchronized (frameStatusLock) {
+      lastTransmittedFrame = Math.max(lastTransmittedFrame, frameId);
+      scheduleFrameRefresh();
+    }
   }
 
   private void showResultFrame(long frameId, String outcome) {
-    ui.post(
-        () -> {
-          if (frameId >= lastResultFrame) {
-            lastResultFrame = frameId;
-            lastResultOutcome = outcome;
-          }
-          renderFrameStatus();
-        });
+    synchronized (frameStatusLock) {
+      if (frameId >= lastResultFrame) {
+        lastResultFrame = frameId;
+        lastResultOutcome = outcome;
+        scheduleFrameRefresh();
+      }
+    }
+  }
+
+  private void scheduleFrameRefresh() {
+    if (refreshPending || destroyed) return;
+    refreshPending = true;
+    ui.postDelayed(this::renderFrameStatus, 200);
   }
 
   private void renderFrameStatus() {
-    String transmitted = lastTransmittedFrame < 0 ? "none" : Long.toString(lastTransmittedFrame);
-    String result =
-        lastResultFrame < 0
-            ? "none"
-            : lastResultFrame + " (" + lastResultOutcome + ")";
-    frameStatus.setText("Frames: transmitted=" + transmitted + ", result=" + result);
+    String transmitted, result;
+    synchronized (frameStatusLock) {
+      refreshPending = false;
+      transmitted = lastTransmittedFrame < 0 ? "none" : Long.toString(lastTransmittedFrame);
+      result = lastResultFrame < 0 ? "none" : lastResultFrame + " (" + lastResultOutcome + ")";
+    }
+    if (!destroyed) frameStatus.setText("Frames: transmitted=" + transmitted + ", result=" + result);
   }
 
   // Persist lifecycle sequence numbers so retries/reconnects do not reuse command IDs.
@@ -309,12 +322,32 @@ public final class MainActivity extends Activity {
     return clientSeq;
   }
 
-  // Queue experiment evidence off the media and UI paths.
+  // Only this executor touches the writer. A queued flush follows all prior writes.
+  private void flushEvidence(boolean close) {
+    log.execute(() -> {
+      try {
+        if (evidenceWriter == null) return;
+        if (close) {
+          evidenceWriter.close();
+          evidenceWriter = null;
+        } else evidenceWriter.flush();
+      } catch (IOException e) {
+        enabled = false;
+        show("Evidence flush failed: " + e);
+      }
+    });
+  }
+
+  // Copy the envelope without modifying the caller's event or reparsing JSON.
   private void event(String type, JSONObject value) {
     try {
-      JSONObject record =
-          new JSONObject(value.toString())
-              .put("type", type)
+      JSONObject record = new JSONObject();
+      java.util.Iterator<String> keys = value.keys();
+      while (keys.hasNext()) {
+        String key = keys.next();
+        record.put(key, value.get(key));
+      }
+      record.put("type", type)
               .put("run_id", run)
               .put("ue_id", uid)
               .put("monotonic_ns", System.nanoTime());
@@ -324,11 +357,16 @@ public final class MainActivity extends Activity {
         record.put("scenario_id", scenarioId == null ? JSONObject.NULL : scenarioId);
       if (!record.has("attempt_id"))
         record.put("attempt_id", attemptId == null ? JSONObject.NULL : attemptId);
+      // Serialize once while the producer owns the values. Queue an immutable line.
+      String line = record.toString();
       log.execute(
           () -> {
-            try (FileWriter f =
-                new FileWriter(new File(getExternalFilesDir(null), "events.jsonl"), true)) {
-              f.write(record.toString() + "\n");
+            try {
+              if (evidenceWriter == null)
+                evidenceWriter = new BufferedWriter(new FileWriter(
+                    new File(getExternalFilesDir(null), "events.jsonl"), true));
+              evidenceWriter.write(line);
+              evidenceWriter.newLine();
             } catch (Exception e) {
               enabled = false;
               show("Evidence write failed: " + e);
@@ -458,17 +496,13 @@ public final class MainActivity extends Activity {
 
               public void onMessage(WebSocket socket, String raw) {
                 long receipt = System.nanoTime();
-                ui.post(
-                    () -> {
-                      if (g != generation) return;
-                      try {
-                        lastControlNs = receipt;
-                        message(new JSONObject(raw), receipt);
-                      } catch (Exception e) {
-                        event("protocol_error", object("reason", e.toString()));
-                        show(e.toString());
-                      }
-                    });
+                if (destroyed || g != generation) return;
+                lastControlNs = receipt;
+                try {
+                  incoming.execute(() -> dispatch(raw, receipt, g));
+                } catch (RejectedExecutionException e) {
+                  if (!destroyed) throw e;
+                }
               }
 
               public void onFailure(WebSocket socket, Throwable e, Response r) {
@@ -732,6 +766,7 @@ public final class MainActivity extends Activity {
         || !campaignId.equals(m.optString("campaign_id"))
         || !scenarioId.equals(m.optString("scenario_id"))
         || !attemptId.equals(m.optString("attempt_id"))) return;
+    cpu.stop();
     abortedAttemptId = attemptId;
     // Set the packet-level flag before asynchronous codec cleanup.
     if (session != null) session.stopTransmission();
@@ -747,6 +782,91 @@ public final class MainActivity extends Activity {
     successorRequest = null;
     pendingEnd = null;
     event("scenario_aborted", object("error", m.opt("error")));
+    flushEvidence(false);
+  }
+
+  // Controls still run on the UI thread. Wait only on the background worker so
+  // a later result observes the session established by the preceding control.
+  private void dispatch(String raw, long receipt, int g) {
+    if (g != generation) return;
+    try {
+      JSONObject result = resultEnvelope(raw);
+      if (result != null) {
+        handleResult(result, receipt);
+      } else {
+        JSONObject control = new JSONObject(raw);
+        FutureTask<Void> applied = new FutureTask<>(() -> {
+          if (!destroyed && g == generation) message(control, receipt);
+          return null;
+        });
+        ui.post(applied);
+        applied.get();
+      }
+    } catch (Exception e) {
+      event("protocol_error", object("reason", e.toString()));
+      show(e.toString());
+    }
+  }
+
+  // Read just the result fields consumed by the app, in any JSON key order.
+  static JSONObject resultEnvelope(String raw) throws Exception {
+    JSONObject result = new JSONObject();
+    try (android.util.JsonReader reader = new android.util.JsonReader(new StringReader(raw))) {
+      reader.beginObject();
+      while (reader.hasNext()) {
+        String key = reader.nextName();
+        switch (key) {
+          case "type":
+            if (!"frame_result".equals(reader.nextString())) return null;
+            result.put("type", "frame_result");
+            break;
+          case "frame_id":
+          case "video_id": case "result_id": case "outcome": case "reason":
+          case "campaign_id": case "scenario_id": case "attempt_id":
+            if (reader.peek() == android.util.JsonToken.NULL) {
+              reader.nextNull();
+              result.put(key, JSONObject.NULL);
+            } else if (reader.peek() == android.util.JsonToken.STRING
+                || reader.peek() == android.util.JsonToken.NUMBER) {
+              result.put(key, reader.nextString());
+            } else reader.skipValue();
+            break;
+          default: reader.skipValue();
+        }
+      }
+      reader.endObject();
+      return result.has("type") ? result : null;
+    }
+  }
+
+  private void handleResult(JSONObject m, long receipt) throws Exception {
+    String id = m.getString("result_id");
+    try (android.database.Cursor cursor =
+        receiptIds.rawQuery("SELECT 1 FROM seen WHERE id=?", new String[] {id})) {
+      if (cursor.moveToFirst()) return;
+    }
+    receiptIds.execSQL("INSERT INTO seen VALUES (?)", new Object[] {id});
+    StreamSession owner = session;
+    if (owner != null && !owner.video().equals(m.getString("video_id"))) owner = null;
+    for (StreamSession old : retiring)
+      if (old.video().equals(m.getString("video_id"))) owner = old;
+    if (owner != null) owner.receipt(m, receipt);
+    else
+      event(
+          "result_receipt",
+          new JSONObject()
+              .put("campaign_id", m.opt("campaign_id"))
+              .put("scenario_id", m.opt("scenario_id"))
+              .put("attempt_id", m.opt("attempt_id"))
+              .put("video_id", m.getString("video_id"))
+              .put("frame_id", m.getLong("frame_id"))
+              .put("result_id", id)
+              .put("receipt_mono_ns", receipt)
+              .put("outcome", m.getString("outcome"))
+              .put("reason", m.isNull("reason") ? JSONObject.NULL : m.getString("reason"))
+              .put("latency_ns", JSONObject.NULL)
+              .put("slo_success", false));
+    showResultFrame(m.getLong("frame_id"), m.getString("outcome"));
   }
 
   private void message(JSONObject m, long receipt) throws Exception {
@@ -761,6 +881,8 @@ public final class MainActivity extends Activity {
                 || run != null && !run.equals(m.getString("run_id")))) {
           if (media != null) media.close();
           if (session != null) session.close();
+          cpu.stop();
+          flushEvidence(false);
           session = null;
           media = null;
           startRequest = null;
@@ -837,6 +959,7 @@ public final class MainActivity extends Activity {
             || attemptId.equals(abortedAttemptId) || attemptId.equals(startedAttemptId)
             || session == null || media == null || !session.video().equals(preparedVideoId)) break;
         startedAttemptId = attemptId;
+        cpu.start(campaignId, scenarioId, attemptId);
         media.release();
         event("scenario_start", object("release_monotonic_ns", System.nanoTime()));
         break;
@@ -938,6 +1061,8 @@ public final class MainActivity extends Activity {
             // Aetheredge: a collection assignment is single-use. The next
             // attempt supplies a new assignment through scenario_context.
             if (collectionMode) {
+              cpu.stop();
+              flushEvidence(false);
               assignment = null;
             }
             if (enabled && !collectionMode && playlist != null && preparedSession != null) {
@@ -975,36 +1100,6 @@ public final class MainActivity extends Activity {
         if (pendingEnd != null
             && pendingEnd.optLong("client_seq", -1) == m.optLong("client_seq", -2))
           pendingEnd = null;
-        break;
-      // Stable result IDs deduplicate reconnect replay before recording a receipt.
-      case "frame_result":
-        String id = m.getString("result_id");
-        try (android.database.Cursor cursor =
-            receiptIds.rawQuery("SELECT 1 FROM seen WHERE id=?", new String[] {id})) {
-          if (cursor.moveToFirst()) break;
-        }
-        receiptIds.execSQL("INSERT INTO seen VALUES (?)", new Object[] {id});
-        StreamSession owner =
-            session != null && session.video().equals(m.getString("video_id")) ? session : null;
-        for (StreamSession old : retiring)
-          if (old.video().equals(m.getString("video_id"))) owner = old;
-        if (owner != null) owner.receipt(m, receipt);
-        else
-          event(
-              "result_receipt",
-              new JSONObject()
-                  .put("campaign_id", m.opt("campaign_id"))
-                  .put("scenario_id", m.opt("scenario_id"))
-                  .put("attempt_id", m.opt("attempt_id"))
-                  .put("video_id", m.getString("video_id"))
-                  .put("frame_id", m.getLong("frame_id"))
-                  .put("result_id", id)
-                  .put("receipt_mono_ns", receipt)
-                  .put("outcome", m.getString("outcome"))
-                  .put("reason", m.isNull("reason") ? JSONObject.NULL : m.getString("reason"))
-                  .put("latency_ns", JSONObject.NULL)
-                  .put("slo_success", false));
-        showResultFrame(m.getLong("frame_id"), m.getString("outcome"));
         break;
       case "error":
         show(m.toString());
@@ -1314,10 +1409,16 @@ public final class MainActivity extends Activity {
     if (preparedSession != null) preparedSession.close();
     if (ws != null) ws.cancel();
     if (callback != null) connectivity.unregisterNetworkCallback(callback);
+    cpu.stop();
     timer.shutdownNow();
     probes.shutdownNow();
     networkIo.shutdownNow();
-    log.shutdown();
+    incoming.execute(() -> {
+      receiptIds.close();
+      flushEvidence(true);
+      log.shutdown();
+    });
+    incoming.shutdown();
     super.onDestroy();
   }
 }

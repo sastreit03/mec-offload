@@ -27,7 +27,7 @@ public final class H264Rtp {
   private byte[] descriptor;
   private final byte[] packetBuffer;
   private final ByteBuffer packetWriter;
-  private final List<byte[]> parameters = new ArrayList<>();
+  private final List<ByteBuffer> parameters = new ArrayList<>();
   public long bytes, packets, accessUnits;
 
   public H264Rtp(Sink sink, int payloadType, int mtu, Metadata metadata) {
@@ -40,68 +40,96 @@ public final class H264Rtp {
     packetWriter = ByteBuffer.wrap(packetBuffer);
   }
 
-  public static List<byte[]> split(byte[] a) {
-    List<byte[]> out = new ArrayList<>();
-    int begin = -1;
-    for (int i = 0; i < a.length - 2; i++) {
-      int n = 0;
-      if (a[i] == 0 && a[i + 1] == 0) {
-        if (a[i + 2] == 1) n = 3;
-        else if (i + 3 < a.length && a[i + 2] == 0 && a[i + 3] == 1) n = 4;
-      }
-      if (n > 0) {
-        if (begin >= 0 && i > begin) out.add(Arrays.copyOfRange(a, begin, i));
-        begin = i + n;
-        i += n - 1;
-      }
+  private static ByteBuffer range(ByteBuffer source, int start, int end) {
+    ByteBuffer view = source.duplicate();
+    view.position(start);
+    view.limit(end);
+    return view.slice();
+  }
+
+  private static List<ByteBuffer> splitViews(ByteBuffer encoded) {
+    ByteBuffer a = encoded.slice();
+    List<ByteBuffer> out = new ArrayList<>();
+    int length = a.remaining(), begin = -1;
+    for (int i = 0; i + 2 < length; i++) {
+      if (a.get(i) != 0 || a.get(i + 1) != 0) continue;
+      int prefix;
+      if (a.get(i + 2) == 1) prefix = 3;
+      else if (i + 3 < length && a.get(i + 2) == 0 && a.get(i + 3) == 1) prefix = 4;
+      else continue;
+      if (begin >= 0 && i > begin) out.add(range(a, begin, i));
+      begin = i + prefix;
+      i = begin - 1;
     }
-    if (begin >= 0 && begin < a.length) out.add(Arrays.copyOfRange(a, begin, a.length));
+    if (begin >= 0 && begin < length) out.add(range(a, begin, length));
     if (out.isEmpty()) {
-      ByteBuffer b = ByteBuffer.wrap(a);
-      while (b.remaining() >= 4) {
-        int n = b.getInt();
-        if (n <= 0 || n > b.remaining()) throw new IllegalArgumentException("AVCC length");
-        byte[] x = new byte[n];
-        b.get(x);
-        out.add(x);
+      while (a.remaining() >= 4) {
+        int n = a.getInt();
+        if (n <= 0 || n > a.remaining()) throw new IllegalArgumentException("AVCC length");
+        out.add(range(a, a.position(), a.position() + n));
+        a.position(a.position() + n);
       }
     }
     return out;
   }
 
-  public void configure(byte[] a) {
-    cacheParameters(split(a));
+  private static byte[] copy(ByteBuffer view) {
+    byte[] bytes = new byte[view.remaining()];
+    view.duplicate().get(bytes);
+    return bytes;
   }
 
-  private void cacheParameters(List<byte[]> nals) {
-    for (byte[] n : nals) {
-      int t = n[0] & 31;
-      if (t == 7 || t == 8) {
-        parameters.removeIf(p -> (p[0] & 31) == t);
-        parameters.add(n);
+  private static List<byte[]> copies(List<ByteBuffer> views) {
+    List<byte[]> out = new ArrayList<>(views.size());
+    for (ByteBuffer view : views) out.add(copy(view));
+    return out;
+  }
+
+  public static List<byte[]> split(byte[] a) {
+    return copies(splitViews(ByteBuffer.wrap(a)));
+  }
+
+  public void configure(byte[] a) { configure(ByteBuffer.wrap(a)); }
+
+  public void configure(ByteBuffer a) { cacheParameters(splitViews(a)); }
+
+  private void cacheParameters(List<ByteBuffer> nals) {
+    for (ByteBuffer n : nals) {
+      int type = n.get(0) & 31;
+      if (type == 7 || type == 8) {
+        parameters.removeIf(p -> (p.get(0) & 31) == type);
+        parameters.add(ByteBuffer.wrap(copy(n)));
       }
     }
   }
 
-  /** Production payload NALs, also used by offline profiling without sending packets. */
-  public List<byte[]> accessUnitNals(byte[] encoded) {
-    List<byte[]> nals = split(encoded);
-    boolean idr = nals.stream().anyMatch(n -> (n[0] & 31) == 5);
+  private List<ByteBuffer> payloadViews(ByteBuffer encoded) {
+    List<ByteBuffer> nals = splitViews(encoded);
     cacheParameters(nals);
-    // Repeat cached SPS/PPS with IDRs so a receiver can start decoding at a keyframe.
-    if (idr) {
-      List<byte[]> all = new ArrayList<>(parameters);
-      for (byte[] n : nals) if ((n[0] & 31) != 7 && (n[0] & 31) != 8) all.add(n);
-      nals = all;
+    if (nals.stream().anyMatch(n -> (n.get(0) & 31) == 5)) {
+      List<ByteBuffer> all = new ArrayList<>(parameters);
+      for (ByteBuffer n : nals) {
+        int type = n.get(0) & 31;
+        if (type != 7 && type != 8) all.add(n);
+      }
+      return all;
     }
     return nals;
   }
 
+  public List<byte[]> accessUnitNals(byte[] encoded) {
+    return copies(payloadViews(ByteBuffer.wrap(encoded)));
+  }
+
   public void accessUnit(byte[] encoded, long pts) throws IOException {
-    List<byte[]> nals = accessUnitNals(encoded);
-    boolean idr = nals.stream().anyMatch(n -> (n[0] & 31) == 5);
+    accessUnit(ByteBuffer.wrap(encoded), pts);
+  }
+
+  public void accessUnit(ByteBuffer encoded, long pts) throws IOException {
+    List<ByteBuffer> nals = payloadViews(encoded);
+    boolean idr = nals.stream().anyMatch(n -> (n.get(0) & 31) == 5);
     long size = 0;
-    for (byte[] n : nals) size += n.length + 4;
+    for (ByteBuffer n : nals) size += n.remaining() + 4;
     // Canonical size includes four-byte Annex-B prefixes, but excludes transport headers.
     descriptor = metadata.begin(pts, size, idr);
     if (descriptor.length != 96) throw new IOException("descriptor size");
@@ -112,20 +140,23 @@ public final class H264Rtp {
     accessUnits++;
   }
 
-  private void nal(byte[] n, long ts, boolean marker) throws IOException {
-    if (n.length <= maxPayload) {
+  private void nal(ByteBuffer n, long ts, boolean marker) throws IOException {
+    if (n.limit() <= maxPayload) {
       writeHeader(ts, marker);
-      packetWriter.put(n);
+      packetWriter.put(n.duplicate());
       sendPacket();
       return;
     }
-    for (int o = 1; o < n.length; ) {
-      int count = Math.min(maxPayload - 2, n.length - o);
-      boolean first = o == 1, last = o + count == n.length;
+    ByteBuffer fragment = n.duplicate();
+    for (int o = 1; o < n.limit(); ) {
+      int count = Math.min(maxPayload - 2, n.limit() - o);
+      boolean first = o == 1, last = o + count == n.limit();
       writeHeader(ts, marker && last);
-      packetWriter.put((byte) ((n[0] & 0xe0) | 28));
-      packetWriter.put((byte) ((n[0] & 31) | (first ? 128 : 0) | (last ? 64 : 0)));
-      packetWriter.put(n, o, count);
+      packetWriter.put((byte) ((n.get(0) & 0xe0) | 28));
+      packetWriter.put((byte) ((n.get(0) & 31) | (first ? 128 : 0) | (last ? 64 : 0)));
+      fragment.limit(o + count);
+      fragment.position(o);
+      packetWriter.put(fragment);
       sendPacket();
       o += count;
     }

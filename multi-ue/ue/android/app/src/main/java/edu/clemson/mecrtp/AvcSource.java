@@ -174,7 +174,7 @@ public final class AvcSource {
           Image image = r.acquireLatestImage();
           if (image != null) {
             try {
-              submit(image, System.nanoTime() / 1000);
+              submit(image, System.nanoTime() / 1000, null);
             } catch (Exception e) {
               fail(e);
             } finally {
@@ -262,13 +262,13 @@ public final class AvcSource {
   }
 
   // Camera and dataset frames share bitrate changes, keyframe requests, and YUV scaling.
-  private boolean submit(Image source, long sourcePts) throws Exception {
+  private boolean submit(Image source, long sourcePts, Long scheduledRelease) throws Exception {
     if (!active || stopRequested || !released) return false;
     if (pendingEncoderInput < 0) pendingEncoderInput = encoder.dequeueInputBuffer(0);
     if (pendingEncoderInput < 0) return false;
     long pts = session.collectionMode()
         ? Math.round(encoderSubmittedFrames * 1_000_000.0 / fps) : sourcePts;
-    if (!session.prepare(pts, System.nanoTime(), sourcePts)) return false;
+    if (!session.prepare(pts, System.nanoTime(), sourcePts, scheduledRelease)) return false;
     int index = pendingEncoderInput;
     Image target = encoder.getInputImage(index);
     if (target == null) throw new Exception("Encoder lacks flexible YUV input");
@@ -315,7 +315,7 @@ public final class AvcSource {
   }
 
   /** Submit one decoded frame without consuming it during collection backpressure. */
-  private void submitDecoded(int index, long pts, int flags) {
+  private void submitDecoded(int index, long pts, int flags, long scheduledRelease) {
     if (!active || stopRequested) return;
     try {
       Image image = decoder.getOutputImage(index);
@@ -323,7 +323,7 @@ public final class AvcSource {
       boolean hasImage = image != null;
       if (image != null) {
         try {
-          submitted = submit(image, pts);
+          submitted = submit(image, pts, scheduledRelease);
         } finally {
           // A collection retry still owns this decoded image and its buffer.
           if (submitted || !session.collectionMode()) image.close();
@@ -333,7 +333,7 @@ public final class AvcSource {
       if (!submitted && hasImage && session.collectionMode()) {
         // Preserve this source frame until the encoder and preceding AU are ready.
         drain();
-        handler.postDelayed(() -> submitDecoded(index, pts, flags), 2);
+        handler.postDelayed(() -> submitDecoded(index, pts, flags, scheduledRelease), 2);
         return;
       }
 
@@ -416,7 +416,7 @@ public final class AvcSource {
             final int heldIndex = i;
             final long heldPts = info.presentationTimeUs;
             final int heldFlags = info.flags;
-            heldFirstFrame = () -> submitDecoded(heldIndex, heldPts, heldFlags);
+            heldFirstFrame = () -> submitDecoded(heldIndex, heldPts, heldFlags, session.releaseMono(fileStart));
             ready();
             return;
           }
@@ -435,12 +435,13 @@ public final class AvcSource {
                     .put("expected_start_unix_ns", release + remainingUs * 1000));
             preparationSent = true;
           }
+          long scheduledRelease = session.releaseMono(release);
           long wait = Math.max(0, (release - sessionClock()) / 1_000_000);
           final int index = i;
           final long pts = info.presentationTimeUs;
           final int flags = info.flags;
-          if (wait > 0) handler.postDelayed(() -> submitDecoded(index, pts, flags), wait);
-          else handler.post(() -> submitDecoded(index, pts, flags));
+          if (wait > 0) handler.postDelayed(() -> submitDecoded(index, pts, flags, scheduledRelease), wait);
+          else handler.post(() -> submitDecoded(index, pts, flags, scheduledRelease));
           drain();
           return;
         }
@@ -467,32 +468,31 @@ public final class AvcSource {
         for (String key : new String[] {"csd-0", "csd-1"}) {
           ByteBuffer b = f.getByteBuffer(key);
           if (b != null) {
-            byte[] a = new byte[b.remaining()];
-            b.duplicate().get(a);
-            rtp.configure(a);
+            rtp.configure(b);
           }
         }
         continue;
       }
       if (i < 0) break;
-      ByteBuffer b = encoder.getOutputBuffer(i);
-      if (b != null && info.size > 0) {
-        b.position(info.offset);
-        b.limit(info.offset + info.size);
-        byte[] a = new byte[info.size];
-        b.get(a);
-        if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) rtp.configure(a);
-        else {
-          events.event("encoder_output", new org.json.JSONObject()
-              .put("video_id", session.video())
-              .put("encoder_pts_us", info.presentationTimeUs)
-              .put("codec_flags", info.flags)
-              .put("codec_keyframe", (info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0)
-              .put("codec_output_bytes", info.size));
-          rtp.accessUnit(a, info.presentationTimeUs);
+      try {
+        ByteBuffer b = encoder.getOutputBuffer(i);
+        if (b != null && info.size > 0) {
+          b.position(info.offset);
+          b.limit(info.offset + info.size);
+          if ((info.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0) rtp.configure(b);
+          else {
+            events.event("encoder_output", new org.json.JSONObject()
+                .put("video_id", session.video())
+                .put("encoder_pts_us", info.presentationTimeUs)
+                .put("codec_flags", info.flags)
+                .put("codec_keyframe", (info.flags & MediaCodec.BUFFER_FLAG_KEY_FRAME) != 0)
+                .put("codec_output_bytes", info.size));
+            rtp.accessUnit(b, info.presentationTimeUs);
+          }
         }
+      } finally {
+        encoder.releaseOutputBuffer(i, false);
       }
-      encoder.releaseOutputBuffer(i, false);
     }
   }
 
