@@ -538,13 +538,33 @@ signing setup (`bash gradlew :app:assembleDebug` from `ue/android`). Install
 the newly built APK on each handset. Keep existing campaign data when updating
 an installation signed with the same key.
 
-From `multi-ue`, verify the encoding environment and identify the USB device.
+From `multi-ue`, use the dedicated `.venv-media` environment to verify the
+encoding dependencies and identify the USB device.
 The Python interpreter must see OpenCV, PyYAML, PyGObject, Gst and GstVideo.
 The pipeline requires `x264enc`, `h264parse`, and the GStreamer app elements.
 
 ```bash
-PY=../gnb-core/env/bin/python
-"$PY" -c 'import cv2, yaml, gi; gi.require_version("Gst", "1.0"); gi.require_version("GstVideo", "1.0"); from gi.repository import Gst, GstVideo; Gst.init(None); assert all(Gst.ElementFactory.find(n) for n in ("appsrc", "videoconvert", "x264enc", "h264parse", "appsink"))'
+PY="$PWD/.venv-media/bin/python"
+"$PY" - <<'PY'
+import cv2
+import yaml
+import gi
+
+gi.require_version("Gst", "1.0")
+gi.require_version("GstVideo", "1.0")
+from gi.repository import Gst, GstVideo
+
+Gst.init(None)
+required = ("appsrc", "videoconvert", "x264enc", "h264parse", "appsink")
+missing = [name for name in required if not Gst.ElementFactory.find(name)]
+if missing:
+    raise SystemExit(f"Missing GStreamer elements: {missing}")
+print("Media preparation environment is ready.")
+PY
+
+export PIXEL1=32110DLH20024R
+export PIXEL2=2B251FDH200GK3
+export PIXEL3=29171FDH2000UD
 adb devices -l
 ```
 
@@ -554,12 +574,12 @@ Repeat the following commands for each participating Pixel. Use the source
 directory from section 10 and the same catalog used in section 11.
 
 ```bash
-PIXEL=pixel1
-SERIAL=replace_with_adb_serial
+ALIAS=pixel1
+SERIAL="$PIXEL1"
 adb -s "$SERIAL" install -r ue/android/app/build/outputs/apk/debug/app-debug.apk
 "$PY" tools/stage_pixel_media.py --campaign-dir "$CAMPAIGN_DIR" \
   --catalog config/tasks.yaml --sources datasets/campaign-v2 \
-  --ue "$PIXEL" --serial "$SERIAL"
+  --ue "$ALIAS" --serial "$SERIAL"
 ```
 
 The tool groups repeated assignments by source SHA-256, start frame, encoded

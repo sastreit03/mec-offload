@@ -36,6 +36,7 @@
 /multi-ue/**/*.py[cod]
 /multi-ue/.pytest_cache/
 /multi-ue/.venv/
+/multi-ue/.venv-media/
 
 # Android-generated and machine-specific files
 /multi-ue/ue/android/.gradle/
