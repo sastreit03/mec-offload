@@ -1,6 +1,6 @@
 # Fixed-policy dataset collection. These defaults support manual runs; the
 # campaign arm contract selects and validates each UE's manifest candidate.
-run_id: 20261125-pilot-no-mps-pixel-optimization-collection
+run_id: 20261125-pilot-no-mps-pixel-offline-encoding-collection
 mode: collection
 catalog: tasks.yaml
 profiles: profiles.collection.yaml
