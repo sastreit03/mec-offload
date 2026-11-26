@@ -8,6 +8,7 @@ import struct
 import tempfile
 import unittest
 import urllib.request
+import urllib.error
 import uuid
 from pathlib import Path
 
@@ -95,7 +96,7 @@ class Campaign(unittest.IsolatedAsyncioTestCase):
                 headers={"Origin":url,"Content-Type":"application/json"}
                 req=urllib.request.Request(url+path,headers=headers,data=None if body is None else json.dumps(body).encode())
                 with urllib.request.urlopen(req,timeout=10) as r:
-                    return json.load(r) if path.startswith("/api") else r.read()
+                    return json.load(r) if path.startswith("/api") and path != "/api/events" else r.read()
             async with serve(mec,"127.0.0.1",0) as server:
                 port=server.sockets[0].getsockname()[1]
                 with socket.socket() as s:
@@ -114,12 +115,19 @@ class Campaign(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(len(visits),cycle)
                         if cycle==0:
                             await asyncio.to_thread(request,"/api/connect",DEFAULT|dict(folder=tmp,server="127.0.0.1",port=port))
+                            with self.assertRaises(urllib.error.HTTPError) as active_export:
+                                await asyncio.to_thread(request,"/api/events")
+                            self.assertEqual(active_export.exception.code, 400)
                             await asyncio.wait_for(done,8)
                             await asyncio.to_thread(request,"/")
                             s=await asyncio.to_thread(request,"/api/status")
                             self.assertEqual(s["health"]["association"],"Validated")
                             self.assertEqual(s["health"]["rtp"],"Completed result received")
                             await asyncio.to_thread(request,"/api/disconnect",{})
+                            exported = await asyncio.to_thread(request,"/api/events")
+                            self.assertEqual(exported, next(root.rglob("events.jsonl")).read_bytes())
+                            exported_rows = [json.loads(line) for line in exported.splitlines()]
+                            self.assertEqual(sum(r["type"] == "result_receipt" for r in exported_rows), 4)
                     finally:
                         p.send_signal(signal.SIGTERM)
                         self.assertEqual(await asyncio.wait_for(p.wait(),8),0)

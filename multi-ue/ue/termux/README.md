@@ -40,6 +40,16 @@ The checks use normal campaign traffic. The client waits for the scenario start 
 
 ## Collect evidence
 
+After the MEC has drained the final attempt, leave this service running and use
+the **Termux client** evidence block in
+[the collection tutorial](../../docs/dataset-collection-tutorial.md#pixel-evidence)
+on the RAN Spark. It forwards the localhost service over ADB, disconnects and
+flushes the client, then downloads `/api/events` and applies the existing run
+filter. No phone-side copy command is needed. The endpoint requires a
+disconnected client in the current service session and exposes only its event
+log. Do not stop the service before downloading.
+
+For an older running service without `/api/events`, use this manual fallback.
 Disconnect after the MEC has drained the final attempt. The UI shows the evidence directory. The default for the first alias and default MEC is `~/.local/state/mec-pixel/192.168.72.136-8765/pixel1/`. Identity and SQLite replay state are private to the host, port, and alias. On the Pixel, copy the event log to shared storage, adjusting the source for the settings used.
 
 ```sh

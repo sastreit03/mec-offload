@@ -1,0 +1,91 @@
+schema_version: 1
+campaign_name: 20261126-pilot-no-mps-linux-control
+campaign_seed: 20261123
+
+duration_s: 5
+fps: 10
+gop_frames: 10
+
+# This profile is part of every scenario ID and exported dataset row.
+radio:
+  profile_id: band78-51prb
+  carrier_prbs: 51
+  nominal_bandwidth_mhz: 20
+  center_frequency_hz: 3309480000
+  subcarrier_spacing_hz: 30000
+  fft_size: 1024
+  sample_rate_hz: 30720000
+  threequarter_sampling: false
+
+policies:
+  ran_scheduler: proportional_fair
+  edgeric_mode: shadow
+  mec_mode: collection
+  mec_queue: fifo_per_application
+  cuda_priority: -3
+  drain_timeout_s: 120
+
+ues:
+  pixel1: {kind: android, hardware: Google Pixel 7}
+  pixel2: {kind: android, hardware: Google Pixel 7}
+  pixel3: {kind: android, hardware: Google Pixel 7}
+  linux1: {kind: linux, hardware: NVIDIA Jetson AGX Orin}
+
+ue_sets:
+  #one_ue: [pixel1]
+  two_ue: [pixel1, linux1]
+  #four_ue: [pixel1, pixel2, pixel3, linux1]
+
+# Applications: {detection, tracking, segmentation}
+application_rotations:
+  - pixel1: detection
+    pixel2: segmentation
+    pixel3: segmentation
+    linux1: detection
+  - pixel1: segmentation
+    pixel2: detection
+    pixel3: detection
+    linux1: segmentation
+
+
+# Each tier deliberately pairs the strongest DNN with the lowest bitrate.
+# profiled bitrates: {500000, 1000000, 1500000, 2000000, 4000000}
+# Available models: 
+#   Detection:     {yolo26n, yolo26m, yolo26l, yolo26x}
+#   Tracking:      {yolo26n, yolo26m, yolo26l, yolo26x}
+#   Segmentaation: {segformer-b0, segformer-b1, segformer-b2, segformer-b3}
+# Available tier_assignment:
+#   shared: All UEs use the same tier at the same time (e.g., all use tier 0, then all use tier 1)
+#   per_ue: Generate every combination of independently assigned tiers (w/ 4 tiers and 4, 4^4 = 256 combinations per application rotation)
+tier_assignment: shared
+tiers:
+  - tier: 0
+    bitrate_bps: 500000
+    detection: yolo26x
+    segmentation: segformer-b3
+  - tier: 1
+    bitrate_bps: 1000000
+    detection: yolo26l
+    segmentation: segformer-b2
+  - tier: 2
+    bitrate_bps: 1500000
+    detection: yolo26m
+    segmentation: segformer-b1
+  - tier: 3
+    bitrate_bps: 2000000
+    detection: yolo26n
+    segmentation: segformer-b0
+
+channels:
+  enabled: false
+
+media:
+  selection: unique_segment_per_channel_rotation_and_ue
+  videos_per_ue: 42
+  frames_per_scenario: 150
+  segments_per_video: 1
+
+execution:
+  randomize_order: true
+  expected_scenarios: 8
+  checkpoint_database: runs/campaigns/20261126-pilot-no-mps-linux-control/state.sqlite3

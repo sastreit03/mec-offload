@@ -38,6 +38,12 @@ class Controller:
     async def action(self, path, data):
         if path == "/api/status":
             return self.status()
+        if path == "/api/events":
+            if self.status()["active"]:
+                raise ValueError("Disconnect after the final MEC drain before downloading evidence")
+            if self.client is None:
+                raise ValueError("No client evidence in this service session")
+            return self.client.root / "events.jsonl"
         if path == "/api/disconnect":
             await self.stop()
             return self.status()
@@ -119,9 +125,27 @@ async def serve(port, root):
                     data = json.loads(self.rfile.read(size))
                     if not isinstance(data, dict):
                         raise ValueError("Expected settings")
-                elif self.command != "GET" or self.path != "/api/status":
+                elif self.command != "GET" or self.path not in ("/api/status", "/api/events"):
                     return self.send_error(404)
                 result = asyncio.run_coroutine_threadsafe(controller.action(self.path, data), loop).result()
+                if self.path == "/api/events":
+                    # Export only this client's events, never identity or replay databases.
+                    with result.open("rb") as stream:
+                        stream.seek(0, 2)
+                        remaining = stream.tell()
+                        stream.seek(0)
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/x-ndjson")
+                        self.send_header("Cache-Control", "no-store")
+                        self.send_header("Content-Length", str(remaining))
+                        self.end_headers()
+                        while remaining:
+                            chunk = stream.read(min(65536, remaining))
+                            if not chunk:
+                                break
+                            self.wfile.write(chunk)
+                            remaining -= len(chunk)
+                    return
                 self.reply(200, json.dumps(result).encode(), "application/json")
             except (ValueError, TypeError, OSError) as exc:
                 self.reply(400, json.dumps(dict(error=str(exc))).encode(), "application/json")

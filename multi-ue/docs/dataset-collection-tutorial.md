@@ -1463,18 +1463,14 @@ Broad container logs and full configuration trees are not collected here.
 
 ### Pixel evidence
 
-For **Termux**, wait for the final MEC drain, then disconnect in the browser
-UI. On the Pixel, copy `events.jsonl` from the evidence directory displayed in
-the UI to shared Downloads. For the default MEC address and `pixel1`:
-
-```sh
-cp ~/.local/state/mec-pixel/192.168.72.136-8765/pixel1/events.jsonl \
-  ~/storage/downloads/pixel1-events.jsonl
-```
-
-Adjust both paths for the alias and the displayed evidence directory. The
-Termux home directory is private to the app; the shared-storage copy makes
-the event log accessible to ADB.
+For **Termux**, use the ADB-forwarded download below from the **RAN Spark**;
+no copy command needs to be typed on the phone. It requires the updated
+`ue/termux/app.py` with `/api/events` on the handset. Leave the Termux service
+running after the final MEC drain. The commands disconnect the campaign client,
+wait for its evidence writer to flush, and download only `events.jsonl` over USB.
+Do not stop the service with Ctrl-C before downloading. If the current service
+predates this endpoint, preserve its private evidence before replacing it; the
+manual export procedure remains in the Termux README for that one-time case.
 
 Connect each Pixel by USB. Pull only its event file into temporary storage and
 filter it into diagnostics. Pulling the entire app directory can fail on
@@ -1487,16 +1483,15 @@ export PIXEL3=29171FDH2000UD
 adb devices -l
 ```
 
-Run this block once per connected phone, changing `ALIAS` and `SERIAL`:
+For the **APK client**, run this block once per connected phone, changing
+`ALIAS` and `SERIAL`:
 
 ```bash
 ALIAS=pixel1
 SERIAL="$PIXEL1"  # Use pixel2/$PIXEL2 and pixel3/$PIXEL3 for the other phones.
 mkdir -p "$REVIEW/pixel/$ALIAS"
 PIXEL_CAPTURE="$(mktemp -d)"
-# Choose the source for the client used in this campaign:
-PIXEL_EVENTS=/sdcard/Android/data/edu.clemson.mecrtp/files/events.jsonl  # APK
-# PIXEL_EVENTS="/sdcard/Download/${ALIAS}-events.jsonl"               # Termux
+PIXEL_EVENTS=/sdcard/Android/data/edu.clemson.mecrtp/files/events.jsonl
 if adb -s "$SERIAL" pull \
     "$PIXEL_EVENTS" \
     "$PIXEL_CAPTURE/events.jsonl" && \
@@ -1510,6 +1505,44 @@ fi
 adb -s "$SERIAL" shell getprop ro.build.fingerprint \
   > "$REVIEW/pixel/$ALIAS/build-fingerprint.txt"
 ```
+
+For the **Termux client**, run this alternative block on the **RAN Spark**, once
+per connected phone, only after the final MEC drain. Set `ALIAS` to the alias
+used by that phone's running service. If a different UI port was selected at
+launch, replace `8767` below. Keep `RUN_ID` set to the actual recorded MEC run ID.
+
+```bash
+ALIAS=pixel1
+SERIAL="$PIXEL1"
+mkdir -p "$REVIEW/pixel/$ALIAS"
+PIXEL_CAPTURE="$(mktemp -d)"
+if TERMUX_FORWARD_PORT=$(adb -s "$SERIAL" forward tcp:0 tcp:8767); then
+  TERMUX_URL="http://127.0.0.1:${TERMUX_FORWARD_PORT}"
+  # Host and Origin refer to the service's handset address, not the forwarded port.
+  if curl --fail --silent --show-error \
+      -H 'Host: 127.0.0.1:8767' -H 'Origin: http://127.0.0.1:8767' \
+      -H 'Content-Type: application/json' -d '{}' \
+      "$TERMUX_URL/api/disconnect" > "$PIXEL_CAPTURE/disconnect.json" && \
+     curl --fail --silent --show-error -H 'Host: 127.0.0.1:8767' \
+      "$TERMUX_URL/api/events" -o "$PIXEL_CAPTURE/events.jsonl" && \
+     python3 tools/filter_run_events.py "$PIXEL_CAPTURE/events.jsonl" \
+      "$REVIEW/pixel/$ALIAS/events.jsonl"; then
+    rm "$PIXEL_CAPTURE/events.jsonl" "$PIXEL_CAPTURE/disconnect.json"
+    rmdir "$PIXEL_CAPTURE"
+  else
+    echo "Collection failed; inspect temporary files in $PIXEL_CAPTURE"
+  fi
+  adb -s "$SERIAL" forward --remove "tcp:${TERMUX_FORWARD_PORT}"
+else
+  echo "ADB forwarding failed; check the selected phone and USB authorization"
+fi
+adb -s "$SERIAL" shell getprop ro.build.fingerprint \
+  > "$REVIEW/pixel/$ALIAS/build-fingerprint.txt"
+```
+
+This uses the same `$REVIEW/pixel/$ALIAS/events.jsonl` destination and run filter
+as the APK workflow. The download endpoint rejects collection while the client
+is active and does not expose identity files or the SQLite replay database.
 
 Do not copy unfiltered logcat history as current-run evidence. If troubleshooting
 requires it, collect logcat separately with an explicit time range. Preserve all
