@@ -533,10 +533,25 @@ configuration, images, and services before running scenarios.
 
 Run this step after verifying the immutable manifest. Use the RAN Spark and
 the same GStreamer/x264 environment used for Linux UE encoder profiling.
-Install the updated Pixel app using the Android project's normal build and
+**APK client:** Install the updated Pixel app using the Android project's normal build and
 signing setup (`bash gradlew :app:assembleDebug` from `ue/android`). Install
 the newly built APK on each handset. Keep existing campaign data when updating
 an installation signed with the same key.
+
+**Termux client (pre-encoded campaigns):** Instead of building and installing
+the APK, complete the one-time setup in
+[`ue/termux/README.md`](../ue/termux/README.md#install-on-each-pixel), including
+`termux-setup-storage` and its shared-storage permission prompt. Both clients
+read the same `.pav` files in `/sdcard/Movies/AetheredgeEncoded`; media already
+staged for the APK can be reused. Continue with the RAN Spark staging commands
+below, one phone at a time, then run `--check-staged`.
+
+Keep `kind: android` and the existing `pixel1`, `pixel2`, and `pixel3` aliases
+in the campaign YAML for either client. The staging preflight uses
+`kind: android` to select phones whose verification receipts it checks;
+changing these Pixels to `kind: linux` would skip that check. Pre-encoded
+Termux campaigns use the existing generator, staging tool, runner, and analysis
+helpers without changes.
 
 From `multi-ue`, use the dedicated `.venv-media` environment to verify the
 encoding dependencies and identify the USB device.
@@ -576,6 +591,7 @@ directory from section 10 and the same catalog used in section 11.
 ```bash
 ALIAS=pixel1
 SERIAL="$PIXEL1"
+# APK client only: skip this installation command when using Termux.
 adb -s "$SERIAL" install -r ue/android/app/build/outputs/apk/debug/app-debug.apk
 "$PY" tools/stage_pixel_media.py --campaign-dir "$CAMPAIGN_DIR" \
   --catalog config/tasks.yaml --sources datasets/campaign-v2 \
@@ -606,6 +622,11 @@ After the last handset, run this check before starting the campaign:
 ```
 
 This checks the saved USB verification receipts in `$CAMPAIGN_DIR/pixel-staging/`
+against the campaign assignments; it does not reopen the files on the handset.
+Termux separately opens and hashes the assigned file on the phone before
+acknowledging scenario readiness, preserving both checks.
+
+The receipt check compares these records
 against the locked manifest and catalog, all assigned Android aliases, and
 distinct device serials. It can run with the phones disconnected. Rerun
 staging if files or devices changed after verification. Keep the receipts
@@ -896,7 +917,7 @@ Prepare all clients required anywhere in the manifest before starting a
 randomized campaign. Connected clients that are not assigned to a scenario
 wait; the manifest determines which clients transmit.
 
-On each **Pixel**, open the installed campaign app, set the MEC address to
+On each **Pixel using the APK**, open the installed campaign app, set the MEC address to
 `192.168.72.136`, and set its unique alias to the corresponding `ues` key
 (`pixel1`, `pixel2`, or `pixel3` on this testbed). For pre-encoded playback select
 **Movies → AetheredgeEncoded** using the app's directory picker. Check that
@@ -906,6 +927,25 @@ baseline, select the original source-video folder instead. Press
 **Connect and stream** once and wait for **MEC control connected**. Keep the
 app in the foreground. Campaign assignments select application, model, bitrate,
 and media; do not manually restart streaming between scenarios.
+
+On each **Pixel using Termux**, stop the APK client first so only one client
+uses the campaign alias. In Termux, start the service from the extracted bundle:
+
+```sh
+cd ~/mec-pixel
+sh multi-ue/ue/termux/run.sh
+```
+
+Open `http://127.0.0.1:8767/` in the Pixel's browser. Enter the same MEC address
+(`192.168.72.136`, port `8765`) and campaign alias, keep the encoded-media
+directory `/sdcard/Movies/AetheredgeEncoded`, then tap **Connect and stream**
+once. Verify the displayed source IP is the Pixel's testbed cellular IP,
+**WebSocket** says **Connected**, and **MEC association report** says
+**Validated**. **RTP: Waiting for assignment** is expected before the runner
+starts. Leave the Termux service running across scenarios; reopening the
+browser page displays the existing service state. Termux follows Android's
+route to the MEC rather than requesting a cellular Network handle, so turn off
+Wi-Fi and VPN routing to the MEC for the initial test.
 
 On the **Orin**, check the already-attached softUE and its container mounts:
 
@@ -1423,6 +1463,19 @@ Broad container logs and full configuration trees are not collected here.
 
 ### Pixel evidence
 
+For **Termux**, wait for the final MEC drain, then disconnect in the browser
+UI. On the Pixel, copy `events.jsonl` from the evidence directory displayed in
+the UI to shared Downloads. For the default MEC address and `pixel1`:
+
+```sh
+cp ~/.local/state/mec-pixel/192.168.72.136-8765/pixel1/events.jsonl \
+  ~/storage/downloads/pixel1-events.jsonl
+```
+
+Adjust both paths for the alias and the displayed evidence directory. The
+Termux home directory is private to the app; the shared-storage copy makes
+the event log accessible to ADB.
+
 Connect each Pixel by USB. Pull only its event file into temporary storage and
 filter it into diagnostics. Pulling the entire app directory can fail on
 `receipts.sqlite3`; neither that database nor `run-as` is needed.
@@ -1441,8 +1494,11 @@ ALIAS=pixel1
 SERIAL="$PIXEL1"  # Use pixel2/$PIXEL2 and pixel3/$PIXEL3 for the other phones.
 mkdir -p "$REVIEW/pixel/$ALIAS"
 PIXEL_CAPTURE="$(mktemp -d)"
+# Choose the source for the client used in this campaign:
+PIXEL_EVENTS=/sdcard/Android/data/edu.clemson.mecrtp/files/events.jsonl  # APK
+# PIXEL_EVENTS="/sdcard/Download/${ALIAS}-events.jsonl"               # Termux
 if adb -s "$SERIAL" pull \
-    /sdcard/Android/data/edu.clemson.mecrtp/files/events.jsonl \
+    "$PIXEL_EVENTS" \
     "$PIXEL_CAPTURE/events.jsonl" && \
    python3 tools/filter_run_events.py "$PIXEL_CAPTURE/events.jsonl" \
     "$REVIEW/pixel/$ALIAS/events.jsonl"; then

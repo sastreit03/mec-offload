@@ -324,7 +324,7 @@ class Client:
             return
         response = self.prepared
         selection = self.successor_selection
-        self.streamer = Streamer(
+        self.streamer = self.make_streamer(
             response,
             str(selection.path),
             self.args.source_ip,
@@ -371,6 +371,7 @@ class Client:
             await self.ws.close()
 
     async def probe(self, m):
+        connection = self.connection
         def run():
             with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
                 s.bind((self.args.source_ip, 0))
@@ -379,11 +380,15 @@ class Client:
                     begin = m["start_unix_ns"] + round(i * m["interval_s"] * 1e9)
                     end = begin + round(m["interval_s"] * 1e9)
                     while self.clock.unix_ns() < begin:
-                        time.sleep(min(0.01, (begin - self.clock.unix_ns()) / 1e9))
+                        if self.stopped or self.connection != connection or self.ws is None:
+                            return False
+                        time.sleep(max(0, min(0.01, (begin - self.clock.unix_ns()) / 1e9)))
                     header = f"MECP1 {self.uid} {self.connection} {m['probe_id']} {i}\n".encode()
                     packet = header + b"0" * max(0, 1000 - len(header))
                     next_send = self.clock.unix_ns()
                     while on and self.clock.unix_ns() < end:
+                        if self.stopped or self.connection != connection or self.ws is None:
+                            return False
                         s.send(packet)
                         next_send += round(len(packet) * 8 / m["rate_bps"] * 1e9)
                         delay = (next_send - self.clock.unix_ns()) / 1e9
@@ -391,7 +396,8 @@ class Client:
                             time.sleep(delay)
 
         try:
-            await asyncio.to_thread(run)
+            if await asyncio.to_thread(run) is False:
+                return
             self.record("association_probe", probe_id=m["probe_id"])
         except OSError as error:
             # MEC restarts can invalidate an in-progress UDP association probe;
@@ -530,6 +536,14 @@ class Client:
         await self.send(self.start_request)
 
     # Reconnect with the saved identity while the media session can continue separately.
+    make_streamer = staticmethod(Streamer)
+
+    async def messages(self, ws):
+        async for raw in ws:
+            message = json.loads(raw)
+            message.pop("_receipt_ns", None)
+            yield message
+
     async def run(self):
         import websockets
 
@@ -568,9 +582,12 @@ class Client:
                             ),
                             timeout=5,
                         )
-                    except Exception:
+                    except BaseException:
                         sock.close()
                         raise
+                    if self.stopped:
+                        sock.close()
+                        break
                     headers = (
                         {"x-mec-resume-token": self.state["resume_token"]}
                         if self.state.get("resume_token")
@@ -583,11 +600,12 @@ class Client:
                         max_size=None,
                         ping_interval=10,
                     ) as ws:
+                        if self.stopped:
+                            break
                         self.ws = ws
                         sync = None
                         try:
-                            async for raw in ws:
-                                m = json.loads(raw)
+                            async for m in self.messages(ws):
                                 kind = m.get("type")
                                 self.last_control_at = time.monotonic()
                                 if kind == "mec_hello":
@@ -679,7 +697,7 @@ class Client:
                                         m["client_mono_ns"],
                                         m["server_receive_unix_ns"],
                                         m["server_send_unix_ns"],
-                                        time.monotonic_ns(),
+                                        m.pop("_receipt_ns", None) or time.monotonic_ns(),
                                     )
                                 elif kind == "association_probe":
                                     asyncio.create_task(self.probe(m))
@@ -761,7 +779,7 @@ class Client:
                                             reason=None,
                                         )
                                         self.slo_ns = round(m["slo_ms"] * 1e6)
-                                        self.streamer = Streamer(
+                                        self.streamer = self.make_streamer(
                                             m,
                                             self.args.source,
                                             self.args.source_ip,

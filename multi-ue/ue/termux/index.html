@@ -1,0 +1,33 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pixel UE</title><style>
+*{box-sizing:border-box}body{margin:0;background:#edf2f5;color:#172932;font:16px Roboto,system-ui,sans-serif}
+main{max-width:600px;margin:0 auto;padding:24px 16px}h1{font-size:28px;margin:0 0 20px}h2{font-size:19px;margin:0 0 14px}
+section{background:white;border-radius:14px;padding:20px;margin-bottom:16px}label,dt{font-size:14px;font-weight:600}
+input,select,button{font:inherit;padding:11px;width:100%;margin:5px 0 13px;border-radius:7px;border:1px solid #78949e}
+button{background:#075967;color:white;border:0;font-weight:600;margin-bottom:0;cursor:pointer}button:disabled{opacity:.45}
+fieldset{padding:0;border:0;margin:0}dl{margin:0}dt{margin-top:12px;color:#455c67}dd{margin:2px 0;overflow-wrap:anywhere}#error{color:#932615;overflow-wrap:anywhere}
+.row{display:grid;grid-template-columns:2fr 1fr;gap:12px}details{margin-bottom:10px}summary{cursor:pointer}output{display:block}
+</style></head><body><main><h1>Pixel UE</h1><section><form id="form"><fieldset id="fields">
+<div class="row"><label>MEC IPv4 address<input name="server" required></label><label>MEC port<input name="port" type="number" min="1" max="65535" required></label></div>
+<div class="row"><label>Campaign UE alias<input name="ue_alias" required></label><label>Application<select name="application"><option>detection</option><option>tracking</option><option>segmentation</option></select></label></div>
+<label>Encoded media directory<input name="folder" required></label><details><summary>Network settings</summary>
+<label>Pixel source IPv4 address<input name="bind_ip" placeholder="Automatic"></label></details></fieldset>
+<button id="connect" disabled>Connect and stream</button><button id="disconnect" type="button" hidden>Disconnect</button></form>
+<output id="error" role="status"></output></section><section><h2>Connection checks</h2><dl>
+<dt>WebSocket</dt><dd id="websocket">Checking local service…</dd><dt>RTP media</dt><dd id="rtp">Waiting</dd>
+<dt>Association probes</dt><dd id="probe">Waiting</dd><dt>MEC association report</dt><dd id="association">Waiting</dd></dl></section>
+<section><h2>Campaign</h2><dl><dt>Source IPv4 address</dt><dd id="source">—</dd><dt>Attempt</dt><dd id="attempt">—</dd>
+<dt>Frames sent / results received</dt><dd id="counts">0 / 0</dd><dt>Evidence directory</dt><dd id="logs">—</dd></dl></section></main>
+<script>
+const el=id=>document.getElementById(id),form=el('form');let initialized=false,busy=false,problem='';
+function render(s){if(!initialized){for(const [k,v] of Object.entries(s.settings))form.elements[k].value=v;initialized=true}
+el('fields').disabled=s.active||busy;el('connect').hidden=s.active;el('connect').disabled=busy;el('disconnect').hidden=!s.active;el('disconnect').disabled=busy;
+for(const k of ['websocket','source','attempt','logs'])el(k).textContent=s[k]||'—';
+for(const k of ['rtp','probe','association'])el(k).textContent=s.active?(s.health[k]||'Waiting'):'Idle';
+el('counts').textContent=(s.health.sent||0)+' / '+(s.health.results||0);el('error').textContent=problem||s.error||s.health.error||''}
+async function status(){try{if(!busy){const s=await(await fetch('/api/status')).json();if(!busy)render(s)}}catch{el('websocket').textContent='Local service unavailable'}finally{setTimeout(status,1000)}}
+async function act(action){if(busy)return;busy=true;problem='';const data=Object.fromEntries(new FormData(form));el('connect').disabled=el('disconnect').disabled=true;
+try{const r=await fetch('/api/'+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const s=await r.json();if(!r.ok)throw Error(s.error);busy=false;render(s)}
+catch(e){problem=e.message;el('error').textContent=problem}finally{busy=false;el('connect').disabled=el('disconnect').disabled=false}}
+form.onsubmit=e=>{e.preventDefault();act('connect')};el('disconnect').onclick=()=>act('disconnect');status();
+</script></body></html>

@@ -176,43 +176,36 @@ def packetize(nals, descriptor, sequence, timestamp, ssrc, mtu=1200, extension_i
     ext = bytes([extension_id, 96]) + descriptor.pack() + b"\0\0"
     overhead = 12 + 4 + len(ext)
     limit = mtu - overhead
-    if descriptor.encoded_bytes != len(canonical_au(nals)):
+    if descriptor.encoded_bytes != sum(4 + len(nal) for nal in nals):
         raise ValueError("AU size differs from descriptor")
     for index, nal in enumerate(nals):
         if not nal or not 1 <= nal[0] & 31 <= 23:
             raise ValueError("unsupported NAL")
-        payloads = [nal]
-        if len(nal) > limit:
-            chunks = [nal[i : i + limit - 2] for i in range(1, len(nal), limit - 2)]
-            payloads = [
-                bytes(
-                    [
-                        (nal[0] & 224) | 28,
-                        (nal[0] & 31)
-                        | (128 if i == 0 else 0)
-                        | (64 if i == len(chunks) - 1 else 0),
-                    ]
-                )
-                + chunk
-                for i, chunk in enumerate(chunks)
-            ]
-        for j, payload in enumerate(payloads):
-            marker = index == len(nals) - 1 and j == len(payloads) - 1
-            yield (
-                struct.pack(
-                    "!BBHIIHH",
-                    0x90,
-                    96 | (128 if marker else 0),
-                    sequence & 65535,
-                    timestamp & 0xFFFFFFFF,
-                    ssrc,
-                    0x1000,
-                    len(ext) // 4,
-                )
-                + ext
-                + payload
+        fragmented = len(nal) > limit
+        view = memoryview(nal)
+        first = 1 if fragmented else 0
+        chunk_size = limit - 2 if fragmented else limit
+        for start in range(first, len(view), chunk_size):
+            end = min(start + chunk_size, len(view))
+            last = end == len(view)
+            marker = index == len(nals) - 1 and last
+            header = struct.pack(
+                "!BBHIIHH",
+                0x90,
+                96 | (128 if marker else 0),
+                sequence & 65535,
+                timestamp & 0xFFFFFFFF,
+                ssrc,
+                0x1000,
+                len(ext) // 4,
             )
+            fu = b""
+            if fragmented:
+                fu = bytes(((nal[0] & 224) | 28,
+                            (nal[0] & 31) | (128 if start == first else 0) | (64 if last else 0)))
+            yield b"".join((header, ext, fu, view[start:end]))
             sequence += 1
+
 
 
 class Assembly:
